@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { GripVertical, MessageSquare, Calendar, User } from 'lucide-react'
 
@@ -12,6 +12,11 @@ export default function Kanban() {
     const { data, updateBookStatus, user } = useAuth()
     const [draggedBook, setDraggedBook] = useState(null)
     const [commentModal, setCommentModal] = useState(null)
+    const [readTimestamps, setReadTimestamps] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('kanban_comment_read') || '{}')
+        } catch { return {} }
+    })
 
     const books = user?.role === 'FREELANCE'
         ? data.books.filter(b => b.assignedTo?.includes(user.id))
@@ -28,6 +33,22 @@ export default function Kanban() {
     }
 
     const getCommentsCount = (bookId) => data.comments.filter(c => c.bookId === bookId).length
+
+    const getUnreadCount = useCallback((bookId) => {
+        const lastRead = readTimestamps[bookId]
+        if (!lastRead) {
+            return data.comments.filter(c => c.bookId === bookId).length
+        }
+        return data.comments.filter(c => c.bookId === bookId && new Date(c.date) > new Date(lastRead)).length
+    }, [data.comments, readTimestamps])
+
+    const openComments = (book) => {
+        const now = new Date().toISOString()
+        const updated = { ...readTimestamps, [book.id]: now }
+        setReadTimestamps(updated)
+        localStorage.setItem('kanban_comment_read', JSON.stringify(updated))
+        setCommentModal(book)
+    }
 
     return (
         <div className="space-y-6 fade-in">
@@ -78,11 +99,17 @@ export default function Kanban() {
                                                     <div className="flex items-center justify-between mt-2">
                                                         <span className="text-[10px] text-dark-500">{book.isbn?.slice(-6)}</span>
                                                         <button
-                                                            onClick={() => setCommentModal(book)}
-                                                            className="flex items-center gap-1 text-xs text-dark-600 hover:text-primary transition-colors"
+                                                            onClick={() => openComments(book)}
+                                                            className={`flex items-center gap-1 text-xs transition-colors relative ${getUnreadCount(book.id) > 0
+                                                                    ? 'text-primary-300 font-semibold'
+                                                                    : 'text-dark-600 hover:text-primary'
+                                                                }`}
                                                         >
                                                             <MessageSquare className="w-3 h-3" />
                                                             {getCommentsCount(book.id)}
+                                                            {getUnreadCount(book.id) > 0 && (
+                                                                <span className="absolute -top-1 -right-2 w-2 h-2 bg-primary rounded-full pulse-glow" />
+                                                            )}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -98,6 +125,7 @@ export default function Kanban() {
 
             {/* Comment Modal */}
             {commentModal && <CommentsModal book={commentModal} onClose={() => setCommentModal(null)} />}
+
         </div>
     )
 }
