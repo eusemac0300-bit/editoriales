@@ -1,0 +1,466 @@
+{
+    "users": [
+        {
+            "id": "u1",
+            "email": "admin@editorial.cl",
+            "password": "admin123",
+            "name": "Carolina Méndez",
+            "role": "ADMIN",
+            "avatar": "CM",
+            "title": "Editora Jefe"
+        },
+        {
+            "id": "u2",
+            "email": "freelance@editorial.cl",
+            "password": "free123",
+            "name": "Diego Valenzuela",
+            "role": "FREELANCE",
+            "avatar": "DV",
+            "title": "Corrector de Estilo",
+            "firstLogin": true
+        },
+        {
+            "id": "u3",
+            "email": "autor@editorial.cl",
+            "password": "autor123",
+            "name": "Isabel Allende Torres",
+            "role": "AUTOR",
+            "avatar": "IA",
+            "title": "Autora",
+            "bio": "Escritora chilena con más de 15 años de carrera literaria. Especialista en novela histórica y ficción contemporánea.",
+            "socialLinks": {
+                "instagram": "@isabelallendet",
+                "twitter": "@iallendet"
+            }
+        },
+        {
+            "id": "u4",
+            "email": "freelance2@editorial.cl",
+            "password": "free123",
+            "name": "Martina Rojas",
+            "role": "FREELANCE",
+            "avatar": "MR",
+            "title": "Diseñadora Editorial",
+            "firstLogin": false
+        },
+        {
+            "id": "u5",
+            "email": "autor2@editorial.cl",
+            "password": "autor123",
+            "name": "Roberto Fuentes",
+            "role": "AUTOR",
+            "avatar": "RF",
+            "title": "Autor",
+            "bio": "Poeta y ensayista. Ganador del Premio Nacional de Literatura 2023."
+        }
+    ],
+    "books": [
+        {
+            "id": "b1",
+            "title": "Los Ecos del Sur",
+            "authorId": "u3",
+            "authorName": "Isabel Allende Torres",
+            "isbn": "978-956-123-456-7",
+            "genre": "Novela Histórica",
+            "status": "Edición",
+            "assignedTo": [
+                "u2"
+            ],
+            "royaltyPercent": 10,
+            "advance": 1500000,
+            "pvp": 18990,
+            "contractExpiry": "2027-06-15",
+            "createdAt": "2025-08-10",
+            "cover": null,
+            "synopsis": "Una saga familiar ambientada en el Chile de los años 70 que recorre tres generaciones de mujeres."
+        },
+        {
+            "id": "b2",
+            "title": "Crónicas de Valparaíso",
+            "authorId": "u5",
+            "authorName": "Roberto Fuentes",
+            "isbn": "978-956-654-321-0",
+            "genre": "Poesía",
+            "status": "Corrección",
+            "assignedTo": [
+                "u2"
+            ],
+            "royaltyPercent": 12,
+            "advance": 800000,
+            "pvp": 14990,
+            "contractExpiry": "2027-03-20",
+            "createdAt": "2025-10-01",
+            "cover": null,
+            "synopsis": "Colección de poemas que retrata la vida cotidiana en los cerros del puerto."
+        },
+        {
+            "id": "b3",
+            "title": "El Algoritmo Perdido",
+            "authorId": "u3",
+            "authorName": "Isabel Allende Torres",
+            "isbn": "978-956-789-012-3",
+            "genre": "Ciencia Ficción",
+            "status": "Maquetación",
+            "assignedTo": [
+                "u4"
+            ],
+            "royaltyPercent": 10,
+            "advance": 2000000,
+            "pvp": 22990,
+            "contractExpiry": "2028-01-10",
+            "createdAt": "2025-05-15",
+            "cover": null,
+            "synopsis": "En un futuro distópico, una programadora descubre un código que puede cambiar la realidad."
+        },
+        {
+            "id": "b4",
+            "title": "Recetas de la Abuela",
+            "authorId": "u5",
+            "authorName": "Roberto Fuentes",
+            "isbn": "978-956-321-654-0",
+            "genre": "No Ficción",
+            "status": "Publicado",
+            "assignedTo": [],
+            "royaltyPercent": 8,
+            "advance": 500000,
+            "pvp": 12990,
+            "contractExpiry": "2026-12-01",
+            "createdAt": "2024-11-20",
+            "cover": null,
+            "synopsis": "Una recopilación de recetas tradicionales chilenas con historias familiares."
+        },
+        {
+            "id": "b5",
+            "title": "Mareas Internas",
+            "authorId": "u3",
+            "authorName": "Isabel Allende Torres",
+            "isbn": "978-956-111-222-3",
+            "genre": "Novela Contemporánea",
+            "status": "Original",
+            "assignedTo": [],
+            "royaltyPercent": 10,
+            "advance": 0,
+            "pvp": 0,
+            "contractExpiry": null,
+            "createdAt": "2026-02-01",
+            "cover": null,
+            "synopsis": "Manuscrito recién recibido sobre relaciones humanas en el Santiago moderno."
+        }
+    ],
+    "inventory": {
+        "physical": [
+            {
+                "bookId": "b4",
+                "stock": 342,
+                "minStock": 100,
+                "entries": [
+                    {
+                        "date": "2025-06-15",
+                        "qty": 500,
+                        "type": "imprenta",
+                        "note": "Primera edición"
+                    },
+                    {
+                        "date": "2025-11-20",
+                        "qty": 200,
+                        "type": "imprenta",
+                        "note": "Reimpresión"
+                    }
+                ],
+                "exits": [
+                    {
+                        "date": "2025-07-01",
+                        "qty": 150,
+                        "type": "venta",
+                        "note": "Distribución librerías",
+                        "revenue": 1948500
+                    },
+                    {
+                        "date": "2025-08-15",
+                        "qty": 8,
+                        "type": "cortesia",
+                        "note": "Prensa y reseñas"
+                    },
+                    {
+                        "date": "2025-12-10",
+                        "qty": 200,
+                        "type": "venta",
+                        "note": "Venta navideña",
+                        "revenue": 2598000
+                    }
+                ]
+            },
+            {
+                "bookId": "b3",
+                "stock": 0,
+                "minStock": 200,
+                "entries": [],
+                "exits": []
+            }
+        ],
+        "digital": [
+            {
+                "bookId": "b4",
+                "versions": [
+                    {
+                        "format": "ePub",
+                        "version": "1.0",
+                        "uploadDate": "2025-06-10"
+                    },
+                    {
+                        "format": "PDF",
+                        "version": "1.0",
+                        "uploadDate": "2025-06-10"
+                    }
+                ],
+                "sales": [
+                    {
+                        "platform": "Amazon Kindle",
+                        "qty": 89,
+                        "revenue": 534210,
+                        "period": "2025-Q3"
+                    },
+                    {
+                        "platform": "Google Books",
+                        "qty": 34,
+                        "revenue": 203830,
+                        "period": "2025-Q3"
+                    },
+                    {
+                        "platform": "Amazon Kindle",
+                        "qty": 120,
+                        "revenue": 719880,
+                        "period": "2025-Q4"
+                    },
+                    {
+                        "platform": "Apple Books",
+                        "qty": 45,
+                        "revenue": 269730,
+                        "period": "2025-Q4"
+                    }
+                ]
+            }
+        ]
+    },
+    "finances": {
+        "invoices": [
+            {
+                "id": "inv1",
+                "bookId": "b4",
+                "type": "egreso",
+                "concept": "Impresión 1ra edición",
+                "amount": 2750000,
+                "provider": "Imprenta del Sur",
+                "date": "2025-05-28",
+                "status": "pagada"
+            },
+            {
+                "id": "inv2",
+                "bookId": "b4",
+                "type": "egreso",
+                "concept": "Edición y corrección",
+                "amount": 850000,
+                "provider": "Diego Valenzuela",
+                "date": "2025-04-15",
+                "status": "pagada"
+            },
+            {
+                "id": "inv3",
+                "bookId": "b4",
+                "type": "egreso",
+                "concept": "Diseño de portada",
+                "amount": 350000,
+                "provider": "Martina Rojas",
+                "date": "2025-05-01",
+                "status": "pagada"
+            },
+            {
+                "id": "inv4",
+                "bookId": "b4",
+                "type": "egreso",
+                "concept": "Reimpresión",
+                "amount": 1200000,
+                "provider": "Imprenta del Sur",
+                "date": "2025-11-10",
+                "status": "pagada"
+            },
+            {
+                "id": "inv5",
+                "bookId": "b4",
+                "type": "ingreso",
+                "concept": "Ventas librerías Jul",
+                "amount": 1948500,
+                "date": "2025-07-31"
+            },
+            {
+                "id": "inv6",
+                "bookId": "b4",
+                "type": "ingreso",
+                "concept": "Ventas navideñas",
+                "amount": 2598000,
+                "date": "2025-12-31"
+            },
+            {
+                "id": "inv7",
+                "bookId": "b4",
+                "type": "ingreso",
+                "concept": "Ventas digitales Q3",
+                "amount": 738040,
+                "date": "2025-09-30"
+            },
+            {
+                "id": "inv8",
+                "bookId": "b4",
+                "type": "ingreso",
+                "concept": "Ventas digitales Q4",
+                "amount": 989610,
+                "date": "2025-12-31"
+            },
+            {
+                "id": "inv9",
+                "bookId": "b1",
+                "type": "egreso",
+                "concept": "Anticipo autora",
+                "amount": 1500000,
+                "provider": "Isabel Allende Torres",
+                "date": "2025-08-10",
+                "status": "pagada"
+            },
+            {
+                "id": "inv10",
+                "bookId": "b2",
+                "type": "egreso",
+                "concept": "Anticipo autor",
+                "amount": 800000,
+                "provider": "Roberto Fuentes",
+                "date": "2025-10-01",
+                "status": "pagada"
+            }
+        ],
+        "royalties": [
+            {
+                "id": "r1",
+                "authorId": "u5",
+                "bookId": "b4",
+                "period": "2025-S2",
+                "totalSales": 638,
+                "salesAmount": 8274150,
+                "royaltyPercent": 8,
+                "grossRoyalty": 661932,
+                "advance": 500000,
+                "netRoyalty": 161932,
+                "status": "pendiente"
+            }
+        ]
+    },
+    "auditLog": [
+        {
+            "id": "a1",
+            "date": "2026-02-25T10:30:00",
+            "userId": "u1",
+            "userName": "Carolina Méndez",
+            "action": "Movió 'Los Ecos del Sur' de Contratación a Edición",
+            "type": "kanban"
+        },
+        {
+            "id": "a2",
+            "date": "2026-02-24T14:15:00",
+            "userId": "u2",
+            "userName": "Diego Valenzuela",
+            "action": "Completó corrección de 'Crónicas de Valparaíso'",
+            "type": "kanban"
+        },
+        {
+            "id": "a3",
+            "date": "2026-02-23T09:00:00",
+            "userId": "u1",
+            "userName": "Carolina Méndez",
+            "action": "Registró factura #inv4 - Reimpresión $1.200.000",
+            "type": "finanzas"
+        },
+        {
+            "id": "a4",
+            "date": "2026-02-22T16:45:00",
+            "userId": "u1",
+            "userName": "Carolina Méndez",
+            "action": "Creó liquidación para Roberto Fuentes - 2025-S2",
+            "type": "finanzas"
+        },
+        {
+            "id": "a5",
+            "date": "2026-02-20T11:20:00",
+            "userId": "u4",
+            "userName": "Martina Rojas",
+            "action": "Movió 'El Algoritmo Perdido' a Maquetación",
+            "type": "kanban"
+        }
+    ],
+    "comments": [
+        {
+            "id": "c1",
+            "bookId": "b1",
+            "userId": "u1",
+            "userName": "Carolina Méndez",
+            "role": "ADMIN",
+            "text": "Isabel, el manuscrito tiene una estructura excelente. Necesitamos revisar el capítulo 7, la transición temporal no queda clara.",
+            "date": "2026-02-25T09:00:00",
+            "category": "Edición"
+        },
+        {
+            "id": "c2",
+            "bookId": "b1",
+            "userId": "u2",
+            "userName": "Diego Valenzuela",
+            "role": "FREELANCE",
+            "text": "Estoy de acuerdo con Carolina. También encontré algunas inconsistencias en los nombres de personajes secundarios entre caps 5 y 8.",
+            "date": "2026-02-25T10:30:00",
+            "category": "Corrección"
+        },
+        {
+            "id": "c3",
+            "bookId": "b1",
+            "userId": "u1",
+            "userName": "Carolina Méndez",
+            "role": "ADMIN",
+            "text": "Diego, perfecto. ¿Puedes preparar un informe de inconsistencias para la autora? Lo necesitamos antes del viernes.",
+            "date": "2026-02-25T11:00:00",
+            "category": "General"
+        },
+        {
+            "id": "c4",
+            "bookId": "b2",
+            "userId": "u2",
+            "userName": "Diego Valenzuela",
+            "role": "FREELANCE",
+            "text": "Los poemas de la sección 'Cerro Alegre' están listos. Me falta la sección 'Ascensores'.",
+            "date": "2026-02-24T14:00:00",
+            "category": "Corrección"
+        }
+    ],
+    "alerts": [
+        {
+            "id": "al1",
+            "type": "stock_critico",
+            "bookId": "b3",
+            "message": "El Algoritmo Perdido - Stock en 0 unidades",
+            "date": "2026-02-27",
+            "read": false
+        },
+        {
+            "id": "al2",
+            "type": "contrato_vencimiento",
+            "bookId": "b4",
+            "message": "Contrato de 'Recetas de la Abuela' vence el 01/12/2026",
+            "date": "2026-02-27",
+            "read": false
+        },
+        {
+            "id": "al3",
+            "type": "liquidacion_pendiente",
+            "bookId": "b4",
+            "message": "Liquidación pendiente para Roberto Fuentes - $161.932",
+            "date": "2026-02-27",
+            "read": true
+        }
+    ]
+}
