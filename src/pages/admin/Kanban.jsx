@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { GripVertical, MessageSquare, Calendar, User } from 'lucide-react'
 
@@ -101,8 +101,8 @@ export default function Kanban() {
                                                         <button
                                                             onClick={() => openComments(book)}
                                                             className={`flex items-center gap-1 text-xs transition-colors relative ${getUnreadCount(book.id) > 0
-                                                                    ? 'text-primary-300 font-semibold'
-                                                                    : 'text-dark-600 hover:text-primary'
+                                                                ? 'text-primary-300 font-semibold'
+                                                                : 'text-dark-600 hover:text-primary'
                                                                 }`}
                                                         >
                                                             <MessageSquare className="w-3 h-3" />
@@ -136,12 +136,24 @@ function CommentsModal({ book, onClose }) {
     const [category, setCategory] = useState('General')
     const comments = data.comments.filter(c => c.bookId === book.id)
     const categories = ['General', 'Edición', 'Corrección', 'Diseño']
+    const commentsEndRef = useRef(null)
+
+    // Auto-scroll to the last message
+    const scrollToBottom = () => {
+        commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+
+    // Scroll on mount and when comments change
+    useEffect(() => {
+        scrollToBottom()
+    }, [comments.length])
 
     const handleSubmit = (e) => {
         e.preventDefault()
         if (!text.trim()) return
         addComment(book.id, text, category)
         setText('')
+        setTimeout(scrollToBottom, 100)
     }
 
     return (
@@ -186,6 +198,7 @@ function CommentsModal({ book, onClose }) {
                             </div>
                         ))
                     )}
+                    <div ref={commentsEndRef} />
                 </div>
 
                 {/* Input */}
