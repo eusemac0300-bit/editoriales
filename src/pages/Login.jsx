@@ -15,16 +15,19 @@ export default function Login() {
         e.preventDefault()
         setError('')
         setLoading(true)
-        setTimeout(() => {
-            const result = login(email, password)
+        try {
+            const result = await login(email, password)
             if (result.success) {
                 const routes = { ADMIN: '/admin', FREELANCE: '/freelance', AUTOR: '/autor' }
                 navigate(routes[result.user.role] || '/admin')
             } else {
                 setError(result.error)
             }
+        } catch (err) {
+            setError('Error de conexión. Intente nuevamente.')
+        } finally {
             setLoading(false)
-        }, 600)
+        }
     }
 
     const demoUsers = [
