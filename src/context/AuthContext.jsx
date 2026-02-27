@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import initialData from '../data/initialData.json'
 import * as db from '../lib/supabaseService'
+import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
@@ -9,6 +10,32 @@ export function AuthProvider({ children }) {
     const [data, setData] = useState(initialData)
     const [loading, setLoading] = useState(true)
     const [supabaseConnected, setSupabaseConnected] = useState(false)
+    const reloadTimerRef = useRef(null)
+    const lastLocalChangeRef = useRef(0)
+
+    // Reload all data from Supabase
+    const reloadData = useCallback(async () => {
+        try {
+            const supabaseData = await db.loadAllData()
+            if (supabaseData && supabaseData.users && supabaseData.users.length > 0) {
+                setData(supabaseData)
+                console.log('🔄 Realtime: data refreshed')
+            }
+        } catch (err) {
+            console.error('Realtime reload failed:', err)
+        }
+    }, [])
+
+    // Debounced reload to avoid flooding
+    const scheduleReload = useCallback(() => {
+        // Skip if change was triggered locally (within last 2 seconds)
+        if (Date.now() - lastLocalChangeRef.current < 2000) return
+
+        if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current)
+        reloadTimerRef.current = setTimeout(() => {
+            reloadData()
+        }, 500)
+    }, [reloadData])
 
     // Load data from Supabase on mount
     useEffect(() => {
@@ -20,7 +47,6 @@ export function AuthProvider({ children }) {
                     setSupabaseConnected(true)
                     console.log('✅ Connected to Supabase - data loaded')
                 } else {
-                    // Fallback to localStorage
                     const saved = localStorage.getItem('editorial_data')
                     if (saved) setData(JSON.parse(saved))
                     console.log('⚠️ Using localStorage fallback')
@@ -39,6 +65,30 @@ export function AuthProvider({ children }) {
 
         init()
     }, [])
+
+    // Subscribe to Supabase Realtime changes
+    useEffect(() => {
+        if (!supabaseConnected) return
+
+        const channel = supabase
+            .channel('editorial-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'books' }, () => scheduleReload())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => scheduleReload())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_log' }, () => scheduleReload())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => scheduleReload())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_physical' }, () => scheduleReload())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'royalties' }, () => scheduleReload())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' }, () => scheduleReload())
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('📡 Realtime: listening for changes')
+                }
+            })
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [supabaseConnected, scheduleReload])
 
     // Save to localStorage as backup always
     useEffect(() => {
@@ -88,6 +138,7 @@ export function AuthProvider({ children }) {
     const isAutor = () => user?.role === 'AUTOR'
 
     const addAuditLog = useCallback(async (action, type = 'general') => {
+        lastLocalChangeRef.current = Date.now()
         if (!user) return
         const entry = {
             id: `a${Date.now()}`,
@@ -108,6 +159,7 @@ export function AuthProvider({ children }) {
     }, [user, supabaseConnected])
 
     const updateBookStatus = useCallback(async (bookId, newStatus) => {
+        lastLocalChangeRef.current = Date.now()
         setData(prev => ({
             ...prev,
             books: prev.books.map(b => b.id === bookId ? { ...b, status: newStatus } : b)
@@ -124,6 +176,7 @@ export function AuthProvider({ children }) {
     }, [data.books, supabaseConnected, addAuditLog])
 
     const addComment = useCallback(async (bookId, text, category) => {
+        lastLocalChangeRef.current = Date.now()
         if (!user) return
         const comment = {
             id: `c${Date.now()}`,
@@ -162,6 +215,7 @@ export function AuthProvider({ children }) {
 
     // ============ SYNC: ADD BOOK ============
     const addNewBook = useCallback(async (book) => {
+        lastLocalChangeRef.current = Date.now()
         setData(prev => ({ ...prev, books: [...prev.books, book] }))
         if (supabaseConnected) {
             await db.addBook(book)
@@ -170,6 +224,7 @@ export function AuthProvider({ children }) {
 
     // ============ SYNC: INVENTORY ============
     const updateInventory = useCallback(async (bookId, updater) => {
+        lastLocalChangeRef.current = Date.now()
         let updatedPhysical = null
         setData(prev => {
             const physical = [...prev.inventory.physical]
@@ -189,6 +244,7 @@ export function AuthProvider({ children }) {
 
     // ============ SYNC: APPROVE ROYALTY ============
     const approveRoyalty = useCallback(async (royaltyId) => {
+        lastLocalChangeRef.current = Date.now()
         setData(prev => ({
             ...prev,
             finances: { ...prev.finances, royalties: prev.finances.royalties.map(r => r.id === royaltyId ? { ...r, status: 'aprobada' } : r) }
@@ -200,6 +256,7 @@ export function AuthProvider({ children }) {
 
     // ============ SYNC: ALERTS ============
     const markAlertAsRead = useCallback(async (alertId) => {
+        lastLocalChangeRef.current = Date.now()
         setData(prev => ({
             ...prev,
             alerts: prev.alerts.map(a => a.id === alertId ? { ...a, read: true } : a)
@@ -210,6 +267,7 @@ export function AuthProvider({ children }) {
     }, [supabaseConnected])
 
     const markAllAlerts = useCallback(async () => {
+        lastLocalChangeRef.current = Date.now()
         setData(prev => ({
             ...prev,
             alerts: prev.alerts.map(a => ({ ...a, read: true }))
@@ -221,6 +279,7 @@ export function AuthProvider({ children }) {
 
     // ============ SYNC: USER PROFILE ============
     const updateProfile = useCallback(async (userId, updates) => {
+        lastLocalChangeRef.current = Date.now()
         setData(prev => ({
             ...prev,
             users: prev.users.map(u => u.id === userId ? { ...u, ...updates } : u)
