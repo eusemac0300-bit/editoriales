@@ -283,6 +283,14 @@ export async function markAlertRead(alertId) {
     return !error
 }
 
+export async function markAllAlertsRead() {
+    const { error } = await supabase
+        .from('alerts')
+        .update({ read: true })
+        .eq('read', false)
+    return !error
+}
+
 // ============ USER UPDATES ============
 export async function updateUserFirstLogin(userId) {
     const { error } = await supabase
@@ -292,12 +300,88 @@ export async function updateUserFirstLogin(userId) {
     return !error
 }
 
+export async function updateUserProfile(userId, updates) {
+    const { error } = await supabase
+        .from('users')
+        .update({
+            name: updates.name,
+            bio: updates.bio,
+            social_links: updates.socialLinks
+        })
+        .eq('id', userId)
+    return !error
+}
+
+// ============ ADD BOOK ============
+export async function addBook(book) {
+    const { error } = await supabase
+        .from('books')
+        .insert({
+            id: book.id,
+            title: book.title,
+            author_id: book.authorId,
+            author_name: book.authorName,
+            isbn: book.isbn,
+            genre: book.genre,
+            status: book.status,
+            assigned_to: book.assignedTo || [],
+            royalty_percent: book.royaltyPercent,
+            advance: book.advance,
+            pvp: book.pvp,
+            contract_expiry: book.contractExpiry,
+            created_at: book.createdAt,
+            cover: book.cover,
+            synopsis: book.synopsis
+        })
+    if (error) console.error('Error adding book:', error)
+    return !error
+}
+
+// ============ INVENTORY UPSERT ============
+export async function upsertInventoryPhysical(bookId, updates) {
+    // Try update first
+    const { data, error: selectErr } = await supabase
+        .from('inventory_physical')
+        .select('id')
+        .eq('book_id', bookId)
+
+    if (data && data.length > 0) {
+        const { error } = await supabase
+            .from('inventory_physical')
+            .update({
+                stock: updates.stock,
+                min_stock: updates.minStock,
+                entries: updates.entries,
+                exits: updates.exits
+            })
+            .eq('book_id', bookId)
+        return !error
+    } else {
+        const { error } = await supabase
+            .from('inventory_physical')
+            .insert({
+                book_id: bookId,
+                stock: updates.stock,
+                min_stock: updates.minStock || 100,
+                entries: updates.entries || [],
+                exits: updates.exits || []
+            })
+        return !error
+    }
+}
+
+// ============ ROYALTY STATUS ============
+export async function updateRoyaltyStatus(royaltyId, newStatus) {
+    const { error } = await supabase
+        .from('royalties')
+        .update({ status: newStatus })
+        .eq('id', royaltyId)
+    return !error
+}
+
 // ============ DATA SYNC ============
 export async function saveFullData(data) {
-    // This is a fallback for bulk saves
-    // Individual operations should use specific functions above
     try {
-        // Update books
         for (const book of data.books) {
             await supabase.from('books').upsert({
                 id: book.id,
@@ -323,3 +407,4 @@ export async function saveFullData(data) {
         return false
     }
 }
+

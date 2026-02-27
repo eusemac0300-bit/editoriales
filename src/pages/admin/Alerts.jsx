@@ -2,20 +2,14 @@ import { useAuth } from '../../context/AuthContext'
 import { Bell, AlertTriangle, Package, FileText, DollarSign, Check } from 'lucide-react'
 
 export default function Alerts() {
-    const { data, setData } = useAuth()
+    const { data, markAlertAsRead, markAllAlerts } = useAuth()
 
     const markRead = (id) => {
-        setData(prev => ({
-            ...prev,
-            alerts: prev.alerts.map(a => a.id === id ? { ...a, read: true } : a)
-        }))
+        markAlertAsRead(id)
     }
 
     const markAllRead = () => {
-        setData(prev => ({
-            ...prev,
-            alerts: prev.alerts.map(a => ({ ...a, read: true }))
-        }))
+        markAllAlerts()
     }
 
     const iconMap = {

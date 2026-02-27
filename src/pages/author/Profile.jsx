@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { User, Upload, Save, Instagram, Twitter, Linkedin, FileText, CheckCircle, Clock, Edit3 } from 'lucide-react'
 
 export default function Profile() {
-    const { user, data, setData } = useAuth()
+    const { user, data, updateProfile } = useAuth()
     const userData = data.users.find(u => u.id === user.id)
 
     const [name, setName] = useState(userData?.name || '')
@@ -12,13 +12,12 @@ export default function Profile() {
     const [twitter, setTwitter] = useState(userData?.socialLinks?.twitter || '')
     const [saved, setSaved] = useState(false)
 
-    const handleSave = () => {
-        setData(prev => ({
-            ...prev,
-            users: prev.users.map(u => u.id === user.id ? {
-                ...u, name, bio, socialLinks: { instagram, twitter }
-            } : u)
-        }))
+    const handleSave = async () => {
+        await updateProfile(user.id, {
+            name,
+            bio,
+            socialLinks: { instagram, twitter }
+        })
         setSaved(true)
         setTimeout(() => setSaved(false), 2000)
     }

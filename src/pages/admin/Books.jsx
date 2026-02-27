@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { FileText, Plus, Calendar, Percent, DollarSign, User } from 'lucide-react'
 
 export default function Books() {
-    const { data, setData, formatCLP, addAuditLog } = useAuth()
+    const { data, addNewBook, formatCLP, addAuditLog } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
 
     const statusColors = {
@@ -25,7 +25,7 @@ export default function Books() {
                 </button>
             </div>
 
-            {showAdd && <AddBookForm data={data} setData={setData} addAuditLog={addAuditLog} onClose={() => setShowAdd(false)} />}
+            {showAdd && <AddBookForm data={data} addNewBook={addNewBook} addAuditLog={addAuditLog} onClose={() => setShowAdd(false)} />}
 
             <div className="space-y-4">
                 {data.books.map(book => (
@@ -69,11 +69,11 @@ export default function Books() {
     )
 }
 
-function AddBookForm({ data, setData, addAuditLog, onClose }) {
+function AddBookForm({ data, addNewBook, addAuditLog, onClose }) {
     const [form, setForm] = useState({ title: '', authorId: '', isbn: '', genre: '', royaltyPercent: 10, advance: 0, pvp: 0, synopsis: '' })
     const authors = data.users.filter(u => u.role === 'AUTOR')
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
         const author = authors.find(a => a.id === form.authorId)
         const book = {
@@ -81,7 +81,7 @@ function AddBookForm({ data, setData, addAuditLog, onClose }) {
             assignedTo: [], advance: parseInt(form.advance), pvp: parseInt(form.pvp),
             royaltyPercent: parseInt(form.royaltyPercent), contractExpiry: null, createdAt: new Date().toISOString().split('T')[0], cover: null
         }
-        setData(prev => ({ ...prev, books: [...prev.books, book] }))
+        await addNewBook(book)
         addAuditLog(`Registró nuevo libro: '${book.title}'`, 'general')
         onClose()
     }

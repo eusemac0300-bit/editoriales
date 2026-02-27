@@ -160,6 +160,76 @@ export function AuthProvider({ children }) {
         }
     }, [user, supabaseConnected])
 
+    // ============ SYNC: ADD BOOK ============
+    const addNewBook = useCallback(async (book) => {
+        setData(prev => ({ ...prev, books: [...prev.books, book] }))
+        if (supabaseConnected) {
+            await db.addBook(book)
+        }
+    }, [supabaseConnected])
+
+    // ============ SYNC: INVENTORY ============
+    const updateInventory = useCallback(async (bookId, updater) => {
+        let updatedPhysical = null
+        setData(prev => {
+            const physical = [...prev.inventory.physical]
+            const idx = physical.findIndex(p => p.bookId === bookId)
+            if (idx >= 0) {
+                physical[idx] = updater(physical[idx])
+            } else {
+                physical.push(updater(null, bookId))
+            }
+            updatedPhysical = physical.find(p => p.bookId === bookId)
+            return { ...prev, inventory: { ...prev.inventory, physical } }
+        })
+        if (supabaseConnected && updatedPhysical) {
+            await db.upsertInventoryPhysical(bookId, updatedPhysical)
+        }
+    }, [supabaseConnected])
+
+    // ============ SYNC: APPROVE ROYALTY ============
+    const approveRoyalty = useCallback(async (royaltyId) => {
+        setData(prev => ({
+            ...prev,
+            finances: { ...prev.finances, royalties: prev.finances.royalties.map(r => r.id === royaltyId ? { ...r, status: 'aprobada' } : r) }
+        }))
+        if (supabaseConnected) {
+            await db.updateRoyaltyStatus(royaltyId, 'aprobada')
+        }
+    }, [supabaseConnected])
+
+    // ============ SYNC: ALERTS ============
+    const markAlertAsRead = useCallback(async (alertId) => {
+        setData(prev => ({
+            ...prev,
+            alerts: prev.alerts.map(a => a.id === alertId ? { ...a, read: true } : a)
+        }))
+        if (supabaseConnected) {
+            await db.markAlertRead(alertId)
+        }
+    }, [supabaseConnected])
+
+    const markAllAlerts = useCallback(async () => {
+        setData(prev => ({
+            ...prev,
+            alerts: prev.alerts.map(a => ({ ...a, read: true }))
+        }))
+        if (supabaseConnected) {
+            await db.markAllAlertsRead()
+        }
+    }, [supabaseConnected])
+
+    // ============ SYNC: USER PROFILE ============
+    const updateProfile = useCallback(async (userId, updates) => {
+        setData(prev => ({
+            ...prev,
+            users: prev.users.map(u => u.id === userId ? { ...u, ...updates } : u)
+        }))
+        if (supabaseConnected) {
+            await db.updateUserProfile(userId, updates)
+        }
+    }, [supabaseConnected])
+
     const formatCLP = (amount) => {
         return new Intl.NumberFormat('es-CL', {
             style: 'currency',
@@ -173,6 +243,8 @@ export function AuthProvider({ children }) {
         isAdmin, isFreelance, isAutor,
         addAuditLog, updateBookStatus, addComment,
         markFreelanceOnboarded, formatCLP,
+        addNewBook, updateInventory, approveRoyalty,
+        markAlertAsRead, markAllAlerts, updateProfile,
         loading, supabaseConnected
     }
 

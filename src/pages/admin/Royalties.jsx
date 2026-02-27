@@ -3,17 +3,14 @@ import { useAuth } from '../../context/AuthContext'
 import { DollarSign, Download, CheckCircle, Clock, User } from 'lucide-react'
 
 export default function Royalties() {
-    const { data, setData, formatCLP, addAuditLog } = useAuth()
+    const { data, approveRoyalty, formatCLP, addAuditLog } = useAuth()
     const [selectedAuthor, setSelectedAuthor] = useState('all')
 
     const authors = data.users.filter(u => u.role === 'AUTOR')
     const royalties = selectedAuthor === 'all' ? data.finances.royalties : data.finances.royalties.filter(r => r.authorId === selectedAuthor)
 
-    const approveRoyalty = (id) => {
-        setData(prev => ({
-            ...prev,
-            finances: { ...prev.finances, royalties: prev.finances.royalties.map(r => r.id === id ? { ...r, status: 'aprobada' } : r) }
-        }))
+    const handleApproveRoyalty = async (id) => {
+        await approveRoyalty(id)
         const r = data.finances.royalties.find(r2 => r2.id === id)
         const author = data.users.find(u => u.id === r?.authorId)
         addAuditLog(`Aprobó liquidación ${formatCLP(r?.netRoyalty || 0)} para ${author?.name}`, 'finanzas')
@@ -21,7 +18,7 @@ export default function Royalties() {
 
     const approveAll = () => {
         const pending = royalties.filter(r => r.status === 'pendiente')
-        pending.forEach(r => approveRoyalty(r.id))
+        pending.forEach(r => handleApproveRoyalty(r.id))
     }
 
     // Calculate simulated royalties for books with sales
@@ -123,7 +120,7 @@ export default function Royalties() {
                                 <div className="flex items-center gap-3">
                                     <span className={`text-lg font-bold ${r.netRoyalty >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCLP(r.netRoyalty)}</span>
                                     {r.status === 'pendiente' ? (
-                                        <button onClick={() => approveRoyalty(r.id)} className="btn-primary text-xs px-3 py-1.5"><CheckCircle className="w-3 h-3 inline mr-1" /> Aprobar</button>
+                                        <button onClick={() => handleApproveRoyalty(r.id)} className="btn-primary text-xs px-3 py-1.5"><CheckCircle className="w-3 h-3 inline mr-1" /> Aprobar</button>
                                     ) : (
                                         <span className="badge-green"><CheckCircle className="w-3 h-3 inline mr-1" /> Aprobada</span>
                                     )}

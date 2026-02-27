@@ -3,28 +3,31 @@ import { useAuth } from '../../context/AuthContext'
 import { Package, Plus, Minus, Gift, TrendingDown, TrendingUp, FileText, Search } from 'lucide-react'
 
 export default function Inventory() {
-    const { data, setData, formatCLP, addAuditLog } = useAuth()
+    const { data, updateInventory, formatCLP, addAuditLog } = useAuth()
     const [tab, setTab] = useState('fisico')
     const [addModal, setAddModal] = useState(null)
     const [search, setSearch] = useState('')
 
     const getBook = (id) => data.books.find(b => b.id === id)
 
-    const addEntry = (bookId, qty, type, note, revenue = 0) => {
+    const addEntry = async (bookId, qty, type, note, revenue = 0) => {
         const entry = { date: new Date().toISOString().split('T')[0], qty: parseInt(qty), type, note, ...(revenue ? { revenue: parseInt(revenue) } : {}) }
-        setData(prev => {
-            const physical = [...prev.inventory.physical]
-            const idx = physical.findIndex(p => p.bookId === bookId)
-            if (idx >= 0) {
+        await updateInventory(bookId, (existing, bId) => {
+            if (existing) {
                 if (type === 'imprenta') {
-                    physical[idx] = { ...physical[idx], stock: physical[idx].stock + parseInt(qty), entries: [...physical[idx].entries, entry] }
+                    return { ...existing, stock: existing.stock + parseInt(qty), entries: [...existing.entries, entry] }
                 } else {
-                    physical[idx] = { ...physical[idx], stock: Math.max(0, physical[idx].stock - parseInt(qty)), exits: [...physical[idx].exits, entry] }
+                    return { ...existing, stock: Math.max(0, existing.stock - parseInt(qty)), exits: [...existing.exits, entry] }
                 }
             } else {
-                physical.push({ bookId, stock: parseInt(qty), minStock: 100, entries: type === 'imprenta' ? [entry] : [], exits: type !== 'imprenta' ? [entry] : [] })
+                return {
+                    bookId: bId || bookId,
+                    stock: parseInt(qty),
+                    minStock: 100,
+                    entries: type === 'imprenta' ? [entry] : [],
+                    exits: type !== 'imprenta' ? [entry] : []
+                }
             }
-            return { ...prev, inventory: { ...prev.inventory, physical } }
         })
         const book = getBook(bookId)
         addAuditLog(`Inventario: ${type === 'imprenta' ? 'Entrada' : 'Salida'} de ${qty} uds. de '${book?.title}' (${type})`, 'inventario')
