@@ -66,29 +66,42 @@ export function AuthProvider({ children }) {
         init()
     }, [])
 
-    // Subscribe to Supabase Realtime changes
+    // Subscribe to Supabase Realtime changes + Polling fallback
     useEffect(() => {
         if (!supabaseConnected) return
 
+        // Realtime subscription
         const channel = supabase
             .channel('editorial-realtime')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'books' }, () => scheduleReload())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => scheduleReload())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'books' }, (payload) => {
+                console.log('📡 Realtime: books changed', payload.eventType)
+                scheduleReload()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, (payload) => {
+                console.log('📡 Realtime: comments changed', payload.eventType)
+                scheduleReload()
+            })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_log' }, () => scheduleReload())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => scheduleReload())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_physical' }, () => scheduleReload())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'royalties' }, () => scheduleReload())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' }, () => scheduleReload())
             .subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log('📡 Realtime: listening for changes')
-                }
+                console.log('📡 Realtime status:', status)
             })
+
+        // Polling fallback: reload every 15 seconds to catch any missed changes
+        const pollInterval = setInterval(() => {
+            if (Date.now() - lastLocalChangeRef.current > 3000) {
+                reloadData()
+            }
+        }, 15000)
 
         return () => {
             supabase.removeChannel(channel)
+            clearInterval(pollInterval)
         }
-    }, [supabaseConnected, scheduleReload])
+    }, [supabaseConnected, scheduleReload, reloadData])
 
     // Save to localStorage as backup always
     useEffect(() => {
