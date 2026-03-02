@@ -6,6 +6,10 @@ import AdminLayout from './layouts/AdminLayout'
 import FreelanceLayout from './layouts/FreelanceLayout'
 import AuthorLayout from './layouts/AuthorLayout'
 
+// Public SaaS pages
+import Landing from './pages/public/Landing'
+import Register from './pages/public/Register'
+
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard'
 import Kanban from './pages/admin/Kanban'
@@ -33,15 +37,21 @@ function AppRoutes() {
     if (!user) {
         return (
             <Routes>
+                <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="*" element={<Navigate to="/login" replace />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         )
     }
 
+    const homeUrl = user.role === 'ADMIN' ? '/admin' : user.role === 'FREELANCE' ? '/freelance' : '/autor'
+
     return (
         <Routes>
-            <Route path="/login" element={<Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'FREELANCE' ? '/freelance' : '/autor'} replace />} />
+            <Route path="/" element={<Navigate to={homeUrl} replace />} />
+            <Route path="/login" element={<Navigate to={homeUrl} replace />} />
+            <Route path="/register" element={<Navigate to={homeUrl} replace />} />
 
             {/* Admin routes */}
             <Route path="/admin" element={<RouteGuard allowedRoles={['ADMIN']}><AdminLayout /></RouteGuard>}>
@@ -71,7 +81,7 @@ function AppRoutes() {
             </Route>
 
             {/* Fallback */}
-            <Route path="*" element={<Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'FREELANCE' ? '/freelance' : '/autor'} replace />} />
+            <Route path="*" element={<Navigate to={homeUrl} replace />} />
         </Routes>
     )
 }

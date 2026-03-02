@@ -1,0 +1,150 @@
+import { Link } from 'react-router-dom'
+import { BookOpen, Zap, Shield, TrendingUp, CheckCircle, ArrowRight, ChevronRight, Users, LayoutDashboard, FileText } from 'lucide-react'
+
+export default function Landing() {
+    return (
+        <div className="min-h-screen bg-dark-900 text-white selection:bg-primary/30 font-sans overflow-x-hidden">
+            {/* Navbar */}
+            <nav className="fixed top-0 w-full z-50 glass-card border-b border-dark-300/50 bg-dark-900/80 backdrop-blur-md">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-600 flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-xl font-bold tracking-tight">Editorial<span className="text-primary">Pro</span></span>
+                    </div>
+                    <div className="hidden md:flex items-center gap-8 text-sm font-medium">
+                        <a href="#features" className="text-dark-600 hover:text-white transition-colors">Características</a>
+                        <a href="#pricing" className="text-dark-600 hover:text-white transition-colors">Precios</a>
+                        <Link to="/login" className="text-dark-600 hover:text-white transition-colors">Iniciar Sesión</Link>
+                        <Link to="/register" className="btn-primary text-sm px-6">Empezar Gratis</Link>
+                    </div>
+                </div>
+            </nav>
+
+            {/* Hero Section */}
+            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+                {/* Visual elements */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+                <div className="relative max-w-7xl mx-auto px-6 text-center z-10">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card border border-primary/20 text-primary text-xs font-semibold tracking-wide uppercase mb-6 slide-down">
+                        <Zap className="w-3 h-3" /> El futuro de la gestión editorial
+                    </div>
+                    <h1 className="text-5xl lg:text-7xl font-bold tracking-tight leading-tight mb-8 slide-up">
+                        Gestiona tu editorial <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-400 to-blue-400">
+                            de forma inteligente
+                        </span>
+                    </h1>
+                    <p className="text-lg text-dark-500 max-w-2xl mx-auto mb-10 slide-up delay-100">
+                        La única plataforma que unifica procesos de edición, diseño, cálculo de escandallos y liquidación de autores en un flujo de trabajo sin fisuras.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 slide-up delay-200">
+                        <Link to="/register" className="btn-primary px-8 py-4 text-base w-full sm:w-auto flex items-center justify-center gap-2 group">
+                            Probar 14 días gratis
+                            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                        <a href="#features" className="px-8 py-4 rounded-xl font-medium text-white border border-dark-300 hover:border-dark-400 hover:bg-dark-200 transition-all w-full sm:w-auto text-center">
+                            Ver características
+                        </a>
+                    </div>
+
+                    {/* Dashboard Preview Mockup */}
+                    <div className="mt-20 relative mx-auto max-w-5xl rounded-2xl border border-dark-300/50 glass-card shadow-2xl shadow-primary/10 overflow-hidden slide-up delay-300">
+                        <div className="h-8 bg-dark-200/50 border-b border-dark-300/50 flex items-center px-4 gap-2">
+                            <div className="w-3 h-3 rounded-full bg-red-400" />
+                            <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                            <div className="w-3 h-3 rounded-full bg-green-400" />
+                        </div>
+                        <div className="aspect-[16/9] bg-dark-800/80 relative flex items-center justify-center">
+                            <p className="text-dark-600 font-mono text-sm">(Vista previa de la interfaz del Dashboard)</p>
+                            <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent pointer-events-none" />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section id="features" className="py-24 relative z-10">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h2 className="text-3xl font-bold mb-4">Todo lo que tu equipo necesita</h2>
+                        <p className="text-dark-600">Diseñado específicamente para las necesidades únicas de las editoriales satélites e independientes.</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[
+                            { icon: LayoutDashboard, title: 'Kanban Editorial', desc: 'Gestiona manuscritos desde recepción hasta imprenta con tableros interactivos y estados personalizables.' },
+                            { icon: TrendingUp, title: 'Escandallos Precisos', desc: 'Calcula costos de impresión, tirajes y márgenes de beneficio con precisión milimétrica.' },
+                            { icon: FileText, title: 'Liquidación de Autores', desc: 'Automatiza el cálculo de regalías y la generación de informes detallados para tus escritores.' },
+                            { icon: Users, title: 'Colaboración (RBAC)', desc: 'Asigna roles a correctores, diseñadores y traductores con permisos de acceso granulares.' },
+                            { icon: Zap, title: 'Control de Inventario', desc: 'Monitorea el stock físico e ingresos por ventas en tiempo real sin salir de la plataforma.' },
+                            { icon: Shield, title: 'Trazabilidad Total', desc: 'Registro de auditoría inmutable para cada cambio, contrato y pago realizado en el sistema.' }
+                        ].map((feature, i) => (
+                            <div key={i} className="glass-card p-6 hover:-translate-y-1 transition-transform duration-300">
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
+                                    <feature.icon className="w-6 h-6 text-primary" />
+                                </div>
+                                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                                <p className="text-dark-600 text-sm leading-relaxed">{feature.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Pricing Section */}
+            <section id="pricing" className="py-24 relative z-10 border-t border-dark-300/30">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <h2 className="text-3xl font-bold mb-4">Planes flexibles y transparentes</h2>
+                        <p className="text-dark-600">Escala a tu propio ritmo. Cancela cuando quieras.</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                        {[
+                            { name: 'Starter', price: '29', desc: 'Para editoriales emergentes', features: ['Hasta 5 usuarios', 'Gestión de 50 libros', 'Kanban Básico', 'Cálculo de Escandallos'] },
+                            { name: 'Pro', price: '79', desc: 'El estándar de la industria', popular: true, features: ['Usuarios ilimitados', 'Libros ilimitados', 'Liquidación de Regalías', 'Roles Personalizados', 'Auditoría Completa'] },
+                            { name: 'Enterprise', price: '199', desc: 'Para corporaciones editoriales', features: ['Todo lo de Pro', 'Multi-tenant interno', 'Integración ERP/SAP', 'Soporte 24/7 Dedicado', 'SLA Garantizado'] }
+                        ].map((plan, i) => (
+                            <div key={i} className={`glass-card p-8 rounded-2xl relative flex flex-col ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 transform md:-translate-y-4' : ''}`}>
+                                {plan.popular && (
+                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-white text-xs font-bold uppercase tracking-wider py-1 px-3 rounded-full">
+                                        Más Popular
+                                    </div>
+                                )}
+                                <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                                <p className="text-dark-600 text-sm mb-6">{plan.desc}</p>
+                                <div className="mb-6">
+                                    <span className="text-4xl font-bold">${plan.price}</span>
+                                    <span className="text-dark-600">/mes</span>
+                                </div>
+                                <ul className="space-y-4 mb-8 flex-1">
+                                    {plan.features.map((f, j) => (
+                                        <li key={j} className="flex items-center gap-3 text-sm text-dark-500">
+                                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" /> {f}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <Link to="/register" className={`w-full py-3 rounded-xl font-medium text-center transition-all ${plan.popular ? 'btn-primary' : 'bg-dark-200 hover:bg-dark-300 text-white'}`}>
+                                    Empezar ahora
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Footer */}
+            <footer className="border-t border-dark-300/30 py-12 text-center text-dark-600 text-sm relative z-10">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                    <span className="text-lg font-bold text-white">EditorialPro</span>
+                </div>
+                <p>© {new Date().getFullYear()} EditorialPro SaaS. Todos los derechos reservados.</p>
+            </footer>
+        </div>
+    )
+}
