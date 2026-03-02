@@ -408,3 +408,54 @@ export async function saveFullData(data) {
     }
 }
 
+// ============ USER MANAGEMENT ============
+export async function addUser(user) {
+    const { error } = await supabase
+        .from('users')
+        .insert({
+            id: user.id,
+            email: user.email,
+            password: user.password,
+            name: user.name,
+            role: user.role,
+            avatar: user.avatar,
+            title: user.title,
+            bio: user.bio || null,
+            social_links: user.socialLinks || {},
+            first_login: user.firstLogin !== undefined ? user.firstLogin : true
+        })
+    if (error) console.error('Error adding user:', error)
+    return !error
+}
+
+export async function updateUser(userId, updates) {
+    const mapped = {}
+    if (updates.name !== undefined) mapped.name = updates.name
+    if (updates.email !== undefined) mapped.email = updates.email
+    if (updates.password !== undefined) mapped.password = updates.password
+    if (updates.role !== undefined) mapped.role = updates.role
+    if (updates.title !== undefined) mapped.title = updates.title
+    if (updates.bio !== undefined) mapped.bio = updates.bio
+    if (updates.avatar !== undefined) mapped.avatar = updates.avatar
+    if (updates.socialLinks !== undefined) mapped.social_links = updates.socialLinks
+
+    const { error } = await supabase
+        .from('users')
+        .update(mapped)
+        .eq('id', userId)
+    if (error) console.error('Error updating user:', error)
+    return !error
+}
+
+export async function deleteUser(userId) {
+    // Delete related data first
+    await supabase.from('comments').delete().eq('user_id', userId)
+    await supabase.from('audit_log').delete().eq('user_id', userId)
+
+    const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId)
+    if (error) console.error('Error deleting user:', error)
+    return !error
+}

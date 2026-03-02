@@ -302,6 +302,51 @@ export function AuthProvider({ children }) {
         }
     }, [supabaseConnected])
 
+    // ============ SYNC: USER MANAGEMENT (ADMIN ONLY) ============
+    const addNewUser = useCallback(async (userData) => {
+        lastLocalChangeRef.current = Date.now()
+        const newUser = {
+            id: `u${Date.now()}`,
+            ...userData,
+            avatar: userData.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+            firstLogin: userData.role === 'FREELANCE',
+            socialLinks: {},
+            bio: null
+        }
+        setData(prev => ({ ...prev, users: [...prev.users, newUser] }))
+        if (supabaseConnected) {
+            await db.addUser(newUser)
+        }
+        return newUser
+    }, [supabaseConnected])
+
+    const updateExistingUser = useCallback(async (userId, updates) => {
+        lastLocalChangeRef.current = Date.now()
+        if (updates.name) {
+            updates.avatar = updates.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+        }
+        setData(prev => ({
+            ...prev,
+            users: prev.users.map(u => u.id === userId ? { ...u, ...updates } : u)
+        }))
+        if (supabaseConnected) {
+            await db.updateUser(userId, updates)
+        }
+    }, [supabaseConnected])
+
+    const deleteExistingUser = useCallback(async (userId) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            users: prev.users.filter(u => u.id !== userId),
+            comments: prev.comments.filter(c => c.userId !== userId),
+            auditLog: prev.auditLog.filter(a => a.userId !== userId)
+        }))
+        if (supabaseConnected) {
+            await db.deleteUser(userId)
+        }
+    }, [supabaseConnected])
+
     const formatCLP = (amount) => {
         return new Intl.NumberFormat('es-CL', {
             style: 'currency',
@@ -317,6 +362,7 @@ export function AuthProvider({ children }) {
         markFreelanceOnboarded, formatCLP,
         addNewBook, updateInventory, approveRoyalty,
         markAlertAsRead, markAllAlerts, updateProfile,
+        addNewUser, updateExistingUser, deleteExistingUser,
         loading, supabaseConnected
     }
 
