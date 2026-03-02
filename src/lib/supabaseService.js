@@ -468,3 +468,45 @@ export async function deleteUser(userId) {
     if (error) console.error('Error deleting user:', error)
     return !error
 }
+
+// ============ SAAS ONBOARDING ============
+export async function createSaaSTenant(formData) {
+    const tenantId = `t${Date.now()}`
+    const userId = `u${Date.now()}`
+
+    // 1. Create Tenant
+    const { error: tenantErr } = await supabase
+        .from('tenants')
+        .insert({
+            id: tenantId,
+            name: formData.editorialName,
+            plan: formData.plan
+        })
+
+    if (tenantErr) {
+        console.error('Error creating tenant:', tenantErr)
+        return { success: false, error: 'No se pudo crear el Workspace.' }
+    }
+
+    // 2. Create Admin User
+    const { error: userErr } = await supabase
+        .from('users')
+        .insert({
+            id: userId,
+            tenant_id: tenantId,
+            email: formData.adminEmail,
+            password: formData.password,
+            name: formData.adminName,
+            role: 'ADMIN',
+            avatar: formData.adminName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+            title: 'Administrador SaaS',
+            first_login: false
+        })
+
+    if (userErr) {
+        console.error('Error creating admin user:', userErr)
+        return { success: false, error: 'No se pudo crear el usuario administrador.' }
+    }
+
+    return { success: true, tenantId, userId }
+}

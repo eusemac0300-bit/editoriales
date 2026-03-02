@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BookOpen, AlertCircle, Building, User, Mail, Lock, CreditCard } from 'lucide-react'
+import * as db from '../../lib/supabaseService'
 
 export default function Register() {
     const navigate = useNavigate()
@@ -30,13 +31,19 @@ export default function Register() {
         setLoading(true)
         setError('')
 
-        // Simulate API call for SaaS tenant creation
-        setTimeout(() => {
+        try {
+            const result = await db.createSaaSTenant(formData)
+            if (result.success) {
+                alert(`¡Felicidades! Se ha creado el Workspace para "${formData.editorialName}" con el plan ${formData.plan}.\nRedirigiendo al login...`)
+                navigate('/login')
+            } else {
+                setError(result.error || 'Hubo un error al crear la cuenta.')
+                setLoading(false)
+            }
+        } catch (err) {
+            setError('Error de conexión. Intente nuevamente.')
             setLoading(false)
-            // Show mock success message
-            alert(`¡Felicidades! Se ha creado el Workspace para "${formData.editorialName}" con el plan ${formData.plan}.\nRedirigiendo al login...`)
-            navigate('/login')
-        }, 1500)
+        }
     }
 
     return (
@@ -149,8 +156,8 @@ export default function Register() {
                                     <label
                                         key={plan}
                                         className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${formData.plan === plan
-                                                ? 'border-primary bg-primary/10'
-                                                : 'border-dark-300 bg-dark-200/50 hover:border-dark-400'
+                                            ? 'border-primary bg-primary/10'
+                                            : 'border-dark-300 bg-dark-200/50 hover:border-dark-400'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
