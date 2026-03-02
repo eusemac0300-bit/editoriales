@@ -1,6 +1,41 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { Users as UsersIcon, Shield, Edit3, Plus, Trash2, X, Save, Eye, EyeOff, AlertTriangle } from 'lucide-react'
+import { Users as UsersIcon, Shield, Edit3, Plus, Trash2, X, Save, Eye, EyeOff, AlertTriangle, RotateCcw, Check } from 'lucide-react'
+
+const MODULES = [
+    'Dashboard', 'Inventario', 'Kanban', 'Escandallo', 'Liquidaciones',
+    'Libros / Contratos', 'Documentos', 'Usuarios', 'Auditoría',
+    'Alertas', 'Perfil Propio', 'Comentarios', 'Historial Pagos'
+]
+
+const DEFAULT_PERMISSIONS = {
+    ADMIN: {
+        'Dashboard': true, 'Inventario': true, 'Kanban': true, 'Escandallo': true,
+        'Liquidaciones': true, 'Libros / Contratos': true, 'Documentos': true,
+        'Usuarios': true, 'Auditoría': true, 'Alertas': true,
+        'Perfil Propio': true, 'Comentarios': true, 'Historial Pagos': false
+    },
+    FREELANCE: {
+        'Dashboard': false, 'Inventario': false, 'Kanban': true, 'Escandallo': false,
+        'Liquidaciones': false, 'Libros / Contratos': false, 'Documentos': false,
+        'Usuarios': false, 'Auditoría': false, 'Alertas': false,
+        'Perfil Propio': false, 'Comentarios': true, 'Historial Pagos': false
+    },
+    AUTOR: {
+        'Dashboard': true, 'Inventario': false, 'Kanban': false, 'Escandallo': false,
+        'Liquidaciones': false, 'Libros / Contratos': false, 'Documentos': false,
+        'Usuarios': false, 'Auditoría': false, 'Alertas': false,
+        'Perfil Propio': true, 'Comentarios': false, 'Historial Pagos': true
+    }
+}
+
+function loadPermissions() {
+    try {
+        const saved = localStorage.getItem('editorial_permissions')
+        if (saved) return JSON.parse(saved)
+    } catch { }
+    return DEFAULT_PERMISSIONS
+}
 
 export default function UsersPage() {
     const { data, user, isAdmin, addNewUser, updateExistingUser, deleteExistingUser, addAuditLog } = useAuth()
@@ -8,9 +43,32 @@ export default function UsersPage() {
     const [editingUser, setEditingUser] = useState(null)
     const [deleteConfirm, setDeleteConfirm] = useState(null)
     const [filter, setFilter] = useState('TODOS')
+    const [permissions, setPermissions] = useState(loadPermissions)
+    const [saved, setSaved] = useState(false)
 
     const roleColors = { ADMIN: 'badge-blue', FREELANCE: 'badge-green', AUTOR: 'badge-purple' }
     const roleLabels = { ADMIN: 'Administrador', FREELANCE: 'Freelance', AUTOR: 'Autor' }
+
+    const togglePermission = useCallback((role, module) => {
+        setPermissions(prev => {
+            const updated = {
+                ...prev,
+                [role]: { ...prev[role], [module]: !prev[role][module] }
+            }
+            localStorage.setItem('editorial_permissions', JSON.stringify(updated))
+            return updated
+        })
+        setSaved(true)
+        setTimeout(() => setSaved(false), 1500)
+    }, [])
+
+    const resetPermissions = useCallback(() => {
+        setPermissions(DEFAULT_PERMISSIONS)
+        localStorage.setItem('editorial_permissions', JSON.stringify(DEFAULT_PERMISSIONS))
+        addAuditLog('Restauró la matriz de permisos a valores por defecto', 'general')
+        setSaved(true)
+        setTimeout(() => setSaved(false), 1500)
+    }, [addAuditLog])
 
     const filteredUsers = filter === 'TODOS'
         ? data.users
@@ -158,9 +216,26 @@ export default function UsersPage() {
                 </div>
             )}
 
-            {/* RBAC permissions matrix */}
+            {/* RBAC permissions matrix - EDITABLE */}
             <div className="glass-card p-5">
-                <h2 className="text-sm font-semibold text-white mb-4">Matriz de Permisos</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-sm font-semibold text-white">Matriz de Permisos</h2>
+                        {saved && (
+                            <span className="text-[10px] text-emerald-400 flex items-center gap-1 fade-in">
+                                <Check className="w-3 h-3" /> Guardado
+                            </span>
+                        )}
+                    </div>
+                    <button
+                        onClick={resetPermissions}
+                        className="flex items-center gap-1 text-[10px] text-dark-500 hover:text-primary transition-colors px-2 py-1 rounded hover:bg-dark-200"
+                        title="Restaurar permisos por defecto"
+                    >
+                        <RotateCcw className="w-3 h-3" /> Restablecer
+                    </button>
+                </div>
+                <p className="text-[10px] text-dark-500 mb-3">Haz clic en cualquier celda para cambiar el permiso</p>
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                         <thead>
@@ -172,26 +247,26 @@ export default function UsersPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {[
-                                ['Dashboard', true, false, true],
-                                ['Inventario', true, false, false],
-                                ['Kanban', true, true, false],
-                                ['Escandallo', true, false, false],
-                                ['Liquidaciones', true, false, false],
-                                ['Libros / Contratos', true, false, false],
-                                ['Documentos', true, false, false],
-                                ['Usuarios', true, false, false],
-                                ['Auditoría', true, false, false],
-                                ['Alertas', true, false, false],
-                                ['Perfil Propio', true, false, true],
-                                ['Comentarios', true, true, false],
-                                ['Historial Pagos', false, false, true],
-                            ].map(([mod, admin, free, autor], i) => (
-                                <tr key={i} className="border-b border-dark-300/30">
+                            {MODULES.map((mod, i) => (
+                                <tr key={i} className="border-b border-dark-300/30 hover:bg-dark-200/20 transition-colors">
                                     <td className="py-2 px-3 text-dark-800">{mod}</td>
-                                    <td className="py-2 px-3 text-center">{admin ? '✅' : '🚫'}</td>
-                                    <td className="py-2 px-3 text-center">{free ? '✅' : '🚫'}</td>
-                                    <td className="py-2 px-3 text-center">{autor ? '✅' : '🚫'}</td>
+                                    {['ADMIN', 'FREELANCE', 'AUTOR'].map(role => {
+                                        const allowed = permissions[role]?.[mod] ?? false
+                                        return (
+                                            <td key={role} className="py-2 px-3 text-center">
+                                                <button
+                                                    onClick={() => togglePermission(role, mod)}
+                                                    className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all duration-200 ${allowed
+                                                            ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 ring-1 ring-emerald-500/20'
+                                                            : 'bg-red-500/10 text-red-400/60 hover:bg-red-500/20 ring-1 ring-red-500/10'
+                                                        }`}
+                                                    title={`${allowed ? 'Revocar' : 'Permitir'} ${mod} para ${role}`}
+                                                >
+                                                    {allowed ? '✓' : '✕'}
+                                                </button>
+                                            </td>
+                                        )
+                                    })}
                                 </tr>
                             ))}
                         </tbody>
