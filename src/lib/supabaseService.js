@@ -1,7 +1,8 @@
 import { supabase } from './supabase'
 
 // ============ LOAD ALL DATA ============
-export async function loadAllData() {
+export async function loadAllData(tenantId) {
+    if (!tenantId) return null
     try {
         const [
             { data: users, error: usersErr },
@@ -14,15 +15,15 @@ export async function loadAllData() {
             { data: comments, error: commentsErr },
             { data: alerts, error: alertsErr }
         ] = await Promise.all([
-            supabase.from('users').select('*'),
-            supabase.from('books').select('*'),
-            supabase.from('inventory_physical').select('*'),
-            supabase.from('inventory_digital').select('*'),
-            supabase.from('invoices').select('*').order('date', { ascending: false }),
-            supabase.from('royalties').select('*'),
-            supabase.from('audit_log').select('*').order('date', { ascending: false }),
-            supabase.from('comments').select('*').order('date', { ascending: true }),
-            supabase.from('alerts').select('*').order('date', { ascending: false })
+            supabase.from('users').select('*').eq('tenant_id', tenantId),
+            supabase.from('books').select('*').eq('tenant_id', tenantId),
+            supabase.from('inventory_physical').select('*').eq('tenant_id', tenantId),
+            supabase.from('inventory_digital').select('*').eq('tenant_id', tenantId),
+            supabase.from('invoices').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
+            supabase.from('royalties').select('*').eq('tenant_id', tenantId),
+            supabase.from('audit_log').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
+            supabase.from('comments').select('*').eq('tenant_id', tenantId).order('date', { ascending: true }),
+            supabase.from('alerts').select('*').eq('tenant_id', tenantId).order('date', { ascending: false })
         ])
 
         const errors = [usersErr, booksErr, invPhysErr, invDigErr, invoicesErr, royaltiesErr, auditErr, commentsErr, alertsErr].filter(Boolean)
@@ -172,6 +173,7 @@ export async function loginUser(email, password) {
 
     return {
         id: data.id,
+        tenantId: data.tenant_id,
         email: data.email,
         name: data.name,
         role: data.role,
@@ -218,6 +220,7 @@ export async function addAuditLogEntry(entry) {
         .from('audit_log')
         .insert({
             id: entry.id,
+            tenant_id: entry.tenantId,
             date: entry.date,
             user_id: entry.userId,
             user_name: entry.userName,
@@ -233,6 +236,7 @@ export async function addCommentEntry(comment) {
         .from('comments')
         .insert({
             id: comment.id,
+            tenant_id: comment.tenantId,
             book_id: comment.bookId,
             user_id: comment.userId,
             user_name: comment.userName,
@@ -263,6 +267,7 @@ export async function addInvoice(invoice) {
         .from('invoices')
         .insert({
             id: invoice.id,
+            tenant_id: invoice.tenantId,
             book_id: invoice.bookId,
             type: invoice.type,
             concept: invoice.concept,
@@ -318,6 +323,7 @@ export async function addBook(book) {
         .from('books')
         .insert({
             id: book.id,
+            tenant_id: book.tenantId,
             title: book.title,
             author_id: book.authorId,
             author_name: book.authorName,
@@ -360,6 +366,7 @@ export async function upsertInventoryPhysical(bookId, updates) {
         const { error } = await supabase
             .from('inventory_physical')
             .insert({
+                tenant_id: updates.tenantId,
                 book_id: bookId,
                 stock: updates.stock,
                 min_stock: updates.minStock || 100,
@@ -385,6 +392,7 @@ export async function saveFullData(data) {
         for (const book of data.books) {
             await supabase.from('books').upsert({
                 id: book.id,
+                tenant_id: book.tenantId, // Requires tenantId to be present on book
                 title: book.title,
                 author_id: book.authorId,
                 author_name: book.authorName,
@@ -414,6 +422,7 @@ export async function addUser(user) {
         .from('users')
         .insert({
             id: user.id,
+            tenant_id: user.tenantId,
             email: user.email,
             password: user.password,
             name: user.name,

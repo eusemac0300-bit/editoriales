@@ -15,16 +15,17 @@ export function AuthProvider({ children }) {
 
     // Reload all data from Supabase
     const reloadData = useCallback(async () => {
+        if (!user?.tenantId) return
         try {
-            const supabaseData = await db.loadAllData()
+            const supabaseData = await db.loadAllData(user.tenantId)
             if (supabaseData && supabaseData.users && supabaseData.users.length > 0) {
                 setData(supabaseData)
-                console.log('🔄 Realtime: data refreshed')
+                console.log('🔄 Realtime: data refreshed for tenant', user.tenantId)
             }
         } catch (err) {
             console.error('Realtime reload failed:', err)
         }
-    }, [])
+    }, [user?.tenantId])
 
     // Debounced reload to avoid flooding
     const scheduleReload = useCallback(() => {
@@ -37,15 +38,19 @@ export function AuthProvider({ children }) {
         }, 500)
     }, [reloadData])
 
-    // Load data from Supabase on mount
+    // Load data from Supabase on mount ONLY if already logged in
     useEffect(() => {
-        async function init() {
+        async function init(savedUser) {
+            if (!savedUser?.tenantId) {
+                setLoading(false)
+                return
+            }
             try {
-                const supabaseData = await db.loadAllData()
+                const supabaseData = await db.loadAllData(savedUser.tenantId)
                 if (supabaseData && supabaseData.users && supabaseData.users.length > 0) {
                     setData(supabaseData)
                     setSupabaseConnected(true)
-                    console.log('✅ Connected to Supabase - data loaded')
+                    console.log(`✅ Connected to Supabase - loaded data for tenant: ${savedUser.tenantId}`)
                 } else {
                     const saved = localStorage.getItem('editorial_data')
                     if (saved) setData(JSON.parse(saved))
@@ -60,10 +65,14 @@ export function AuthProvider({ children }) {
             }
         }
 
-        const savedUser = localStorage.getItem('editorial_user')
-        if (savedUser) setUser(JSON.parse(savedUser))
-
-        init()
+        const savedUserRecord = localStorage.getItem('editorial_user')
+        if (savedUserRecord) {
+            const parsed = JSON.parse(savedUserRecord)
+            setUser(parsed)
+            init(parsed)
+        } else {
+            setLoading(false)
+        }
     }, [])
 
     // Subscribe to Supabase Realtime changes + Polling fallback
@@ -111,31 +120,38 @@ export function AuthProvider({ children }) {
     }, [data, loading])
 
     const login = useCallback(async (email, password) => {
-        if (supabaseConnected) {
-            const found = await db.loginUser(email, password)
-            if (found) {
-                setUser(found)
-                localStorage.setItem('editorial_user', JSON.stringify(found))
-                return { success: true, user: found }
+        // Asumimos que Supabase siempre intentará conectarse. Si no, tenemos fallback local.
+        const found = await db.loginUser(email, password)
+        if (found && found.tenantId) {
+            setUser(found)
+            localStorage.setItem('editorial_user', JSON.stringify(found))
+
+            // Cargar datos INMEDIATAMENTE de esta editorial al hacer login
+            const tenantData = await db.loadAllData(found.tenantId)
+            if (tenantData) {
+                setData(tenantData)
+                setSupabaseConnected(true)
             }
-            return { success: false, error: 'Credenciales incorrectas' }
+            return { success: true, user: found }
         }
 
-        // Fallback to local data
-        const found = data.users.find(u => u.email === email && u.password === password)
-        if (found) {
-            const userObj = { ...found }
+        // Fallback to local data (solo para demos offline)
+        const foundLocal = data.users.find(u => u.email === email && u.password === password)
+        if (foundLocal) {
+            const userObj = { ...foundLocal }
             delete userObj.password
             setUser(userObj)
             localStorage.setItem('editorial_user', JSON.stringify(userObj))
             return { success: true, user: userObj }
         }
         return { success: false, error: 'Credenciales incorrectas' }
-    }, [supabaseConnected, data.users])
+    }, [data.users])
 
     const logout = () => {
         setUser(null)
+        setData(initialData) // Limpiar datos de memoria por seguridad cross-tenant
         localStorage.removeItem('editorial_user')
+        localStorage.removeItem('editorial_data')
     }
 
     const hasPermission = (requiredRole) => {
@@ -155,6 +171,7 @@ export function AuthProvider({ children }) {
         if (!user) return
         const entry = {
             id: `a${Date.now()}`,
+            tenantId: user.tenantId, // Multi-tenant isolation
             date: new Date().toISOString(),
             userId: user.id,
             userName: user.name,
@@ -193,6 +210,7 @@ export function AuthProvider({ children }) {
         if (!user) return
         const comment = {
             id: `c${Date.now()}`,
+            tenantId: user.tenantId,
             bookId,
             userId: user.id,
             userName: user.name,
@@ -227,13 +245,14 @@ export function AuthProvider({ children }) {
     }, [user, supabaseConnected])
 
     // ============ SYNC: ADD BOOK ============
-    const addNewBook = useCallback(async (book) => {
+    const addNewBook = useCallback(async (bookData) => {
         lastLocalChangeRef.current = Date.now()
+        const book = { ...bookData, tenantId: user?.tenantId }
         setData(prev => ({ ...prev, books: [...prev.books, book] }))
         if (supabaseConnected) {
             await db.addBook(book)
         }
-    }, [supabaseConnected])
+    }, [user, supabaseConnected])
 
     // ============ SYNC: INVENTORY ============
     const updateInventory = useCallback(async (bookId, updater) => {
@@ -245,7 +264,9 @@ export function AuthProvider({ children }) {
             if (idx >= 0) {
                 physical[idx] = updater(physical[idx])
             } else {
-                physical.push(updater(null, bookId))
+                const newInv = updater(null, bookId)
+                newInv.tenantId = user?.tenantId
+                physical.push(newInv)
             }
             updatedPhysical = physical.find(p => p.bookId === bookId)
             return { ...prev, inventory: { ...prev.inventory, physical } }
@@ -307,6 +328,7 @@ export function AuthProvider({ children }) {
         lastLocalChangeRef.current = Date.now()
         const newUser = {
             id: `u${Date.now()}`,
+            tenantId: user?.tenantId,
             ...userData,
             avatar: userData.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
             firstLogin: userData.role === 'FREELANCE',
@@ -318,7 +340,7 @@ export function AuthProvider({ children }) {
             await db.addUser(newUser)
         }
         return newUser
-    }, [supabaseConnected])
+    }, [user, supabaseConnected])
 
     const updateExistingUser = useCallback(async (userId, updates) => {
         lastLocalChangeRef.current = Date.now()
