@@ -150,41 +150,28 @@ export default function Register() {
                         </form>
                     ) : (
                         <form onSubmit={handleRegister} className="space-y-6 slide-up">
-                            <h3 className="text-lg font-bold text-white text-center">Selecciona tu Plan</h3>
+                            <h3 className="text-lg font-bold text-white text-center">Confirmación</h3>
                             <div className="space-y-3">
-                                {['STARTER', 'PRO', 'ENTERPRISE'].map(plan => (
-                                    <label
-                                        key={plan}
-                                        className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${formData.plan === plan
-                                            ? 'border-primary bg-primary/10'
-                                            : 'border-dark-300 bg-dark-200/50 hover:border-dark-400'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <input
-                                                type="radio"
-                                                name="plan"
-                                                value={plan}
-                                                checked={formData.plan === plan}
-                                                onChange={() => setFormData({ ...formData, plan })}
-                                                className="w-4 h-4 text-primary focus:ring-primary border-dark-400 bg-dark-300"
-                                            />
-                                            <div>
-                                                <p className="font-bold text-white text-sm">{plan}</p>
-                                                <p className="text-xs text-dark-500">
-                                                    {plan === 'STARTER' ? 'Hasta 5 usuarios' : plan === 'PRO' ? 'El estándar ideal' : 'Gestoría VIP'}
-                                                </p>
-                                            </div>
+                                <div className="flex items-center justify-between p-5 rounded-xl border border-primary bg-primary/10 transition-all">
+                                    <div className="flex items-center gap-3">
+                                        <div>
+                                            <p className="font-bold text-white text-base">Plan PRO (14 días gratis)</p>
+                                            <p className="text-sm text-dark-500 mt-1">
+                                                Acceso total a todas las herramientas SaaS para tu equipo.
+                                            </p>
                                         </div>
-                                        <span className="font-bold text-primary">
-                                            ${plan === 'STARTER' ? '29' : plan === 'PRO' ? '79' : '199'}/mo
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="font-bold text-primary text-xl">
+                                            $50.000
                                         </span>
-                                    </label>
-                                ))}
+                                        <p className="text-xs text-dark-500">CLP / mes</p>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="pt-4 border-t border-dark-300">
-                                <p className="text-xs text-dark-500 mb-4 flex items-center justify-center gap-1">
+                                <p className="text-xs text-emerald-400 mb-4 flex items-center justify-center gap-1 bg-emerald-400/10 py-2 rounded-lg font-medium">
                                     <CreditCard className="w-4 h-4" /> Tarjeta no requerida para 14 días gratis
                                 </p>
                                 <div className="flex gap-3">

@@ -103,36 +103,36 @@ export default function Landing() {
                         <p className="text-dark-600">Escala a tu propio ritmo. Cancela cuando quieras.</p>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                        {[
-                            { name: 'Starter', price: '29', desc: 'Para editoriales emergentes', features: ['Hasta 5 usuarios', 'Gestión de 50 libros', 'Kanban Básico', 'Cálculo de Escandallos'] },
-                            { name: 'Pro', price: '79', desc: 'El estándar de la industria', popular: true, features: ['Usuarios ilimitados', 'Libros ilimitados', 'Liquidación de Regalías', 'Roles Personalizados', 'Auditoría Completa'] },
-                            { name: 'Enterprise', price: '199', desc: 'Para corporaciones editoriales', features: ['Todo lo de Pro', 'Multi-tenant interno', 'Integración ERP/SAP', 'Soporte 24/7 Dedicado', 'SLA Garantizado'] }
-                        ].map((plan, i) => (
-                            <div key={i} className={`glass-card p-8 rounded-2xl relative flex flex-col ${plan.popular ? 'border-primary shadow-lg shadow-primary/20 transform md:-translate-y-4' : ''}`}>
-                                {plan.popular && (
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-white text-xs font-bold uppercase tracking-wider py-1 px-3 rounded-full">
-                                        Más Popular
-                                    </div>
-                                )}
-                                <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
-                                <p className="text-dark-600 text-sm mb-6">{plan.desc}</p>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold">${plan.price}</span>
-                                    <span className="text-dark-600">/mes</span>
-                                </div>
-                                <ul className="space-y-4 mb-8 flex-1">
-                                    {plan.features.map((f, j) => (
-                                        <li key={j} className="flex items-center gap-3 text-sm text-dark-500">
-                                            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" /> {f}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <Link to="/register" className={`w-full py-3 rounded-xl font-medium text-center transition-all ${plan.popular ? 'btn-primary' : 'bg-dark-200 hover:bg-dark-300 text-white'}`}>
-                                    Empezar ahora
-                                </Link>
+                    <div className="max-w-md mx-auto">
+                        <div className="glass-card p-8 rounded-2xl relative flex flex-col border-primary shadow-lg shadow-primary/20">
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-primary text-white text-xs font-bold uppercase tracking-wider py-1 px-4 rounded-full">
+                                14 días de prueba gratis
                             </div>
-                        ))}
+                            <h3 className="text-2xl font-bold mb-2 text-center text-white">Plan PRO</h3>
+                            <p className="text-dark-600 text-sm mb-6 text-center">Acceso total a todas las herramientas</p>
+                            <div className="mb-6 text-center">
+                                <span className="text-4xl font-bold text-white">$50.000</span>
+                                <span className="text-dark-600">/mes</span>
+                            </div>
+                            <ul className="space-y-4 mb-8 flex-1">
+                                {[
+                                    'Usuarios ilimitados',
+                                    'Libros ilimitados',
+                                    'Liquidación de Regalías',
+                                    'Gestión de Kanban Editorial',
+                                    'Cálculo de Escandallos',
+                                    'Roles Personalizados (RBAC)',
+                                    'Auditoría y Trazabilidad Completa'
+                                ].map((f, j) => (
+                                    <li key={j} className="flex items-center gap-3 text-sm text-dark-400">
+                                        <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" /> <span className="text-white font-medium">{f}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <Link to="/register" className="w-full py-4 rounded-xl font-bold text-center transition-all btn-primary text-base">
+                                Comenzar ahora
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </section>
