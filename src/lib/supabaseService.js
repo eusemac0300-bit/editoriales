@@ -286,6 +286,21 @@ export async function addDocumentEntry(doc) {
     return !error
 }
 
+export async function updateDocumentEntry(docId, updates) {
+    const dbUpdates = {}
+    if (updates.name !== undefined) dbUpdates.name = updates.name
+    if (updates.type !== undefined) dbUpdates.type = updates.type
+    if (updates.bookId !== undefined) dbUpdates.book_id = updates.bookId
+
+    const { error } = await supabase
+        .from('documents')
+        .update(dbUpdates)
+        .eq('id', docId)
+
+    if (error) console.error('Error updating document:', error)
+    return !error
+}
+
 // ============ AUDIT LOG ============
 export async function addAuditLogEntry(entry) {
     const { error } = await supabase

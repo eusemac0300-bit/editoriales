@@ -1,15 +1,17 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { FolderOpen, FileText, Download, Upload, X } from 'lucide-react'
+import { FolderOpen, FileText, Download, Upload, X, Edit } from 'lucide-react'
 
 export default function Documents() {
-    const { user, data, formatCLP, addDocument, addAuditLog, supabaseConnected } = useAuth()
+    const { user, data, formatCLP, addDocument, editDocument, addAuditLog, supabaseConnected } = useAuth()
     const [showUploadModal, setShowUploadModal] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
     const [file, setFile] = useState(null)
     const [docType, setDocType] = useState('Manuscrito')
     const [selectedBook, setSelectedBook] = useState('')
+    const [editingDoc, setEditingDoc] = useState(null)
+    const [editDocName, setEditDocName] = useState('')
     const fileInputRef = useRef(null)
 
     // Merge uploaded documents with invoices that act as documents
@@ -18,10 +20,12 @@ export default function Documents() {
         name: doc.name,
         type: doc.type,
         book: data.books.find(b => b.id === doc.bookId)?.title || '—',
+        bookId: doc.bookId,
         amount: null,
         date: doc.createdAt ? doc.createdAt.split('T')[0] : '',
         format: doc.fileUrl?.split('.').pop()?.toUpperCase() || 'FILE',
-        fileUrl: doc.fileUrl
+        fileUrl: doc.fileUrl,
+        isInvoice: false
     }))
 
     const invoiceDocs = data.finances.invoices.map(inv => ({
@@ -29,10 +33,12 @@ export default function Documents() {
         name: `${inv.type === 'egreso' ? 'Factura' : 'Ingreso'} - ${inv.concept}`,
         type: inv.type === 'egreso' ? 'Factura Proveedor' : 'Comprobante Ingreso',
         book: data.books.find(b => b.id === inv.bookId)?.title || '—',
+        bookId: inv.bookId,
         amount: inv.amount,
         date: inv.date,
         format: 'PDF',
-        fileUrl: inv.fileUrl // If added in the future
+        fileUrl: inv.fileUrl,
+        isInvoice: true
     }))
 
     const documents = [...generalDocs, ...invoiceDocs].sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -54,64 +60,93 @@ export default function Documents() {
                 return
             }
             setFile(selectedFile)
+            setEditingDoc(null)
             setShowUploadModal(true)
         }
     }
 
-    const handleConfirmUpload = async () => {
-        if (!file) return
+    const handleEditClick = (doc) => {
+        setEditingDoc(doc)
+        setDocType(doc.type)
+        setSelectedBook(doc.bookId || '')
+        setEditDocName(doc.name)
+        setFile(null)
+        setShowUploadModal(true)
+    }
+
+    const handleConfirmSubmit = async () => {
         if (!supabaseConnected) {
-            alert('Atención: La plataforma está en modo local temporal por falta de base de datos activa. No se puede subir el archivo.')
+            alert('Atención: La plataforma está en modo local temporal por falta de base de datos activa. No se pueden guardar cambios.')
             setShowUploadModal(false)
             setFile(null)
+            setEditingDoc(null)
             return
         }
 
         setIsUploading(true)
         try {
-            // Check if bucket exists, or just upload directly
-            const fileName = `${user.tenantId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('editorial_documents')
-                .upload(fileName, file)
+            if (editingDoc) {
+                // Modo Edición: solo actualizamos metadata
+                const updates = {
+                    name: editDocName || editingDoc.name,
+                    type: docType,
+                    bookId: selectedBook || null
+                }
 
-            if (uploadError) {
-                // If the bucket doesn't exist, we fallback
-                console.warn('Storage upload failed (bucket might be missing):', uploadError)
-                alert('Error al subir a la nube. Por favor, asegúrese de haber corrido la migración SQL "docs_migration.sql".')
-                setIsUploading(false)
-                return
+                await editDocument(editingDoc.id, updates)
+                addAuditLog(`Editó documento: ${updates.name}`, 'general')
+                alert('Documento actualizado con éxito.')
+            } else {
+                // Modo Subida: original file upload behavior
+                if (!file) {
+                    setIsUploading(false)
+                    return
+                }
+
+                const fileName = `${user.tenantId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('editorial_documents')
+                    .upload(fileName, file)
+
+                if (uploadError) {
+                    console.warn('Storage upload failed (bucket might be missing):', uploadError)
+                    alert('Error al subir a la nube. Por favor, asegúrese de haber corrido la migración SQL "docs_migration.sql".')
+                    setIsUploading(false)
+                    return
+                }
+
+                const { data: publicUrlData } = supabase.storage
+                    .from('editorial_documents')
+                    .getPublicUrl(fileName)
+
+                const url = publicUrlData.publicUrl
+
+                const newDoc = {
+                    id: `doc${Date.now()}`,
+                    name: file.name,
+                    bookId: selectedBook || null,
+                    type: docType,
+                    fileUrl: url,
+                    size: file.size,
+                    uploadedBy: user.id,
+                    createdAt: new Date().toISOString()
+                }
+
+                await addDocument(newDoc)
+                addAuditLog(`Subió documento: ${file.name}`, 'general')
+                alert('Documento subido con éxito.')
             }
 
-            // Get public URL
-            const { data: publicUrlData } = supabase.storage
-                .from('editorial_documents')
-                .getPublicUrl(fileName)
-
-            const url = publicUrlData.publicUrl
-
-            const newDoc = {
-                id: `doc${Date.now()}`,
-                name: file.name,
-                bookId: selectedBook || null,
-                type: docType,
-                fileUrl: url,
-                size: file.size,
-                uploadedBy: user.id,
-                createdAt: new Date().toISOString()
-            }
-
-            await addDocument(newDoc)
-            addAuditLog(`Subió documento: ${file.name}`, 'general')
-
+            // Cleanup after success
             setShowUploadModal(false)
             setFile(null)
+            setEditingDoc(null)
             setSelectedBook('')
-            alert('Documento subido con éxito.')
+            setEditDocName('')
 
         } catch (err) {
             console.error(err)
-            alert('Se produjo un error durante la subida.')
+            alert('Se produjo un error durante la operación.')
         } finally {
             setIsUploading(false)
         }
@@ -154,16 +189,32 @@ export default function Documents() {
                 <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-dark-100 border border-dark-300 rounded-xl w-full max-w-md overflow-hidden slide-up relative">
                         <button
-                            onClick={() => { setShowUploadModal(false); setFile(null) }}
+                            onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName('') }}
                             className="absolute top-4 right-4 text-dark-500 hover:text-white"
                         >
                             <X className="w-5 h-5" />
                         </button>
                         <div className="p-6">
-                            <h3 className="text-lg font-bold text-white mb-1">Clasificar Documento</h3>
-                            <p className="text-sm text-dark-600 mb-6">Archivo seleccionado: <span className="text-primary-400 font-medium truncate line-clamp-1">{file?.name}</span></p>
+                            <h3 className="text-lg font-bold text-white mb-4">
+                                {editingDoc ? 'Editar Documento' : 'Clasificar Documento'}
+                            </h3>
 
                             <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs text-dark-500 block mb-1">Nombre del Documento</label>
+                                    {editingDoc ? (
+                                        <input
+                                            type="text"
+                                            value={editDocName}
+                                            onChange={(e) => setEditDocName(e.target.value)}
+                                            className="input-field w-full text-sm"
+                                        />
+                                    ) : (
+                                        <p className="text-sm text-dark-800 bg-dark-200 p-2 rounded-lg truncate" title={file?.name}>
+                                            <span className="text-primary-400 font-medium">{file?.name}</span>
+                                        </p>
+                                    )}
+                                </div>
                                 <div>
                                     <label className="text-xs text-dark-500 block mb-1">Tipo de Documento</label>
                                     <select
@@ -195,18 +246,18 @@ export default function Documents() {
                         </div>
                         <div className="p-4 border-t border-dark-300 bg-dark-50 flex justify-end gap-3">
                             <button
-                                onClick={() => { setShowUploadModal(false); setFile(null) }}
+                                onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName('') }}
                                 className="btn-secondary text-sm"
                             >
                                 Cancelar
                             </button>
                             <button
-                                onClick={handleConfirmUpload}
+                                onClick={handleConfirmSubmit}
                                 disabled={isUploading}
                                 className="btn-primary text-sm flex items-center gap-2"
                             >
                                 {isUploading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                                {isUploading ? 'Subiendo...' : 'Confirmar Subida'}
+                                {isUploading ? 'Guardando...' : editingDoc ? 'Guardar Cambios' : 'Confirmar Subida'}
                             </button>
                         </div>
                     </div>
@@ -246,16 +297,25 @@ export default function Documents() {
                                 <td className="py-3 px-4 text-sm text-right text-dark-600">{doc.date}</td>
                                 <td className="py-3 px-4 text-center">
                                     <div className="flex items-center justify-center gap-2">
+                                        {!doc.isInvoice && (
+                                            <button
+                                                onClick={() => handleEditClick(doc)}
+                                                className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-primary hover:bg-primary/10 transition-all"
+                                                title="Editar Título o Vínculo del Documento"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                        )}
                                         {!doc.fileUrl && (
                                             <button
                                                 onClick={() => {
                                                     setDocType(doc.type.includes('Factura') ? 'Comprobante' : 'Varios')
-                                                    const b = data.books.find(b => b.title === doc.book)
+                                                    const b = doc.bookId ? { id: doc.bookId } : data.books.find(b => b.title === doc.book)
                                                     setSelectedBook(b ? b.id : '')
                                                     handleUploadClick()
                                                 }}
                                                 className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-white hover:bg-dark-300 transition-all"
-                                                title="Adjuntar Archivo"
+                                                title="Adjuntar Archivo Físico"
                                             >
                                                 <Upload className="w-4 h-4" />
                                             </button>

@@ -476,6 +476,17 @@ export function AuthProvider({ children }) {
         }
     }, [user, supabaseConnected])
 
+    const editDocument = useCallback(async (docId, updates) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            documents: (prev.documents || []).map(d => d.id === docId ? { ...d, ...updates } : d)
+        }))
+        if (supabaseConnected) {
+            await db.updateDocumentEntry(docId, updates)
+        }
+    }, [supabaseConnected])
+
     const value = {
         user, data, setData, login, logout, hasPermission,
         isSuperAdmin, isAdmin, isFreelance, isAutor, resetWorkspace,
@@ -484,7 +495,7 @@ export function AuthProvider({ children }) {
         addNewBook, updateBookDetails, deleteExistingBook, updateInventory, approveRoyalty,
         markAlertAsRead, markAllAlerts, updateProfile,
         addNewUser, updateExistingUser, deleteExistingUser,
-        addDocument,
+        addDocument, editDocument,
         loading, supabaseConnected
     }
 
