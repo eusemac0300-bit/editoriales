@@ -133,10 +133,11 @@ export default function Escandallo() {
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-dark-500">$</span>
                                         <input
-                                            type="number"
-                                            value={costs[item.key]}
-                                            onChange={e => setCosts(prev => ({ ...prev, [item.key]: parseInt(e.target.value) || 0 }))}
+                                            type="text"
+                                            value={costs[item.key] === 0 ? '' : new Intl.NumberFormat('es-CL').format(costs[item.key])}
+                                            onChange={e => setCosts(prev => ({ ...prev, [item.key]: parseInt(e.target.value.replace(/\D/g, ''), 10) || 0 }))}
                                             className="input-field pl-7 text-sm"
+                                            placeholder="0"
                                         />
                                     </div>
                                 </div>
@@ -151,16 +152,37 @@ export default function Escandallo() {
                                 <label className="text-xs text-dark-600 mb-1 block">PVP (CLP)</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-dark-500">$</span>
-                                    <input type="number" value={pvp} onChange={e => setPvp(parseInt(e.target.value) || 0)} className="input-field pl-7 text-sm" />
+                                    <input
+                                        type="text"
+                                        value={pvp === 0 ? '' : new Intl.NumberFormat('es-CL').format(pvp)}
+                                        onChange={e => setPvp(parseInt(e.target.value.replace(/\D/g, ''), 10) || 0)}
+                                        className="input-field pl-7 text-sm"
+                                        placeholder="0"
+                                    />
                                 </div>
                             </div>
                             <div>
                                 <label className="text-xs text-dark-600 mb-1 block">Tiraje (unidades)</label>
-                                <input type="number" value={tiraje} onChange={e => setTiraje(parseInt(e.target.value) || 0)} className="input-field text-sm" />
+                                <input
+                                    type="text"
+                                    value={tiraje === 0 ? '' : new Intl.NumberFormat('es-CL').format(tiraje)}
+                                    onChange={e => setTiraje(parseInt(e.target.value.replace(/\D/g, ''), 10) || 0)}
+                                    className="input-field text-sm"
+                                    placeholder="0"
+                                />
                             </div>
                             <div>
                                 <label className="text-xs text-dark-600 mb-1 block">% Regalía Autor</label>
-                                <input type="number" value={royalty} onChange={e => setRoyalty(parseFloat(e.target.value) || 0)} className="input-field text-sm" min="0" max="100" />
+                                <input
+                                    type="number"
+                                    value={royalty === 0 ? '' : royalty}
+                                    onChange={e => {
+                                        const val = e.target.value
+                                        setRoyalty(val === '' ? 0 : parseFloat(val))
+                                    }}
+                                    className="input-field text-sm" min="0" max="100"
+                                    placeholder="0"
+                                />
                             </div>
                         </div>
                     </div>
