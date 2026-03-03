@@ -12,6 +12,7 @@ export default function Documents() {
     const [selectedBook, setSelectedBook] = useState('')
     const [editingDoc, setEditingDoc] = useState(null)
     const [editDocName, setEditDocName] = useState('')
+    const [docAmount, setDocAmount] = useState('')
     const fileInputRef = useRef(null)
 
     // Merge uploaded documents with invoices that act as documents
@@ -21,7 +22,7 @@ export default function Documents() {
         type: doc.type,
         book: data.books.find(b => b.id === doc.bookId)?.title || '—',
         bookId: doc.bookId,
-        amount: null,
+        amount: doc.amount || null,
         date: doc.createdAt ? doc.createdAt.split('T')[0] : '',
         format: doc.fileUrl?.split('.').pop()?.toUpperCase() || 'FILE',
         fileUrl: doc.fileUrl,
@@ -62,6 +63,7 @@ export default function Documents() {
             setFile(selectedFile)
             setEditDocName(selectedFile.name)
             setEditingDoc(null)
+            setDocAmount('')
             setShowUploadModal(true)
         }
     }
@@ -71,6 +73,7 @@ export default function Documents() {
         setDocType(doc.type)
         setSelectedBook(doc.bookId || '')
         setEditDocName(doc.name)
+        setDocAmount(doc.amount ? doc.amount.toString() : '')
         setFile(null)
         setShowUploadModal(true)
     }
@@ -81,6 +84,7 @@ export default function Documents() {
             setShowUploadModal(false)
             setFile(null)
             setEditingDoc(null)
+            setDocAmount('')
             return
         }
 
@@ -91,6 +95,7 @@ export default function Documents() {
                 const updates = {
                     name: editDocName || editingDoc.name,
                     type: docType,
+                    amount: docAmount ? parseInt(docAmount.replace(/\D/g, '')) || null : null,
                     bookId: selectedBook || null
                 }
 
@@ -129,6 +134,7 @@ export default function Documents() {
                     type: docType,
                     fileUrl: url,
                     size: file.size,
+                    amount: docAmount ? parseInt(docAmount.replace(/\D/g, '')) || null : null,
                     uploadedBy: user.id,
                     createdAt: new Date().toISOString()
                 }
@@ -144,6 +150,7 @@ export default function Documents() {
             setEditingDoc(null)
             setSelectedBook('')
             setEditDocName('')
+            setDocAmount('')
 
         } catch (err) {
             console.error(err)
@@ -201,7 +208,7 @@ export default function Documents() {
                 <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-dark-100 border border-dark-300 rounded-xl w-full max-w-md overflow-hidden slide-up relative">
                         <button
-                            onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName('') }}
+                            onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName(''); setDocAmount('') }}
                             className="absolute top-4 right-4 text-dark-500 hover:text-white"
                         >
                             <X className="w-5 h-5" />
@@ -239,6 +246,18 @@ export default function Documents() {
                                         <option value="Varios">Varios</option>
                                     </select>
                                 </div>
+                                {['Comprobante', 'Contrato'].includes(docType) && (
+                                    <div>
+                                        <label className="text-xs text-dark-500 block mb-1">Monto Asignado ($) (Opcional)</label>
+                                        <input
+                                            type="text"
+                                            value={docAmount ? formatCLP(docAmount) : ''}
+                                            onChange={(e) => setDocAmount(e.target.value.replace(/\D/g, ''))}
+                                            className="input-field w-full text-sm"
+                                            placeholder="$ 0"
+                                        />
+                                    </div>
+                                )}
                                 <div>
                                     <label className="text-xs text-dark-500 block mb-1">Vincular a un Título (Opcional)</label>
                                     <select
@@ -256,7 +275,7 @@ export default function Documents() {
                         </div>
                         <div className="p-4 border-t border-dark-300 bg-dark-50 flex justify-end gap-3">
                             <button
-                                onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName('') }}
+                                onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName(''); setDocAmount('') }}
                                 className="btn-secondary text-sm"
                             >
                                 Cancelar
