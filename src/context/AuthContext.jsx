@@ -369,6 +369,32 @@ export function AuthProvider({ children }) {
         }
     }, [supabaseConnected])
 
+    const resetWorkspace = useCallback(async () => {
+        if (!user || user.role !== 'ADMIN') return false
+        setLoading(true)
+        try {
+            const success = await db.resetTenantData(user.tenantId, user.id)
+            if (success) {
+                // Keep only the current logged in admin user
+                setData({
+                    ...initialData,
+                    users: [user],
+                    books: [],
+                    inventory: { physical: [], digital: [] },
+                    finances: { invoices: [], royalties: [] },
+                    auditLog: [],
+                    comments: [],
+                    alerts: []
+                })
+                // Trigger a hard reload from db just to be sure
+                await reloadData()
+            }
+            return success
+        } finally {
+            setLoading(false)
+        }
+    }, [user, reloadData])
+
     const formatCLP = (amount) => {
         return new Intl.NumberFormat('es-CL', {
             style: 'currency',
@@ -379,7 +405,7 @@ export function AuthProvider({ children }) {
 
     const value = {
         user, data, setData, login, logout, hasPermission,
-        isAdmin, isFreelance, isAutor,
+        isAdmin, isFreelance, isAutor, resetWorkspace,
         addAuditLog, updateBookStatus, addComment,
         markFreelanceOnboarded, formatCLP,
         addNewBook, updateInventory, approveRoyalty,

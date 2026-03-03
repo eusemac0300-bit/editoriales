@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import {
     BookOpen, LayoutDashboard, Package, Kanban, Calculator,
     DollarSign, FileText, Users, Bell, ClipboardList,
-    FolderOpen, LogOut, Menu, X, ChevronDown
+    FolderOpen, LogOut, Menu, X, ChevronDown, AlertTriangle
 } from 'lucide-react'
 
 const navItems = [
@@ -21,15 +21,31 @@ const navItems = [
 ]
 
 export default function AdminLayout() {
-    const { user, logout, data } = useAuth()
+    const { user, logout, data, resetWorkspace } = useAuth()
     const navigate = useNavigate()
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [profileOpen, setProfileOpen] = useState(false)
+    const [isResetting, setIsResetting] = useState(false)
     const unreadAlerts = data.alerts.filter(a => !a.read).length
 
     const handleLogout = () => {
         logout()
         navigate('/login')
+    }
+
+    const handleReset = async () => {
+        if (window.confirm('⚠️ ADVERTENCIA: Esta acción es irreversible.\n\nSe borrarán TODOS los datos de tu editorial (libros, usuarios, ventas) excepto tu cuenta de Administrador. Útil para empezar en blanco tras haber probado los datos de demostración.\n\n¿Estás seguro de continuar?')) {
+            setIsResetting(true)
+            const success = await resetWorkspace()
+            setIsResetting(false)
+            setProfileOpen(false)
+            if (success) {
+                alert('Workspace reseteado exitosamente. Ahora tu espacio está en blanco.')
+                navigate('/admin')
+            } else {
+                alert('Hubo un error al intentar resetear el workspace.')
+            }
+        }
     }
 
     return (
@@ -90,7 +106,18 @@ export default function AdminLayout() {
                             </button>
 
                             {profileOpen && (
-                                <div className="absolute bottom-full left-0 w-full mb-2 glass-card p-2 slide-up">
+                                <div className="absolute bottom-full left-0 w-full mb-2 glass-card p-2 slide-up flex flex-col gap-1">
+                                    <button
+                                        onClick={handleReset}
+                                        disabled={isResetting}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-orange-400 hover:bg-orange-500/10 transition-all text-sm disabled:opacity-50"
+                                    >
+                                        <AlertTriangle className="w-4 h-4" />
+                                        {isResetting ? 'Borrando...' : 'Empezar desde Cero'}
+                                    </button>
+
+                                    <div className="h-px bg-dark-300 w-full my-1"></div>
+
                                     <button
                                         onClick={handleLogout}
                                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-all text-sm"

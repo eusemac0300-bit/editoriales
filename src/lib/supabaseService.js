@@ -510,3 +510,33 @@ export async function createSaaSTenant(formData) {
 
     return { success: true, tenantId, userId }
 }
+
+// ============ RESET DEMO DATA ============
+export async function resetTenantData(tenantId, adminUserId) {
+    if (!tenantId || !adminUserId) return false
+
+    try {
+        // Delete all data associated with this tenant
+        // Notice: Supabase ON DELETE CASCADE requires careful order, or simply dropping by tenant_id
+        await supabase.from('inventory_physical').delete().eq('tenant_id', tenantId)
+        await supabase.from('inventory_digital').delete().eq('tenant_id', tenantId)
+        await supabase.from('invoices').delete().eq('tenant_id', tenantId)
+        await supabase.from('royalties').delete().eq('tenant_id', tenantId)
+        await supabase.from('comments').delete().eq('tenant_id', tenantId)
+        await supabase.from('alerts').delete().eq('tenant_id', tenantId)
+
+        // Books should be deleted after inventory (though CASCADE might cover it, it's safer to be explicit)
+        await supabase.from('books').delete().eq('tenant_id', tenantId)
+
+        // Delete audit log
+        await supabase.from('audit_log').delete().eq('tenant_id', tenantId)
+
+        // Delete all users EXCEPT the admin user initiating the reset
+        await supabase.from('users').delete().eq('tenant_id', tenantId).neq('id', adminUserId)
+
+        return true
+    } catch (err) {
+        console.error('Error resetting tenant data:', err)
+        return false
+    }
+}
