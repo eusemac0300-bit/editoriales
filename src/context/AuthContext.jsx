@@ -48,9 +48,42 @@ export function AuthProvider({ children }) {
             try {
                 const supabaseData = await db.loadAllData(savedUser.tenantId)
                 if (supabaseData && supabaseData.users && supabaseData.users.length > 0) {
-                    setData(supabaseData)
-                    setSupabaseConnected(true)
-                    console.log(`✅ Connected to Supabase - loaded data for tenant: ${savedUser.tenantId}`)
+                    const savedStr = localStorage.getItem('editorial_data')
+                    const savedLocal = savedStr ? JSON.parse(savedStr) : null
+
+                    // Auto-Migración: Si hay más libros en LocalStorage que en la BD
+                    if (savedLocal && savedLocal.books && savedLocal.books.length > (supabaseData.books?.length || 0)) {
+                        console.log('⚠️ Historial local detectado. Migrando a la nube automática y silenciosamente...');
+                        setData(savedLocal);
+                        setSupabaseConnected(true);
+
+                        // Migración en segundo plano de Usuarios (Autores) y Libros
+                        ; (async () => {
+                            try {
+                                if (savedLocal.users) {
+                                    for (const u of savedLocal.users) {
+                                        if (!supabaseData.users.find(dbu => dbu.id === u.id)) {
+                                            await db.addUser({ ...u, tenantId: savedUser.tenantId })
+                                        }
+                                    }
+                                }
+                                if (savedLocal.books) {
+                                    for (const b of savedLocal.books) {
+                                        if (!supabaseData.books.find(dbb => dbb.id === b.id)) {
+                                            await db.addBook({ ...b, tenantId: savedUser.tenantId })
+                                        }
+                                    }
+                                }
+                                console.log('✅ Migración de historial local completada.');
+                            } catch (e) {
+                                console.error('Error migrando historial:', e);
+                            }
+                        })();
+                    } else {
+                        setData(supabaseData)
+                        setSupabaseConnected(true)
+                        console.log(`✅ Connected to Supabase - loaded data for tenant: ${savedUser.tenantId}`)
+                    }
                 } else {
                     const saved = localStorage.getItem('editorial_data')
                     if (saved) setData(JSON.parse(saved))
