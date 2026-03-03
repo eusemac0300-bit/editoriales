@@ -245,13 +245,30 @@ export default function Documents() {
                                 </td>
                                 <td className="py-3 px-4 text-sm text-right text-dark-600">{doc.date}</td>
                                 <td className="py-3 px-4 text-center">
-                                    <button
-                                        onClick={() => handleDownload(doc)}
-                                        className={`p-1.5 rounded-lg transition-all ${doc.fileUrl ? 'bg-primary/10 text-primary hover:bg-primary hover:text-white cursor-pointer' : 'text-dark-600 hover:text-dark-500 cursor-help'}`}
-                                        title={doc.fileUrl ? "Descargar / Ver Archivo" : "No hay archivo subido para este registro histórico"}
-                                    >
-                                        <Download className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center justify-center gap-2">
+                                        {!doc.fileUrl && (
+                                            <button
+                                                onClick={() => {
+                                                    setDocType(doc.type.includes('Factura') ? 'Comprobante' : 'Varios')
+                                                    const b = data.books.find(b => b.title === doc.book)
+                                                    setSelectedBook(b ? b.id : '')
+                                                    handleUploadClick()
+                                                }}
+                                                className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-white hover:bg-dark-300 transition-all"
+                                                title="Adjuntar Archivo"
+                                            >
+                                                <Upload className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => handleDownload(doc)}
+                                            className={`p-1.5 rounded-lg transition-all ${doc.fileUrl ? 'bg-primary/10 text-primary hover:bg-primary hover:text-white cursor-pointer' : 'opacity-50 text-dark-600 cursor-not-allowed'}`}
+                                            title={doc.fileUrl ? "Descargar / Ver Archivo" : "No hay archivo subido"}
+                                            disabled={!doc.fileUrl}
+                                        >
+                                            <Download className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
