@@ -28,10 +28,15 @@ export async function loadAllData(tenantId) {
             supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false })
         ])
 
-        const errors = [usersErr, booksErr, invPhysErr, invDigErr, invoicesErr, royaltiesErr, auditErr, commentsErr, alertsErr].filter(Boolean)
-        if (errors.length > 0) {
-            console.error('Supabase load errors:', errors)
+        const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean)
+        if (criticalErrors.length > 0) {
+            console.error('Supabase critical load errors:', criticalErrors)
             return null
+        }
+
+        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr].filter(Boolean)
+        if (nonCriticalErrors.length > 0) {
+            console.warn('Supabase non-critical load errors (missing features):', nonCriticalErrors)
         }
 
         // Transform snake_case to camelCase for books
