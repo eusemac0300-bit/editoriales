@@ -487,6 +487,17 @@ export function AuthProvider({ children }) {
         }
     }, [supabaseConnected])
 
+    const deleteDocument = useCallback(async (docId, fileUrl) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            documents: (prev.documents || []).filter(d => d.id !== docId)
+        }))
+        if (supabaseConnected) {
+            await db.deleteDocumentEntry(docId, fileUrl)
+        }
+    }, [supabaseConnected])
+
     const value = {
         user, data, setData, login, logout, hasPermission,
         isSuperAdmin, isAdmin, isFreelance, isAutor, resetWorkspace,
@@ -495,7 +506,7 @@ export function AuthProvider({ children }) {
         addNewBook, updateBookDetails, deleteExistingBook, updateInventory, approveRoyalty,
         markAlertAsRead, markAllAlerts, updateProfile,
         addNewUser, updateExistingUser, deleteExistingUser,
-        addDocument, editDocument,
+        addDocument, editDocument, deleteDocument,
         loading, supabaseConnected
     }
 

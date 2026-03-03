@@ -301,6 +301,26 @@ export async function updateDocumentEntry(docId, updates) {
     return !error
 }
 
+export async function deleteDocumentEntry(docId, fileUrl) {
+    if (fileUrl) {
+        try {
+            // The file path in the bucket is everything after the bucket name
+            const pathParts = fileUrl.split('editorial_documents/')
+            if (pathParts.length > 1) {
+                const filePath = pathParts.pop()
+                if (filePath) {
+                    await supabase.storage.from('editorial_documents').remove([filePath])
+                }
+            }
+        } catch (e) {
+            console.error('Failed to delete file from storage', e)
+        }
+    }
+    const { error } = await supabase.from('documents').delete().eq('id', docId)
+    if (error) console.error('Error deleting document DB entry:', error)
+    return !error
+}
+
 // ============ AUDIT LOG ============
 export async function addAuditLogEntry(entry) {
     const { error } = await supabase

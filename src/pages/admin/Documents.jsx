@@ -1,10 +1,10 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { FolderOpen, FileText, Download, Upload, X, Edit } from 'lucide-react'
+import { FolderOpen, FileText, Download, Upload, X, Edit, Trash2 } from 'lucide-react'
 
 export default function Documents() {
-    const { user, data, formatCLP, addDocument, editDocument, addAuditLog, supabaseConnected } = useAuth()
+    const { user, data, formatCLP, addDocument, editDocument, deleteDocument, addAuditLog, supabaseConnected } = useAuth()
     const [showUploadModal, setShowUploadModal] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
     const [file, setFile] = useState(null)
@@ -158,6 +158,17 @@ export default function Documents() {
             window.open(doc.fileUrl, '_blank')
         } else {
             alert('Este registro no tiene un archivo físico asociado en la plataforma aún.')
+        }
+    }
+
+    const handleDelete = async (doc) => {
+        if (!supabaseConnected) {
+            alert('Atención: Al estar en modo local, no se pueden eliminar documentos físicos.')
+            return
+        }
+        if (confirm(`¿Estás seguro de que deseas eliminar permanentemente el documento "${doc.name}"? Esta acción no se puede deshacer.`)) {
+            await deleteDocument(doc.id, doc.fileUrl)
+            addAuditLog(`Eliminó documento: ${doc.name}`, 'general')
         }
     }
 
@@ -328,6 +339,15 @@ export default function Documents() {
                                         >
                                             <Download className="w-4 h-4" />
                                         </button>
+                                        {!doc.isInvoice && (
+                                            <button
+                                                onClick={() => handleDelete(doc)}
+                                                className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                                title="Eliminar Documento"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
