@@ -13,7 +13,8 @@ export async function loadAllData(tenantId) {
             { data: royalties, error: royaltiesErr },
             { data: auditLog, error: auditErr },
             { data: comments, error: commentsErr },
-            { data: alerts, error: alertsErr }
+            { data: alerts, error: alertsErr },
+            { data: documents, error: docsErr }
         ] = await Promise.all([
             supabase.from('users').select('*').eq('tenant_id', tenantId),
             supabase.from('books').select('*').eq('tenant_id', tenantId),
@@ -23,7 +24,8 @@ export async function loadAllData(tenantId) {
             supabase.from('royalties').select('*').eq('tenant_id', tenantId),
             supabase.from('audit_log').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
             supabase.from('comments').select('*').eq('tenant_id', tenantId).order('date', { ascending: true }),
-            supabase.from('alerts').select('*').eq('tenant_id', tenantId).order('date', { ascending: false })
+            supabase.from('alerts').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
+            supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false })
         ])
 
         const errors = [usersErr, booksErr, invPhysErr, invDigErr, invoicesErr, royaltiesErr, auditErr, commentsErr, alertsErr].filter(Boolean)
@@ -141,6 +143,18 @@ export async function loadAllData(tenantId) {
             read: a.read
         }))
 
+        // Transform documents
+        const transformedDocuments = (documents || []).map(d => ({
+            id: d.id,
+            bookId: d.book_id,
+            name: d.name,
+            type: d.type,
+            fileUrl: d.file_url,
+            size: d.size,
+            uploadedBy: d.uploaded_by,
+            createdAt: d.created_at
+        }))
+
         return {
             users: transformedUsers,
             books: transformedBooks,
@@ -154,7 +168,8 @@ export async function loadAllData(tenantId) {
             },
             auditLog: transformedAudit,
             comments: transformedComments,
-            alerts: transformedAlerts
+            alerts: transformedAlerts,
+            documents: transformedDocuments
         }
     } catch (err) {
         console.error('Failed to load data from Supabase:', err)
@@ -246,6 +261,23 @@ export async function deleteBook(bookId) {
         .from('books')
         .delete()
         .eq('id', bookId)
+    return !error
+}
+
+// ============ DOCUMENTS ============
+export async function addDocumentEntry(doc) {
+    const { error } = await supabase
+        .from('documents')
+        .insert({
+            id: doc.id,
+            tenant_id: doc.tenantId,
+            book_id: doc.bookId,
+            name: doc.name,
+            type: doc.type,
+            file_url: doc.fileUrl,
+            size: doc.size,
+            uploaded_by: doc.uploadedBy
+        })
     return !error
 }
 
