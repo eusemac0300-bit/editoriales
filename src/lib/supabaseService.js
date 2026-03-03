@@ -48,7 +48,9 @@ export async function loadAllData(tenantId) {
             contractExpiry: b.contract_expiry,
             createdAt: b.created_at,
             cover: b.cover,
-            synopsis: b.synopsis
+            synopsis: b.synopsis,
+            tiraje: b.tiraje || 0,
+            escandalloCosts: b.escandallo_costs || { edicion: 0, correccion: 0, maquetacion: 0, diseno: 0, impresion: 0, marketing: 0, distribucion: 0, otros: 0 }
         }))
 
         // Transform users
@@ -229,6 +231,8 @@ export async function updateBook(bookId, updates) {
     if (updates.synopsis !== undefined) dbUpdates.synopsis = updates.synopsis
     if (updates.genre !== undefined) dbUpdates.genre = updates.genre
     if (updates.isbn !== undefined) dbUpdates.isbn = updates.isbn
+    if (updates.tiraje !== undefined) dbUpdates.tiraje = updates.tiraje
+    if (updates.escandalloCosts !== undefined) dbUpdates.escandallo_costs = updates.escandalloCosts
 
     const { error } = await supabase
         .from('books')

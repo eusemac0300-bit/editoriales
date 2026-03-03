@@ -1,16 +1,55 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { Calculator, TrendingUp, Target, DollarSign, BarChart3 } from 'lucide-react'
+import { Calculator, TrendingUp, Target, DollarSign, BarChart3, Save, Book } from 'lucide-react'
 
 export default function Escandallo() {
-    const { formatCLP } = useAuth()
+    const { formatCLP, data, updateBookDetails, addAuditLog } = useAuth()
+    const [selectedBookId, setSelectedBookId] = useState('')
     const [costs, setCosts] = useState({
-        edicion: 850000, correccion: 350000, maquetacion: 450000, diseno: 350000,
-        impresion: 2750000, marketing: 500000, distribucion: 300000, otros: 100000
+        edicion: 0, correccion: 0, maquetacion: 0, diseno: 0,
+        impresion: 0, marketing: 0, distribucion: 0, otros: 0
     })
-    const [pvp, setPvp] = useState(18990)
-    const [tiraje, setTiraje] = useState(500)
-    const [royalty, setRoyalty] = useState(10)
+    const [pvp, setPvp] = useState(0)
+    const [tiraje, setTiraje] = useState(0)
+    const [royalty, setRoyalty] = useState(0)
+    const [isSaving, setIsSaving] = useState(false)
+
+    // Load book data when selected
+    useEffect(() => {
+        if (selectedBookId) {
+            const book = data?.books?.find(b => b.id === selectedBookId)
+            if (book) {
+                setCosts(book.escandalloCosts || { edicion: 0, correccion: 0, maquetacion: 0, diseno: 0, impresion: 0, marketing: 0, distribucion: 0, otros: 0 })
+                setPvp(book.pvp || 0)
+                setTiraje(book.tiraje || 0)
+                setRoyalty(book.royaltyPercent || 0)
+            }
+        } else {
+            setCosts({ edicion: 0, correccion: 0, maquetacion: 0, diseno: 0, impresion: 0, marketing: 0, distribucion: 0, otros: 0 })
+            setPvp(0)
+            setTiraje(0)
+            setRoyalty(0)
+        }
+    }, [selectedBookId, data?.books])
+
+    const handleSave = async () => {
+        if (!selectedBookId) return
+        setIsSaving(true)
+        const updates = {
+            escandalloCosts: costs,
+            pvp,
+            tiraje,
+            royaltyPercent: royalty
+        }
+        await updateBookDetails(selectedBookId, updates)
+
+        const book = data.books.find(b => b.id === selectedBookId)
+        if (book) {
+            addAuditLog(`Actualizó escandallo para título: ${book.title}`, 'general')
+        }
+        setIsSaving(false)
+        alert('Escandallo guardado correctamente.')
+    }
 
     const totalCosts = Object.values(costs).reduce((s, v) => s + v, 0)
     const costPerUnit = tiraje > 0 ? totalCosts / tiraje : 0
@@ -35,11 +74,49 @@ export default function Escandallo() {
 
     return (
         <div className="space-y-6 fade-in">
-            <div>
-                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <Calculator className="w-6 h-6 text-primary" />Calculadora de Escandallo
-                </h1>
-                <p className="text-dark-600 text-sm mt-1">Simulador de rentabilidad y punto de equilibrio</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                        <Calculator className="w-6 h-6 text-primary" />Calculadora de Escandallo por Título
+                    </h1>
+                    <p className="text-dark-600 text-sm mt-1">Simulador de rentabilidad y punto de equilibrio por obra literaria.</p>
+                </div>
+                {selectedBookId && (
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="btn-primary flex items-center gap-2"
+                    >
+                        {isSaving ? (
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <Save className="w-4 h-4" />
+                        )}
+                        Guardar en Título
+                    </button>
+                )}
+            </div>
+
+            <div className="glass-card p-5 border-l-4 border-l-primary">
+                <label className="text-sm font-semibold text-white mb-2 block flex items-center gap-2">
+                    <Book className="w-4 h-4 text-primary" /> Seleccionar Título
+                </label>
+                <select
+                    value={selectedBookId}
+                    onChange={(e) => setSelectedBookId(e.target.value)}
+                    className="input-field text-sm font-medium w-full md:w-1/2"
+                >
+                    <option value="">-- Elige un Título --</option>
+                    {data?.books?.map(b => (
+                        <option key={b.id} value={b.id}>{b.title} ({b.authorName})</option>
+                    ))}
+                </select>
+                {!selectedBookId && (
+                    <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                        Selecciona un título para cargar o guardar el escandallo. Si editas sin seleccionar, solo funcionará como simulador rápido.
+                    </p>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

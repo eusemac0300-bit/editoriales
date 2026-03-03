@@ -13,7 +13,7 @@ const navItems = [
     { to: '/admin/kanban', icon: Kanban, label: 'Producción' },
     { to: '/admin/escandallo', icon: Calculator, label: 'Escandallo' },
     { to: '/admin/liquidaciones', icon: DollarSign, label: 'Liquidaciones' },
-    { to: '/admin/libros', icon: FileText, label: 'Libros' },
+    { to: '/admin/libros', icon: FileText, label: 'Títulos' },
     { to: '/admin/documentos', icon: FolderOpen, label: 'Documentos' },
     { to: '/admin/usuarios', icon: Users, label: 'Usuarios' },
     { to: '/admin/auditoria', icon: ClipboardList, label: 'Auditoría' },
