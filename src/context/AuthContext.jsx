@@ -156,12 +156,15 @@ export function AuthProvider({ children }) {
 
     const hasPermission = (requiredRole) => {
         if (!user) return false
+        if (requiredRole === 'SUPERADMIN') return user.role === 'SUPERADMIN'
+        if (user.role === 'SUPERADMIN') return true
         if (user.role === 'ADMIN') return true
         if (requiredRole === 'FREELANCE' && (user.role === 'FREELANCE' || user.role === 'ADMIN')) return true
         if (requiredRole === 'AUTOR' && user.role === 'AUTOR') return true
         return user.role === requiredRole
     }
 
+    const isSuperAdmin = () => user?.role === 'SUPERADMIN'
     const isAdmin = () => user?.role === 'ADMIN'
     const isFreelance = () => user?.role === 'FREELANCE'
     const isAutor = () => user?.role === 'AUTOR'
@@ -405,7 +408,7 @@ export function AuthProvider({ children }) {
 
     const value = {
         user, data, setData, login, logout, hasPermission,
-        isAdmin, isFreelance, isAutor, resetWorkspace,
+        isSuperAdmin, isAdmin, isFreelance, isAutor, resetWorkspace,
         addAuditLog, updateBookStatus, addComment,
         markFreelanceOnboarded, formatCLP,
         addNewBook, updateInventory, approveRoyalty,

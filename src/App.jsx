@@ -5,10 +5,14 @@ import Login from './pages/Login'
 import AdminLayout from './layouts/AdminLayout'
 import FreelanceLayout from './layouts/FreelanceLayout'
 import AuthorLayout from './layouts/AuthorLayout'
+import SuperAdminLayout from './layouts/SuperAdminLayout'
 
 // Public SaaS pages
 import Landing from './pages/public/Landing'
 import Register from './pages/public/Register'
+
+// SuperAdmin pages
+import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard'
@@ -45,13 +49,18 @@ function AppRoutes() {
         )
     }
 
-    const homeUrl = user.role === 'ADMIN' ? '/admin' : user.role === 'FREELANCE' ? '/freelance' : '/autor'
+    const homeUrl = user.role === 'SUPERADMIN' ? '/superadmin' : user.role === 'ADMIN' ? '/admin' : user.role === 'FREELANCE' ? '/freelance' : '/autor'
 
     return (
         <Routes>
             <Route path="/" element={<Navigate to={homeUrl} replace />} />
             <Route path="/login" element={<Navigate to={homeUrl} replace />} />
             <Route path="/register" element={<Navigate to={homeUrl} replace />} />
+
+            {/* SuperAdmin routes */}
+            <Route path="/superadmin" element={<RouteGuard allowedRoles={['SUPERADMIN']}><SuperAdminLayout /></RouteGuard>}>
+                <Route index element={<SuperAdminDashboard />} />
+            </Route>
 
             {/* Admin routes */}
             <Route path="/admin" element={<RouteGuard allowedRoles={['ADMIN']}><AdminLayout /></RouteGuard>}>

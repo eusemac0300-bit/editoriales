@@ -160,6 +160,29 @@ export async function loadAllData(tenantId) {
     }
 }
 
+// ============ SUPERADMIN DATA ============
+export async function loadSuperAdminData() {
+    try {
+        const [
+            { data: tenants, error: tErr },
+            { data: users, error: uErr }
+        ] = await Promise.all([
+            supabase.from('tenants').select('*').order('created_at', { ascending: false }),
+            supabase.from('users').select('id, tenant_id, email, name, role').eq('role', 'ADMIN')
+        ])
+
+        if (tErr || uErr) {
+            console.error('Superadmin load error', tErr, uErr)
+            return null
+        }
+
+        return { tenants, adminUsers: users }
+    } catch (err) {
+        console.error('Failed to load superadmin data:', err)
+        return null
+    }
+}
+
 // ============ USER AUTH ============
 export async function loginUser(email, password) {
     const { data, error } = await supabase

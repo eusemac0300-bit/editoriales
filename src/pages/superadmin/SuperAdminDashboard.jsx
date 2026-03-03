@@ -1,0 +1,192 @@
+import { useState, useEffect } from 'react'
+import { loadSuperAdminData } from '../../lib/supabaseService'
+import { Building2, Users, CreditCard, Activity, Search } from 'lucide-react'
+
+export default function SuperAdminDashboard() {
+    const [tenants, setTenants] = useState([])
+    const [admins, setAdmins] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [searchTerm, setSearchTerm] = useState('')
+
+    useEffect(() => {
+        async function fetch() {
+            setLoading(true)
+            const res = await loadSuperAdminData()
+            if (res) {
+                setTenants(res.tenants || [])
+                setAdmins(res.adminUsers || [])
+            }
+            setLoading(false)
+        }
+        fetch()
+    }, [])
+
+    const filteredTenants = tenants.filter(t =>
+        t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.id.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    if (loading) {
+        return (
+            <div className="flex-center h-64">
+                <div className="w-12 h-12 rounded-full border-4 border-purple-500/30 border-t-purple-500 animate-spin" />
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-6 slide-up">
+            <div>
+                <h1 className="text-2xl font-bold text-white tracking-tight">Panel de Control SaaS</h1>
+                <p className="text-dark-600 text-sm mt-1">Supervisión Master de todas las editoriales suscritas.</p>
+            </div>
+
+            {/* Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="glass-card p-5 border-l-4 border-l-purple-500">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400">
+                            <Building2 className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <p className="text-dark-600 text-sm font-medium">Editoriales Activas</p>
+                            <h3 className="text-2xl font-bold text-white mt-1">{tenants.filter(t => t.active).length}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="glass-card p-5 border-l-4 border-l-blue-500">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
+                            <Users className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <p className="text-dark-600 text-sm font-medium">Cuentas Admin Totales</p>
+                            <h3 className="text-2xl font-bold text-white mt-1">{admins.length}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="glass-card p-5 border-l-4 border-l-green-500">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-green-500/10 rounded-xl text-green-400">
+                            <CreditCard className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <p className="text-dark-600 text-sm font-medium">MRR Estimado (M/Mes)</p>
+                            <h3 className="text-2xl font-bold text-white mt-1">
+                                ${new Intl.NumberFormat('es-CL').format(tenants.length * 50000)}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="glass-card p-5 border-l-4 border-l-orange-500">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-orange-500/10 rounded-xl text-orange-400">
+                            <Activity className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <p className="text-dark-600 text-sm font-medium">Estado del Sistema</p>
+                            <h3 className="text-xl font-bold text-green-400 mt-1 flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 bg-green-500 rounded-full pulse-glow"></span>
+                                Online
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Table Section */}
+            <div className="glass-card rounded-2xl overflow-hidden border border-dark-300">
+                <div className="p-5 border-b border-dark-300 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <h2 className="text-lg font-bold text-white">Directorio de Editoriales</h2>
+                    <div className="relative w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+                        <input
+                            type="text"
+                            placeholder="Buscar editorial o ID..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="input-field pl-9 h-10 py-0 text-sm"
+                        />
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                        <thead>
+                            <tr className="bg-dark-200/50 text-dark-800 text-xs uppercase tracking-wider">
+                                <th className="p-4 font-semibold text-dark-600">ID Workspace</th>
+                                <th className="p-4 font-semibold text-dark-600">Nombre de Editorial</th>
+                                <th className="p-4 font-semibold text-dark-600">Administrador / Email</th>
+                                <th className="p-4 font-semibold text-dark-600">Plan</th>
+                                <th className="p-4 font-semibold text-dark-600">Fecha Registro</th>
+                                <th className="p-4 font-semibold text-dark-600">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-dark-300/50">
+                            {filteredTenants.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="p-8 text-center text-dark-600">
+                                        No se encontraron editoriales.
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredTenants.map(tenant => {
+                                    const admin = admins.find(a => a.tenant_id === tenant.id)
+                                    const date = new Date(tenant.created_at).toLocaleDateString('es-CL', {
+                                        year: 'numeric', month: 'short', day: 'numeric'
+                                    })
+                                    return (
+                                        <tr key={tenant.id} className="hover:bg-dark-200/20 transition-colors">
+                                            <td className="p-4">
+                                                <span className="font-mono text-xs text-dark-600 bg-dark-200 px-2 py-1 rounded">
+                                                    {tenant.id}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                <p className="text-sm font-semibold text-white">{tenant.name}</p>
+                                            </td>
+                                            <td className="p-4">
+                                                {admin ? (
+                                                    <div>
+                                                        <p className="text-sm text-white font-medium">{admin.name}</p>
+                                                        <p className="text-xs text-dark-600">{admin.email}</p>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-dark-600 italic">No admin found</span>
+                                                )}
+                                            </td>
+                                            <td className="p-4">
+                                                <span className="badge border border-purple-500/50 bg-purple-500/10 text-purple-400">
+                                                    {tenant.plan || 'PRO'}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className="text-sm text-dark-700">{date}</span>
+                                            </td>
+                                            <td className="p-4">
+                                                {tenant.active ? (
+                                                    <span className="flex items-center gap-1.5 text-xs font-semibold text-green-400 bg-green-500/10 px-2.5 py-1 rounded-full w-max">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                                        Activa
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-full w-max">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                        Suspendida
+                                                    </span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    )
+}
