@@ -144,7 +144,7 @@ export default function Documents() {
                         accept=".pdf,.jpg,.jpeg,.png"
                     />
                     <button onClick={handleUploadClick} className="btn-primary text-sm whitespace-nowrap">
-                        <Upload className="w-4 h-4 inline mr-1" /> Subir Archivo PDF/IMG
+                        <span className="text-lg leading-none mr-2 font-light">+</span> Crear Documento
                     </button>
                 </div>
             </div>
