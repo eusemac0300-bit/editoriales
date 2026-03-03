@@ -60,6 +60,7 @@ export default function Documents() {
                 return
             }
             setFile(selectedFile)
+            setEditDocName(selectedFile.name)
             setEditingDoc(null)
             setShowUploadModal(true)
         }
@@ -123,7 +124,7 @@ export default function Documents() {
 
                 const newDoc = {
                     id: `doc${Date.now()}`,
-                    name: file.name,
+                    name: editDocName || file.name,
                     bookId: selectedBook || null,
                     type: docType,
                     fileUrl: url,
@@ -213,17 +214,15 @@ export default function Documents() {
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-xs text-dark-500 block mb-1">Nombre del Documento</label>
-                                    {editingDoc ? (
-                                        <input
-                                            type="text"
-                                            value={editDocName}
-                                            onChange={(e) => setEditDocName(e.target.value)}
-                                            className="input-field w-full text-sm"
-                                        />
-                                    ) : (
-                                        <p className="text-sm text-dark-800 bg-dark-200 p-2 rounded-lg truncate" title={file?.name}>
-                                            <span className="text-primary-400 font-medium">{file?.name}</span>
-                                        </p>
+                                    <input
+                                        type="text"
+                                        value={editDocName}
+                                        onChange={(e) => setEditDocName(e.target.value)}
+                                        className="input-field w-full text-sm"
+                                        placeholder="Ingrese o modifique el nombre..."
+                                    />
+                                    {!editingDoc && file && (
+                                        <p className="text-xs text-dark-600 mt-2">Archivo original a subir: <span className="text-primary-400 truncate">{file.name}</span></p>
                                     )}
                                 </div>
                                 <div>
@@ -282,9 +281,10 @@ export default function Documents() {
                             <th className="table-header text-left py-3 px-4">Documento</th>
                             <th className="table-header text-left py-3 px-4">Títlo Relacionado</th>
                             <th className="table-header text-left py-3 px-4">Categoría</th>
-                            <th className="table-header text-right py-3 px-4">Monto / Info</th>
+                            <th className="table-header text-right py-3 px-4">Monto ($)</th>
+                            <th className="table-header text-center py-3 px-4">Formato / Info</th>
                             <th className="table-header text-right py-3 px-4">Fecha</th>
-                            <th className="table-header text-center py-3 px-4">Descarga</th>
+                            <th className="table-header text-center py-3 px-4">Descargas & Opciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -303,7 +303,10 @@ export default function Documents() {
                                     </span>
                                 </td>
                                 <td className="py-3 px-4 text-sm text-right text-dark-800">
-                                    {doc.amount ? formatCLP(doc.amount) : <span className="text-dark-600 text-xs">{doc.format}</span>}
+                                    {doc.amount ? formatCLP(doc.amount) : "—"}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-center">
+                                    <span className="text-dark-400 font-medium text-xs px-2 py-1 bg-dark-200 rounded border border-dark-300">{doc.format}</span>
                                 </td>
                                 <td className="py-3 px-4 text-sm text-right text-dark-600">{doc.date}</td>
                                 <td className="py-3 px-4 text-center">
@@ -354,7 +357,7 @@ export default function Documents() {
                         ))}
                         {documents.length === 0 && (
                             <tr>
-                                <td colSpan="6" className="py-8 text-center text-dark-500 text-sm">No hay documentos ni facturas registrados.</td>
+                                <td colSpan="7" className="py-8 text-center text-dark-500 text-sm">No hay documentos ni facturas registrados.</td>
                             </tr>
                         )}
                     </tbody>
