@@ -18,7 +18,7 @@ export default function Login() {
         try {
             const result = await login(email, password)
             if (result.success) {
-                const routes = { ADMIN: '/admin', FREELANCE: '/freelance', AUTOR: '/autor' }
+                const routes = { SUPERADMIN: '/superadmin', ADMIN: '/admin', FREELANCE: '/freelance', AUTOR: '/autor' }
                 navigate(routes[result.user.role] || '/admin')
             } else {
                 setError(result.error)
