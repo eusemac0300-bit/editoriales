@@ -241,6 +241,14 @@ export async function updateBook(bookId, updates) {
     return !error
 }
 
+export async function deleteBook(bookId) {
+    const { error } = await supabase
+        .from('books')
+        .delete()
+        .eq('id', bookId)
+    return !error
+}
+
 // ============ AUDIT LOG ============
 export async function addAuditLogEntry(entry) {
     const { error } = await supabase

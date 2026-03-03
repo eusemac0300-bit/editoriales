@@ -1,36 +1,114 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { FileText, Plus, Calendar, Percent, DollarSign, User } from 'lucide-react'
+import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2 } from 'lucide-react'
 
 export default function Books() {
-    const { data, addNewBook, formatCLP, addAuditLog } = useAuth()
+    const { data, addNewBook, updateBookDetails, deleteExistingBook, formatCLP, addAuditLog } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
+    const [editingBook, setEditingBook] = useState(null)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [filterStatus, setFilterStatus] = useState('All')
 
     const statusColors = {
         'Original': 'badge-purple', 'Contratación': 'badge-yellow', 'Edición': 'badge-blue',
         'Corrección': 'badge-yellow', 'Maquetación': 'badge-blue', 'Imprenta': 'badge-red', 'Publicado': 'badge-green'
     }
 
+    const statuses = ['All', ...Object.keys(statusColors)]
+
+    const handleDelete = async (book) => {
+        if (window.confirm(`¿Estás seguro de que deseas eliminar el título "${book.title}"? Esta acción no se puede deshacer.`)) {
+            await deleteExistingBook(book.id)
+            addAuditLog(`Eliminó el título: '${book.title}'`, 'general')
+        }
+    }
+
+    const filteredBooks = data.books.filter(book => {
+        const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (book.authorName && book.authorName.toLowerCase().includes(searchTerm.toLowerCase()))
+        const matchesStatus = filterStatus === 'All' || book.status === filterStatus
+        return matchesSearch && matchesStatus
+    })
+
     return (
         <div className="space-y-6 fade-in">
             <div className="flex flex-col sm:flex-row justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <FileText className="w-6 h-6 text-primary" />Registro de Libros
+                        <FileText className="w-6 h-6 text-primary" />Registro de Títulos
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">{data.books.length} libros en catálogo</p>
+                    <p className="text-dark-600 text-sm mt-1">{filteredBooks.length} títulos en catálogo</p>
                 </div>
-                <button onClick={() => setShowAdd(!showAdd)} className="btn-primary text-sm">
-                    <Plus className="w-4 h-4 inline mr-1" /> Nuevo Libro
+                <button onClick={() => { setEditingBook(null); setShowAdd(!showAdd) }} className="btn-primary text-sm h-10">
+                    <Plus className="w-4 h-4 inline mr-1" /> Nuevo Título
                 </button>
             </div>
 
-            {showAdd && <AddBookForm data={data} addNewBook={addNewBook} addAuditLog={addAuditLog} onClose={() => setShowAdd(false)} />}
+            {/* Filters */}
+            <div className="glass-card p-4 flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+                    <input
+                        type="text"
+                        placeholder="Buscar por título o autor..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="input-field pl-9 h-10 py-0 text-sm w-full"
+                    />
+                </div>
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <Filter className="w-4 h-4 text-dark-500" />
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="input-field h-10 py-0 text-sm"
+                    >
+                        {statuses.map(s => (
+                            <option key={s} value={s}>{s === 'All' ? 'Todos los Estados' : s}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            {(showAdd || editingBook) && (
+                <BookForm
+                    data={data}
+                    initialData={editingBook}
+                    onSave={async (bookData) => {
+                        if (editingBook) {
+                            await updateBookDetails(editingBook.id, bookData)
+                            addAuditLog(`Actualizó título: '${bookData.title}'`, 'general')
+                        } else {
+                            await addNewBook(bookData)
+                            addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
+                        }
+                        setShowAdd(false)
+                        setEditingBook(null)
+                    }}
+                    onClose={() => { setShowAdd(false); setEditingBook(null) }}
+                />
+            )}
 
             <div className="space-y-4">
-                {data.books.map(book => (
-                    <div key={book.id} className="glass-card p-5">
-                        <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
+                {filteredBooks.map(book => (
+                    <div key={book.id} className="glass-card p-5 relative group">
+                        <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                                onClick={() => { setEditingBook(book); setShowAdd(false) }}
+                                className="p-1.5 bg-dark-200 hover:bg-dark-300 rounded text-dark-500 hover:text-white transition-colors"
+                                title="Editar título"
+                            >
+                                <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => handleDelete(book)}
+                                className="p-1.5 bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
+                                title="Eliminar título"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start justify-between gap-3 pr-20">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-lg font-medium text-white">{book.title}</h3>
@@ -64,31 +142,58 @@ export default function Books() {
                         </div>
                     </div>
                 ))}
+                {filteredBooks.length === 0 && (
+                    <div className="p-8 text-center text-dark-600 glass-card">
+                        No se encontraron títulos que coincidan con la búsqueda.
+                    </div>
+                )}
             </div>
         </div>
     )
 }
 
-function AddBookForm({ data, addNewBook, addAuditLog, onClose }) {
-    const [form, setForm] = useState({ title: '', authorId: '', isbn: '', genre: '', royaltyPercent: 10, advance: 0, pvp: 0, synopsis: '' })
+function BookForm({ data, initialData, onSave, onClose }) {
+    const [form, setForm] = useState({
+        title: initialData?.title || '',
+        authorId: initialData?.authorId || '',
+        isbn: initialData?.isbn || '',
+        genre: initialData?.genre || '',
+        royaltyPercent: initialData?.royaltyPercent || 10,
+        advance: initialData?.advance || 0,
+        pvp: initialData?.pvp || 0,
+        synopsis: initialData?.synopsis || ''
+    })
     const authors = data.users.filter(u => u.role === 'AUTOR')
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         const author = authors.find(a => a.id === form.authorId)
-        const book = {
-            id: `b${Date.now()}`, ...form, authorName: author?.name || '', status: 'Original',
-            assignedTo: [], advance: parseInt(form.advance), pvp: parseInt(form.pvp),
-            royaltyPercent: parseInt(form.royaltyPercent), contractExpiry: null, createdAt: new Date().toISOString().split('T')[0], cover: null
+
+        const bookData = {
+            ...form,
+            authorName: author?.name || '',
+            advance: parseInt(form.advance.toString().replace(/\D/g, ''), 10) || 0,
+            pvp: parseInt(form.pvp.toString().replace(/\D/g, ''), 10) || 0,
+            royaltyPercent: parseFloat(form.royaltyPercent) || 0
         }
-        await addNewBook(book)
-        addAuditLog(`Registró nuevo libro: '${book.title}'`, 'general')
-        onClose()
+
+        if (!initialData) {
+            bookData.id = `b${Date.now()}`
+            bookData.status = 'Original'
+            bookData.assignedTo = []
+            bookData.contractExpiry = null
+            bookData.createdAt = new Date().toISOString().split('T')[0]
+            bookData.cover = null
+        }
+
+        await onSave(bookData)
     }
 
+    const formatMoney = (val) => val === 0 || val === '' ? '' : new Intl.NumberFormat('es-CL').format(val)
+
     return (
-        <div className="glass-card p-5 slide-up">
-            <h3 className="text-sm font-semibold text-white mb-4">Registrar Nuevo Libro</h3>
+        <div className="glass-card p-5 slide-up border border-primary/30">
+            <h3 className="text-sm font-semibold text-white mb-4">{initialData ? 'Editar Título' : 'Registrar Nuevo Título'}</h3>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
                     <label className="text-xs text-dark-600 mb-1 block">Título</label>
@@ -111,23 +216,29 @@ function AddBookForm({ data, addNewBook, addAuditLog, onClose }) {
                 </div>
                 <div>
                     <label className="text-xs text-dark-600 mb-1 block">PVP (CLP)</label>
-                    <input type="number" value={form.pvp} onChange={e => setForm(p => ({ ...p, pvp: e.target.value }))} className="input-field text-sm" />
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-dark-500">$</span>
+                        <input type="text" value={formatMoney(form.pvp)} onChange={e => setForm(p => ({ ...p, pvp: e.target.value.replace(/\D/g, '') }))} className="input-field pl-7 text-sm" placeholder="0" />
+                    </div>
                 </div>
                 <div>
                     <label className="text-xs text-dark-600 mb-1 block">% Regalía</label>
-                    <input type="number" value={form.royaltyPercent} onChange={e => setForm(p => ({ ...p, royaltyPercent: e.target.value }))} className="input-field text-sm" />
+                    <input type="number" value={form.royaltyPercent === 0 ? '' : form.royaltyPercent} onChange={e => setForm(p => ({ ...p, royaltyPercent: e.target.value }))} className="input-field text-sm" min="0" max="100" placeholder="0" />
                 </div>
                 <div>
                     <label className="text-xs text-dark-600 mb-1 block">Anticipo (CLP)</label>
-                    <input type="number" value={form.advance} onChange={e => setForm(p => ({ ...p, advance: e.target.value }))} className="input-field text-sm" />
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-dark-500">$</span>
+                        <input type="text" value={formatMoney(form.advance)} onChange={e => setForm(p => ({ ...p, advance: e.target.value.replace(/\D/g, '') }))} className="input-field pl-7 text-sm" placeholder="0" />
+                    </div>
                 </div>
                 <div className="sm:col-span-2">
                     <label className="text-xs text-dark-600 mb-1 block">Sinopsis</label>
                     <textarea value={form.synopsis} onChange={e => setForm(p => ({ ...p, synopsis: e.target.value }))} className="input-field text-sm" rows={2} />
                 </div>
-                <div className="sm:col-span-2 flex gap-2 justify-end">
+                <div className="sm:col-span-2 flex gap-2 justify-end mt-2">
                     <button type="button" onClick={onClose} className="btn-secondary text-sm">Cancelar</button>
-                    <button type="submit" className="btn-primary text-sm">Registrar Libro</button>
+                    <button type="submit" className="btn-primary text-sm">{initialData ? 'Guardar Cambios' : 'Registrar Título'}</button>
                 </div>
             </form>
         </div>

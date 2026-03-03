@@ -269,6 +269,18 @@ export function AuthProvider({ children }) {
         }
     }, [supabaseConnected])
 
+    // ============ SYNC: DELETE BOOK ============
+    const deleteExistingBook = useCallback(async (bookId) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            books: prev.books.filter(b => b.id !== bookId)
+        }))
+        if (supabaseConnected) {
+            await db.deleteBook(bookId)
+        }
+    }, [supabaseConnected])
+
     // ============ SYNC: INVENTORY ============
     const updateInventory = useCallback(async (bookId, updater) => {
         lastLocalChangeRef.current = Date.now()
@@ -423,7 +435,7 @@ export function AuthProvider({ children }) {
         isSuperAdmin, isAdmin, isFreelance, isAutor, resetWorkspace,
         addAuditLog, updateBookStatus, addComment,
         markFreelanceOnboarded, formatCLP,
-        addNewBook, updateBookDetails, updateInventory, approveRoyalty,
+        addNewBook, updateBookDetails, deleteExistingBook, updateInventory, approveRoyalty,
         markAlertAsRead, markAllAlerts, updateProfile,
         addNewUser, updateExistingUser, deleteExistingUser,
         loading, supabaseConnected
