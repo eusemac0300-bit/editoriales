@@ -52,7 +52,11 @@ export function AuthProvider({ children }) {
                     const savedLocal = savedStr ? JSON.parse(savedStr) : null
 
                     // Auto-Migración: Si hay más libros en LocalStorage que en la BD
-                    if (savedLocal && savedLocal.books && savedLocal.books.length > (supabaseData.books?.length || 0)) {
+                    const hasMoreLocalBooks = savedLocal && savedLocal.books && savedLocal.books.length > (supabaseData.books?.length || 0);
+                    const hasMoreLocalUsers = savedLocal && savedLocal.users && savedLocal.users.length > (supabaseData.users?.length || 0);
+                    const isCloudEmpty = supabaseData.books?.length === 0;
+
+                    if (savedLocal && (hasMoreLocalBooks || hasMoreLocalUsers || isCloudEmpty)) {
                         console.log('⚠️ Historial local detectado. Migrando a la nube automática y silenciosamente...');
                         setData(savedLocal);
                         setSupabaseConnected(true);
