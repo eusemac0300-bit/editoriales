@@ -43,13 +43,13 @@ export default function SuperAdminDashboard() {
 
             {/* Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="glass-card p-5 border-l-4 border-l-purple-500">
+                <div className="glass-card p-5 border-l-4 border-l-emerald-500">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400">
+                        <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
                             <Building2 className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-dark-600 text-sm font-medium">Editoriales Activas</p>
+                            <p className="text-dark-600 text-sm font-medium">Editoriales Activas (Demo + PRO)</p>
                             <h3 className="text-2xl font-bold text-white mt-1">{tenants.filter(t => t.active).length}</h3>
                         </div>
                     </div>
@@ -61,21 +61,21 @@ export default function SuperAdminDashboard() {
                             <Users className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-dark-600 text-sm font-medium">Cuentas Admin Totales</p>
+                            <p className="text-dark-600 text-sm font-medium">Administradores Registrados</p>
                             <h3 className="text-2xl font-bold text-white mt-1">{admins.length}</h3>
                         </div>
                     </div>
                 </div>
 
-                <div className="glass-card p-5 border-l-4 border-l-green-500">
+                <div className="glass-card p-5 border-l-4 border-l-amber-500">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-green-500/10 rounded-xl text-green-400">
+                        <div className="p-3 bg-amber-500/10 rounded-xl text-amber-400">
                             <CreditCard className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-dark-600 text-sm font-medium">MRR Estimado (M/Mes)</p>
+                            <p className="text-dark-600 text-sm font-medium">Editoriales Pagando PRO</p>
                             <h3 className="text-2xl font-bold text-white mt-1">
-                                ${new Intl.NumberFormat('es-CL').format(tenants.length * 50000)}
+                                {tenants.filter(t => t.plan !== 'TRIAL').length} / ${new Intl.NumberFormat('es-CL').format(tenants.filter(t => t.plan !== 'TRIAL').length * 50000)}
                             </h3>
                         </div>
                     </div>
@@ -120,8 +120,9 @@ export default function SuperAdminDashboard() {
                                 <th className="p-4 font-semibold text-dark-600">ID Workspace</th>
                                 <th className="p-4 font-semibold text-dark-600">Nombre de Editorial</th>
                                 <th className="p-4 font-semibold text-dark-600">Administrador / Email</th>
-                                <th className="p-4 font-semibold text-dark-600">Plan</th>
+                                <th className="p-4 font-semibold text-dark-600">Plan de Pago</th>
                                 <th className="p-4 font-semibold text-dark-600">Fecha Registro</th>
+                                <th className="p-4 font-semibold text-dark-600">Días en Uso</th>
                                 <th className="p-4 font-semibold text-dark-600">Estado</th>
                             </tr>
                         </thead>
@@ -135,9 +136,13 @@ export default function SuperAdminDashboard() {
                             ) : (
                                 filteredTenants.map(tenant => {
                                     const admin = admins.find(a => a.tenant_id === tenant.id)
-                                    const date = new Date(tenant.created_at).toLocaleDateString('es-CL', {
+                                    const dateObj = new Date(tenant.created_at)
+                                    const date = dateObj.toLocaleDateString('es-CL', {
                                         year: 'numeric', month: 'short', day: 'numeric'
                                     })
+                                    const diffTime = Math.abs(new Date() - dateObj);
+                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
                                     return (
                                         <tr key={tenant.id} className="hover:bg-dark-200/20 transition-colors">
                                             <td className="p-4">
@@ -159,12 +164,15 @@ export default function SuperAdminDashboard() {
                                                 )}
                                             </td>
                                             <td className="p-4">
-                                                <span className="badge border border-purple-500/50 bg-purple-500/10 text-purple-400">
-                                                    {tenant.plan || 'PRO'}
+                                                <span className={`badge border ${tenant.plan === 'TRIAL' ? 'border-orange-500/50 bg-orange-500/10 text-orange-400' : 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'}`}>
+                                                    {tenant.plan === 'TRIAL' ? 'Prueba (14 días)' : 'PRO (Pagado)'}
                                                 </span>
                                             </td>
                                             <td className="p-4">
                                                 <span className="text-sm text-dark-700">{date}</span>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className="text-sm font-bold text-white">{diffDays} días</span>
                                             </td>
                                             <td className="p-4">
                                                 {tenant.active ? (

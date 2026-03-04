@@ -13,7 +13,7 @@ export default function Register() {
         adminName: '',
         adminEmail: '',
         password: '',
-        plan: 'PRO'
+        plan: 'TRIAL'
     })
 
     const handleNext = (e) => {
@@ -50,15 +50,15 @@ export default function Register() {
         <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4 selection:bg-primary/30 relative overflow-hidden">
             {/* Background elements */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
 
             <div className="w-full max-w-md relative z-10 fade-in">
                 <div className="text-center mb-8">
                     <Link to="/" className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-600 mb-6 shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
                         <BookOpen className="w-8 h-8 text-white" />
                     </Link>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Comienza tu prueba</h1>
-                    <p className="text-dark-600 mt-2">Crea el workspace de tu editorial</p>
+                    <h1 className="text-3xl font-bold text-white tracking-tight">Potencia tu Editorial</h1>
+                    <p className="text-dark-600 mt-2">Control total sobre tus escandallos, regalías y catálogo</p>
                 </div>
 
                 <div className="glass-card p-8 shadow-2xl">

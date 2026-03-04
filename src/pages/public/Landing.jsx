@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BookOpen, Zap, Shield, TrendingUp, CheckCircle, ArrowRight, ChevronRight, Users, LayoutDashboard, FileText } from 'lucide-react'
+import { BookOpen, Zap, Shield, TrendingUp, CheckCircle, ArrowRight, ChevronRight, Users, LayoutDashboard, FileText, Building2 } from 'lucide-react'
 
 export default function Landing() {
     return (
@@ -26,7 +26,7 @@ export default function Landing() {
             <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
                 {/* Visual elements */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none" />
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
 
                 <div className="relative max-w-7xl mx-auto px-6 text-center z-10">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card border border-primary/20 text-primary text-xs font-semibold tracking-wide uppercase mb-6 slide-down">
@@ -34,7 +34,7 @@ export default function Landing() {
                     </div>
                     <h1 className="text-5xl lg:text-7xl font-bold tracking-tight leading-tight mb-8 slide-up">
                         Gestiona tu editorial <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-400 to-blue-400">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-teal-400 to-emerald-400">
                             de forma inteligente
                         </span>
                     </h1>
@@ -52,15 +52,15 @@ export default function Landing() {
                     </div>
 
                     {/* Dashboard Preview Mockup */}
-                    <div className="mt-20 relative mx-auto max-w-5xl rounded-2xl border border-dark-300/50 glass-card shadow-2xl shadow-primary/10 overflow-hidden slide-up delay-300">
+                    <div className="mt-20 relative mx-auto max-w-5xl rounded-2xl border border-dark-300/50 glass-card shadow-[0_0_50px_rgba(16,185,129,0.15)] overflow-hidden slide-up delay-300">
                         <div className="h-8 bg-dark-200/50 border-b border-dark-300/50 flex items-center px-4 gap-2">
                             <div className="w-3 h-3 rounded-full bg-red-400" />
                             <div className="w-3 h-3 rounded-full bg-yellow-400" />
                             <div className="w-3 h-3 rounded-full bg-green-400" />
                         </div>
                         <div className="aspect-[16/9] bg-dark-800/80 relative flex items-center justify-center">
-                            <p className="text-dark-600 font-mono text-sm">(Vista previa de la interfaz del Dashboard)</p>
-                            <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-transparent to-transparent pointer-events-none" />
+                            <img src="/dashboard-demo.webp" alt="Demo de vista de Dashboard" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent pointer-events-none" />
                         </div>
                     </div>
                 </div>
@@ -76,12 +76,12 @@ export default function Landing() {
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[
-                            { icon: LayoutDashboard, title: 'Kanban Editorial', desc: 'Gestiona manuscritos desde recepción hasta imprenta con tableros interactivos y estados personalizables.' },
-                            { icon: TrendingUp, title: 'Escandallos Precisos', desc: 'Calcula costos de impresión, tirajes y márgenes de beneficio con precisión milimétrica.' },
-                            { icon: FileText, title: 'Liquidación de Autores', desc: 'Automatiza el cálculo de regalías y la generación de informes detallados para tus escritores.' },
-                            { icon: Users, title: 'Colaboración (RBAC)', desc: 'Asigna roles a correctores, diseñadores y traductores con permisos de acceso granulares.' },
-                            { icon: Zap, title: 'Control de Inventario', desc: 'Monitorea el stock físico e ingresos por ventas en tiempo real sin salir de la plataforma.' },
-                            { icon: Shield, title: 'Trazabilidad Total', desc: 'Registro de auditoría inmutable para cada cambio, contrato y pago realizado en el sistema.' }
+                            { icon: LayoutDashboard, title: 'Kanban Editorial Visual', desc: 'Flujo estructurado. Sigue el progreso de recepción, corrección, diseño, hasta el envío a imprenta.' },
+                            { icon: FileText, title: 'Cotizaciones Formales a Imprentas', desc: 'Genera fichas técnicas limpias y emite PDFs profesionales para solicitar cotizaciones en clics.' },
+                            { icon: TrendingUp, title: 'Escandallos y Precios Reales', desc: 'Calcula tus costos por unidad tomando en cuenta tipo de papel, tiraje, comisiones y preprensa.' },
+                            { icon: Zap, title: 'Liquidación de Regalías exactas', desc: 'Cruza ventas con porcentajes contractuales, liquidando a autores transparentemente en formato PDF.' },
+                            { icon: Users, title: 'Freelancers y Autores Nativos', desc: 'Invita correctores o autores. Diseñamos escritorios únicos para que cada quien vea lo suyo.' },
+                            { icon: Shield, title: 'Workspaces 100% Seguros', desc: 'Múltiples editoriales en aislamiento (Multi-Tenant). Tu información contable y literaria nunca se cruza.' }
                         ].map((feature, i) => (
                             <div key={i} className="glass-card p-6 hover:-translate-y-1 transition-transform duration-300">
                                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
@@ -120,9 +120,9 @@ export default function Landing() {
                                     'Libros ilimitados',
                                     'Liquidación de Regalías',
                                     'Gestión de Kanban Editorial',
-                                    'Cálculo de Escandallos',
-                                    'Roles Personalizados (RBAC)',
-                                    'Auditoría y Trazabilidad Completa'
+                                    'Solicitud automática de cotizaciones (PDF)',
+                                    'Escandallos por márgenes y ventas',
+                                    'Portales independientes para tus Autores'
                                 ].map((f, j) => (
                                     <li key={j} className="flex items-center gap-3 text-sm text-dark-400">
                                         <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" /> <span className="text-white font-medium">{f}</span>
