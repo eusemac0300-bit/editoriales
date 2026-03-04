@@ -41,62 +41,6 @@ export default function SuperAdminDashboard() {
                 <p className="text-dark-600 text-sm mt-1">Supervisión Master de todas las editoriales suscritas.</p>
             </div>
 
-            {/* Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="glass-card p-5 border-l-4 border-l-emerald-500">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
-                            <Building2 className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-dark-600 text-sm font-medium">Editoriales Activas (Demo + PRO)</p>
-                            <h3 className="text-2xl font-bold text-white mt-1">{tenants.filter(t => t.active).length}</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="glass-card p-5 border-l-4 border-l-blue-500">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
-                            <Users className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-dark-600 text-sm font-medium">Administradores Registrados</p>
-                            <h3 className="text-2xl font-bold text-white mt-1">{admins.length}</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="glass-card p-5 border-l-4 border-l-amber-500">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-amber-500/10 rounded-xl text-amber-400">
-                            <CreditCard className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-dark-600 text-sm font-medium">Editoriales Pagando PRO</p>
-                            <h3 className="text-2xl font-bold text-white mt-1">
-                                {tenants.filter(t => t.plan !== 'TRIAL').length} / ${new Intl.NumberFormat('es-CL').format(tenants.filter(t => t.plan !== 'TRIAL').length * 50000)}
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="glass-card p-5 border-l-4 border-l-orange-500">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-orange-500/10 rounded-xl text-orange-400">
-                            <Activity className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p className="text-dark-600 text-sm font-medium">Estado del Sistema</p>
-                            <h3 className="text-xl font-bold text-green-400 mt-1 flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 bg-green-500 rounded-full pulse-glow"></span>
-                                Online
-                            </h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {/* Table Section */}
             <div className="glass-card rounded-2xl overflow-hidden border border-dark-300">
                 <div className="p-5 border-b border-dark-300 flex flex-col md:flex-row md:items-center justify-between gap-4">
