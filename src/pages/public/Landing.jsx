@@ -58,8 +58,8 @@ export default function Landing() {
                             <div className="w-3 h-3 rounded-full bg-yellow-400" />
                             <div className="w-3 h-3 rounded-full bg-green-400" />
                         </div>
-                        <div className="aspect-[16/9] bg-dark-800/80 relative flex items-center justify-center">
-                            <img src="/dashboard-demo.webp" alt="Demo de vista de Dashboard" className="w-full h-full object-cover" />
+                        <div className="aspect-[1.1] sm:aspect-[16/9] bg-dark-800/80 relative flex items-center justify-center">
+                            <img src="/dashboard-hero.png" alt="Demo de vista de Dashboard" className="w-full h-full object-cover object-top" />
                             <div className="absolute inset-0 bg-gradient-to-t from-dark-900 via-dark-900/40 to-transparent pointer-events-none" />
                         </div>
                     </div>
