@@ -64,44 +64,44 @@ export default function Quotes() {
         const secondaryColor = [52, 152, 219] // Blue para detalles
         const textColor = [60, 60, 60]
         const lightGray = [150, 150, 150]
-        const pageMargin = 20
+        const pageMargin = 15 // Margin reducido
 
         // Encabezado
         doc.setFont('helvetica', 'bold')
-        doc.setFontSize(22)
+        doc.setFontSize(18)
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
-        doc.text('SOLICITUD DE COTIZACIÓN', pageMargin, pageMargin + 10)
+        doc.text('SOLICITUD DE COTIZACIÓN', pageMargin, pageMargin + 5)
 
         // Línea separadora decorativa
         doc.setDrawColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
         doc.setLineWidth(0.5)
-        doc.line(pageMargin, pageMargin + 15, 190, pageMargin + 15)
+        doc.line(pageMargin, pageMargin + 9, 195, pageMargin + 9)
 
         // Fechas y Datos de Cabecera
         doc.setFont('helvetica', 'normal')
-        doc.setFontSize(10)
+        doc.setFontSize(9)
         doc.setTextColor(lightGray[0], lightGray[1], lightGray[2])
         const currentDate = new Date(quote.createdAt).toLocaleDateString('es-CL', {
             year: 'numeric', month: 'long', day: 'numeric'
         })
-        doc.text(`Fecha de emisión: ${currentDate}`, 190, pageMargin + 22, { align: 'right' })
-        doc.text(`ID Referencia: #${quote.id.substring(0, 8).toUpperCase()}`, 190, pageMargin + 27, { align: 'right' })
+        doc.text(`Fecha: ${currentDate}`, 195, pageMargin + 16, { align: 'right' })
+        doc.text(`ID Ref: #${quote.id.substring(0, 8).toUpperCase()}`, 195, pageMargin + 21, { align: 'right' })
 
         // Cuerpo: Saludo formal
-        doc.setFontSize(11)
+        doc.setFontSize(10)
         doc.setTextColor(textColor[0], textColor[1], textColor[2])
-        doc.text(`Señores`, pageMargin, pageMargin + 35)
+        doc.text(`Señores`, pageMargin, pageMargin + 26)
         doc.setFont('helvetica', 'bold')
-        doc.text(`${quote.provider}`, pageMargin, pageMargin + 40)
-        doc.text('Presente.', pageMargin, pageMargin + 45)
+        doc.text(`${quote.provider}`, pageMargin, pageMargin + 31)
+        doc.text('Presente.', pageMargin, pageMargin + 36)
 
         doc.setFont('helvetica', 'normal')
-        doc.text(`Junto con saludarles cordialmente, tenemos el agrado de solicitar a ustedes la elaboración de un presupuesto para la impresión y encuadernación de nuestra obra titulada:`, pageMargin, pageMargin + 58, { maxWidth: 170, lineHeightFactor: 1.5 })
+        doc.text(`Junto con saludarles, tenemos el agrado de solicitar a ustedes la elaboración de un presupuesto para la impresión y encuadernación de nuestra obra titulada:`, pageMargin, pageMargin + 46, { maxWidth: 180, lineHeightFactor: 1.3 })
 
         doc.setFont('helvetica', 'italic')
-        doc.setFontSize(12)
+        doc.setFontSize(11)
         doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
-        doc.text(`"${quote.bookTitle || 'Obra Sin Título'}"`, pageMargin, pageMargin + 72)
+        doc.text(`"${quote.bookTitle || 'Obra Sin Título'}"`, pageMargin, pageMargin + 54)
 
         // Cantidades solicitadas
         const quantitiesList = [
@@ -112,18 +112,18 @@ export default function Quotes() {
         ].filter(v => v && v > 0)
 
         doc.setFont('helvetica', 'normal')
-        doc.setFontSize(11)
+        doc.setFontSize(10)
         doc.setTextColor(textColor[0], textColor[1], textColor[2])
-        doc.text(`Para este requerimiento, solicitamos cotizar los siguientes tirajes:`, pageMargin, pageMargin + 85)
+        doc.text(`Cantidades a cotizar:`, pageMargin, pageMargin + 64)
 
         doc.setFont('helvetica', 'bold')
-        doc.text(`${quantitiesList.join(', ')} ejemplares.`, pageMargin, pageMargin + 92)
+        doc.text(`${quantitiesList.join(', ')} ejemplares.`, pageMargin + 35, pageMargin + 64)
 
         doc.setFont('helvetica', 'normal')
-        doc.text(`A continuación, detallamos las especificaciones técnicas requeridas para el proyecto:`, pageMargin, pageMargin + 105)
+        doc.text(`A continuación, detallamos las especificaciones técnicas requeridas:`, pageMargin, pageMargin + 73)
 
         autoTable(doc, {
-            startY: pageMargin + 112,
+            startY: pageMargin + 77,
             head: [['Especificación Técnica', 'Detalle']],
             body: [
                 ['Formato (Ancho x Alto)', `${quote.bookWidth || '-'} x ${quote.bookHeight || '-'} cm`],
@@ -153,53 +153,51 @@ export default function Quotes() {
             alternateRowStyles: {
                 fillColor: [252, 252, 252]
             },
-            styles: { fontSize: 10, cellPadding: 4, font: 'helvetica' },
+            styles: { fontSize: 9, cellPadding: 2.5, font: 'helvetica' },
             columnStyles: {
                 0: { fontStyle: 'bold', cellWidth: 70 },
                 1: { cellWidth: 100 }
             }
         })
 
-        let finalY = doc.lastAutoTable.finalY + 15
+        let finalY = doc.lastAutoTable.finalY + 8
 
         if (quote.notes) {
-            if (finalY > 230) {
+            if (finalY > 260) {
                 doc.addPage()
                 finalY = pageMargin
             }
 
             doc.setFont('helvetica', 'bold')
-            doc.setFontSize(11)
+            doc.setFontSize(10)
             doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
             doc.text('Observaciones y Notas Adicionales:', pageMargin, finalY)
 
             doc.setFont('helvetica', 'normal')
-            doc.setFontSize(10)
+            doc.setFontSize(9)
             doc.setTextColor(textColor[0], textColor[1], textColor[2])
-            const splitNotes = doc.splitTextToSize(quote.notes, 170)
-            doc.text(splitNotes, pageMargin, finalY + 7, { lineHeightFactor: 1.5 })
+            const splitNotes = doc.splitTextToSize(quote.notes, 180)
+            doc.text(splitNotes, pageMargin, finalY + 5, { lineHeightFactor: 1.3 })
 
-            finalY = finalY + (splitNotes.length * 5) + 15
+            finalY = finalY + (splitNotes.length * 4) + 12
         }
 
-        if (finalY > 250) {
+        if (finalY > 270) {
             doc.addPage()
             finalY = pageMargin
         }
 
         doc.setFont('helvetica', 'normal')
-        doc.setFontSize(11)
-        doc.text(`Quedamos a su entera disposición para resolver cualquier duda respecto a las especificaciones mencionadas y a la espera de su propuesta comercial.`, pageMargin, finalY, { maxWidth: 170, lineHeightFactor: 1.5 })
-
-        doc.text(`Agradeciendo de antemano su gestión y pronta respuesta,`, pageMargin, finalY + 18)
-        doc.text(`Atentamente,`, pageMargin, finalY + 28)
-
-        doc.setFont('helvetica', 'bold')
-        doc.text(`Departamento de Producción Editorial`, pageMargin, finalY + 38)
-        doc.setFont('helvetica', 'normal')
         doc.setFontSize(10)
+        doc.text(`Quedamos a su disposición para resolver cualquier duda y a la espera de su propuesta comercial.`, pageMargin, finalY, { maxWidth: 180, lineHeightFactor: 1.3 })
+
+        doc.text(`Atentamente,`, pageMargin, finalY + 12)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`Departamento de Producción Editorial`, pageMargin, finalY + 18)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
         doc.setTextColor(lightGray[0], lightGray[1], lightGray[2])
-        doc.text(`${window.location.hostname}`, pageMargin, finalY + 43)
+        doc.text(`${window.location.hostname}`, pageMargin, finalY + 23)
 
         const pageCount = doc.internal.getNumberOfPages()
         for (let i = 1; i <= pageCount; i++) {
@@ -207,7 +205,7 @@ export default function Quotes() {
             doc.setFont('helvetica', 'italic')
             doc.setFontSize(8)
             doc.setTextColor(lightGray[0], lightGray[1], lightGray[2])
-            doc.text(`Página ${i} de ${pageCount}`, 190, 285, { align: 'right' })
+            doc.text(`Página ${i} de ${pageCount}`, 195, 285, { align: 'right' })
         }
 
         const safeTitle = (quote.bookTitle || 'Libro').replace(/\s+/g, '_')
