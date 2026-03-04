@@ -98,10 +98,10 @@ export default function Quotes() {
         doc.setFont('helvetica', 'normal')
         doc.text(`Junto con saludarles, tenemos el agrado de solicitar a ustedes la elaboración de un presupuesto para la impresión y encuadernación de nuestra obra titulada:`, pageMargin, pageMargin + 46, { maxWidth: 180, lineHeightFactor: 1.3 })
 
-        doc.setFont('helvetica', 'italic')
-        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(12)
         doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
-        doc.text(`"${quote.bookTitle || 'Obra Sin Título'}"`, pageMargin, pageMargin + 54)
+        doc.text(`"${quote.bookTitle || 'Obra Sin Título'}"`, pageMargin, pageMargin + 56)
 
         // Cantidades solicitadas
         const quantitiesList = [
