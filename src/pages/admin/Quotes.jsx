@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { Printer, Plus, Search, Filter, Edit, Trash2, Calendar, FileText, CheckCircle, Clock, XCircle, DollarSign, Download } from 'lucide-react'
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export default function Quotes() {
     const { data, addNewQuote, updateQuoteDetails, deleteExistingQuote, formatCLP, addAuditLog } = useAuth()
@@ -67,9 +67,9 @@ export default function Quotes() {
         doc.setTextColor(50, 50, 50)
         doc.text(`Fecha Solicitud: ${new Date(quote.createdAt).toLocaleDateString()}`, 14, 30)
         doc.text(`Imprenta Destino: ${quote.provider}`, 14, 35)
-        doc.text(`Tiraje Solicitado: ${quote.requestedAmount} ejemplares`, 14, 40)
+        doc.text(`Tiraje Solicitado: ${quote.requestedAmount || 0} ejemplares`, 14, 40)
 
-        doc.autoTable({
+        autoTable(doc, {
             startY: 50,
             head: [['Especificacion', 'Detalle']],
             body: [
@@ -103,7 +103,9 @@ export default function Quotes() {
             doc.text(splitNotes, 14, finalY + 7)
         }
 
-        doc.save(`Sol_Cotizacion_${quote.bookTitle.replace(/\s+/g, '_')}_${quote.provider.replace(/\s+/g, '_')}.pdf`)
+        const safeTitle = (quote.bookTitle || 'Libro').replace(/\s+/g, '_')
+        const safeProvider = (quote.provider || 'Imprenta').replace(/\s+/g, '_')
+        doc.save(`Sol_Cotizacion_${safeTitle}_${safeProvider}.pdf`)
     }
 
     return (
