@@ -65,6 +65,7 @@ export async function loadAllData(tenantId) {
             legalDepositNumber: b.legal_deposit_number || '',
             coverType: b.cover_type || '',
             flaps: b.flaps || '',
+            flapWidth: b.flap_width || '',
             interiorPaper: b.interior_paper || '',
             coverPaper: b.cover_paper || '',
             coverFinish: b.cover_finish || '',
@@ -271,6 +272,7 @@ export async function updateBook(bookId, updates) {
     if (updates.pages !== undefined) dbUpdates.pages = updates.pages
     if (updates.coverType !== undefined) dbUpdates.cover_type = updates.coverType
     if (updates.flaps !== undefined) dbUpdates.flaps = updates.flaps
+    if (updates.flapWidth !== undefined) dbUpdates.flap_width = updates.flapWidth
     if (updates.interiorPaper !== undefined) dbUpdates.interior_paper = updates.interiorPaper
     if (updates.coverPaper !== undefined) dbUpdates.cover_paper = updates.coverPaper
     if (updates.coverFinish !== undefined) dbUpdates.cover_finish = updates.coverFinish
@@ -478,6 +480,7 @@ export async function addBook(book) {
             pages: book.pages,
             cover_type: book.coverType,
             flaps: book.flaps,
+            flap_width: book.flapWidth,
             interior_paper: book.interiorPaper,
             cover_paper: book.coverPaper,
             cover_finish: book.coverFinish,

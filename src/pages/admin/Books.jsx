@@ -177,7 +177,8 @@ function BookForm({ data, initialData, onSave, onClose }) {
         pagesColor: initialData?.pagesColor || '',
         sku: initialData?.sku || '',
         hasLegalDeposit: initialData?.hasLegalDeposit || 'No',
-        legalDepositNumber: initialData?.legalDepositNumber || ''
+        legalDepositNumber: initialData?.legalDepositNumber || '',
+        flapWidth: initialData?.flapWidth || ''
     })
     const authors = data.users.filter(u => u.role === 'AUTOR')
 
@@ -310,6 +311,12 @@ function BookForm({ data, initialData, onSave, onClose }) {
                                 <option value="Sin solapa">Sin solapas</option>
                             </select>
                         </div>
+                        {form.flaps === 'Con solapa' && (
+                            <div>
+                                <label className="text-xs text-dark-600 mb-1 block">Medida Solapa (cm)</label>
+                                <input value={form.flapWidth} onChange={e => setForm(p => ({ ...p, flapWidth: e.target.value }))} className="input-field text-sm" placeholder="Ej: 8" />
+                            </div>
+                        )}
                         <div>
                             <label className="text-xs text-dark-600 mb-1 block">Papel Interiores</label>
                             <input value={form.interiorPaper} onChange={e => setForm(p => ({ ...p, interiorPaper: e.target.value }))} className="input-field text-sm" placeholder="Ej: Ahuesado 90g" />
