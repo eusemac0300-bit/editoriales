@@ -156,6 +156,7 @@ export async function loadAllData(tenantId) {
             type: d.type,
             fileUrl: d.file_url,
             size: d.size,
+            amount: d.amount,
             uploadedBy: d.uploaded_by,
             createdAt: d.created_at
         }))
@@ -281,6 +282,7 @@ export async function addDocumentEntry(doc) {
             type: doc.type,
             file_url: doc.fileUrl,
             size: doc.size,
+            amount: doc.amount,
             uploaded_by: doc.uploadedBy
         })
     return !error
@@ -291,6 +293,7 @@ export async function updateDocumentEntry(docId, updates) {
     if (updates.name !== undefined) dbUpdates.name = updates.name
     if (updates.type !== undefined) dbUpdates.type = updates.type
     if (updates.bookId !== undefined) dbUpdates.book_id = updates.bookId
+    if (updates.amount !== undefined) dbUpdates.amount = updates.amount
 
     const { error } = await supabase
         .from('documents')
