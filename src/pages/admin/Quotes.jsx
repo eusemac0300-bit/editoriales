@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { Printer, Plus, Search, Filter, Edit, Trash2, Calendar, FileText, CheckCircle, Clock, XCircle, DollarSign, Download } from 'lucide-react'
+import { Printer, Plus, Search, Filter, Edit, Trash2, Calendar, FileText, CheckCircle, Clock, XCircle, DollarSign, Download, ChevronDown, ChevronRight } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
@@ -269,6 +269,10 @@ export default function Quotes() {
 function QuoteForm({ data, initialData, onSave, onClose }) {
     const formatMoneyStr = (val) => val === 0 || !val ? '' : new Intl.NumberFormat('es-CL').format(val)
 
+    const [showAltAmounts, setShowAltAmounts] = useState(
+        (initialData?.requestedAmount2 || initialData?.requestedAmount3 || initialData?.requestedAmount4) ? true : false
+    )
+
     const [form, setForm] = useState({
         bookId: initialData?.bookId || '',
         provider: initialData?.provider || '',
@@ -381,41 +385,57 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                             required
                         />
                     </div>
-                    <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 1 (Opcional)</label>
-                        <input
-                            type="number"
-                            min="0"
-                            value={form.requestedAmount2}
-                            onChange={e => setForm(p => ({ ...p, requestedAmount2: e.target.value }))}
-                            className="input-field text-sm"
-                            placeholder="Ej: 1000"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 2 (Opcional)</label>
-                        <input
-                            type="number"
-                            min="0"
-                            value={form.requestedAmount3}
-                            onChange={e => setForm(p => ({ ...p, requestedAmount3: e.target.value }))}
-                            className="input-field text-sm"
-                            placeholder="Ej: 1500"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 3 (Opcional)</label>
-                        <input
-                            type="number"
-                            min="0"
-                            value={form.requestedAmount4}
-                            onChange={e => setForm(p => ({ ...p, requestedAmount4: e.target.value }))}
-                            className="input-field text-sm"
-                            placeholder="Ej: 2000"
-                        />
-                    </div>
 
                     <div className="md:col-span-2">
+                        <button
+                            type="button"
+                            onClick={() => setShowAltAmounts(!showAltAmounts)}
+                            className="flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 transition-colors py-2"
+                        >
+                            {showAltAmounts ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                            Opciones de Tiraje Alternativas
+                        </button>
+
+                        {showAltAmounts && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 p-3 bg-dark-200/50 rounded-lg border border-dark-300">
+                                <div>
+                                    <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 1</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={form.requestedAmount2}
+                                        onChange={e => setForm(p => ({ ...p, requestedAmount2: e.target.value }))}
+                                        className="input-field text-sm"
+                                        placeholder="Ej: 1000"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 2</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={form.requestedAmount3}
+                                        onChange={e => setForm(p => ({ ...p, requestedAmount3: e.target.value }))}
+                                        className="input-field text-sm"
+                                        placeholder="Ej: 1500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 3</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={form.requestedAmount4}
+                                        onChange={e => setForm(p => ({ ...p, requestedAmount4: e.target.value }))}
+                                        className="input-field text-sm"
+                                        placeholder="Ej: 2000"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="md:col-span-1">
                         <label className="text-xs text-dark-600 mb-1 block">Tipo de Encuadernación</label>
                         <select
                             value={form.bindingType}
