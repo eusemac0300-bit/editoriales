@@ -246,18 +246,16 @@ export default function Documents() {
                                         <option value="Varios">Varios</option>
                                     </select>
                                 </div>
-                                {['Comprobante', 'Contrato'].includes(docType) && (
-                                    <div>
-                                        <label className="text-xs text-dark-500 block mb-1">Monto Asignado ($) (Opcional)</label>
-                                        <input
-                                            type="text"
-                                            value={docAmount ? formatCLP(docAmount) : ''}
-                                            onChange={(e) => setDocAmount(e.target.value.replace(/\D/g, ''))}
-                                            className="input-field w-full text-sm"
-                                            placeholder="$ 0"
-                                        />
-                                    </div>
-                                )}
+                                <div>
+                                    <label className="text-xs text-dark-500 block mb-1">Monto ($) (Opcional)</label>
+                                    <input
+                                        type="text"
+                                        value={docAmount ? formatCLP(docAmount) : ''}
+                                        onChange={(e) => setDocAmount(e.target.value.replace(/\D/g, ''))}
+                                        className="input-field w-full text-sm"
+                                        placeholder="$ 0"
+                                    />
+                                </div>
                                 <div>
                                     <label className="text-xs text-dark-500 block mb-1">Vincular a un Título (Opcional)</label>
                                     <select
