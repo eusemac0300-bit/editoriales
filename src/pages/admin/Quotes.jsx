@@ -129,13 +129,13 @@ export default function Quotes() {
                 ['Formato (Ancho x Alto)', `${quote.bookWidth || '-'} x ${quote.bookHeight || '-'} cm`],
                 ['Páginas B/N interiores', quote.bookPagesBw || '0'],
                 ['Páginas Color interiores', quote.bookPagesColor || '0'],
+                ['Papel Interior', quote.bookInteriorPaper || ''],
                 ['Tipo de Tapa', quote.bookCoverType || ''],
                 ['Solapas', quote.bookFlaps === 'Con solapa' ? `Sí (Ancho: ${quote.bookFlapWidth || ''} cm)` : 'No o Sin solapas'],
-                ['Papel Interior', quote.bookInteriorPaper || ''],
                 ['Papel Tapas', quote.bookCoverPaper || ''],
                 ['Terminación de Tapas', quote.bookCoverFinish || ''],
                 ['Tipo de Encuadernación', quote.bindingType || ''],
-                ['Términos u otras Terminaciones Especiales', quote.extraFinishes || 'Ninguna indicada.']
+                ['Terminaciones Especiales', quote.extraFinishes || 'Ninguna']
             ],
             theme: 'plain',
             headStyles: {
