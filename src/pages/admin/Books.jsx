@@ -173,7 +173,11 @@ function BookForm({ data, initialData, onSave, onClose }) {
         interiorPaper: initialData?.interiorPaper || '',
         coverPaper: initialData?.coverPaper || '',
         coverFinish: initialData?.coverFinish || '',
-        cover: initialData?.cover || ''
+        cover: initialData?.cover || '',
+        pagesColor: initialData?.pagesColor || '',
+        sku: initialData?.sku || '',
+        hasLegalDeposit: initialData?.hasLegalDeposit || 'No',
+        legalDepositNumber: initialData?.legalDepositNumber || ''
     })
     const authors = data.users.filter(u => u.role === 'AUTOR')
 
@@ -283,8 +287,12 @@ function BookForm({ data, initialData, onSave, onClose }) {
                             <input value={form.height} onChange={e => setForm(p => ({ ...p, height: e.target.value }))} className="input-field text-sm" placeholder="Ej: 21" />
                         </div>
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Páginas</label>
+                            <label className="text-xs text-dark-600 mb-1 block">Páginas (B/N)</label>
                             <input type="number" value={form.pages} onChange={e => setForm(p => ({ ...p, pages: e.target.value }))} className="input-field text-sm" placeholder="Ej: 320" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Páginas (Color)</label>
+                            <input type="number" value={form.pagesColor} onChange={e => setForm(p => ({ ...p, pagesColor: e.target.value }))} className="input-field text-sm" placeholder="Ej: 16" />
                         </div>
                         <div>
                             <label className="text-xs text-dark-600 mb-1 block">Tipo de Tapa</label>
@@ -320,6 +328,29 @@ function BookForm({ data, initialData, onSave, onClose }) {
                                 <option value="Sin laminado">Sin laminado</option>
                             </select>
                         </div>
+                    </div>
+                </div>
+
+                <div className="sm:col-span-2 mt-2 pt-4 border-t border-dark-300">
+                    <h4 className="text-sm font-medium text-white mb-3">Identificadores Adicionales (Opcional)</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">SKU</label>
+                            <input value={form.sku} onChange={e => setForm(p => ({ ...p, sku: e.target.value }))} className="input-field text-sm" placeholder="Ej: ED100-XXX" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Depósito Legal</label>
+                            <select value={form.hasLegalDeposit} onChange={e => setForm(p => ({ ...p, hasLegalDeposit: e.target.value }))} className="input-field text-sm">
+                                <option value="No">No</option>
+                                <option value="Sí">Sí</option>
+                            </select>
+                        </div>
+                        {form.hasLegalDeposit === 'Sí' && (
+                            <div>
+                                <label className="text-xs text-dark-600 mb-1 block">Nº Depósito Legal</label>
+                                <input value={form.legalDepositNumber} onChange={e => setForm(p => ({ ...p, legalDepositNumber: e.target.value }))} className="input-field text-sm" placeholder="Ej: 12345/2026" />
+                            </div>
+                        )}
                     </div>
                 </div>
 

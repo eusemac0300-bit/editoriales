@@ -59,6 +59,10 @@ export async function loadAllData(tenantId) {
             width: b.width || '',
             height: b.height || '',
             pages: b.pages || '',
+            pagesColor: b.pages_color || '',
+            sku: b.sku || '',
+            hasLegalDeposit: b.has_legal_deposit || 'No',
+            legalDepositNumber: b.legal_deposit_number || '',
             coverType: b.cover_type || '',
             flaps: b.flaps || '',
             interiorPaper: b.interior_paper || '',
@@ -271,6 +275,10 @@ export async function updateBook(bookId, updates) {
     if (updates.coverPaper !== undefined) dbUpdates.cover_paper = updates.coverPaper
     if (updates.coverFinish !== undefined) dbUpdates.cover_finish = updates.coverFinish
     if (updates.cover !== undefined) dbUpdates.cover = updates.cover
+    if (updates.pagesColor !== undefined) dbUpdates.pages_color = updates.pagesColor
+    if (updates.sku !== undefined) dbUpdates.sku = updates.sku
+    if (updates.hasLegalDeposit !== undefined) dbUpdates.has_legal_deposit = updates.hasLegalDeposit
+    if (updates.legalDepositNumber !== undefined) dbUpdates.legal_deposit_number = updates.legalDepositNumber
 
     const { error } = await supabase
         .from('books')
@@ -472,7 +480,11 @@ export async function addBook(book) {
             flaps: book.flaps,
             interior_paper: book.interiorPaper,
             cover_paper: book.coverPaper,
-            cover_finish: book.coverFinish
+            cover_finish: book.coverFinish,
+            pages_color: book.pagesColor,
+            sku: book.sku,
+            has_legal_deposit: book.hasLegalDeposit,
+            legal_deposit_number: book.legalDepositNumber
         })
     if (error) console.error('Error adding book:', error)
     return !error
