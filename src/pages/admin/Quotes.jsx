@@ -67,7 +67,14 @@ export default function Quotes() {
         doc.setTextColor(50, 50, 50)
         doc.text(`Fecha Solicitud: ${new Date(quote.createdAt).toLocaleDateString()}`, 14, 30)
         doc.text(`Imprenta Destino: ${quote.provider}`, 14, 35)
-        doc.text(`Tiraje Solicitado: ${quote.requestedAmount || 0} ejemplares`, 14, 40)
+        const quantitiesList = [
+            quote.requestedAmount,
+            quote.requestedAmount2,
+            quote.requestedAmount3,
+            quote.requestedAmount4
+        ].filter(v => v && v > 0)
+
+        doc.text(`Tiraje(s) Solicitado(s): ${quantitiesList.join(', ')} ejemplares`, 14, 40)
 
         autoTable(doc, {
             startY: 50,
@@ -220,8 +227,11 @@ export default function Quotes() {
                                             <p className="text-xs text-white font-medium">{quote.provider}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-dark-500 uppercase">Tiraje Solicitado</p>
-                                            <p className="text-xs text-white font-mono">{quote.requestedAmount} u.</p>
+                                            <p className="text-[10px] text-dark-500 uppercase">Tirajes</p>
+                                            <p className="text-xs text-white font-mono">
+                                                {[quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4]
+                                                    .filter(v => v && v > 0).join(', ')} u.
+                                            </p>
                                         </div>
                                         <div>
                                             <p className="text-[10px] text-dark-500 uppercase">Monto Total</p>
@@ -263,6 +273,9 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
         bookId: initialData?.bookId || '',
         provider: initialData?.provider || '',
         requestedAmount: initialData?.requestedAmount || '',
+        requestedAmount2: initialData?.requestedAmount2 || '',
+        requestedAmount3: initialData?.requestedAmount3 || '',
+        requestedAmount4: initialData?.requestedAmount4 || '',
         bindingType: initialData?.bindingType || 'Rústica Fresada PUR',
         extraFinishes: initialData?.extraFinishes || '',
         status: initialData?.status || 'Solicitada',
@@ -357,7 +370,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         />
                     </div>
                     <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Solicitado (Unidades)</label>
+                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Principal</label>
                         <input
                             type="number"
                             min="1"
@@ -369,6 +382,40 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         />
                     </div>
                     <div>
+                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 1 (Opcional)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={form.requestedAmount2}
+                            onChange={e => setForm(p => ({ ...p, requestedAmount2: e.target.value }))}
+                            className="input-field text-sm"
+                            placeholder="Ej: 1000"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 2 (Opcional)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={form.requestedAmount3}
+                            onChange={e => setForm(p => ({ ...p, requestedAmount3: e.target.value }))}
+                            className="input-field text-sm"
+                            placeholder="Ej: 1500"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 3 (Opcional)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={form.requestedAmount4}
+                            onChange={e => setForm(p => ({ ...p, requestedAmount4: e.target.value }))}
+                            className="input-field text-sm"
+                            placeholder="Ej: 2000"
+                        />
+                    </div>
+
+                    <div className="md:col-span-2">
                         <label className="text-xs text-dark-600 mb-1 block">Tipo de Encuadernación</label>
                         <select
                             value={form.bindingType}

@@ -176,12 +176,14 @@ export async function loadAllData(tenantId) {
             createdAt: d.created_at
         }))
 
-        // Transform quotes
         const transformedQuotes = (quotes || []).map(q => ({
             id: q.id,
             bookId: q.book_id,
             provider: q.provider,
             requestedAmount: q.requested_amount,
+            requestedAmount2: q.requested_amount_2,
+            requestedAmount3: q.requested_amount_3,
+            requestedAmount4: q.requested_amount_4,
             bindingType: q.binding_type,
             extraFinishes: q.extra_finishes,
             status: q.status,
@@ -659,6 +661,9 @@ export async function addQuoteToDb(quote) {
             book_id: quote.bookId,
             provider: quote.provider,
             requested_amount: quote.requestedAmount,
+            requested_amount_2: quote.requestedAmount2 || 0,
+            requested_amount_3: quote.requestedAmount3 || 0,
+            requested_amount_4: quote.requestedAmount4 || 0,
             binding_type: quote.bindingType,
             extra_finishes: quote.extraFinishes,
             status: quote.status,
@@ -691,6 +696,9 @@ export async function updateQuoteInDb(quoteId, updates) {
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes
     if (updates.provider !== undefined) dbUpdates.provider = updates.provider
     if (updates.requestedAmount !== undefined) dbUpdates.requested_amount = updates.requestedAmount
+    if (updates.requestedAmount2 !== undefined) dbUpdates.requested_amount_2 = updates.requestedAmount2
+    if (updates.requestedAmount3 !== undefined) dbUpdates.requested_amount_3 = updates.requestedAmount3
+    if (updates.requestedAmount4 !== undefined) dbUpdates.requested_amount_4 = updates.requestedAmount4
     if (updates.bindingType !== undefined) dbUpdates.binding_type = updates.bindingType
     if (updates.extraFinishes !== undefined) dbUpdates.extra_finishes = updates.extraFinishes
     dbUpdates.updated_at = new Date().toISOString()
