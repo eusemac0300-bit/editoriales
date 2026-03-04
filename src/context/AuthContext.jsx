@@ -448,7 +448,8 @@ export function AuthProvider({ children }) {
                     finances: { invoices: [], royalties: [] },
                     auditLog: [],
                     comments: [],
-                    alerts: []
+                    alerts: [],
+                    quotes: []
                 })
                 // Trigger a hard reload from db just to be sure
                 await reloadData()
@@ -498,6 +499,40 @@ export function AuthProvider({ children }) {
         }
     }, [supabaseConnected])
 
+    const addNewQuote = useCallback(async (quoteData) => {
+        lastLocalChangeRef.current = Date.now()
+        const quote = { ...quoteData, tenantId: user?.tenantId }
+        setData(prev => ({
+            ...prev,
+            quotes: [quote, ...(prev.quotes || [])]
+        }))
+        if (supabaseConnected) {
+            await db.addQuoteToDb(quote)
+        }
+    }, [user, supabaseConnected])
+
+    const updateQuoteDetails = useCallback(async (quoteId, updates) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            quotes: (prev.quotes || []).map(q => q.id === quoteId ? { ...q, ...updates } : q)
+        }))
+        if (supabaseConnected) {
+            await db.updateQuoteInDb(quoteId, updates)
+        }
+    }, [supabaseConnected])
+
+    const deleteExistingQuote = useCallback(async (quoteId) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            quotes: (prev.quotes || []).filter(q => q.id !== quoteId)
+        }))
+        if (supabaseConnected) {
+            await db.deleteQuoteFromDb(quoteId)
+        }
+    }, [supabaseConnected])
+
     const value = {
         user, data, setData, login, logout, hasPermission,
         isSuperAdmin, isAdmin, isFreelance, isAutor, resetWorkspace,
@@ -507,6 +542,7 @@ export function AuthProvider({ children }) {
         markAlertAsRead, markAllAlerts, updateProfile,
         addNewUser, updateExistingUser, deleteExistingUser,
         addDocument, editDocument, deleteDocument,
+        addNewQuote, updateQuoteDetails, deleteExistingQuote,
         loading, supabaseConnected
     }
 

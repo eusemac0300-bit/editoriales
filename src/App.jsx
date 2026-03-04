@@ -26,6 +26,7 @@ import Books from './pages/admin/Books'
 import Documents from './pages/admin/Documents'
 import UsersPage from './pages/admin/Users'
 import Reports from './pages/admin/Reports'
+import Quotes from './pages/admin/Quotes'
 
 // Freelance pages
 import FreelanceKanban from './pages/freelance/FreelanceKanban'
@@ -68,6 +69,7 @@ function AppRoutes() {
                 <Route path="inventario" element={<Inventory />} />
                 <Route path="kanban" element={<Kanban />} />
                 <Route path="escandallo" element={<Escandallo />} />
+                <Route path="cotizaciones" element={<Quotes />} />
                 <Route path="liquidaciones" element={<Royalties />} />
                 <Route path="libros" element={<Books />} />
                 <Route path="documentos" element={<Documents />} />

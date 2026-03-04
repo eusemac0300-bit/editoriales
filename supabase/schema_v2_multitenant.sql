@@ -5,11 +5,12 @@
 -- =============================================
 
 -- Limpiar tablas existentes para re-crear con tenant_id
+DROP TABLE IF EXISTS quotes CASCADE;
 DROP TABLE IF EXISTS alerts CASCADE;
 DROP TABLE IF EXISTS comments CASCADE;
 DROP TABLE IF EXISTS audit_log CASCADE;
 DROP TABLE IF EXISTS royalties CASCADE;
-DROP TABLE IF EXISTS invoices CASCADE;
+DROP TABLE IF EXISTS quotes CASCADE;
 DROP TABLE IF EXISTS inventory_digital CASCADE;
 DROP TABLE IF EXISTS inventory_physical CASCADE;
 DROP TABLE IF EXISTS books CASCADE;
@@ -148,6 +149,34 @@ CREATE TABLE alerts (
     read BOOLEAN DEFAULT false
 );
 
+-- 10. COTIZACIONES
+CREATE TABLE quotes (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT REFERENCES tenants(id) ON DELETE CASCADE,
+    book_id TEXT REFERENCES books(id) ON DELETE SET NULL,
+    provider TEXT NOT NULL,
+    requested_amount NUMERIC NOT NULL DEFAULT 0,
+    binding_type TEXT,
+    extra_finishes TEXT,
+    status TEXT DEFAULT 'Solicitada',
+    quoted_amount NUMERIC DEFAULT 0,
+    delivery_date DATE,
+    notes TEXT,
+    book_title TEXT,
+    book_width TEXT,
+    book_height TEXT,
+    book_pages_bw TEXT,
+    book_pages_color TEXT,
+    book_cover_type TEXT,
+    book_flaps TEXT,
+    book_flap_width TEXT,
+    book_interior_paper TEXT,
+    book_cover_paper TEXT,
+    book_cover_finish TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- =============================================
 -- CONFIGURACIÓN REALTIME
 -- =============================================
@@ -165,7 +194,7 @@ ALTER TABLE alerts REPLICA IDENTITY FULL;
 -- Re-crear publicación (si existe, la borramos y la creamos)
 DROP PUBLICATION IF EXISTS supabase_realtime;
 CREATE PUBLICATION supabase_realtime FOR TABLE 
-    users, books, inventory_physical, invoices, royalties, comments, audit_log, alerts;
+    users, books, inventory_physical, invoices, royalties, comments, audit_log, alerts, quotes;
 
 -- =============================================
 -- HABILITAR RLS (Row Level Security) Básico
@@ -180,6 +209,7 @@ ALTER TABLE royalties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alerts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
 
 -- Políticas públicas (Se asume filtro a nivel de aplicación (app-level isolation) para simplificar la migración frontend actual)
 CREATE POLICY "Public Tenant Access" ON tenants FOR ALL USING (true) WITH CHECK (true);
@@ -192,6 +222,7 @@ CREATE POLICY "Public Royalties Access" ON royalties FOR ALL USING (true) WITH C
 CREATE POLICY "Public Audit Access" ON audit_log FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public Comments Access" ON comments FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public Alerts Access" ON alerts FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public Quotes Access" ON quotes FOR ALL USING (true) WITH CHECK (true);
 
 -- =============================================
 -- DATOS INICIALES (SEED) - TENANT TEST

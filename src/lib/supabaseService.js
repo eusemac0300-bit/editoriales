@@ -14,7 +14,8 @@ export async function loadAllData(tenantId) {
             { data: auditLog, error: auditErr },
             { data: comments, error: commentsErr },
             { data: alerts, error: alertsErr },
-            { data: documents, error: docsErr }
+            { data: documents, error: docsErr },
+            { data: quotes, error: quotesErr }
         ] = await Promise.all([
             supabase.from('users').select('*').eq('tenant_id', tenantId),
             supabase.from('books').select('*').eq('tenant_id', tenantId),
@@ -25,7 +26,8 @@ export async function loadAllData(tenantId) {
             supabase.from('audit_log').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
             supabase.from('comments').select('*').eq('tenant_id', tenantId).order('date', { ascending: true }),
             supabase.from('alerts').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
-            supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false })
+            supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+            supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false })
         ])
 
         const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean)
@@ -34,7 +36,7 @@ export async function loadAllData(tenantId) {
             return null
         }
 
-        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr].filter(Boolean)
+        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr].filter(Boolean)
         if (nonCriticalErrors.length > 0) {
             console.warn('Supabase non-critical load errors (missing features):', nonCriticalErrors)
         }
@@ -174,6 +176,33 @@ export async function loadAllData(tenantId) {
             createdAt: d.created_at
         }))
 
+        // Transform quotes
+        const transformedQuotes = (quotes || []).map(q => ({
+            id: q.id,
+            bookId: q.book_id,
+            provider: q.provider,
+            requestedAmount: q.requested_amount,
+            bindingType: q.binding_type,
+            extraFinishes: q.extra_finishes,
+            status: q.status,
+            quotedAmount: q.quoted_amount,
+            deliveryDate: q.delivery_date,
+            notes: q.notes,
+            bookTitle: q.book_title,
+            bookWidth: q.book_width,
+            bookHeight: q.book_height,
+            bookPagesBw: q.book_pages_bw,
+            bookPagesColor: q.book_pages_color,
+            bookCoverType: q.book_cover_type,
+            bookFlaps: q.book_flaps,
+            bookFlapWidth: q.book_flap_width,
+            bookInteriorPaper: q.book_interior_paper,
+            bookCoverPaper: q.book_cover_paper,
+            bookCoverFinish: q.book_cover_finish,
+            createdAt: q.created_at,
+            updatedAt: q.updated_at
+        }))
+
         return {
             users: transformedUsers,
             books: transformedBooks,
@@ -188,7 +217,8 @@ export async function loadAllData(tenantId) {
             auditLog: transformedAudit,
             comments: transformedComments,
             alerts: transformedAlerts,
-            documents: transformedDocuments
+            documents: transformedDocuments,
+            quotes: transformedQuotes
         }
     } catch (err) {
         console.error('Failed to load data from Supabase:', err)
@@ -616,6 +646,69 @@ export async function deleteUser(userId) {
         .delete()
         .eq('id', userId)
     if (error) console.error('Error deleting user:', error)
+    return !error
+}
+
+// ============ QUOTES ============
+export async function addQuoteToDb(quote) {
+    const { error } = await supabase
+        .from('quotes')
+        .insert({
+            id: quote.id,
+            tenant_id: quote.tenantId,
+            book_id: quote.bookId,
+            provider: quote.provider,
+            requested_amount: quote.requestedAmount,
+            binding_type: quote.bindingType,
+            extra_finishes: quote.extraFinishes,
+            status: quote.status,
+            quoted_amount: quote.quotedAmount,
+            delivery_date: quote.deliveryDate,
+            notes: quote.notes,
+            book_title: quote.bookTitle,
+            book_width: quote.bookWidth,
+            book_height: quote.bookHeight,
+            book_pages_bw: quote.bookPagesBw,
+            book_pages_color: quote.bookPagesColor,
+            book_cover_type: quote.bookCoverType,
+            book_flaps: quote.bookFlaps,
+            book_flap_width: quote.bookFlapWidth,
+            book_interior_paper: quote.bookInteriorPaper,
+            book_cover_paper: quote.bookCoverPaper,
+            book_cover_finish: quote.bookCoverFinish,
+            created_at: quote.createdAt,
+            updated_at: quote.updatedAt
+        })
+    if (error) console.error('Error adding quote:', error)
+    return !error
+}
+
+export async function updateQuoteInDb(quoteId, updates) {
+    const dbUpdates = {}
+    if (updates.status !== undefined) dbUpdates.status = updates.status
+    if (updates.quotedAmount !== undefined) dbUpdates.quoted_amount = updates.quotedAmount
+    if (updates.deliveryDate !== undefined) dbUpdates.delivery_date = updates.deliveryDate
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes
+    if (updates.provider !== undefined) dbUpdates.provider = updates.provider
+    if (updates.requestedAmount !== undefined) dbUpdates.requested_amount = updates.requestedAmount
+    if (updates.bindingType !== undefined) dbUpdates.binding_type = updates.bindingType
+    if (updates.extraFinishes !== undefined) dbUpdates.extra_finishes = updates.extraFinishes
+    dbUpdates.updated_at = new Date().toISOString()
+
+    const { error } = await supabase
+        .from('quotes')
+        .update(dbUpdates)
+        .eq('id', quoteId)
+    if (error) console.error('Error updating quote:', error)
+    return !error
+}
+
+export async function deleteQuoteFromDb(quoteId) {
+    const { error } = await supabase
+        .from('quotes')
+        .delete()
+        .eq('id', quoteId)
+    if (error) console.error('Error deleting quote:', error)
     return !error
 }
 

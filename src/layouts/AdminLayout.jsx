@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import {
     BookOpen, LayoutDashboard, Package, Kanban, Calculator,
     DollarSign, FileText, Users, Bell, ClipboardList,
-    FolderOpen, LogOut, Menu, X, ChevronDown, AlertTriangle
+    FolderOpen, LogOut, Menu, X, ChevronDown, AlertTriangle, Printer
 } from 'lucide-react'
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
     { to: '/admin/inventario', icon: Package, label: 'Inventario' },
     { to: '/admin/kanban', icon: Kanban, label: 'Producción' },
     { to: '/admin/escandallo', icon: Calculator, label: 'Escandallo' },
+    { to: '/admin/cotizaciones', icon: Printer, label: 'Cotizaciones' },
     { to: '/admin/liquidaciones', icon: DollarSign, label: 'Liquidaciones' },
     { to: '/admin/libros', icon: FileText, label: 'Títulos' },
     { to: '/admin/documentos', icon: FolderOpen, label: 'Documentos' },
