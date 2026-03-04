@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { Printer, Plus, Search, Filter, Edit, Trash2, Calendar, FileText, CheckCircle, Clock, XCircle, DollarSign } from 'lucide-react'
+import { Printer, Plus, Search, Filter, Edit, Trash2, Calendar, FileText, CheckCircle, Clock, XCircle, DollarSign, Download } from 'lucide-react'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 
 export default function Quotes() {
     const { data, addNewQuote, updateQuoteDetails, deleteExistingQuote, formatCLP, addAuditLog } = useAuth()
@@ -52,6 +54,56 @@ export default function Quotes() {
             case 'Rechazada': return <XCircle className="w-4 h-4 text-red-400" />
             default: return <Clock className="w-4 h-4 text-dark-400" />
         }
+    }
+
+    const generateQuotePDF = (quote) => {
+        const doc = new jsPDF()
+
+        doc.setFontSize(22)
+        doc.setTextColor(41, 128, 185)
+        doc.text('Solicitud de Cotizacion', 14, 20)
+
+        doc.setFontSize(10)
+        doc.setTextColor(50, 50, 50)
+        doc.text(`Fecha Solicitud: ${new Date(quote.createdAt).toLocaleDateString()}`, 14, 30)
+        doc.text(`Imprenta Destino: ${quote.provider}`, 14, 35)
+        doc.text(`Tiraje Solicitado: ${quote.requestedAmount} ejemplares`, 14, 40)
+
+        doc.autoTable({
+            startY: 50,
+            head: [['Especificacion', 'Detalle']],
+            body: [
+                ['Obra a imprimir', quote.bookTitle || ''],
+                ['Formato (Ancho x Alto)', `${quote.bookWidth || '-'} x ${quote.bookHeight || '-'} cm`],
+                ['Paginas B/N interiores', quote.bookPagesBw || '0'],
+                ['Paginas Color interiores', quote.bookPagesColor || '0'],
+                ['Tipo de Tapa', quote.bookCoverType || ''],
+                ['Solapas', quote.bookFlaps === 'Con solapa' ? `Si (${quote.bookFlapWidth || ''} cm)` : 'No'],
+                ['Papel Interior', quote.bookInteriorPaper || ''],
+                ['Papel Tapas', quote.bookCoverPaper || ''],
+                ['Laminado de Tapas', quote.bookCoverFinish || ''],
+                ['Tipo de Encuadernacion', quote.bindingType || ''],
+                ['Terminaciones Especiales', quote.extraFinishes || 'Ninguna']
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+            styles: { fontSize: 10, cellPadding: 3 }
+        })
+
+        const finalY = doc.lastAutoTable.finalY + 15
+
+        if (quote.notes) {
+            doc.setFontSize(12)
+            doc.setTextColor(41, 128, 185)
+            doc.text('Observaciones y Notas:', 14, finalY)
+
+            doc.setFontSize(10)
+            doc.setTextColor(50, 50, 50)
+            const splitNotes = doc.splitTextToSize(quote.notes, 180)
+            doc.text(splitNotes, 14, finalY + 7)
+        }
+
+        doc.save(`Sol_Cotizacion_${quote.bookTitle.replace(/\s+/g, '_')}_${quote.provider.replace(/\s+/g, '_')}.pdf`)
     }
 
     return (
@@ -125,6 +177,13 @@ export default function Quotes() {
                             filteredQuotes.map(quote => (
                                 <div key={quote.id} className="glass-card p-5 relative group border-l-4 border-l-primary/50">
                                     <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => generateQuotePDF(quote)}
+                                            className="p-1.5 bg-dark-200 hover:bg-blue-500/20 rounded text-blue-400 hover:text-blue-300 transition-colors"
+                                            title="Descargar PDF de Solicitud"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                        </button>
                                         <button
                                             onClick={() => setEditingQuote(quote)}
                                             className="p-1.5 bg-dark-200 hover:bg-dark-300 rounded text-dark-500 hover:text-white transition-colors"
