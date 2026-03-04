@@ -58,6 +58,12 @@ export function AuthProvider({ children }) {
 
                     if (savedLocal && (hasMoreLocalBooks || hasMoreLocalUsers || isCloudEmpty)) {
                         console.log('⚠️ Historial local detectado. Migrando a la nube automática y silenciosamente...');
+
+                        // Preserve quotes if savedLocal does not have them yet
+                        if (!savedLocal.quotes && supabaseData.quotes) {
+                            savedLocal.quotes = supabaseData.quotes
+                        }
+
                         setData(savedLocal);
                         setSupabaseConnected(true);
 
@@ -132,6 +138,7 @@ export function AuthProvider({ children }) {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_physical' }, () => scheduleReload())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'royalties' }, () => scheduleReload())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' }, () => scheduleReload())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'quotes' }, () => scheduleReload())
             .subscribe((status) => {
                 console.log('📡 Realtime status:', status)
             })
