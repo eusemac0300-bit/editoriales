@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2 } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload } from 'lucide-react'
 
 export default function Books() {
     const { data, addNewBook, updateBookDetails, deleteExistingBook, formatCLP, addAuditLog } = useAuth()
@@ -153,6 +154,8 @@ export default function Books() {
 }
 
 function BookForm({ data, initialData, onSave, onClose }) {
+    const { user } = useAuth()
+    const [isUploadingCover, setIsUploadingCover] = useState(false)
     const [form, setForm] = useState({
         title: initialData?.title || '',
         authorId: initialData?.authorId || '',
@@ -161,9 +164,41 @@ function BookForm({ data, initialData, onSave, onClose }) {
         royaltyPercent: initialData?.royaltyPercent || 10,
         advance: initialData?.advance || 0,
         pvp: initialData?.pvp || 0,
-        synopsis: initialData?.synopsis || ''
+        synopsis: initialData?.synopsis || '',
+        width: initialData?.width || '',
+        height: initialData?.height || '',
+        pages: initialData?.pages || '',
+        coverType: initialData?.coverType || '',
+        flaps: initialData?.flaps || '',
+        interiorPaper: initialData?.interiorPaper || '',
+        coverPaper: initialData?.coverPaper || '',
+        coverFinish: initialData?.coverFinish || '',
+        cover: initialData?.cover || ''
     })
     const authors = data.users.filter(u => u.role === 'AUTOR')
+
+    const handleCoverUpload = async (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+        if (file.size > 5 * 1024 * 1024) {
+            alert('La imagen no puede pesar más de 5MB')
+            return
+        }
+        setIsUploadingCover(true)
+        try {
+            const fileName = `${user.tenantId}/covers/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+            const { error: uploadErr } = await supabase.storage.from('editorial_documents').upload(fileName, file)
+            if (uploadErr) throw uploadErr
+
+            const { data: publicUrlData } = supabase.storage.from('editorial_documents').getPublicUrl(fileName)
+            setForm(p => ({ ...p, cover: publicUrlData.publicUrl }))
+        } catch (err) {
+            console.error(err)
+            alert('Error al subir la imagen. Verifica tu conexión a internet o los permisos de base de datos.')
+        } finally {
+            setIsUploadingCover(false)
+        }
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -183,7 +218,6 @@ function BookForm({ data, initialData, onSave, onClose }) {
             bookData.assignedTo = []
             bookData.contractExpiry = null
             bookData.createdAt = new Date().toISOString().split('T')[0]
-            bookData.cover = null
         }
 
         await onSave(bookData)
@@ -235,6 +269,89 @@ function BookForm({ data, initialData, onSave, onClose }) {
                 <div className="sm:col-span-2">
                     <label className="text-xs text-dark-600 mb-1 block">Sinopsis</label>
                     <textarea value={form.synopsis} onChange={e => setForm(p => ({ ...p, synopsis: e.target.value }))} className="input-field text-sm" rows={2} />
+                </div>
+
+                <div className="sm:col-span-2 mt-2 pt-4 border-t border-dark-300">
+                    <h4 className="text-sm font-medium text-white mb-3">Detalles Físicos y Técnicos (Opcional)</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Ancho (cm)</label>
+                            <input value={form.width} onChange={e => setForm(p => ({ ...p, width: e.target.value }))} className="input-field text-sm" placeholder="Ej: 14" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Alto (cm)</label>
+                            <input value={form.height} onChange={e => setForm(p => ({ ...p, height: e.target.value }))} className="input-field text-sm" placeholder="Ej: 21" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Páginas</label>
+                            <input type="number" value={form.pages} onChange={e => setForm(p => ({ ...p, pages: e.target.value }))} className="input-field text-sm" placeholder="Ej: 320" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Tipo de Tapa</label>
+                            <select value={form.coverType} onChange={e => setForm(p => ({ ...p, coverType: e.target.value }))} className="input-field text-sm">
+                                <option value="">Indefinido</option>
+                                <option value="Blanda">Tapa Blanda (Rústica)</option>
+                                <option value="Dura">Tapa Dura (Cartoné)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Solapas</label>
+                            <select value={form.flaps} onChange={e => setForm(p => ({ ...p, flaps: e.target.value }))} className="input-field text-sm">
+                                <option value="">Indefinido</option>
+                                <option value="Con solapa">Con solapas</option>
+                                <option value="Sin solapa">Sin solapas</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Papel Interiores</label>
+                            <input value={form.interiorPaper} onChange={e => setForm(p => ({ ...p, interiorPaper: e.target.value }))} className="input-field text-sm" placeholder="Ej: Ahuesado 90g" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Papel Tapas</label>
+                            <input value={form.coverPaper} onChange={e => setForm(p => ({ ...p, coverPaper: e.target.value }))} className="input-field text-sm" placeholder="Ej: Cartulina 250g" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Laminado Tapa</label>
+                            <select value={form.coverFinish} onChange={e => setForm(p => ({ ...p, coverFinish: e.target.value }))} className="input-field text-sm">
+                                <option value="">Indefinido</option>
+                                <option value="Brillante">Brillante</option>
+                                <option value="Mate">Mate</option>
+                                <option value="Soft Touch">Soft Touch</option>
+                                <option value="Sin laminado">Sin laminado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="sm:col-span-2 mb-2">
+                    <label className="text-xs text-dark-600 mb-1 block">Imagen de Portada (Opcional)</label>
+                    <div className="flex items-center gap-4 p-3 bg-dark-200 border border-dark-300 rounded-lg">
+                        {form.cover ? (
+                            <img src={form.cover} alt="Cover preview" className="w-16 h-20 object-cover rounded shadow border border-dark-400" />
+                        ) : (
+                            <div className="w-16 h-20 bg-dark-300 rounded flex items-center justify-center border border-dark-400 border-dashed">
+                                <ImageIcon className="w-6 h-6 text-dark-500" />
+                            </div>
+                        )}
+                        <div className="flex-1">
+                            <input
+                                type="file"
+                                accept="image/png, image/jpeg, image/webp"
+                                className="hidden"
+                                id="cover-upload"
+                                onChange={handleCoverUpload}
+                                disabled={isUploadingCover}
+                            />
+                            <label
+                                htmlFor="cover-upload"
+                                className={`btn-secondary text-xs inline-flex items-center gap-2 cursor-pointer ${isUploadingCover ? 'opacity-50' : ''}`}
+                            >
+                                <Upload className="w-3 h-3" />
+                                {isUploadingCover ? 'Subiendo...' : 'Subir Imagen'}
+                            </label>
+                            <p className="text-[10px] text-dark-500 mt-2">Formatos aceptados: JPG, PNG, WEBP. Máx: 5MB.</p>
+                        </div>
+                    </div>
                 </div>
                 <div className="sm:col-span-2 flex gap-2 justify-end mt-2">
                     <button type="button" onClick={onClose} className="btn-secondary text-sm">Cancelar</button>

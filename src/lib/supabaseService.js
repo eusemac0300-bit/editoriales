@@ -56,6 +56,14 @@ export async function loadAllData(tenantId) {
             createdAt: b.created_at,
             cover: b.cover,
             synopsis: b.synopsis,
+            width: b.width || '',
+            height: b.height || '',
+            pages: b.pages || '',
+            coverType: b.cover_type || '',
+            flaps: b.flaps || '',
+            interiorPaper: b.interior_paper || '',
+            coverPaper: b.cover_paper || '',
+            coverFinish: b.cover_finish || '',
             tiraje: b.tiraje || 0,
             escandalloCosts: b.escandallo_costs || { edicion: 0, correccion: 0, maquetacion: 0, diseno: 0, impresion: 0, marketing: 0, distribucion: 0, otros: 0 }
         }))
@@ -254,6 +262,15 @@ export async function updateBook(bookId, updates) {
     if (updates.isbn !== undefined) dbUpdates.isbn = updates.isbn
     if (updates.tiraje !== undefined) dbUpdates.tiraje = updates.tiraje
     if (updates.escandalloCosts !== undefined) dbUpdates.escandallo_costs = updates.escandalloCosts
+    if (updates.width !== undefined) dbUpdates.width = updates.width
+    if (updates.height !== undefined) dbUpdates.height = updates.height
+    if (updates.pages !== undefined) dbUpdates.pages = updates.pages
+    if (updates.coverType !== undefined) dbUpdates.cover_type = updates.coverType
+    if (updates.flaps !== undefined) dbUpdates.flaps = updates.flaps
+    if (updates.interiorPaper !== undefined) dbUpdates.interior_paper = updates.interiorPaper
+    if (updates.coverPaper !== undefined) dbUpdates.cover_paper = updates.coverPaper
+    if (updates.coverFinish !== undefined) dbUpdates.cover_finish = updates.coverFinish
+    if (updates.cover !== undefined) dbUpdates.cover = updates.cover
 
     const { error } = await supabase
         .from('books')
@@ -447,7 +464,15 @@ export async function addBook(book) {
             contract_expiry: book.contractExpiry,
             created_at: book.createdAt,
             cover: book.cover,
-            synopsis: book.synopsis
+            synopsis: book.synopsis,
+            width: book.width,
+            height: book.height,
+            pages: book.pages,
+            cover_type: book.coverType,
+            flaps: book.flaps,
+            interior_paper: book.interiorPaper,
+            cover_paper: book.coverPaper,
+            cover_finish: book.coverFinish
         })
     if (error) console.error('Error adding book:', error)
     return !error
