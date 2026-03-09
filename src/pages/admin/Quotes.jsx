@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase'
 export default function Quotes() {
     const { data, addNewQuote, updateQuoteDetails, deleteExistingQuote, formatCLP, addAuditLog } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
+    const [editingQuote, setEditingQuote] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState('All')
     const [poModalQuote, setPoModalQuote] = useState(null)
