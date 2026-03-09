@@ -29,7 +29,7 @@ export async function loadAllData(tenantId) {
             supabase.from('alerts').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
             supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
-            supabase.from('sales').select('*').eq('tenant_id', tenantId).order('sale_date', { ascending: false })
+            supabase.from('sales').select('*, books(title)').eq('tenant_id', tenantId).order('sale_date', { ascending: false })
         ])
 
         const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean)
@@ -214,6 +214,7 @@ export async function loadAllData(tenantId) {
             id: s.id,
             tenantId: s.tenant_id,
             bookId: s.book_id,
+            bookTitle: s.book_title || s.books?.title || '',
             channel: s.channel,
             type: s.type,
             quantity: s.quantity,
@@ -832,6 +833,7 @@ export async function addSaleToDb(sale) {
             id: sale.id,
             tenant_id: sale.tenantId,
             book_id: sale.bookId,
+            book_title: sale.bookTitle || '',
             channel: sale.channel,
             type: sale.type,
             quantity: sale.quantity,
