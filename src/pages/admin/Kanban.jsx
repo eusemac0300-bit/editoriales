@@ -91,7 +91,7 @@ export default function Kanban() {
             </div>
 
             <div className="overflow-x-auto pb-4">
-                <div className="flex gap-4 min-w-max">
+                <div className="flex gap-2 xl:gap-4 w-full h-full">
                     {STAGES.map(stage => {
                         const stageBooks = books.filter(b => b.status === stage)
                         return (

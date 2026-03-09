@@ -39,47 +39,47 @@ body {
   .glass-card {
     @apply bg-dark-100/80 backdrop-blur-sm border border-dark-300 rounded-xl;
   }
-  
+
   .glass-card-hover {
     @apply glass-card transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5;
   }
-  
+
   .btn-primary {
     @apply bg-primary hover:bg-primary-600 text-white font-medium px-4 py-2.5 rounded-lg transition-all duration-200 active:scale-[0.98] shadow-lg shadow-primary/20;
   }
-  
+
   .btn-secondary {
     @apply bg-dark-200 hover:bg-dark-300 text-dark-900 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 border border-dark-400;
   }
-  
+
   .btn-danger {
     @apply bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 border border-red-500/20;
   }
-  
+
   .input-field {
     @apply w-full bg-dark-50 border border-dark-300 rounded-lg px-4 py-2.5 text-dark-900 placeholder:text-dark-600 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all duration-200;
   }
-  
+
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
-  
+
   .badge-blue {
     @apply badge bg-primary/15 text-primary-300 border border-primary/20;
   }
-  
+
   .badge-green {
     @apply badge bg-emerald-500/15 text-emerald-400 border border-emerald-500/20;
   }
-  
+
   .badge-yellow {
     @apply badge bg-amber-500/15 text-amber-400 border border-amber-500/20;
   }
-  
+
   .badge-red {
     @apply badge bg-red-500/15 text-red-400 border border-red-500/20;
   }
-  
+
   .badge-purple {
     @apply badge bg-purple-500/15 text-purple-400 border border-purple-500/20;
   }
@@ -97,7 +97,7 @@ body {
   }
 
   .kanban-column {
-    @apply bg-dark-50/50 rounded-xl p-3 min-w-[280px] max-w-[280px] flex flex-col gap-2;
+    @apply bg-dark-50/50 rounded-xl p-2 md:p-3 flex-1 min-w-[160px] xl:min-w-[0] flex flex-col gap-2 transition-all;
   }
 
   .kanban-card {
@@ -126,23 +126,49 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(19, 127, 236, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(19, 127, 236, 0); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(19, 127, 236, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(19, 127, 236, 0);
+  }
 }
 
 .pulse-glow {
