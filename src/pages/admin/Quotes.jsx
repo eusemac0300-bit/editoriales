@@ -402,15 +402,6 @@ export default function Quotes() {
                                                 <ExternalLink className="w-4 h-4" />
                                             </a>
                                         )}
-                                        {quote.status === 'Aprobada' && (
-                                            <button
-                                                onClick={() => generatePOPDF(quote)}
-                                                className="p-1.5 bg-dark-200 hover:bg-green-500/20 rounded text-green-400 hover:text-green-300 transition-colors"
-                                                title="Generar Orden de Compra (OC)"
-                                            >
-                                                <FileText className="w-4 h-4" />
-                                            </button>
-                                        )}
                                         <button
                                             onClick={() => generateQuotePDF(quote)}
                                             className="p-1.5 bg-dark-200 hover:bg-blue-500/20 rounded text-blue-400 hover:text-blue-300 transition-colors"
@@ -493,6 +484,18 @@ export default function Quotes() {
                                             {quote.extraFinishes && <span className="w-full mt-1 text-primary-400"><strong className="text-dark-500">Terminaciones Ex:</strong> {quote.extraFinishes}</span>}
                                         </div>
                                     </div>
+
+                                    {/* Action Footers */}
+                                    {quote.status === 'Aprobada' && (
+                                        <div className="mt-4 pt-4 border-t border-dark-300">
+                                            <button
+                                                onClick={() => generatePOPDF(quote)}
+                                                className="w-full bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 border border-emerald-500/30 flex items-center justify-center gap-2 text-sm"
+                                            >
+                                                <FileText className="w-4 h-4" /> Generar Orden de Compra en PDF
+                                            </button>
+                                        </div>
+                                    )}
 
                                 </div>
                             ))
