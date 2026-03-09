@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban } from 'lucide-react'
+import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban, QrCode, Download, X } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
+import Barcode from 'react-barcode'
 
 const STAGES = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
 const stageColors = {
@@ -13,6 +15,7 @@ export default function Books() {
     const { data, addNewBook, updateBookDetails, deleteExistingBook, formatCLP, addAuditLog } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
     const [editingBook, setEditingBook] = useState(null)
+    const [showCodes, setShowCodes] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState('All')
 
@@ -101,6 +104,13 @@ export default function Books() {
                     <div key={book.id} className="glass-card p-5 relative group">
                         <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
+                                onClick={() => setShowCodes(book)}
+                                className="p-1.5 bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-500/70 hover:text-emerald-400 transition-colors"
+                                title="Ver Códigos QR e ISBN"
+                            >
+                                <QrCode className="w-4 h-4" />
+                            </button>
+                            <button
                                 onClick={() => { setEditingBook(book); setShowAdd(false) }}
                                 className="p-1.5 bg-dark-200 hover:bg-dark-300 rounded text-dark-500 hover:text-white transition-colors"
                                 title="Editar título"
@@ -158,6 +168,104 @@ export default function Books() {
                         No se encontraron títulos que coincidan con la búsqueda.
                     </div>
                 )}
+            </div>
+
+            {showCodes && (
+                <CodesModal book={showCodes} onClose={() => setShowCodes(null)} formatCLP={formatCLP} />
+            )}
+        </div>
+    )
+}
+
+function CodesModal({ book, onClose, formatCLP }) {
+    const qrData = JSON.stringify({
+        Titulo: book.title,
+        Autor: book.authorName,
+        ISBN: book.isbn,
+        Genero: book.genre,
+        PVP: book.pvp ? formatCLP(book.pvp) : 'N/A',
+        Sinopsis: book.synopsis
+    }, null, 2)
+
+    const downloadSvg = (selector, filename) => {
+        const svg = document.querySelector(selector)
+        if (!svg) {
+            alert("No se pudo generar el vector.")
+            return
+        }
+        const svgData = new XMLSerializer().serializeToString(svg)
+        const preface = '<?xml version="1.0" standalone="no"?>\r\n'
+        const finalSvg = svgData.includes('xmlns="http://www.w3.org/2000/svg"')
+            ? svgData
+            : svgData.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
+
+        const blob = new Blob([preface + finalSvg], { type: 'image/svg+xml;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
+    return (
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-dark border border-primary/20 rounded-xl shadow-2xl max-w-2xl w-full p-6 slide-up flex flex-col items-center" onClick={e => e.stopPropagation()}>
+                <div className="w-full flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <QrCode className="w-5 h-5 text-primary" /> Códigos Vectoriales: {book.title}
+                    </h2>
+                    <button onClick={onClose} className="text-dark-500 hover:text-white transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                    {/* QR Code */}
+                    <div className="flex flex-col items-center glass-card p-6">
+                        <h3 className="text-sm font-semibold text-white mb-4 text-center">QR Code (Ficha Completa)</h3>
+                        <div className="bg-white p-3 rounded-lg flex items-center justify-center m-auto" id="qr-wrapper">
+                            <QRCodeSVG value={qrData} size={160} level="L" />
+                        </div>
+                        <p className="text-[10px] text-dark-500 text-center mt-3 leading-relaxed">Al escanear este código se obtienen los detalles del título para compartir.</p>
+                        <button onClick={() => downloadSvg('#qr-wrapper svg', `QR_${book.title.replace(/\s+/g, '_')}.svg`)} className="btn-secondary mt-4 w-full flex items-center justify-center gap-2 text-xs">
+                            <Download className="w-3 h-3" /> Descargar QR (SVG)
+                        </button>
+                    </div>
+
+                    {/* Barcode / ISBN */}
+                    <div className="flex flex-col items-center glass-card p-6">
+                        <h3 className="text-sm font-semibold text-white mb-4 text-center">Código de Barras (ISBN)</h3>
+                        {book.isbn ? (() => {
+                            const numericIsbn = book.isbn.replace(/\D/g, '')
+                            const isEAN13 = numericIsbn.length === 13
+                            return (
+                                <>
+                                    <div className="bg-white p-4 rounded-lg flex items-center justify-center m-auto w-full overflow-hidden" id="barcode-wrapper">
+                                        <Barcode
+                                            value={isEAN13 ? numericIsbn : book.isbn}
+                                            format={isEAN13 ? "EAN13" : "CODE128"}
+                                            width={2}
+                                            height={70}
+                                            fontSize={16}
+                                            background="#ffffff"
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-dark-500 text-center mt-3 leading-relaxed">Contenedor vectorial. Si es de 13 dígitos es EAN-13, ideal para contratapa.</p>
+                                    <button onClick={() => downloadSvg('#barcode-wrapper svg', `ISBN_${book.isbn}.svg`)} className="btn-primary mt-4 w-full flex items-center justify-center gap-2 text-xs">
+                                        <Download className="w-3 h-3" /> Descargar ISBN (SVG)
+                                    </button>
+                                </>
+                            )
+                        })() : (
+                            <div className="text-center mt-auto mb-auto bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg">
+                                <p className="text-sm font-semibold text-amber-400 mb-2">Sin código ISBN</p>
+                                <p className="text-[10px] text-dark-500">Edita el libro y agrégale un código ISBN de 13 dígitos para generar este vector.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     )
