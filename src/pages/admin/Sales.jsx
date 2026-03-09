@@ -15,7 +15,7 @@ const STATUS_COLORS = {
 }
 
 export default function Sales() {
-    const { data, formatCLP, addNewSale, updateSaleDetails, addAuditLog } = useAuth()
+    const { data, formatCLP, addNewSale, updateSaleDetails, addAuditLog, reloadData } = useAuth()
 
     const sales = useMemo(() => data?.finances?.sales || [], [data])
     const books = useMemo(() => data?.books || [], [data])
@@ -275,7 +275,7 @@ export default function Sales() {
                             // 1. Save the sale
                             await addNewSale(finalSale)
 
-                            // 2. Phase 3: Deduct stock directly via Supabase (safe, no updater function)
+                            // 2. Deduct stock directly via Supabase
                             if (saleData.bookId && saleData.quantity > 0) {
                                 const { data: invRows } = await supabase
                                     .from('inventory_physical')
@@ -306,6 +306,9 @@ export default function Sales() {
                                 `Registró venta: "${finalSale.bookTitle}" | ${saleData.quantity} u. × ${formatCLP(saleData.unitPrice)} | Canal: ${saleData.channel}`,
                                 'ventas'
                             )
+
+                            // 4. Force reload so Inventario shows updated stock immediately
+                            await reloadData()
 
                             setShowAdd(false)
                         } catch (err) {

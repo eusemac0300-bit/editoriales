@@ -552,7 +552,7 @@ export function AuthProvider({ children }) {
         addDocument, editDocument, deleteDocument,
         addNewQuote, updateQuoteDetails, deleteExistingQuote,
         addNewSale, updateSaleDetails, deleteExistingSale,
-        loading, supabaseConnected
+        loading, supabaseConnected, reloadData
     }
 
     if (loading) {
