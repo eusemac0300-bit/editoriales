@@ -40,6 +40,12 @@ export default function Quotes() {
         }
     }
 
+    const handleQuickStatusChange = async (quote, newStatus) => {
+        if (quote.status === newStatus) return
+        await updateQuoteDetails(quote.id, { ...quote, status: newStatus })
+        addAuditLog('Estado de cotización actualizado', `Cotización de ${quote.bookTitle} cambió a ${newStatus}`, 'ADMIN')
+    }
+
     const statusColors = {
         'Solicitada': 'bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs px-2 py-0.5 rounded-full',
         'Presupuestada': 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 text-xs px-2 py-0.5 rounded-full',
@@ -402,6 +408,15 @@ export default function Quotes() {
                                                 <ExternalLink className="w-4 h-4" />
                                             </a>
                                         )}
+                                        {quote.status === 'Aprobada' && (
+                                            <button
+                                                onClick={() => generatePOPDF(quote)}
+                                                className="p-1.5 bg-dark-200 hover:bg-green-500/20 rounded text-green-400 hover:text-green-300 transition-colors"
+                                                title="Generar Orden de Compra (OC)"
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => generateQuotePDF(quote)}
                                             className="p-1.5 bg-dark-200 hover:bg-blue-500/20 rounded text-blue-400 hover:text-blue-300 transition-colors"
@@ -429,9 +444,24 @@ export default function Quotes() {
                                         <div>
                                             <div className="flex items-center gap-3">
                                                 <h3 className="text-lg font-medium text-white">{quote.bookTitle}</h3>
-                                                <span className={`${statusColors[quote.status]} flex items-center gap-1`}>
-                                                    <StatusIcon status={quote.status} /> {quote.status}
-                                                </span>
+                                                <div className="relative inline-block">
+                                                    <select
+                                                        value={quote.status}
+                                                        onChange={(e) => handleQuickStatusChange(quote, e.target.value)}
+                                                        className={`${statusColors[quote.status]} flex items-center gap-1 appearance-none pr-6 cursor-pointer outline-none font-medium hover:brightness-110 transition-all`}
+                                                        style={{
+                                                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                                                            backgroundPosition: 'right 0.2rem center',
+                                                            backgroundRepeat: 'no-repeat',
+                                                            backgroundSize: '1.2em 1.2em'
+                                                        }}
+                                                    >
+                                                        <option value="Solicitada" className="bg-dark-200 text-blue-400">Solicitada</option>
+                                                        <option value="Presupuestada" className="bg-dark-200 text-yellow-400">Presupuestada</option>
+                                                        <option value="Aprobada" className="bg-dark-200 text-green-400">Aprobada</option>
+                                                        <option value="Rechazada" className="bg-dark-200 text-red-400">Rechazada</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                             <p className="text-sm text-dark-500 mt-1 tabular-nums">ID: {quote.id}</p>
                                         </div>
