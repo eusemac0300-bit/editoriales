@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { Printer, Plus, Search, Filter, Edit, Trash2, Calendar, FileText, CheckCircle, Clock, XCircle, DollarSign, Download, ChevronDown, ChevronRight } from 'lucide-react'
+import { Printer, Plus, Search, Filter, Edit, Trash2, Calendar, FileText, CheckCircle, Clock, XCircle, DollarSign, Download, ChevronDown, ChevronRight, Upload, ExternalLink } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { supabase } from '../../lib/supabase'
 
 export default function Quotes() {
     const { data, addNewQuote, updateQuoteDetails, deleteExistingQuote, formatCLP, addAuditLog } = useAuth()
@@ -213,6 +214,112 @@ export default function Quotes() {
         doc.save(`Sol_Cotizacion_${safeTitle}_${safeProvider}.pdf`)
     }
 
+    const generatePOPDF = (quote) => {
+        const doc = new jsPDF()
+
+        // Variables de diseño
+        const primaryColor = [39, 174, 96] // Emerald green
+        const secondaryColor = [46, 204, 113]
+        const textColor = [60, 60, 60]
+        const lightGray = [150, 150, 150]
+        const pageMargin = 15
+
+        // Encabezado
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(18)
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.text('ORDEN DE COMPRA', pageMargin, pageMargin + 5)
+
+        // Línea separadora decorativa
+        doc.setDrawColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
+        doc.setLineWidth(0.5)
+        doc.line(pageMargin, pageMargin + 9, 195, pageMargin + 9)
+
+        // Fechas y Datos de Cabecera
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.setTextColor(lightGray[0], lightGray[1], lightGray[2])
+        const currentDate = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
+        doc.text(`Fecha: ${currentDate}`, 195, pageMargin + 16, { align: 'right' })
+        doc.text(`OC REF: #OC-${quote.id.substring(0, 8).toUpperCase()}`, 195, pageMargin + 21, { align: 'right' })
+
+        // Proveedor
+        doc.setFontSize(10)
+        doc.setTextColor(textColor[0], textColor[1], textColor[2])
+        doc.text(`Proveedor:`, pageMargin, pageMargin + 26)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${quote.provider}`, pageMargin, pageMargin + 31)
+
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Por medio del presente documento emitimos la orden de compra respectiva a la cotización aprobada para la obra:`, pageMargin, pageMargin + 46, { maxWidth: 180, lineHeightFactor: 1.3 })
+
+        // Ficha
+        let finalY = pageMargin + 60
+        doc.setFontSize(10)
+
+        doc.setFont('helvetica', 'bold')
+        doc.text('Obra a Imprimir:', pageMargin, finalY)
+        doc.setFont('helvetica', 'normal')
+        doc.text(quote.bookTitle || 'No especificado', pageMargin + 40, finalY)
+
+        const tirajes = [quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4].filter(v => v && v > 0)
+        finalY += 8
+        doc.setFont('helvetica', 'bold')
+        doc.text('Tiraje(s) Acordado(s):', pageMargin, finalY)
+        doc.setFont('helvetica', 'normal')
+        doc.text(tirajes.join(' / ') + ' unidades', pageMargin + 40, finalY)
+
+        finalY += 8
+        doc.setFont('helvetica', 'bold')
+        doc.text('Encuadernación:', pageMargin, finalY)
+        doc.setFont('helvetica', 'normal')
+        doc.text(quote.bindingType || 'No especificado', pageMargin + 40, finalY)
+
+        if (quote.deliveryDate) {
+            finalY += 8
+            doc.setFont('helvetica', 'bold')
+            doc.text('Entrega Esperada:', pageMargin, finalY)
+            doc.setFont('helvetica', 'normal')
+            doc.text(new Date(quote.deliveryDate).toLocaleDateString(), pageMargin + 40, finalY)
+        }
+
+        // Tabla de Valores
+        finalY += 20
+        const total = quote.quotedAmount || 0
+        const neto = Math.round(total / 1.19)
+        const iva = total - neto
+
+        doc.setFillColor(245, 245, 245)
+        doc.rect(pageMargin, finalY, 180, 42, 'F')
+        doc.setDrawColor(200, 200, 200)
+        doc.rect(pageMargin, finalY, 180, 42)
+
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'bold')
+        doc.text('Detalle de Valores', pageMargin + 5, finalY + 8)
+
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.text('Valor Neto:', pageMargin + 5, finalY + 18)
+        doc.text(formatCLP(neto), pageMargin + 175, finalY + 18, { align: 'right' })
+
+        doc.text('IVA (19%):', pageMargin + 5, finalY + 26)
+        doc.text(formatCLP(iva), pageMargin + 175, finalY + 26, { align: 'right' })
+
+        doc.setFont('helvetica', 'bold')
+        doc.text('Total a Pagar:', pageMargin + 5, finalY + 36)
+        doc.text(formatCLP(total), pageMargin + 175, finalY + 36, { align: 'right' })
+
+        // Footer
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'italic')
+        doc.text('Documento generado digitalmente. Esta Orden de Compra está sujeta a los términos y condiciones de la editorial.', pageMargin, 280)
+
+        const safeTitle = (quote.bookTitle || 'Libro').replace(/\s+/g, '_')
+        const safeProvider = (quote.provider || 'Imprenta').replace(/\s+/g, '_')
+        doc.save(`OC_${safeProvider}_${safeTitle}.pdf`)
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -284,6 +391,26 @@ export default function Quotes() {
                             filteredQuotes.map(quote => (
                                 <div key={quote.id} className="glass-card p-5 relative group border-l-4 border-l-primary/50">
                                     <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {quote.quoteDocument && (
+                                            <a
+                                                href={quote.quoteDocument}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-1.5 bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-400 hover:text-emerald-300 transition-colors"
+                                                title="Ver Cotización (Documento Adjunto)"
+                                            >
+                                                <ExternalLink className="w-4 h-4" />
+                                            </a>
+                                        )}
+                                        {quote.status === 'Aprobada' && (
+                                            <button
+                                                onClick={() => generatePOPDF(quote)}
+                                                className="p-1.5 bg-dark-200 hover:bg-green-500/20 rounded text-green-400 hover:text-green-300 transition-colors"
+                                                title="Generar Orden de Compra (OC)"
+                                            >
+                                                <FileText className="w-4 h-4" />
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => generateQuotePDF(quote)}
                                             className="p-1.5 bg-dark-200 hover:bg-blue-500/20 rounded text-blue-400 hover:text-blue-300 transition-colors"
@@ -365,6 +492,8 @@ export default function Quotes() {
 }
 
 function QuoteForm({ data, initialData, onSave, onClose }) {
+    const { user } = useAuth()
+    const [isUploading, setIsUploading] = useState(false)
     const formatMoneyStr = (val) => val === 0 || !val ? '' : new Intl.NumberFormat('es-CL').format(val)
 
     const [showAltAmounts, setShowAltAmounts] = useState(
@@ -383,10 +512,32 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
         status: initialData?.status || 'Solicitada',
         quotedAmountStr: formatMoneyStr(initialData?.quotedAmount),
         deliveryDate: initialData?.deliveryDate || '',
-        notes: initialData?.notes || ''
+        notes: initialData?.notes || '',
+        quoteDocument: initialData?.quoteDocument || ''
     })
 
     const books = data.books || []
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+        if (file.size > 10 * 1024 * 1024) return alert('El documento excede los 10MB.')
+
+        setIsUploading(true)
+        try {
+            const fileName = `${user?.tenantId || 'general'}/quotes/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+            const { error: uploadErr } = await supabase.storage.from('editorial_documents').upload(fileName, file)
+            if (uploadErr) throw uploadErr
+
+            const { data: publicUrlData } = supabase.storage.from('editorial_documents').getPublicUrl(fileName)
+            setForm(p => ({ ...p, quoteDocument: publicUrlData.publicUrl }))
+        } catch (err) {
+            console.error(err)
+            alert('Error al subir el documento. Revisa tu conexión.')
+        } finally {
+            setIsUploading(false)
+        }
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -605,6 +756,42 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                             rows={3}
                             placeholder="Tiempos de entrega, retractilado individual, despacho a bodega..."
                         />
+                    </div>
+                </div>
+
+                <div className="md:col-span-3 border-t border-dark-300 pt-4 pb-2">
+                    <label className="text-xs text-dark-600 mb-2 block">Adjuntar Cotización Recibida (Opcional)</label>
+                    <div className="flex items-center gap-4 bg-dark-200 p-3 rounded-lg border border-dark-300">
+                        {form.quoteDocument ? (
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-emerald-500/20 rounded relative text-emerald-400">
+                                    <FileText className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-white truncate max-w-[200px] sm:max-w-xs">Documento_Adjunto</p>
+                                    <a href={form.quoteDocument} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-400 hover:underline">Ver Documento</a>
+                                    <button type="button" onClick={() => setForm(p => ({ ...p, quoteDocument: '' }))} className="text-[10px] text-red-400 hover:underline ml-3">Eliminar</button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex-1 w-full">
+                                <input
+                                    type="file"
+                                    accept=".pdf,.png,.jpg,.jpeg,.webp"
+                                    className="hidden"
+                                    id="quote-upload"
+                                    onChange={handleFileUpload}
+                                    disabled={isUploading}
+                                />
+                                <label
+                                    htmlFor="quote-upload"
+                                    className={`btn-secondary text-xs inline-flex items-center gap-2 cursor-pointer ${isUploading ? 'opacity-50' : ''}`}
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    {isUploading ? 'Subiendo documento...' : 'Subir Archivo (.pdf, .jpg, .png)'}
+                                </label>
+                            </div>
+                        )}
                     </div>
                 </div>
 
