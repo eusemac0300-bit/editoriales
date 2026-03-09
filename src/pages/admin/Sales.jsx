@@ -261,35 +261,43 @@ export default function Sales() {
                     formatCLP={formatCLP}
                     onClose={() => setShowAdd(false)}
                     onSave={async (saleData) => {
-                        const id = `sale-${Date.now()}`
-                        const book = books.find(b => b.id === saleData.bookId)
-                        const finalSale = {
-                            ...saleData,
-                            id,
-                            bookTitle: book?.title || saleData.bookTitle,
-                            createdAt: new Date().toISOString()
-                        }
-                        await addNewSale(finalSale)
-
-                        // Phase 3: Deduct from physical inventory
-                        if (saleData.bookId && saleData.quantity > 0) {
-                            const inv = data?.inventory?.physical?.find(i => i.book_id === saleData.bookId || i.bookId === saleData.bookId)
-                            if (inv) {
-                                const newStock = Math.max(0, (inv.stock || 0) - saleData.quantity)
-                                const exits = [...(inv.exits || []), {
-                                    date: new Date().toISOString().slice(0, 10),
-                                    qty: saleData.quantity,
-                                    ref: `Venta ${saleData.channel} – ${finalSale.id}`
-                                }]
-                                await updateInventory(inv.id || inv.book_id, { stock: newStock, exits })
+                        try {
+                            const id = `sale-${Date.now()}`
+                            const book = books.find(b => b.id === saleData.bookId)
+                            const finalSale = {
+                                ...saleData,
+                                id,
+                                bookTitle: book?.title || saleData.bookTitle,
+                                createdAt: new Date().toISOString()
                             }
-                        }
+                            await addNewSale(finalSale)
 
-                        await addAuditLog(
-                            `Registró venta: "${finalSale.bookTitle}" | ${saleData.quantity} u. × ${formatCLP(saleData.unitPrice)} | Canal: ${saleData.channel}`,
-                            'ventas'
-                        )
-                        setShowAdd(false)
+                            // Phase 3: Deduct from physical inventory
+                            // updateInventory expects an updater FUNCTION as 2nd arg
+                            if (saleData.bookId && saleData.quantity > 0) {
+                                const saleQty = saleData.quantity
+                                const saleRef = `Venta ${saleData.channel} – ${id}`
+                                await updateInventory(saleData.bookId, (current) => {
+                                    if (!current) return null // no inventory record → skip
+                                    const newStock = Math.max(0, (current.stock || 0) - saleQty)
+                                    const exits = [...(current.exits || []), {
+                                        date: new Date().toISOString().slice(0, 10),
+                                        qty: saleQty,
+                                        ref: saleRef
+                                    }]
+                                    return { ...current, stock: newStock, exits }
+                                })
+                            }
+
+                            await addAuditLog(
+                                `Registró venta: "${finalSale.bookTitle}" | ${saleData.quantity} u. × ${formatCLP(saleData.unitPrice)} | Canal: ${saleData.channel}`,
+                                'ventas'
+                            )
+                            setShowAdd(false)
+                        } catch (err) {
+                            console.error('Error al registrar venta:', err)
+                            alert('Ocurrió un error al guardar la venta. Revisa la consola para más detalles.')
+                        }
                     }}
                 />
             )}
