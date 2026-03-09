@@ -1,0 +1,514 @@
+import { useState, useMemo } from 'react'
+import { useAuth } from '../../context/AuthContext'
+import {
+    ShoppingCart, Plus, X, Search, Filter, Trash2, TrendingUp,
+    BookOpen, DollarSign, Calendar, Users, Package, BarChart3,
+    CheckCircle, XCircle, Edit3
+} from 'lucide-react'
+
+const CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria', 'Consignación']
+const TYPES = ['B2C (Consumidor final)', 'B2B (Empresa / Librería)']
+const STATUS_COLORS = {
+    Completada: 'badge-green',
+    Anulada: 'badge-red'
+}
+
+export default function Sales() {
+    const { data, formatCLP, addNewSale, deleteExistingSale, updateSaleDetails, updateInventory, addAuditLog } = useAuth()
+
+    const sales = useMemo(() => data?.finances?.sales || [], [data])
+    const books = useMemo(() => data?.books || [], [data])
+
+    const [showAdd, setShowAdd] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
+    const [filterChannel, setFilterChannel] = useState('')
+    const [filterMonth, setFilterMonth] = useState('')
+
+    // ── Stats ──────────────────────────────────────────────────────────────────
+    const activeSales = useMemo(() => sales.filter(s => s.status !== 'Anulada'), [sales])
+
+    const totalRevenue = useMemo(() => activeSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0), [activeSales])
+    const totalUnits = useMemo(() => activeSales.reduce((sum, s) => sum + (s.quantity || 0), 0), [activeSales])
+    const avgTicket = activeSales.length ? Math.round(totalRevenue / activeSales.length) : 0
+
+    const revenueByChannel = useMemo(() => {
+        const map = {}
+        for (const s of activeSales) {
+            map[s.channel] = (map[s.channel] || 0) + (s.totalAmount || 0)
+        }
+        return Object.entries(map).sort((a, b) => b[1] - a[1])
+    }, [activeSales])
+
+    // ── Filter ─────────────────────────────────────────────────────────────────
+    const filtered = useMemo(() => {
+        let list = [...sales]
+        if (searchTerm) {
+            const q = searchTerm.toLowerCase()
+            list = list.filter(s =>
+                (s.bookTitle || '').toLowerCase().includes(q) ||
+                (s.clientName || '').toLowerCase().includes(q) ||
+                (s.documentRef || '').toLowerCase().includes(q)
+            )
+        }
+        if (filterChannel) list = list.filter(s => s.channel === filterChannel)
+        if (filterMonth) list = list.filter(s => s.saleDate?.startsWith(filterMonth))
+        return list.sort((a, b) => new Date(b.saleDate) - new Date(a.saleDate))
+    }, [sales, searchTerm, filterChannel, filterMonth])
+
+    const handleDelete = async (sale) => {
+        if (!window.confirm(`¿Anular venta de "${sale.bookTitle}"? El stock NO será repuesto automáticamente.`)) return
+        await updateSaleDetails(sale.id, { status: 'Anulada' })
+        await addAuditLog(`Anuló venta: ${sale.bookTitle} (${sale.quantity} u. × ${sale.channel})`, 'ventas')
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                        <ShoppingCart className="w-6 h-6 text-primary" /> Registro de Ventas
+                    </h1>
+                    <p className="text-sm text-dark-500 mt-1">Control de ingresos por canal, títulos y períodos</p>
+                </div>
+                <button
+                    onClick={() => setShowAdd(true)}
+                    className="btn-primary flex items-center gap-2 text-sm px-4 py-2.5 shadow-lg shadow-primary/20"
+                >
+                    <Plus className="w-4 h-4" /> Nueva Venta
+                </button>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="glass-card p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <DollarSign className="w-4 h-4 text-emerald-400" />
+                        <p className="text-[11px] text-dark-500 uppercase tracking-wide">Ingresos Totales</p>
+                    </div>
+                    <p className="text-xl font-bold text-emerald-400 font-mono">{formatCLP(totalRevenue)}</p>
+                    <p className="text-[10px] text-dark-600 mt-1">{activeSales.length} ventas activas</p>
+                </div>
+                <div className="glass-card p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Package className="w-4 h-4 text-blue-400" />
+                        <p className="text-[11px] text-dark-500 uppercase tracking-wide">Unidades Vendidas</p>
+                    </div>
+                    <p className="text-xl font-bold text-blue-400 font-mono">{totalUnits.toLocaleString()}</p>
+                    <p className="text-[10px] text-dark-600 mt-1">ejemplares totales</p>
+                </div>
+                <div className="glass-card p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <TrendingUp className="w-4 h-4 text-yellow-400" />
+                        <p className="text-[11px] text-dark-500 uppercase tracking-wide">Ticket Promedio</p>
+                    </div>
+                    <p className="text-xl font-bold text-yellow-400 font-mono">{formatCLP(avgTicket)}</p>
+                    <p className="text-[10px] text-dark-600 mt-1">por transacción</p>
+                </div>
+                <div className="glass-card p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <BarChart3 className="w-4 h-4 text-purple-400" />
+                        <p className="text-[11px] text-dark-500 uppercase tracking-wide">Canal Top</p>
+                    </div>
+                    <p className="text-base font-bold text-purple-300 truncate">{revenueByChannel[0]?.[0] || '—'}</p>
+                    <p className="text-[10px] text-dark-600 mt-1">{revenueByChannel[0] ? formatCLP(revenueByChannel[0][1]) : '—'}</p>
+                </div>
+            </div>
+
+            {/* Channel breakdown */}
+            {revenueByChannel.length > 0 && (
+                <div className="glass-card p-4">
+                    <h3 className="text-xs font-semibold text-dark-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <BarChart3 className="w-3.5 h-3.5" /> Ingresos por Canal
+                    </h3>
+                    <div className="space-y-2">
+                        {revenueByChannel.map(([channel, amount]) => {
+                            const pct = totalRevenue > 0 ? Math.round((amount / totalRevenue) * 100) : 0
+                            return (
+                                <div key={channel}>
+                                    <div className="flex justify-between text-xs mb-1">
+                                        <span className="text-dark-400">{channel}</span>
+                                        <span className="text-white font-mono">{formatCLP(amount)} <span className="text-dark-600">({pct}%)</span></span>
+                                    </div>
+                                    <div className="h-1.5 bg-dark-300 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-primary to-primary-400 rounded-full transition-all duration-700"
+                                            style={{ width: `${pct}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-3">
+                <div className="relative flex-1 min-w-48">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-600" />
+                    <input
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder="Buscar por libro, cliente o documento..."
+                        className="input-field pl-9 text-sm w-full"
+                    />
+                </div>
+                <select
+                    value={filterChannel}
+                    onChange={e => setFilterChannel(e.target.value)}
+                    className="input-field text-sm"
+                >
+                    <option value="">Todos los canales</option>
+                    {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <input
+                    type="month"
+                    value={filterMonth}
+                    onChange={e => setFilterMonth(e.target.value)}
+                    className="input-field text-sm"
+                />
+                {(searchTerm || filterChannel || filterMonth) && (
+                    <button
+                        onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterMonth('') }}
+                        className="text-xs text-dark-500 hover:text-white flex items-center gap-1 px-2"
+                    >
+                        <X className="w-3 h-3" /> Limpiar
+                    </button>
+                )}
+            </div>
+
+            {/* Sales table */}
+            {filtered.length === 0 ? (
+                <div className="glass-card p-12 text-center">
+                    <ShoppingCart className="w-12 h-12 text-dark-500 mx-auto mb-4" />
+                    <h3 className="text-white font-medium mb-1">Sin ventas registradas</h3>
+                    <p className="text-sm text-dark-500">Haz clic en "Nueva Venta" para comenzar a registrar ingresos.</p>
+                </div>
+            ) : (
+                <div className="glass-card overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-dark-300">
+                                    <th className="text-left text-[10px] uppercase text-dark-500 px-4 py-3">Fecha</th>
+                                    <th className="text-left text-[10px] uppercase text-dark-500 px-4 py-3">Libro</th>
+                                    <th className="text-left text-[10px] uppercase text-dark-500 px-4 py-3">Canal</th>
+                                    <th className="text-left text-[10px] uppercase text-dark-500 px-4 py-3">Cliente</th>
+                                    <th className="text-right text-[10px] uppercase text-dark-500 px-4 py-3">Qty</th>
+                                    <th className="text-right text-[10px] uppercase text-dark-500 px-4 py-3">P. Unitario</th>
+                                    <th className="text-right text-[10px] uppercase text-dark-500 px-4 py-3">Total</th>
+                                    <th className="text-left text-[10px] uppercase text-dark-500 px-4 py-3">Estado</th>
+                                    <th className="px-4 py-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-dark-300">
+                                {filtered.map(sale => (
+                                    <tr key={sale.id} className="hover:bg-dark-200/50 transition-colors">
+                                        <td className="px-4 py-3 text-dark-400 text-xs whitespace-nowrap">
+                                            {sale.saleDate ? new Date(sale.saleDate + 'T12:00:00').toLocaleDateString('es-CL') : '—'}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <p className="text-white font-medium truncate max-w-40">{sale.bookTitle || '—'}</p>
+                                            {sale.documentRef && <p className="text-[10px] text-dark-600">{sale.documentRef}</p>}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="text-xs text-primary-300 bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+                                                {sale.channel}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-dark-400 text-xs">{sale.clientName || '—'}</td>
+                                        <td className="px-4 py-3 text-white font-mono text-right">{sale.quantity}</td>
+                                        <td className="px-4 py-3 text-dark-400 font-mono text-right text-xs">{formatCLP(sale.unitPrice)}</td>
+                                        <td className="px-4 py-3 text-emerald-400 font-mono font-bold text-right">{formatCLP(sale.totalAmount)}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[sale.status] || 'badge-blue'}`}>
+                                                {sale.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {sale.status !== 'Anulada' && (
+                                                <button
+                                                    onClick={() => handleDelete(sale)}
+                                                    className="p-1.5 bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
+                                                    title="Anular Venta"
+                                                >
+                                                    <XCircle className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="px-4 py-3 border-t border-dark-300 flex justify-between items-center">
+                        <p className="text-xs text-dark-500">{filtered.length} registros</p>
+                        <p className="text-xs text-white font-mono">
+                            Total filtro: <span className="text-emerald-400 font-bold">
+                                {formatCLP(filtered.filter(s => s.status !== 'Anulada').reduce((s, r) => s + (r.totalAmount || 0), 0))}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Sale Modal */}
+            {showAdd && (
+                <SaleForm
+                    books={books}
+                    data={data}
+                    formatCLP={formatCLP}
+                    onClose={() => setShowAdd(false)}
+                    onSave={async (saleData) => {
+                        const id = `sale-${Date.now()}`
+                        const book = books.find(b => b.id === saleData.bookId)
+                        const finalSale = {
+                            ...saleData,
+                            id,
+                            bookTitle: book?.title || saleData.bookTitle,
+                            createdAt: new Date().toISOString()
+                        }
+                        await addNewSale(finalSale)
+
+                        // Phase 3: Deduct from physical inventory
+                        if (saleData.bookId && saleData.quantity > 0) {
+                            const inv = data?.inventory?.physical?.find(i => i.book_id === saleData.bookId || i.bookId === saleData.bookId)
+                            if (inv) {
+                                const newStock = Math.max(0, (inv.stock || 0) - saleData.quantity)
+                                const exits = [...(inv.exits || []), {
+                                    date: new Date().toISOString().slice(0, 10),
+                                    qty: saleData.quantity,
+                                    ref: `Venta ${saleData.channel} – ${finalSale.id}`
+                                }]
+                                await updateInventory(inv.id || inv.book_id, { stock: newStock, exits })
+                            }
+                        }
+
+                        await addAuditLog(
+                            `Registró venta: "${finalSale.bookTitle}" | ${saleData.quantity} u. × ${formatCLP(saleData.unitPrice)} | Canal: ${saleData.channel}`,
+                            'ventas'
+                        )
+                        setShowAdd(false)
+                    }}
+                />
+            )}
+        </div>
+    )
+}
+
+function SaleForm({ books, data, formatCLP, onSave, onClose }) {
+    const today = new Date().toISOString().slice(0, 10)
+    const [form, setForm] = useState({
+        bookId: '',
+        channel: 'Directa',
+        type: 'B2C (Consumidor final)',
+        quantity: 1,
+        unitPrice: '',
+        saleDate: today,
+        clientName: '',
+        documentRef: '',
+        notes: '',
+        status: 'Completada'
+    })
+    const [saving, setSaving] = useState(false)
+
+    const quantity = parseInt(form.quantity) || 0
+    const unitPrice = parseInt(form.unitPrice?.toString().replace(/\D/g, '')) || 0
+    const total = quantity * unitPrice
+    // Neto / IVA breakdown
+    const neto = Math.round(total / 1.19)
+    const iva = total - neto
+
+    const selectedBook = books.find(b => b.id === form.bookId)
+
+    // Inventory availability
+    const inv = data?.inventory?.physical?.find(i =>
+        i.book_id === form.bookId || i.bookId === form.bookId
+    )
+    const stock = inv?.stock ?? null
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        if (!form.bookId) { alert('Debes seleccionar un libro.'); return }
+        if (quantity < 1) { alert('La cantidad debe ser mayor a 0.'); return }
+        if (unitPrice < 1) { alert('El precio unitario debe ser mayor a 0.'); return }
+        if (stock !== null && quantity > stock) {
+            if (!window.confirm(`⚠️ Stock disponible: ${stock} u.\nEstás registrando ${quantity} u. ¿Confirmar de todas formas?`)) return
+        }
+        setSaving(true)
+        await onSave({ ...form, quantity, unitPrice, totalAmount: total, saleDate: form.saleDate })
+        setSaving(false)
+    }
+
+    return (
+        <div className="fixed inset-0 bg-dark-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-in">
+            <div className="glass-card w-full max-w-xl p-6 slide-up border border-primary/30 max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-5 border-b border-dark-300 pb-3">
+                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                        <ShoppingCart className="w-4 h-4 text-emerald-400" /> Registrar Nueva Venta
+                    </h3>
+                    <button onClick={onClose} className="text-dark-500 hover:text-white"><X className="w-5 h-5" /></button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Book */}
+                    <div>
+                        <label className="text-xs text-dark-600 mb-1 block">Título *</label>
+                        <select
+                            value={form.bookId}
+                            onChange={e => {
+                                const b = books.find(bk => bk.id === e.target.value)
+                                setForm(p => ({ ...p, bookId: e.target.value, unitPrice: b?.pvp ? String(b.pvp) : p.unitPrice }))
+                            }}
+                            className="input-field text-sm w-full"
+                            required
+                        >
+                            <option value="">Selecciona un título...</option>
+                            {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+                        </select>
+                        {selectedBook && (
+                            <div className="flex flex-wrap gap-3 mt-1.5">
+                                {selectedBook.pvp > 0 && <span className="text-[10px] text-primary-400">PVP: {formatCLP(selectedBook.pvp)}</span>}
+                                {stock !== null && (
+                                    <span className={`text-[10px] font-medium ${stock < 10 ? 'text-red-400' : 'text-emerald-400'}`}>
+                                        Stock: {stock} u.
+                                    </span>
+                                )}
+                                {selectedBook.royaltyPercent > 0 && <span className="text-[10px] text-yellow-400">Royalty autor: {selectedBook.royaltyPercent}%</span>}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Channel + Type */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Canal de Venta *</label>
+                            <select value={form.channel} onChange={e => setForm(p => ({ ...p, channel: e.target.value }))} className="input-field text-sm w-full">
+                                {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Tipo</label>
+                            <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} className="input-field text-sm w-full">
+                                {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Qty + Price + Date */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Cantidad *</label>
+                            <input
+                                type="number" min="1"
+                                value={form.quantity}
+                                onChange={e => setForm(p => ({ ...p, quantity: e.target.value }))}
+                                className="input-field text-sm w-full"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Precio Unitario (CLP) *</label>
+                            <input
+                                type="text"
+                                value={form.unitPrice}
+                                onChange={e => setForm(p => ({ ...p, unitPrice: e.target.value.replace(/\D/g, '') }))}
+                                className="input-field text-sm w-full text-yellow-400"
+                                placeholder="15990"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block flex items-center gap-1"><Calendar className="w-3 h-3" /> Fecha</label>
+                            <input
+                                type="date"
+                                value={form.saleDate}
+                                onChange={e => setForm(p => ({ ...p, saleDate: e.target.value }))}
+                                className="input-field text-sm w-full"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Totals preview */}
+                    {total > 0 && (
+                        <div className="bg-dark-200/60 border border-dark-300 rounded-lg p-3 grid grid-cols-3 gap-2">
+                            <div className="text-center">
+                                <p className="text-[9px] text-dark-500 uppercase">Neto</p>
+                                <p className="text-xs text-white font-mono font-medium">{formatCLP(neto)}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[9px] text-dark-500 uppercase">IVA 19%</p>
+                                <p className="text-xs text-white font-mono font-medium">{formatCLP(iva)}</p>
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[9px] text-primary-400 uppercase font-semibold">Total</p>
+                                <p className="text-sm text-emerald-400 font-mono font-bold">{formatCLP(total)}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Royalty preview */}
+                    {selectedBook?.royaltyPercent > 0 && total > 0 && (
+                        <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg px-3 py-2 flex items-center gap-2">
+                            <Users className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+                            <p className="text-[10px] text-yellow-300">
+                                Royalty acumulado para el autor: <span className="font-mono font-bold">
+                                    {formatCLP(Math.round(total * (selectedBook.royaltyPercent / 100)))}
+                                </span>
+                                {' '}({selectedBook.royaltyPercent}% sobre total)
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Client + Doc */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Cliente / Librería</label>
+                            <input
+                                type="text"
+                                value={form.clientName}
+                                onChange={e => setForm(p => ({ ...p, clientName: e.target.value }))}
+                                className="input-field text-sm w-full"
+                                placeholder="Nombre o razón social"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Ref. Documento</label>
+                            <input
+                                type="text"
+                                value={form.documentRef}
+                                onChange={e => setForm(p => ({ ...p, documentRef: e.target.value }))}
+                                className="input-field text-sm w-full"
+                                placeholder="Boleta / Factura nro."
+                            />
+                        </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                        <label className="text-xs text-dark-600 mb-1 block">Observaciones</label>
+                        <textarea
+                            value={form.notes}
+                            onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
+                            className="input-field text-sm w-full"
+                            rows={2}
+                            placeholder="Notas internas..."
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-2 border-t border-dark-300">
+                        <button type="button" onClick={onClose} className="btn-secondary text-sm px-4 py-2">Cancelar</button>
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="btn-primary text-sm px-5 py-2 flex items-center gap-2 disabled:opacity-60"
+                        >
+                            {saving ? 'Guardando...' : <><CheckCircle className="w-4 h-4" /> Registrar Venta</>}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}

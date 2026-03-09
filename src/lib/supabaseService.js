@@ -15,7 +15,8 @@ export async function loadAllData(tenantId) {
             { data: comments, error: commentsErr },
             { data: alerts, error: alertsErr },
             { data: documents, error: docsErr },
-            { data: quotes, error: quotesErr }
+            { data: quotes, error: quotesErr },
+            { data: sales, error: salesErr }
         ] = await Promise.all([
             supabase.from('users').select('*').eq('tenant_id', tenantId),
             supabase.from('books').select('*').eq('tenant_id', tenantId),
@@ -27,7 +28,8 @@ export async function loadAllData(tenantId) {
             supabase.from('comments').select('*').eq('tenant_id', tenantId).order('date', { ascending: true }),
             supabase.from('alerts').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
             supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
-            supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false })
+            supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+            supabase.from('sales').select('*').eq('tenant_id', tenantId).order('sale_date', { ascending: false })
         ])
 
         const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean)
@@ -36,7 +38,7 @@ export async function loadAllData(tenantId) {
             return null
         }
 
-        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr].filter(Boolean)
+        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr, salesErr].filter(Boolean)
         if (nonCriticalErrors.length > 0) {
             console.warn('Supabase non-critical load errors (missing features):', nonCriticalErrors)
         }
@@ -208,6 +210,23 @@ export async function loadAllData(tenantId) {
             createdAt: q.created_at,
             updatedAt: q.updated_at
         }))
+        const transformedSales = (sales || []).map(s => ({
+            id: s.id,
+            tenantId: s.tenant_id,
+            bookId: s.book_id,
+            channel: s.channel,
+            type: s.type,
+            quantity: s.quantity,
+            unitPrice: s.unit_price,
+            totalAmount: s.total_amount,
+            saleDate: s.sale_date,
+            clientName: s.client_name,
+            documentRef: s.document_ref,
+            status: s.status,
+            notes: s.notes,
+            createdAt: s.created_at,
+            updatedAt: s.updated_at
+        }))
 
         return {
             users: transformedUsers,
@@ -218,7 +237,8 @@ export async function loadAllData(tenantId) {
             },
             finances: {
                 invoices: transformedInvoices,
-                royalties: transformedRoyalties
+                royalties: transformedRoyalties,
+                sales: transformedSales
             },
             auditLog: transformedAudit,
             comments: transformedComments,
@@ -802,4 +822,52 @@ export async function resetTenantData(tenantId, adminUserId) {
         console.error('Error resetting tenant data:', err)
         return false
     }
+}
+
+// ============ SALES ============
+export async function addSaleToDb(sale) {
+    const { error } = await supabase
+        .from('sales')
+        .insert({
+            id: sale.id,
+            tenant_id: sale.tenantId,
+            book_id: sale.bookId,
+            channel: sale.channel,
+            type: sale.type,
+            quantity: sale.quantity,
+            unit_price: sale.unitPrice,
+            total_amount: sale.totalAmount,
+            sale_date: sale.saleDate,
+            client_name: sale.clientName,
+            document_ref: sale.documentRef,
+            status: sale.status,
+            notes: sale.notes,
+            created_at: sale.createdAt,
+            updated_at: sale.updatedAt || sale.createdAt
+        })
+    if (error) console.error('Error adding sale:', error)
+    return !error
+}
+
+export async function updateSaleInDb(saleId, updates) {
+    const dbUpdates = {}
+    if (updates.status !== undefined) dbUpdates.status = updates.status
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes
+    dbUpdates.updated_at = new Date().toISOString()
+
+    const { error } = await supabase
+        .from('sales')
+        .update(dbUpdates)
+        .eq('id', saleId)
+    if (error) console.error('Error updating sale:', error)
+    return !error
+}
+
+export async function deleteSaleFromDb(saleId) {
+    const { error } = await supabase
+        .from('sales')
+        .delete()
+        .eq('id', saleId)
+    if (error) console.error('Error deleting sale:', error)
+    return !error
 }

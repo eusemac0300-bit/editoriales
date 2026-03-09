@@ -96,6 +96,7 @@ export function AuthProvider({ children }) {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'royalties' }, () => scheduleReload())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' }, () => scheduleReload())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'quotes' }, () => scheduleReload())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => scheduleReload())
             .subscribe((status) => {
                 console.log('📡 Realtime status:', status)
             })
@@ -497,6 +498,49 @@ export function AuthProvider({ children }) {
         }
     }, [supabaseConnected])
 
+    const addNewSale = useCallback(async (saleData) => {
+        lastLocalChangeRef.current = Date.now()
+        const sale = { ...saleData, tenantId: user?.tenantId }
+        setData(prev => ({
+            ...prev,
+            finances: {
+                ...prev.finances,
+                sales: [sale, ...(prev.finances?.sales || [])]
+            }
+        }))
+        if (supabaseConnected) {
+            await db.addSaleToDb(sale)
+        }
+    }, [user, supabaseConnected])
+
+    const updateSaleDetails = useCallback(async (saleId, updates) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            finances: {
+                ...prev.finances,
+                sales: (prev.finances?.sales || []).map(s => s.id === saleId ? { ...s, ...updates } : s)
+            }
+        }))
+        if (supabaseConnected) {
+            await db.updateSaleInDb(saleId, updates)
+        }
+    }, [supabaseConnected])
+
+    const deleteExistingSale = useCallback(async (saleId) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            finances: {
+                ...prev.finances,
+                sales: (prev.finances?.sales || []).filter(s => s.id !== saleId)
+            }
+        }))
+        if (supabaseConnected) {
+            await db.deleteSaleFromDb(saleId)
+        }
+    }, [supabaseConnected])
+
     const value = {
         user, data, setData, login, logout, hasPermission,
         isSuperAdmin, isAdmin, isFreelance, isAutor, resetWorkspace,
@@ -507,6 +551,7 @@ export function AuthProvider({ children }) {
         addNewUser, updateExistingUser, deleteExistingUser,
         addDocument, editDocument, deleteDocument,
         addNewQuote, updateQuoteDetails, deleteExistingQuote,
+        addNewSale, updateSaleDetails, deleteExistingSale,
         loading, supabaseConnected
     }
 
