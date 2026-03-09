@@ -275,30 +275,23 @@ export default function Sales() {
                             // 1. Save the sale
                             await addNewSale(finalSale)
 
-                            // 2. Deduct stock directly via Supabase
-                            if (saleData.bookId && saleData.quantity > 0) {
-                                const { data: invRows } = await supabase
+                            // 2. Deduct stock: use local inv id (already loaded from DB)
+                            const invRecord = data?.inventory?.physical?.find(i => i.bookId === saleData.bookId)
+                            if (invRecord?.id && saleData.quantity > 0) {
+                                const newStock = Math.max(0, (invRecord.stock || 0) - saleData.quantity)
+                                const exits = [
+                                    ...(invRecord.exits || []),
+                                    {
+                                        date: new Date().toISOString().slice(0, 10),
+                                        qty: saleData.quantity,
+                                        ref: `Venta ${saleData.channel} – ${id}`
+                                    }
+                                ]
+                                const { error: stockErr } = await supabase
                                     .from('inventory_physical')
-                                    .select('id, stock, exits')
-                                    .eq('book_id', saleData.bookId)
-                                    .limit(1)
-
-                                if (invRows && invRows.length > 0) {
-                                    const inv = invRows[0]
-                                    const newStock = Math.max(0, (inv.stock || 0) - saleData.quantity)
-                                    const exits = [
-                                        ...(inv.exits || []),
-                                        {
-                                            date: new Date().toISOString().slice(0, 10),
-                                            qty: saleData.quantity,
-                                            ref: `Venta ${saleData.channel} – ${id}`
-                                        }
-                                    ]
-                                    await supabase
-                                        .from('inventory_physical')
-                                        .update({ stock: newStock, exits })
-                                        .eq('id', inv.id)
-                                }
+                                    .update({ stock: newStock, exits })
+                                    .eq('id', invRecord.id)
+                                if (stockErr) console.error('Stock update error:', stockErr)
                             }
 
                             // 3. Audit log
@@ -307,7 +300,7 @@ export default function Sales() {
                                 'ventas'
                             )
 
-                            // 4. Force reload so Inventario shows updated stock immediately
+                            // 4. Force full reload so Inventario reflects updated stock
                             await reloadData()
 
                             setShowAdd(false)
@@ -347,10 +340,8 @@ function SaleForm({ books, data, formatCLP, onSave, onClose }) {
 
     const selectedBook = books.find(b => b.id === form.bookId)
 
-    // Inventory availability
-    const inv = data?.inventory?.physical?.find(i =>
-        i.book_id === form.bookId || i.bookId === form.bookId
-    )
+    // Inventory availability - use bookId (camelCase) after supabaseService transform
+    const inv = data?.inventory?.physical?.find(i => i.bookId === form.bookId)
     const stock = inv?.stock ?? null
 
     const handleSubmit = async (e) => {
@@ -358,8 +349,15 @@ function SaleForm({ books, data, formatCLP, onSave, onClose }) {
         if (!form.bookId) { alert('Debes seleccionar un libro.'); return }
         if (quantity < 1) { alert('La cantidad debe ser mayor a 0.'); return }
         if (unitPrice < 1) { alert('El precio unitario debe ser mayor a 0.'); return }
-        if (stock !== null && quantity > stock) {
-            if (!window.confirm(`⚠️ Stock disponible: ${stock} u.\nEstás registrando ${quantity} u. ¿Confirmar de todas formas?`)) return
+        // Hard block: no inventory record → cannot sell
+        if (stock === null) {
+            alert('❌ Este libro no tiene registro de inventario físico. Registra el stock primero en la sección Inventario.')
+            return
+        }
+        // Hard block: quantity exceeds stock
+        if (quantity > stock) {
+            alert(`❌ Stock insuficiente. Disponible: ${stock} u. Intentas vender: ${quantity} u.`)
+            return
         }
         setSaving(true)
         await onSave({ ...form, quantity, unitPrice, totalAmount: total, saleDate: form.saleDate })

@@ -93,6 +93,7 @@ export async function loadAllData(tenantId) {
 
         // Transform inventory
         const physical = (invPhysical || []).map(p => ({
+            id: p.id,
             bookId: p.book_id,
             stock: p.stock,
             minStock: p.min_stock,
