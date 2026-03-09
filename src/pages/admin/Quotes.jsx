@@ -222,11 +222,19 @@ export default function Quotes() {
     }
 
     const handlePOGenerateClick = (quote) => {
+        if (quote.approvedAmount) {
+            generatePOPDF(quote, quote.approvedAmount)
+            return
+        }
+
         const tirajes = [quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4].filter(v => v && v > 0)
         if (tirajes.length > 1) {
             setPoModalQuote(quote)
         } else {
-            generatePOPDF(quote, tirajes[0])
+            // Implicitly approve the only amount
+            updateQuoteDetails(quote.id, { ...quote, approvedAmount: tirajes[0] }).then(() => {
+                generatePOPDF(quote, tirajes[0])
+            })
         }
     }
 
@@ -492,10 +500,14 @@ export default function Quotes() {
                                             <p className="text-xs text-white font-medium">{quote.provider}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-dark-500 uppercase">Tirajes</p>
+                                            <p className="text-[10px] text-dark-500 uppercase">
+                                                {quote.approvedAmount ? 'Tiraje Aprobado' : 'Tirajes Propios'}
+                                            </p>
                                             <p className="text-xs text-white font-mono">
-                                                {[quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4]
-                                                    .filter(v => v && v > 0).join(', ')} u.
+                                                {quote.approvedAmount
+                                                    ? <span className="text-emerald-400 font-bold">{quote.approvedAmount} u.</span>
+                                                    : `${[quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4].filter(v => v && v > 0).join(', ')} u.`
+                                                }
                                             </p>
                                         </div>
                                         <div className="col-span-2">
@@ -575,8 +587,10 @@ export default function Quotes() {
                                     <button
                                         key={idx}
                                         onClick={() => {
-                                            generatePOPDF(poModalQuote, amount)
-                                            setPoModalQuote(null)
+                                            updateQuoteDetails(poModalQuote.id, { ...poModalQuote, approvedAmount: amount }).then(() => {
+                                                generatePOPDF(poModalQuote, amount)
+                                                setPoModalQuote(null)
+                                            })
                                         }}
                                         className="w-full text-left p-3 rounded-lg bg-dark-200 hover:bg-emerald-500/10 border border-dark-400 hover:border-emerald-500/50 transition-all flex justify-between items-center group"
                                     >
