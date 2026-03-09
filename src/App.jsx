@@ -25,6 +25,7 @@ import Alerts from './pages/admin/Alerts'
 import Books from './pages/admin/Books'
 import Documents from './pages/admin/Documents'
 import UsersPage from './pages/admin/Users'
+import AuthorsPage from './pages/admin/Authors'
 import Reports from './pages/admin/Reports'
 import Quotes from './pages/admin/Quotes'
 
@@ -72,6 +73,7 @@ function AppRoutes() {
                 <Route path="cotizaciones" element={<Quotes />} />
                 <Route path="liquidaciones" element={<Royalties />} />
                 <Route path="libros" element={<Books />} />
+                <Route path="autores" element={<AuthorsPage />} />
                 <Route path="documentos" element={<Documents />} />
                 <Route path="usuarios" element={<UsersPage />} />
                 <Route path="auditoria" element={<AuditLog />} />

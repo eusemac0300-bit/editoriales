@@ -9,9 +9,10 @@ const stageColors = {
 }
 
 export default function Kanban() {
-    const { data, updateBookStatus, user } = useAuth()
+    const { data, updateBookStatus, updateInventory, addAuditLog, user } = useAuth()
     const [draggedBook, setDraggedBook] = useState(null)
     const [commentModal, setCommentModal] = useState(null)
+    const [publishModal, setPublishModal] = useState(null)
     const [readTimestamps, setReadTimestamps] = useState(() => {
         try {
             return JSON.parse(localStorage.getItem('kanban_comment_read') || '{}')
@@ -27,9 +28,41 @@ export default function Kanban() {
 
     const handleDrop = (stage) => {
         if (draggedBook && draggedBook.status !== stage) {
-            updateBookStatus(draggedBook.id, stage)
+            if (stage === 'Publicado') {
+                setPublishModal(draggedBook)
+            } else {
+                updateBookStatus(draggedBook.id, stage)
+            }
         }
         setDraggedBook(null)
+    }
+
+    const handlePublishConfirm = async (bookId, qty) => {
+        try {
+            await updateBookStatus(bookId, 'Publicado')
+            if (qty > 0) {
+                const entry = { date: new Date().toISOString().split('T')[0], qty, type: 'imprenta', note: 'Llegada desde imprenta' }
+                await updateInventory(bookId, (existing, bId) => {
+                    if (existing) {
+                        return { ...existing, stock: (existing.stock || 0) + qty, entries: [...(existing.entries || []), entry] }
+                    } else {
+                        return {
+                            bookId: bId || bookId,
+                            stock: qty,
+                            minStock: 100,
+                            entries: [entry],
+                            exits: []
+                        }
+                    }
+                })
+                await addAuditLog(`Inventario: Añadidos ${qty} ejemplares de libro publicado (Tiraje)`, 'inventario')
+            }
+        } catch (error) {
+            console.error('Error al publicar libro:', error)
+            alert('Ocurrió un error al intentar publicar y actualizar inventario.')
+        } finally {
+            setPublishModal(null)
+        }
     }
 
     const getCommentsCount = (bookId) => data.comments.filter(c => c.bookId === bookId).length
@@ -126,6 +159,9 @@ export default function Kanban() {
             {/* Comment Modal */}
             {commentModal && <CommentsModal book={commentModal} onClose={() => setCommentModal(null)} />}
 
+            {/* Publish Modal */}
+            {publishModal && <PublishModal book={publishModal} onClose={() => setPublishModal(null)} onConfirm={handlePublishConfirm} />}
+
         </div>
     )
 }
@@ -214,6 +250,41 @@ function CommentsModal({ book, onClose }) {
                         <button type="submit" className="btn-primary text-sm px-4">
                             Enviar
                         </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
+
+function PublishModal({ book, onClose, onConfirm }) {
+    const [qty, setQty] = useState('')
+
+    const handleSubmit = (e) => {
+        e.preventDefault()
+        onConfirm(book.id, parseInt(qty) || 0)
+    }
+
+    return (
+        <div className="fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="glass-card max-w-sm w-full p-6 slide-up" onClick={e => e.stopPropagation()}>
+                <h3 className="text-lg font-semibold text-white mb-2">Publicar Libro</h3>
+                <p className="text-sm text-dark-600 mb-4">
+                    Has movido "{book.title}" a Publicado. ¿Cuántas copias físicas recibiste de la imprenta para añadir al inventario?
+                </p>
+                <form onSubmit={handleSubmit}>
+                    <label className="text-xs text-dark-600 mb-1 block">Tiraje Recibido (Cantidad o 0 si digital)</label>
+                    <input
+                        type="number"
+                        value={qty}
+                        onChange={e => setQty(e.target.value)}
+                        className="input-field mb-6"
+                        placeholder="Ej: 500"
+                        min="0"
+                    />
+                    <div className="flex gap-2">
+                        <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancelar</button>
+                        <button type="submit" className="btn-primary flex-1 text-sm">Guardar y Publicar</button>
                     </div>
                 </form>
             </div>

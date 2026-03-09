@@ -46,8 +46,8 @@ export default function UsersPage() {
     const [permissions, setPermissions] = useState(loadPermissions)
     const [saved, setSaved] = useState(false)
 
-    const roleColors = { ADMIN: 'badge-blue', FREELANCE: 'badge-green', AUTOR: 'badge-purple' }
-    const roleLabels = { ADMIN: 'Administrador', FREELANCE: 'Freelance', AUTOR: 'Autor' }
+    const roleColors = { ADMIN: 'badge-blue', FREELANCE: 'badge-green' }
+    const roleLabels = { ADMIN: 'Administrador', FREELANCE: 'Freelance' }
 
     const togglePermission = useCallback((role, module) => {
         setPermissions(prev => {
@@ -71,8 +71,10 @@ export default function UsersPage() {
     }, [addAuditLog])
 
     const filteredUsers = filter === 'TODOS'
-        ? data.users
+        ? data.users.filter(u => u.role !== 'AUTOR')
         : data.users.filter(u => u.role === filter)
+
+    const staffCount = data.users.filter(u => u.role !== 'AUTOR').length
 
     const handleDelete = async (userId) => {
         const targetUser = data.users.find(u => u.id === userId)
@@ -94,24 +96,24 @@ export default function UsersPage() {
             <div className="flex flex-col sm:flex-row justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <UsersIcon className="w-6 h-6 text-primary" />Gestión de Usuarios
+                        <UsersIcon className="w-6 h-6 text-primary" />Personal y Administradores
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">{data.users.length} usuarios registrados · Solo administradores</p>
+                    <p className="text-dark-600 text-sm mt-1">{staffCount} cuentas de personal registradas</p>
                 </div>
                 <button onClick={() => { setShowAdd(!showAdd); setEditingUser(null) }} className="btn-primary text-sm">
-                    <Plus className="w-4 h-4 inline mr-1" /> Nuevo Usuario
+                    <Plus className="w-4 h-4 inline mr-1" /> Nuevo Personal
                 </button>
             </div>
 
             {/* Role summary */}
-            <div className="grid grid-cols-3 gap-3">
-                {['ADMIN', 'FREELANCE', 'AUTOR'].map(role => (
+            <div className="grid grid-cols-2 gap-3">
+                {['ADMIN', 'FREELANCE'].map(role => (
                     <div
                         key={role}
                         className={`stat-card text-center cursor-pointer transition-all ${filter === role ? 'ring-2 ring-primary' : 'hover:ring-1 hover:ring-dark-400'}`}
                         onClick={() => setFilter(filter === role ? 'TODOS' : role)}
                     >
-                        <Shield className={`w-5 h-5 mx-auto mb-2 ${role === 'ADMIN' ? 'text-primary' : role === 'FREELANCE' ? 'text-emerald-400' : 'text-purple-400'}`} />
+                        <Shield className={`w-5 h-5 mx-auto mb-2 ${role === 'ADMIN' ? 'text-primary' : 'text-emerald-400'}`} />
                         <p className="text-2xl font-bold text-white">{data.users.filter(u => u.role === role).length}</p>
                         <p className="text-[10px] text-dark-600 uppercase">{roleLabels[role]}s</p>
                     </div>
@@ -250,15 +252,15 @@ export default function UsersPage() {
                             {MODULES.map((mod, i) => (
                                 <tr key={i} className="border-b border-dark-300/30 hover:bg-dark-200/20 transition-colors">
                                     <td className="py-2 px-3 text-dark-800">{mod}</td>
-                                    {['ADMIN', 'FREELANCE', 'AUTOR'].map(role => {
+                                    {['ADMIN', 'FREELANCE'].map(role => {
                                         const allowed = permissions[role]?.[mod] ?? false
                                         return (
                                             <td key={role} className="py-2 px-3 text-center">
                                                 <button
                                                     onClick={() => togglePermission(role, mod)}
                                                     className={`w-7 h-7 rounded-lg inline-flex items-center justify-center transition-all duration-200 ${allowed
-                                                            ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 ring-1 ring-emerald-500/20'
-                                                            : 'bg-red-500/10 text-red-400/60 hover:bg-red-500/20 ring-1 ring-red-500/10'
+                                                        ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 ring-1 ring-emerald-500/20'
+                                                        : 'bg-red-500/10 text-red-400/60 hover:bg-red-500/20 ring-1 ring-red-500/10'
                                                         }`}
                                                     title={`${allowed ? 'Revocar' : 'Permitir'} ${mod} para ${role}`}
                                                 >
@@ -282,7 +284,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
         name: existingUser?.name || '',
         email: existingUser?.email || '',
         password: existingUser?.password || '',
-        role: existingUser?.role || 'AUTOR',
+        role: existingUser?.role || 'ADMIN',
         title: existingUser?.title || ''
     })
     const [showPassword, setShowPassword] = useState(false)
@@ -394,7 +396,6 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                     >
                         <option value="ADMIN">Administrador</option>
                         <option value="FREELANCE">Freelance</option>
-                        <option value="AUTOR">Autor</option>
                     </select>
                 </div>
                 <div>

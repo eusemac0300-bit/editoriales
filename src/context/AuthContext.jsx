@@ -361,7 +361,7 @@ export function AuthProvider({ children }) {
             avatar: userData.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
             firstLogin: userData.role === 'FREELANCE',
             socialLinks: {},
-            bio: null
+            bio: userData.bio || null
         }
         setData(prev => ({ ...prev, users: [...prev.users, newUser] }))
         if (supabaseConnected) {

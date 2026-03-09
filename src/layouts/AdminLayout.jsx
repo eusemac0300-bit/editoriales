@@ -15,8 +15,9 @@ const navItems = [
     { to: '/admin/cotizaciones', icon: Printer, label: 'Cotizaciones' },
     { to: '/admin/liquidaciones', icon: DollarSign, label: 'Liquidaciones' },
     { to: '/admin/libros', icon: FileText, label: 'Títulos' },
-    { to: '/admin/documentos', icon: FolderOpen, label: 'Documentos' },
+    { to: '/admin/autores', icon: Users, label: 'Autores' },
     { to: '/admin/usuarios', icon: Users, label: 'Usuarios' },
+    { to: '/admin/documentos', icon: FolderOpen, label: 'Documentos' },
     { to: '/admin/auditoria', icon: ClipboardList, label: 'Auditoría' },
     { to: '/admin/alertas', icon: Bell, label: 'Alertas' },
 ]

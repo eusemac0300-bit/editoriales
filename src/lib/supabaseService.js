@@ -611,7 +611,7 @@ export async function addUser(user) {
             role: user.role,
             avatar: user.avatar,
             title: user.title,
-            bio: user.bio || null,
+            bio: user.bio ? (typeof user.bio === 'string' ? user.bio : JSON.stringify(user.bio)) : null,
             social_links: user.socialLinks || {},
             first_login: user.firstLogin !== undefined ? user.firstLogin : true
         })
@@ -626,7 +626,7 @@ export async function updateUser(userId, updates) {
     if (updates.password !== undefined) mapped.password = updates.password
     if (updates.role !== undefined) mapped.role = updates.role
     if (updates.title !== undefined) mapped.title = updates.title
-    if (updates.bio !== undefined) mapped.bio = updates.bio
+    if (updates.bio !== undefined) mapped.bio = typeof updates.bio === 'string' ? updates.bio : JSON.stringify(updates.bio)
     if (updates.avatar !== undefined) mapped.avatar = updates.avatar
     if (updates.socialLinks !== undefined) mapped.social_links = updates.socialLinks
 

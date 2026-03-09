@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react'
 
 export default function AdminDashboard() {
     const { data, formatCLP } = useAuth()
@@ -10,18 +10,22 @@ export default function AdminDashboard() {
     const totalBooks = books.length
     const published = books.filter(b => b.status === 'Publicado').length
     const inProduction = books.filter(b => !['Publicado', 'Original'].includes(b.status)).length
-    const totalIncome = finances.invoices.filter(i => i.type === 'ingreso').reduce((s, i) => s + i.amount, 0)
-    const totalExpenses = finances.invoices.filter(i => i.type === 'egreso').reduce((s, i) => s + i.amount, 0)
+    const incomeInvoices = finances.invoices.filter(i => i.type === 'ingreso')
+    const expenseInvoices = finances.invoices.filter(i => i.type === 'egreso')
+    const totalIncome = incomeInvoices.reduce((s, i) => s + i.amount, 0)
+    const totalExpenses = expenseInvoices.reduce((s, i) => s + i.amount, 0)
+    const balance = totalIncome - totalExpenses
     const totalStock = inventory.physical.reduce((s, p) => s + p.stock, 0)
     const criticalAlerts = alerts.filter(a => !a.read).length
+    const lowStockCount = inventory.physical.filter(p => p.stock < p.minStock).length
 
     const stats = [
         { label: 'Libros Totales', value: totalBooks, icon: BookOpen, color: 'from-primary to-primary-700', change: `${published} publicados`, link: '/admin/libros' },
         { label: 'En Producción', value: inProduction, icon: TrendingUp, color: 'from-amber-500 to-amber-700', change: `${books.filter(b => b.status === 'Original').length} manuscritos`, link: '/admin/kanban' },
-        { label: 'Ingresos', value: formatCLP(totalIncome), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: '+12% vs período ant.', up: true, link: '/admin/liquidaciones' },
-        { label: 'Egresos', value: formatCLP(totalExpenses), icon: ArrowDownRight, color: 'from-red-500 to-red-700', change: 'Costos acumulados', link: '/admin/escandallo' },
-        { label: 'Stock Físico', value: `${totalStock} uds.`, icon: Package, color: 'from-purple-500 to-purple-700', change: `${inventory.physical.filter(p => p.stock < p.minStock).length} bajo mín.`, link: '/admin/inventario' },
-        { label: 'Alertas Activas', value: criticalAlerts, icon: AlertTriangle, color: 'from-orange-500 to-orange-700', change: 'Requieren atención', link: '/admin/alertas' },
+        { label: 'Ingresos', value: formatCLP(totalIncome), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${incomeInvoices.length} facturas registradas`, up: totalIncome > 0, link: '/admin/liquidaciones' },
+        { label: 'Egresos', value: formatCLP(totalExpenses), icon: ArrowDownRight, color: 'from-red-500 to-red-700', change: `${expenseInvoices.length} facturas · Balance: ${formatCLP(balance)}`, link: '/admin/escandallo' },
+        { label: 'Stock Físico', value: `${totalStock} uds.`, icon: Package, color: 'from-purple-500 to-purple-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} bajo mínimo` : 'Niveles normales', link: '/admin/inventario' },
+        { label: 'Alertas Activas', value: criticalAlerts, icon: AlertTriangle, color: 'from-orange-500 to-orange-700', change: criticalAlerts > 0 ? 'Requieren atención' : 'Sin alertas pendientes', link: '/admin/alertas' },
     ]
 
     const kanbanStages = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
@@ -122,20 +126,28 @@ export default function AdminDashboard() {
             {/* Recent audit log */}
             <div className="glass-card p-5">
                 <h2 className="text-sm font-semibold text-white mb-4">Actividad Reciente</h2>
-                <div className="space-y-3">
-                    {data.auditLog.slice(0, 5).map(log => (
-                        <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-dark-50/50">
-                            <div className="w-8 h-8 rounded-lg bg-dark-200 flex items-center justify-center text-xs font-bold text-primary-300 shrink-0">
-                                {log.userName.split(' ').map(w => w[0]).join('').slice(0, 2)}
+                {data.auditLog.length === 0 ? (
+                    <div className="text-center py-8">
+                        <Activity className="w-8 h-8 text-dark-600 mx-auto mb-3" />
+                        <p className="text-sm text-dark-600">No hay actividad registrada aún</p>
+                        <p className="text-xs text-dark-500 mt-1">Las acciones en la plataforma aparecerán aquí</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {data.auditLog.slice(0, 5).map(log => (
+                            <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-dark-50/50">
+                                <div className="w-8 h-8 rounded-lg bg-dark-200 flex items-center justify-center text-xs font-bold text-primary-300 shrink-0">
+                                    {log.userName.split(' ').map(w => w[0]).join('').slice(0, 2)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-white">{log.action}</p>
+                                    <p className="text-xs text-dark-600 mt-0.5">{log.userName} · {new Date(log.date).toLocaleDateString('es-CL')}</p>
+                                </div>
+                                <span className={log.type === 'kanban' ? 'badge-blue' : log.type === 'finanzas' ? 'badge-green' : 'badge-yellow'}>{log.type}</span>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm text-white">{log.action}</p>
-                                <p className="text-xs text-dark-600 mt-0.5">{log.userName} · {new Date(log.date).toLocaleDateString('es-CL')}</p>
-                            </div>
-                            <span className={log.type === 'kanban' ? 'badge-blue' : 'badge-yellow'}>{log.type}</span>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     )
