@@ -8,9 +8,9 @@ import { supabase } from '../../lib/supabase'
 export default function Quotes() {
     const { data, addNewQuote, updateQuoteDetails, deleteExistingQuote, formatCLP, addAuditLog } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
-    const [editingQuote, setEditingQuote] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState('All')
+    const [poModalQuote, setPoModalQuote] = useState(null)
 
     const quotesList = data.quotes || []
 
@@ -220,7 +220,16 @@ export default function Quotes() {
         doc.save(`Sol_Cotizacion_${safeTitle}_${safeProvider}.pdf`)
     }
 
-    const generatePOPDF = (quote) => {
+    const handlePOGenerateClick = (quote) => {
+        const tirajes = [quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4].filter(v => v && v > 0)
+        if (tirajes.length > 1) {
+            setPoModalQuote(quote)
+        } else {
+            generatePOPDF(quote, tirajes[0])
+        }
+    }
+
+    const generatePOPDF = (quote, specificAmount = null) => {
         const doc = new jsPDF()
 
         // Variables de diseño
@@ -273,7 +282,11 @@ export default function Quotes() {
         doc.setFont('helvetica', 'bold')
         doc.text('Tiraje(s) Acordado(s):', pageMargin, finalY)
         doc.setFont('helvetica', 'normal')
-        doc.text(tirajes.join(' / ') + ' unidades', pageMargin + 40, finalY)
+        if (specificAmount) {
+            doc.text(`${specificAmount} unidades`, pageMargin + 40, finalY)
+        } else {
+            doc.text(tirajes.join(' / ') + ' unidades', pageMargin + 40, finalY)
+        }
 
         finalY += 8
         doc.setFont('helvetica', 'bold')
@@ -410,7 +423,7 @@ export default function Quotes() {
                                         )}
                                         {quote.status === 'Aprobada' && (
                                             <button
-                                                onClick={() => generatePOPDF(quote)}
+                                                onClick={() => handlePOGenerateClick(quote)}
                                                 className="p-1.5 bg-dark-200 hover:bg-green-500/20 rounded text-green-400 hover:text-green-300 transition-colors"
                                                 title="Generar Orden de Compra (OC)"
                                             >
@@ -519,7 +532,7 @@ export default function Quotes() {
                                     {quote.status === 'Aprobada' && (
                                         <div className="mt-4 pt-4 border-t border-dark-300">
                                             <button
-                                                onClick={() => generatePOPDF(quote)}
+                                                onClick={() => handlePOGenerateClick(quote)}
                                                 className="w-full bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 border border-emerald-500/30 flex items-center justify-center gap-2 text-sm"
                                             >
                                                 <FileText className="w-4 h-4" /> Generar Orden de Compra en PDF
@@ -532,6 +545,45 @@ export default function Quotes() {
                         )}
                     </div>
                 </>
+            )}
+
+            {/* Modal de Selección de Tiraje para Orden de Compra */}
+            {poModalQuote && (
+                <div className="fixed inset-0 bg-dark-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-in">
+                    <div className="glass-card w-full max-w-sm p-6 slide-up border border-primary/30">
+                        <div className="flex justify-between items-center mb-4 border-b border-dark-300 pb-2">
+                            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-emerald-400" /> Confirmar Tiraje Aprobado
+                            </h3>
+                            <button onClick={() => setPoModalQuote(null)} className="text-dark-500 hover:text-white transition-colors">
+                                <XCircle className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <p className="text-xs text-dark-400 mb-4 bg-dark-200/50 p-3 rounded text-center">
+                            Esta cotización posee varias opciones de tiraje propuestas por la imprenta. Selecciona la opción que estás aprobando para la Orden de Compra:
+                        </p>
+                        <div className="space-y-2">
+                            {[poModalQuote.requestedAmount, poModalQuote.requestedAmount2, poModalQuote.requestedAmount3, poModalQuote.requestedAmount4]
+                                .filter(v => v && v > 0)
+                                .map((amount, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            generatePOPDF(poModalQuote, amount)
+                                            setPoModalQuote(null)
+                                        }}
+                                        className="w-full text-left p-3 rounded-lg bg-dark-200 hover:bg-emerald-500/10 border border-dark-400 hover:border-emerald-500/50 transition-all flex justify-between items-center group"
+                                    >
+                                        <span className="text-white font-medium pl-1 text-sm">{amount} unidades</span>
+                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span className="text-[10px] text-emerald-400">Generar PDF</span>
+                                            <Download className="w-4 h-4 text-emerald-400" />
+                                        </div>
+                                    </button>
+                                ))}
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     )
