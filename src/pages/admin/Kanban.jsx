@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { GripVertical, MessageSquare, Calendar, User } from 'lucide-react'
+import { GripVertical, MessageSquare, Calendar, User, Clock } from 'lucide-react'
 
 const STAGES = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
 const stageColors = {
@@ -127,8 +127,22 @@ export default function Kanban() {
                                                     </div>
                                                     <div className="flex items-center gap-1 mt-1">
                                                         <Calendar className="w-3 h-3 text-dark-600" />
-                                                        <span className="text-xs text-dark-600">{book.genre}</span>
+                                                        <span className="text-xs text-dark-600 truncate">{book.genre}</span>
                                                     </div>
+                                                    {book.deliveryDate && (() => {
+                                                        const today = new Date()
+                                                        const due = new Date(book.deliveryDate)
+                                                        const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+                                                        const colorClass = diff < 0 ? 'text-red-400' : diff <= 7 ? 'text-amber-400' : 'text-dark-600'
+                                                        return (
+                                                            <div className="flex items-center gap-1 mt-1">
+                                                                <Clock className={`w-3 h-3 ${colorClass}`} />
+                                                                <span className={`text-xs ${colorClass} truncate`}>
+                                                                    {diff < 0 ? `Vencido ${Math.abs(diff)}d` : diff === 0 ? 'Hoy' : `${diff}d`}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                    })()}
                                                     <div className="flex items-center justify-between mt-2">
                                                         <span className="text-[10px] text-dark-500">{book.isbn?.slice(-6)}</span>
                                                         <button

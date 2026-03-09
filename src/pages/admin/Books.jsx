@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload } from 'lucide-react'
+import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban } from 'lucide-react'
+
+const STAGES = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
+const stageColors = {
+    'Original': 'badge-purple', 'Contratación': 'badge-yellow', 'Edición': 'badge-blue',
+    'Corrección': 'badge-yellow', 'Maquetación': 'badge-blue', 'Imprenta': 'badge-red', 'Publicado': 'badge-green'
+}
 
 export default function Books() {
     const { data, addNewBook, updateBookDetails, deleteExistingBook, formatCLP, addAuditLog } = useAuth()
@@ -119,14 +125,14 @@ export default function Books() {
                                 <p className="text-xs text-dark-500 mt-1">{book.synopsis}</p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-4">
                             <div className="bg-dark-50 rounded-lg p-2.5">
                                 <p className="text-[10px] text-dark-600 uppercase">ISBN</p>
                                 <p className="text-xs text-white font-mono">{book.isbn || '—'}</p>
                             </div>
                             <div className="bg-dark-50 rounded-lg p-2.5">
                                 <p className="text-[10px] text-dark-600 uppercase">Género</p>
-                                <p className="text-xs text-white">{book.genre}</p>
+                                <p className="text-xs text-white">{book.genre || '—'}</p>
                             </div>
                             <div className="bg-dark-50 rounded-lg p-2.5">
                                 <p className="text-[10px] text-dark-600 uppercase flex items-center gap-1"><DollarSign className="w-3 h-3" />PVP</p>
@@ -139,6 +145,10 @@ export default function Books() {
                             <div className="bg-dark-50 rounded-lg p-2.5">
                                 <p className="text-[10px] text-dark-600 uppercase flex items-center gap-1"><Calendar className="w-3 h-3" />Vence</p>
                                 <p className="text-xs text-white">{book.contractExpiry || '—'}</p>
+                            </div>
+                            <div className="bg-dark-50 rounded-lg p-2.5">
+                                <p className="text-[10px] text-dark-600 uppercase flex items-center gap-1"><Calendar className="w-3 h-3" />Entrega Est.</p>
+                                <p className="text-xs text-white">{book.deliveryDate || '—'}</p>
                             </div>
                         </div>
                     </div>
@@ -178,7 +188,10 @@ function BookForm({ data, initialData, onSave, onClose }) {
         sku: initialData?.sku || '',
         hasLegalDeposit: initialData?.hasLegalDeposit || 'No',
         legalDepositNumber: initialData?.legalDepositNumber || '',
-        flapWidth: initialData?.flapWidth || ''
+        flapWidth: initialData?.flapWidth || '',
+        // Nuevos campos de producción
+        entryStage: initialData?.status || 'Original',
+        deliveryDate: initialData?.deliveryDate || ''
     })
     const authors = data.users.filter(u => u.role === 'AUTOR')
 
@@ -219,7 +232,7 @@ function BookForm({ data, initialData, onSave, onClose }) {
 
         if (!initialData) {
             bookData.id = `b${Date.now()}`
-            bookData.status = 'Original'
+            bookData.status = form.entryStage  // Etapa elegida por el admin
             bookData.assignedTo = []
             bookData.contractExpiry = null
             bookData.createdAt = new Date().toISOString().split('T')[0]
@@ -234,24 +247,59 @@ function BookForm({ data, initialData, onSave, onClose }) {
         <div className="glass-card p-5 slide-up border border-primary/30">
             <h3 className="text-sm font-semibold text-white mb-4">{initialData ? 'Editar Título' : 'Registrar Nuevo Título'}</h3>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="sm:col-span-2">
-                    <label className="text-xs text-dark-600 mb-1 block">Título</label>
-                    <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} className="input-field text-sm" required />
-                </div>
-                <div>
-                    <label className="text-xs text-dark-600 mb-1 block">Autor</label>
-                    <select value={form.authorId} onChange={e => setForm(p => ({ ...p, authorId: e.target.value }))} className="input-field text-sm" required>
-                        <option value="">Seleccionar...</option>
-                        {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                    </select>
-                </div>
-                <div>
-                    <label className="text-xs text-dark-600 mb-1 block">ISBN</label>
-                    <input value={form.isbn} onChange={e => setForm(p => ({ ...p, isbn: e.target.value }))} className="input-field text-sm" />
-                </div>
-                <div>
-                    <label className="text-xs text-dark-600 mb-1 block">Género</label>
-                    <input value={form.genre} onChange={e => setForm(p => ({ ...p, genre: e.target.value }))} className="input-field text-sm" />
+
+                {/* ── Sección: Datos de Producción ── */}
+                <div className="sm:col-span-2 pb-3 border-b border-primary/20">
+                    <h4 className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-2 mb-3">
+                        <Kanban className="w-3.5 h-3.5" /> Datos de Producción
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="sm:col-span-1">
+                            <label className="text-xs text-dark-600 mb-1 block">Título del Libro *</label>
+                            <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} className="input-field text-sm" required placeholder="Título completo" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Autor *</label>
+                            <select value={form.authorId} onChange={e => setForm(p => ({ ...p, authorId: e.target.value }))} className="input-field text-sm" required>
+                                <option value="">Seleccionar autor...</option>
+                                {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">Género *</label>
+                            <input value={form.genre} onChange={e => setForm(p => ({ ...p, genre: e.target.value }))} className="input-field text-sm" placeholder="Ej: Narrativa" required />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block flex items-center gap-1">
+                                <Kanban className="w-3 h-3 text-primary" /> Etapa de Entrada *
+                            </label>
+                            <select
+                                value={form.entryStage}
+                                onChange={e => setForm(p => ({ ...p, entryStage: e.target.value }))}
+                                className="input-field text-sm"
+                                disabled={!!initialData}
+                                title={initialData ? 'Para cambiar la etapa, arrastra la tarjeta en el Tablero de Producción' : ''}
+                            >
+                                {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                            {initialData && <p className="text-[10px] text-dark-500 mt-1">Cambia la etapa arrastrando en el Tablero</p>}
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block flex items-center gap-1">
+                                <Calendar className="w-3 h-3" /> Fecha Estimada de Entrega
+                            </label>
+                            <input
+                                type="date"
+                                value={form.deliveryDate}
+                                onChange={e => setForm(p => ({ ...p, deliveryDate: e.target.value }))}
+                                className="input-field text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block">ISBN</label>
+                            <input value={form.isbn} onChange={e => setForm(p => ({ ...p, isbn: e.target.value }))} className="input-field text-sm" placeholder="978-956-..." />
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <label className="text-xs text-dark-600 mb-1 block">PVP (CLP)</label>
