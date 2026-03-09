@@ -223,22 +223,32 @@ export default function Quotes() {
 
     const handlePOGenerateClick = (quote) => {
         if (quote.approvedAmount) {
-            generatePOPDF(quote, quote.approvedAmount)
+            let matchedPrice = quote.quotedAmount
+            if (quote.approvedAmount === quote.requestedAmount2) matchedPrice = quote.quotedAmount2
+            if (quote.approvedAmount === quote.requestedAmount3) matchedPrice = quote.quotedAmount3
+            if (quote.approvedAmount === quote.requestedAmount4) matchedPrice = quote.quotedAmount4
+            generatePOPDF(quote, quote.approvedAmount, matchedPrice)
             return
         }
 
-        const tirajes = [quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4].filter(v => v && v > 0)
+        const tirajes = [
+            { qty: quote.requestedAmount, price: quote.quotedAmount },
+            { qty: quote.requestedAmount2, price: quote.quotedAmount2 },
+            { qty: quote.requestedAmount3, price: quote.quotedAmount3 },
+            { qty: quote.requestedAmount4, price: quote.quotedAmount4 }
+        ].filter(v => v.qty && v.qty > 0)
+
         if (tirajes.length > 1) {
-            setPoModalQuote(quote)
+            setPoModalQuote({ ...quote, _tirajesObj: tirajes })
         } else {
             // Implicitly approve the only amount
-            updateQuoteDetails(quote.id, { ...quote, approvedAmount: tirajes[0] }).then(() => {
-                generatePOPDF(quote, tirajes[0])
+            updateQuoteDetails(quote.id, { ...quote, approvedAmount: tirajes[0].qty }).then(() => {
+                generatePOPDF(quote, tirajes[0].qty, tirajes[0].price)
             })
         }
     }
 
-    const generatePOPDF = (quote, specificAmount = null) => {
+    const generatePOPDF = (quote, specificAmount = null, specificPrice = null) => {
         const doc = new jsPDF()
 
         // Variables de diseño
@@ -318,7 +328,7 @@ export default function Quotes() {
 
         // Tabla de Valores
         finalY += 20
-        const total = quote.quotedAmount || 0
+        const total = specificPrice || quote.quotedAmount || 0
         const neto = Math.round(total / 1.19)
         const iva = total - neto
 
@@ -581,26 +591,29 @@ export default function Quotes() {
                             Esta cotización posee varias opciones de tiraje propuestas por la imprenta. Selecciona la opción que estás aprobando para la Orden de Compra:
                         </p>
                         <div className="space-y-2">
-                            {[poModalQuote.requestedAmount, poModalQuote.requestedAmount2, poModalQuote.requestedAmount3, poModalQuote.requestedAmount4]
-                                .filter(v => v && v > 0)
-                                .map((amount, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => {
-                                            updateQuoteDetails(poModalQuote.id, { ...poModalQuote, approvedAmount: amount }).then(() => {
-                                                generatePOPDF(poModalQuote, amount)
-                                                setPoModalQuote(null)
-                                            })
-                                        }}
-                                        className="w-full text-left p-3 rounded-lg bg-dark-200 hover:bg-emerald-500/10 border border-dark-400 hover:border-emerald-500/50 transition-all flex justify-between items-center group"
-                                    >
-                                        <span className="text-white font-medium pl-1 text-sm">{amount} unidades</span>
-                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <span className="text-[10px] text-emerald-400">Generar PDF</span>
-                                            <Download className="w-4 h-4 text-emerald-400" />
-                                        </div>
-                                    </button>
-                                ))}
+                            {poModalQuote._tirajesObj?.map((tObj, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => {
+                                        const cleanQuote = { ...poModalQuote }
+                                        delete cleanQuote._tirajesObj
+                                        updateQuoteDetails(poModalQuote.id, { ...cleanQuote, approvedAmount: tObj.qty }).then(() => {
+                                            generatePOPDF(cleanQuote, tObj.qty, tObj.price)
+                                            setPoModalQuote(null)
+                                        })
+                                    }}
+                                    className="w-full text-left p-3 rounded-lg bg-dark-200 hover:bg-emerald-500/10 border border-dark-400 hover:border-emerald-500/50 transition-all flex justify-between items-center group"
+                                >
+                                    <div>
+                                        <span className="text-white font-medium pl-1 text-sm">{tObj.qty} unidades</span>
+                                        {tObj.price > 0 && <span className="block pl-1 text-xs text-emerald-400">Total CLP: {formatCLP(tObj.price)}</span>}
+                                    </div>
+                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="text-[10px] text-emerald-400">Generar PDF</span>
+                                        <Download className="w-4 h-4 text-emerald-400" />
+                                    </div>
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -629,6 +642,9 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
         extraFinishes: initialData?.extraFinishes || '',
         status: initialData?.status || 'Solicitada',
         quotedAmountStr: formatMoneyStr(initialData?.quotedAmount),
+        quotedAmountStr2: formatMoneyStr(initialData?.quotedAmount2),
+        quotedAmountStr3: formatMoneyStr(initialData?.quotedAmount3),
+        quotedAmountStr4: formatMoneyStr(initialData?.quotedAmount4),
         deliveryDate: initialData?.deliveryDate || '',
         notes: initialData?.notes || '',
         quoteDocument: initialData?.quoteDocument || ''
@@ -667,13 +683,22 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
         }
 
         const quotedAmountNum = parseInt(form.quotedAmountStr.toString().replace(/\D/g, ''), 10) || 0
+        const quotedAmountNum2 = parseInt(form.quotedAmountStr2?.toString().replace(/\D/g, ''), 10) || 0
+        const quotedAmountNum3 = parseInt(form.quotedAmountStr3?.toString().replace(/\D/g, ''), 10) || 0
+        const quotedAmountNum4 = parseInt(form.quotedAmountStr4?.toString().replace(/\D/g, ''), 10) || 0
 
         const quoteData = {
             ...form,
-            quotedAmount: quotedAmountNum
+            quotedAmount: quotedAmountNum,
+            quotedAmount2: quotedAmountNum2,
+            quotedAmount3: quotedAmountNum3,
+            quotedAmount4: quotedAmountNum4
         }
 
         delete quoteData.quotedAmountStr
+        delete quoteData.quotedAmountStr2
+        delete quoteData.quotedAmountStr3
+        delete quoteData.quotedAmountStr4
 
         if (!initialData) {
             // New quote: snapshot the book data
@@ -764,39 +789,75 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         </button>
 
                         {showAltAmounts && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 p-3 bg-dark-200/50 rounded-lg border border-dark-300">
-                                <div>
-                                    <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 1</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={form.requestedAmount2}
-                                        onChange={e => setForm(p => ({ ...p, requestedAmount2: e.target.value }))}
-                                        className="input-field text-sm"
-                                        placeholder="Ej: 1000"
-                                    />
+                            <div className="space-y-4 mt-2 p-4 bg-dark-200/50 rounded-lg border border-dark-300">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 1 (uds.)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={form.requestedAmount2}
+                                            onChange={e => setForm(p => ({ ...p, requestedAmount2: e.target.value }))}
+                                            className="input-field text-sm"
+                                            placeholder="Ej: 1000"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-dark-600 mb-1 block">Precio Tiraje Alt. 1 (Total CLP)</label>
+                                        <input
+                                            type="text"
+                                            value={form.quotedAmountStr2}
+                                            onChange={e => setForm(p => ({ ...p, quotedAmountStr2: e.target.value.replace(/\D/g, '') }))}
+                                            className="input-field text-sm text-yellow-400 font-medium"
+                                            placeholder="Ej: 800000"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 2</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={form.requestedAmount3}
-                                        onChange={e => setForm(p => ({ ...p, requestedAmount3: e.target.value }))}
-                                        className="input-field text-sm"
-                                        placeholder="Ej: 1500"
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 2 (uds.)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={form.requestedAmount3}
+                                            onChange={e => setForm(p => ({ ...p, requestedAmount3: e.target.value }))}
+                                            className="input-field text-sm"
+                                            placeholder="Ej: 1500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-dark-600 mb-1 block">Precio Tiraje Alt. 2 (Total CLP)</label>
+                                        <input
+                                            type="text"
+                                            value={form.quotedAmountStr3}
+                                            onChange={e => setForm(p => ({ ...p, quotedAmountStr3: e.target.value.replace(/\D/g, '') }))}
+                                            className="input-field text-sm text-yellow-400 font-medium"
+                                            placeholder="Ej: 950000"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 3</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={form.requestedAmount4}
-                                        onChange={e => setForm(p => ({ ...p, requestedAmount4: e.target.value }))}
-                                        className="input-field text-sm"
-                                        placeholder="Ej: 2000"
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 3 (uds.)</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={form.requestedAmount4}
+                                            onChange={e => setForm(p => ({ ...p, requestedAmount4: e.target.value }))}
+                                            className="input-field text-sm"
+                                            placeholder="Ej: 2000"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-dark-600 mb-1 block">Precio Tiraje Alt. 3 (Total CLP)</label>
+                                        <input
+                                            type="text"
+                                            value={form.quotedAmountStr4}
+                                            onChange={e => setForm(p => ({ ...p, quotedAmountStr4: e.target.value.replace(/\D/g, '') }))}
+                                            className="input-field text-sm text-yellow-400 font-medium"
+                                            placeholder="Ej: 1200000"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}

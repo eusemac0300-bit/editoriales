@@ -201,6 +201,10 @@ export async function loadAllData(tenantId) {
             bookInteriorPaper: q.book_interior_paper,
             bookCoverPaper: q.book_cover_paper,
             bookCoverFinish: q.book_cover_finish,
+            approvedAmount: q.approved_amount,
+            quotedAmount2: q.quoted_amount_2,
+            quotedAmount3: q.quoted_amount_3,
+            quotedAmount4: q.quoted_amount_4,
             createdAt: q.created_at,
             updatedAt: q.updated_at
         }))
@@ -668,6 +672,9 @@ export async function addQuoteToDb(quote) {
             extra_finishes: quote.extraFinishes,
             status: quote.status,
             quoted_amount: quote.quotedAmount,
+            quoted_amount_2: quote.quotedAmount2 || 0,
+            quoted_amount_3: quote.quotedAmount3 || 0,
+            quoted_amount_4: quote.quotedAmount4 || 0,
             delivery_date: quote.deliveryDate,
             notes: quote.notes,
             book_title: quote.bookTitle,
@@ -681,6 +688,7 @@ export async function addQuoteToDb(quote) {
             book_interior_paper: quote.bookInteriorPaper,
             book_cover_paper: quote.bookCoverPaper,
             book_cover_finish: quote.bookCoverFinish,
+            approved_amount: quote.approvedAmount || null,
             created_at: quote.createdAt,
             updated_at: quote.updatedAt
         })
@@ -692,6 +700,9 @@ export async function updateQuoteInDb(quoteId, updates) {
     const dbUpdates = {}
     if (updates.status !== undefined) dbUpdates.status = updates.status
     if (updates.quotedAmount !== undefined) dbUpdates.quoted_amount = updates.quotedAmount
+    if (updates.quotedAmount2 !== undefined) dbUpdates.quoted_amount_2 = updates.quotedAmount2
+    if (updates.quotedAmount3 !== undefined) dbUpdates.quoted_amount_3 = updates.quotedAmount3
+    if (updates.quotedAmount4 !== undefined) dbUpdates.quoted_amount_4 = updates.quotedAmount4
     if (updates.deliveryDate !== undefined) dbUpdates.delivery_date = updates.deliveryDate
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes
     if (updates.provider !== undefined) dbUpdates.provider = updates.provider
@@ -701,6 +712,7 @@ export async function updateQuoteInDb(quoteId, updates) {
     if (updates.requestedAmount4 !== undefined) dbUpdates.requested_amount_4 = updates.requestedAmount4
     if (updates.bindingType !== undefined) dbUpdates.binding_type = updates.bindingType
     if (updates.extraFinishes !== undefined) dbUpdates.extra_finishes = updates.extraFinishes
+    if (updates.approvedAmount !== undefined) dbUpdates.approved_amount = updates.approvedAmount
     dbUpdates.updated_at = new Date().toISOString()
 
     const { error } = await supabase
