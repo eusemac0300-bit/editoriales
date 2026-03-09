@@ -251,13 +251,18 @@ export default function Quotes() {
         doc.setLineWidth(0.5)
         doc.line(pageMargin, pageMargin + 9, 195, pageMargin + 9)
 
+        const quotesSorted = data?.quotes ? [...data.quotes].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)) : []
+        const quoteIndex = quotesSorted.findIndex(q => q.id === quote.id)
+        const correlativeNum = String(quoteIndex >= 0 ? quoteIndex + 1 : 1).padStart(4, '0')
+        const ocRef = `OC-${new Date(quote.createdAt || Date.now()).getFullYear()}-${correlativeNum}`
+
         // Fechas y Datos de Cabecera
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(9)
         doc.setTextColor(lightGray[0], lightGray[1], lightGray[2])
         const currentDate = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
         doc.text(`Fecha: ${currentDate}`, 195, pageMargin + 16, { align: 'right' })
-        doc.text(`OC REF: #OC-${quote.id.substring(0, 8).toUpperCase()}`, 195, pageMargin + 21, { align: 'right' })
+        doc.text(`OC REF: #${ocRef}`, 195, pageMargin + 21, { align: 'right' })
 
         // Proveedor
         doc.setFontSize(10)
@@ -337,7 +342,7 @@ export default function Quotes() {
 
         const safeTitle = (quote.bookTitle || 'Libro').replace(/\s+/g, '_')
         const safeProvider = (quote.provider || 'Imprenta').replace(/\s+/g, '_')
-        doc.save(`OC_${safeProvider}_${safeTitle}.pdf`)
+        doc.save(`${ocRef}_${safeProvider}_${safeTitle}.pdf`)
     }
 
     return (
