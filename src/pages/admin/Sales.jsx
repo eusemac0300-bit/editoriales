@@ -275,23 +275,37 @@ export default function Sales() {
                             // 1. Save the sale
                             await addNewSale(finalSale)
 
-                            // 2. Deduct stock: use local inv id (already loaded from DB)
-                            const invRecord = data?.inventory?.physical?.find(i => i.bookId === saleData.bookId)
-                            if (invRecord?.id && saleData.quantity > 0) {
-                                const newStock = Math.max(0, (invRecord.stock || 0) - saleData.quantity)
-                                const exits = [
-                                    ...(invRecord.exits || []),
-                                    {
-                                        date: new Date().toISOString().slice(0, 10),
-                                        qty: saleData.quantity,
-                                        ref: `Venta ${saleData.channel} – ${id}`
-                                    }
-                                ]
-                                const { error: stockErr } = await supabase
+                            // 2. Deduct stock — always query Supabase for the row (local state may lack `id`)
+                            if (saleData.bookId && saleData.quantity > 0) {
+                                const { data: invRows, error: invErr } = await supabase
                                     .from('inventory_physical')
-                                    .update({ stock: newStock, exits })
-                                    .eq('id', invRecord.id)
-                                if (stockErr) console.error('Stock update error:', stockErr)
+                                    .select('id, stock, exits')
+                                    .eq('book_id', saleData.bookId)
+                                    .order('id', { ascending: true })
+                                    .limit(1)
+
+                                if (invErr) {
+                                    console.error('Error fetching inv:', invErr)
+                                } else if (invRows && invRows.length > 0) {
+                                    const invRow = invRows[0]
+                                    const newStock = Math.max(0, (invRow.stock || 0) - saleData.quantity)
+                                    const exits = [
+                                        ...(invRow.exits || []),
+                                        {
+                                            date: new Date().toISOString().slice(0, 10),
+                                            qty: saleData.quantity,
+                                            ref: `Venta ${saleData.channel} – ${id}`
+                                        }
+                                    ]
+                                    const { error: updErr } = await supabase
+                                        .from('inventory_physical')
+                                        .update({ stock: newStock, exits })
+                                        .eq('id', invRow.id)
+                                    if (updErr) console.error('Stock update error:', updErr)
+                                    else console.log(`✅ Stock ${saleData.bookId}: ${invRow.stock} → ${newStock}`)
+                                } else {
+                                    console.warn('No inventory row found for book:', saleData.bookId)
+                                }
                             }
 
                             // 3. Audit log
