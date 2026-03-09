@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabase'
 import {
-    ShoppingCart, Plus, X, Search, Filter, Trash2, TrendingUp,
+    ShoppingCart, Plus, X, Search, TrendingUp,
     BookOpen, DollarSign, Calendar, Users, Package, BarChart3,
-    CheckCircle, XCircle, Edit3
+    CheckCircle, XCircle
 } from 'lucide-react'
 
 const CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria', 'Consignación']
@@ -14,7 +15,7 @@ const STATUS_COLORS = {
 }
 
 export default function Sales() {
-    const { data, formatCLP, addNewSale, deleteExistingSale, updateSaleDetails, updateInventory, addAuditLog } = useAuth()
+    const { data, formatCLP, addNewSale, updateSaleDetails, addAuditLog } = useAuth()
 
     const sales = useMemo(() => data?.finances?.sales || [], [data])
     const books = useMemo(() => data?.books || [], [data])
@@ -267,36 +268,49 @@ export default function Sales() {
                             const finalSale = {
                                 ...saleData,
                                 id,
-                                bookTitle: book?.title || saleData.bookTitle,
+                                bookTitle: book?.title || '',
                                 createdAt: new Date().toISOString()
                             }
+
+                            // 1. Save the sale
                             await addNewSale(finalSale)
 
-                            // Phase 3: Deduct from physical inventory
-                            // updateInventory expects an updater FUNCTION as 2nd arg
+                            // 2. Phase 3: Deduct stock directly via Supabase (safe, no updater function)
                             if (saleData.bookId && saleData.quantity > 0) {
-                                const saleQty = saleData.quantity
-                                const saleRef = `Venta ${saleData.channel} – ${id}`
-                                await updateInventory(saleData.bookId, (current) => {
-                                    if (!current) return null // no inventory record → skip
-                                    const newStock = Math.max(0, (current.stock || 0) - saleQty)
-                                    const exits = [...(current.exits || []), {
-                                        date: new Date().toISOString().slice(0, 10),
-                                        qty: saleQty,
-                                        ref: saleRef
-                                    }]
-                                    return { ...current, stock: newStock, exits }
-                                })
+                                const { data: invRows } = await supabase
+                                    .from('inventory_physical')
+                                    .select('id, stock, exits')
+                                    .eq('book_id', saleData.bookId)
+                                    .limit(1)
+
+                                if (invRows && invRows.length > 0) {
+                                    const inv = invRows[0]
+                                    const newStock = Math.max(0, (inv.stock || 0) - saleData.quantity)
+                                    const exits = [
+                                        ...(inv.exits || []),
+                                        {
+                                            date: new Date().toISOString().slice(0, 10),
+                                            qty: saleData.quantity,
+                                            ref: `Venta ${saleData.channel} – ${id}`
+                                        }
+                                    ]
+                                    await supabase
+                                        .from('inventory_physical')
+                                        .update({ stock: newStock, exits })
+                                        .eq('id', inv.id)
+                                }
                             }
 
+                            // 3. Audit log
                             await addAuditLog(
                                 `Registró venta: "${finalSale.bookTitle}" | ${saleData.quantity} u. × ${formatCLP(saleData.unitPrice)} | Canal: ${saleData.channel}`,
                                 'ventas'
                             )
+
                             setShowAdd(false)
                         } catch (err) {
                             console.error('Error al registrar venta:', err)
-                            alert('Ocurrió un error al guardar la venta. Revisa la consola para más detalles.')
+                            alert(`Error al guardar: ${err.message || 'Error desconocido'}. Revisa la consola.`)
                         }
                     }}
                 />
