@@ -458,9 +458,22 @@ export default function Quotes() {
                                                     .filter(v => v && v > 0).join(', ')} u.
                                             </p>
                                         </div>
-                                        <div>
-                                            <p className="text-[10px] text-dark-500 uppercase">Monto Total</p>
-                                            <p className="text-xs text-white font-mono font-medium">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount) : 'Pte.'}</p>
+                                        <div className="col-span-2">
+                                            <p className="text-[10px] text-dark-500 uppercase mb-1">Costo de Producción</p>
+                                            <div className="bg-dark-200/50 p-2 rounded border border-dark-300 grid grid-cols-3 gap-2">
+                                                <div>
+                                                    <p className="text-[9px] text-dark-500">Neto</p>
+                                                    <p className="text-xs text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(Math.round(quote.quotedAmount / 1.19)) : '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] text-dark-500">IVA (19%)</p>
+                                                    <p className="text-xs text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount - Math.round(quote.quotedAmount / 1.19)) : '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] text-primary-400 font-semibold">Total</p>
+                                                    <p className="text-xs text-primary-300 font-mono font-bold">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount) : 'Pte.'}</p>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div>
                                             <p className="text-[10px] text-dark-500 uppercase">Fecha Entrega</p>
@@ -726,8 +739,8 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         </select>
                     </div>
                     <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Monto Cotizado (CLP)</label>
-                        <div className="relative">
+                        <label className="text-xs text-dark-600 mb-1 block">Monto Cotizado (Total CLP)</label>
+                        <div className="relative mb-2">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-dark-500"><DollarSign className="w-3 h-3" /></span>
                             <input
                                 type="text"
@@ -737,6 +750,20 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                                 placeholder="0"
                             />
                         </div>
+                        {(() => {
+                            const val = parseInt(form.quotedAmountStr.toString().replace(/\D/g, ''), 10) || 0
+                            if (val > 0) {
+                                const neto = Math.round(val / 1.19)
+                                const iva = val - neto
+                                return (
+                                    <div className="flex items-center gap-3 text-[10px] bg-dark-200/50 px-2 py-1.5 rounded border border-dark-300">
+                                        <span className="text-dark-400">Neto: <span className="text-white font-mono">{formatMoneyStr(neto)}</span></span>
+                                        <span className="text-dark-400">IVA: <span className="text-white font-mono">{formatMoneyStr(iva)}</span></span>
+                                    </div>
+                                )
+                            }
+                            return null
+                        })()}
                     </div>
                     <div>
                         <label className="text-xs text-dark-600 mb-1 block flex items-center gap-1"><Calendar className="w-3 h-3" /> Fecha Prevista Entrega</label>
