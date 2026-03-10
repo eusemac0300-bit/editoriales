@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS sales (
     quantity NUMERIC NOT NULL DEFAULT 1,
     unit_price NUMERIC NOT NULL DEFAULT 0,
     total_amount NUMERIC NOT NULL DEFAULT 0,
+    neto NUMERIC NOT NULL DEFAULT 0,
+    iva NUMERIC NOT NULL DEFAULT 0,
     sale_date DATE DEFAULT CURRENT_DATE,
     client_name TEXT,
     document_ref TEXT, -- Boleta, Factura

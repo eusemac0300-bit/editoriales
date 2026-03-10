@@ -172,7 +172,7 @@ export default function Sales() {
     const handleExportExcel = () => {
         if (filtered.length === 0) return alert('No hay datos para exportar')
 
-        const headers = ['Fecha', 'Libro', 'Canal', 'Tipo', 'Cliente', 'Documento', 'Cantidad', 'Precio Unitario', 'Total', 'Estado']
+        const headers = ['Fecha', 'Libro', 'Canal', 'Tipo', 'Cliente', 'Documento', 'Cantidad', 'P. Unitario', 'Neto', 'IVA', 'Total', 'Estado']
 
         const rows = filtered.map(s => [
             s.saleDate || '',
@@ -183,6 +183,8 @@ export default function Sales() {
             s.documentRef || '',
             s.quantity || 0,
             s.unitPrice || 0,
+            s.neto || 0,
+            s.iva || 0,
             s.totalAmount || 0,
             s.status || ''
         ])
@@ -390,7 +392,8 @@ export default function Sales() {
                                         </td>
                                         <td className="px-4 py-3 text-dark-400 text-xs">{sale.clientName || '—'}</td>
                                         <td className="px-4 py-3 text-white font-mono text-right">{sale.quantity}</td>
-                                        <td className="px-4 py-3 text-dark-400 font-mono text-right text-xs">{formatCLP(sale.unitPrice)}</td>
+                                        <td className="px-4 py-3 text-dark-500 font-mono text-right text-xs">{(sale.neto > 0) ? formatCLP(sale.neto) : '-'}</td>
+                                        <td className="px-4 py-3 text-dark-400 font-mono text-right text-xs">{(sale.iva > 0) ? formatCLP(sale.iva) : '-'}</td>
                                         <td className="px-4 py-3 text-emerald-400 font-mono font-bold text-right">{formatCLP(sale.totalAmount)}</td>
                                         <td className="px-4 py-3">
                                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[sale.status] || 'badge-blue'}`}>
@@ -568,7 +571,7 @@ function SaleForm({ books, data, formatCLP, onSave, onClose }) {
             return
         }
         setSaving(true)
-        await onSave({ ...form, quantity, unitPrice, totalAmount: total, saleDate: form.saleDate })
+        await onSave({ ...form, quantity, unitPrice, totalAmount: total, neto, iva, saleDate: form.saleDate })
         setSaving(false)
     }
 
@@ -645,52 +648,45 @@ function SaleForm({ books, data, formatCLP, onSave, onClose }) {
                                 type="text"
                                 value={form.unitPrice}
                                 onChange={e => setForm(p => ({ ...p, unitPrice: e.target.value.replace(/\D/g, '') }))}
-                                className="input-field text-sm w-full text-yellow-400"
-                                placeholder="15990"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs text-dark-600 mb-1 block flex items-center gap-1"><Calendar className="w-3 h-3" /> Fecha</label>
-                            <input
-                                type="date"
-                                value={form.saleDate}
-                                onChange={e => setForm(p => ({ ...p, saleDate: e.target.value }))}
                                 className="input-field text-sm w-full"
+                                required
                             />
                         </div>
                     </div>
 
-                    {/* Totals preview */}
-                    {total > 0 && (
-                        <div className="bg-dark-200/60 border border-dark-300 rounded-lg p-3 grid grid-cols-3 gap-2">
-                            <div className="text-center">
-                                <p className="text-[9px] text-dark-500 uppercase">Neto</p>
-                                <p className="text-xs text-white font-mono font-medium">{formatCLP(neto)}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[9px] text-dark-500 uppercase">IVA 19%</p>
-                                <p className="text-xs text-white font-mono font-medium">{formatCLP(iva)}</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-[9px] text-primary-400 uppercase font-semibold">Total</p>
-                                <p className="text-sm text-emerald-400 font-mono font-bold">{formatCLP(total)}</p>
-                            </div>
+                    {/* Breakdown Neto/IVA/Total */}
+                    <div className="bg-dark-100/50 p-4 rounded-xl border border-dark-300">
+                        <div className="flex items-center justify-between text-xs text-dark-500">
+                            <span>Subtotal (Neto): {formatCLP(neto)}</span>
+                            <span>IVA (19%): {formatCLP(iva)}</span>
+                            <span className="text-sm text-emerald-400 font-bold ml-4">Total: {formatCLP(total)}</span>
                         </div>
-                    )}
+                    </div>
+
+                    <div>
+                        <label className="text-xs text-dark-600 mb-1 block flex items-center gap-1"><Calendar className="w-3 h-3" /> Fecha</label>
+                        <input
+                            type="date"
+                            value={form.saleDate}
+                            onChange={e => setForm(p => ({ ...p, saleDate: e.target.value }))}
+                            className="input-field text-sm w-full"
+                        />
+                    </div>
 
                     {/* Royalty preview */}
-                    {selectedBook?.royaltyPercent > 0 && total > 0 && (
-                        <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg px-3 py-2 flex items-center gap-2">
-                            <Users className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-                            <p className="text-[10px] text-yellow-300">
-                                Royalty acumulado para el autor: <span className="font-mono font-bold">
-                                    {formatCLP(Math.round(total * (selectedBook.royaltyPercent / 100)))}
-                                </span>
-                                {' '}({selectedBook.royaltyPercent}% sobre total)
-                            </p>
-                        </div>
-                    )}
+                    {
+                        selectedBook?.royaltyPercent > 0 && total > 0 && (
+                            <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg px-3 py-2 flex items-center gap-2">
+                                <Users className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+                                <p className="text-[10px] text-yellow-300">
+                                    Royalty acumulado para el autor: <span className="font-mono font-bold">
+                                        {formatCLP(Math.round(total * (selectedBook.royaltyPercent / 100)))}
+                                    </span>
+                                    {' '}({selectedBook.royaltyPercent}% sobre total)
+                                </p>
+                            </div>
+                        )
+                    }
 
                     {/* Client + Doc */}
                     <div className="grid grid-cols-2 gap-3">
@@ -738,8 +734,8 @@ function SaleForm({ books, data, formatCLP, onSave, onClose }) {
                             {saving ? 'Guardando...' : <><CheckCircle className="w-4 h-4" /> Registrar Venta</>}
                         </button>
                     </div>
-                </form>
-            </div>
-        </div>
+                </form >
+            </div >
+        </div >
     )
 }
