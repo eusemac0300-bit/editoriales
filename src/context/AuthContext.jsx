@@ -688,7 +688,7 @@ export function AuthProvider({ children }) {
         addExpense, updateExpense, deleteExpense,
         theme, toggleTheme,
         language, setLanguage, t,
-        currency, setCurrency, taxRate, setTaxRate, formatCurrency, formatCLP,
+        currency, setCurrency, taxRate, setTaxRate, formatCurrency,
         loading, supabaseConnected, reloadData
     }
 
