@@ -1,6 +1,6 @@
 export const MODULES = [
     'Dashboard', 'Inventario', 'Producción', 'Escandallo', 'Cotizaciones',
-    'Ventas', 'Consignaciones', 'Liquidaciones', 'Proveedores', 'Órdenes', 'Gastos',
+    'Ventas', 'Consignaciones', 'Liquidaciones', 'Proveedores', 'Órdenes', 'Gastos', 'Flujo de Caja',
     'Títulos', 'Autores', 'Usuarios', 'Documentos', 'Auditoría', 'Alertas'
 ]
 
@@ -8,14 +8,14 @@ export const DEFAULT_PERMISSIONS = {
     SUPERADMIN: {
         'Dashboard': true, 'Inventario': true, 'Producción': true, 'Escandallo': true, 'Cotizaciones': true,
         'Ventas': true, 'Consignaciones': true, 'Liquidaciones': true, 'Proveedores': true,
-        'Órdenes': true, 'Gastos': true, 'Títulos': true, 'Autores': true, 'Usuarios': true,
-        'Documentos': true, 'Auditoría': true, 'Alertas': true
+        'Órdenes': true, 'Gastos': true, 'Flujo de Caja': true, 'Títulos': true, 'Autores': true,
+        'Usuarios': true, 'Documentos': true, 'Auditoría': true, 'Alertas': true
     },
     ADMIN: {
         'Dashboard': true, 'Inventario': true, 'Producción': true, 'Escandallo': true, 'Cotizaciones': true,
         'Ventas': true, 'Consignaciones': true, 'Liquidaciones': true, 'Proveedores': true,
-        'Órdenes': true, 'Gastos': true, 'Títulos': true, 'Autores': true, 'Usuarios': true,
-        'Documentos': true, 'Auditoría': true, 'Alertas': true
+        'Órdenes': true, 'Gastos': true, 'Flujo de Caja': true, 'Títulos': true, 'Autores': true,
+        'Usuarios': true, 'Documentos': true, 'Auditoría': true, 'Alertas': true
     },
     VENDEDOR: {
         'Dashboard': true, 'Inventario': true, 'Producción': false, 'Escandallo': false, 'Cotizaciones': true,
