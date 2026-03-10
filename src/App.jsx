@@ -29,6 +29,7 @@ import AuthorsPage from './pages/admin/Authors'
 import Reports from './pages/admin/Reports'
 import Quotes from './pages/admin/Quotes'
 import Sales from './pages/admin/Sales'
+import Consignments from './pages/admin/Consignments'
 
 // Freelance pages
 import FreelanceKanban from './pages/freelance/FreelanceKanban'
@@ -73,6 +74,7 @@ function AppRoutes() {
                 <Route path="escandallo" element={<Escandallo />} />
                 <Route path="cotizaciones" element={<Quotes />} />
                 <Route path="ventas" element={<Sales />} />
+                <Route path="consignaciones" element={<Consignments />} />
                 <Route path="liquidaciones" element={<Royalties />} />
                 <Route path="libros" element={<Books />} />
                 <Route path="autores" element={<AuthorsPage />} />

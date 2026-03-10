@@ -16,7 +16,8 @@ export async function loadAllData(tenantId) {
             { data: alerts, error: alertsErr },
             { data: documents, error: docsErr },
             { data: quotes, error: quotesErr },
-            { data: sales, error: salesErr }
+            { data: sales, error: salesErr },
+            { data: consignments, error: consignmentsErr }
         ] = await Promise.all([
             supabase.from('users').select('*').eq('tenant_id', tenantId),
             supabase.from('books').select('*').eq('tenant_id', tenantId),
@@ -29,7 +30,8 @@ export async function loadAllData(tenantId) {
             supabase.from('alerts').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
             supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
-            supabase.from('sales').select('*, books(title)').eq('tenant_id', tenantId).order('sale_date', { ascending: false })
+            supabase.from('sales').select('*, books(title)').eq('tenant_id', tenantId).order('sale_date', { ascending: false }),
+            supabase.from('consignments').select('*, books(title)').eq('tenant_id', tenantId).order('created_at', { ascending: false })
         ])
 
         const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean)
@@ -38,7 +40,7 @@ export async function loadAllData(tenantId) {
             return null
         }
 
-        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr, salesErr].filter(Boolean)
+        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr, salesErr, consignmentsErr].filter(Boolean)
         if (nonCriticalErrors.length > 0) {
             console.warn('Supabase non-critical load errors (missing features):', nonCriticalErrors)
         }
@@ -237,6 +239,23 @@ export async function loadAllData(tenantId) {
             updatedAt: s.updated_at
         }))
 
+        // Transform consignments
+        const transformedConsignments = (consignments || []).map(c => ({
+            id: c.id,
+            bookId: c.book_id,
+            bookTitle: c.books?.title || '',
+            clientName: c.client_name,
+            contactInfo: c.contact_info,
+            sentDate: c.sent_date,
+            sentQuantity: c.sent_quantity || 0,
+            soldQuantity: c.sold_quantity || 0,
+            returnedQuantity: c.returned_quantity || 0,
+            status: c.status,
+            notes: c.notes,
+            createdAt: c.created_at,
+            updatedAt: c.updated_at
+        }))
+
         return {
             users: transformedUsers,
             books: transformedBooks,
@@ -247,7 +266,8 @@ export async function loadAllData(tenantId) {
             finances: {
                 invoices: transformedInvoices,
                 royalties: transformedRoyalties,
-                sales: transformedSales
+                sales: transformedSales,
+                consignments: transformedConsignments
             },
             auditLog: transformedAudit,
             comments: transformedComments,
