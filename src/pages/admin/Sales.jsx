@@ -168,18 +168,18 @@ export default function Sales() {
         doc.save(`Venta_${sale.id.slice(-8)}.pdf`)
     }
 
-    // ✅ #5: Exportar a CSV
-    const handleExportCSV = () => {
+    // ✅ #5: Exportar a Excel (.xls)
+    const handleExportExcel = () => {
         if (filtered.length === 0) return alert('No hay datos para exportar')
 
         const headers = ['Fecha', 'Libro', 'Canal', 'Tipo', 'Cliente', 'Documento', 'Cantidad', 'Precio Unitario', 'Total', 'Estado']
 
         const rows = filtered.map(s => [
             s.saleDate || '',
-            `"${(s.bookTitle || '').replace(/"/g, '""')}"`,
+            s.bookTitle || '',
             s.channel || '',
             s.type || '',
-            `"${(s.clientName || '').replace(/"/g, '""')}"`,
+            s.clientName || '',
             s.documentRef || '',
             s.quantity || 0,
             s.unitPrice || 0,
@@ -187,17 +187,27 @@ export default function Sales() {
             s.status || ''
         ])
 
-        // Add BOM for Excel UTF-8 display compatibility
-        const csvContent = '\uFEFF' + [
-            headers.join(','),
-            ...rows.map(r => r.join(','))
-        ].join('\n')
+        const tableHtml = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head><meta charset="utf-8"></head>
+            <body>
+                <table border="1">
+                    <thead>
+                        <tr>${headers.map(h => `<th style="background-color:#1FB8A6; color:white;">${h}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' })
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.setAttribute('href', url)
-        link.setAttribute('download', `Ventas_Export_${new Date().toISOString().slice(0, 10)}.csv`)
+        link.setAttribute('download', `Ventas_Export_${new Date().toISOString().slice(0, 10)}.xls`)
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -215,10 +225,10 @@ export default function Sales() {
                 </div>
                 <div className="flex gap-2">
                     <button
-                        onClick={handleExportCSV}
+                        onClick={handleExportExcel}
                         className="btn-secondary flex items-center gap-2 text-sm px-4 py-2.5"
                     >
-                        <FileSpreadsheet className="w-4 h-4" /> Exportar CSV
+                        <FileSpreadsheet className="w-4 h-4" /> Exportar Excel
                     </button>
                     <button
                         onClick={() => setShowAdd(true)}
