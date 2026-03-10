@@ -7,7 +7,8 @@ import {
 } from 'lucide-react'
 
 export default function Reports() {
-    const { data, formatCLP } = useAuth()
+    const { data, formatCurrency, t } = useAuth()
+    const formatCLP = formatCurrency
     const [month, setMonth] = useState(new Date().toISOString().slice(0, 7))
 
     const sales = data.finances?.sales || []
@@ -47,9 +48,9 @@ export default function Reports() {
             <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <PieChart className="w-6 h-6 text-primary" /> Contabilidad P&L
+                        <PieChart className="w-6 h-6 text-primary" /> {t('cashflow')} (P&L)
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">Estado de resultados consolidado (Pérdidas y Ganancias)</p>
+                    <p className="text-dark-600 text-sm mt-1">{t('documents')}</p>
                 </div>
                 <div className="flex gap-2">
                     <input
@@ -171,9 +172,9 @@ export default function Reports() {
                         <table className="w-full text-xs">
                             <thead className="bg-dark-200/50 text-dark-600 sticky top-0">
                                 <tr>
-                                    <th className="px-4 py-3 text-left">Fecha</th>
-                                    <th className="px-4 py-3 text-left">Categoría / Detalle</th>
-                                    <th className="px-4 py-3 text-right">Monto</th>
+                                    <th className="px-4 py-3 text-left">{t('date')}</th>
+                                    <th className="px-4 py-3 text-left">{t('description')}</th>
+                                    <th className="px-4 py-3 text-right">{t('amount')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-dark-300/30">

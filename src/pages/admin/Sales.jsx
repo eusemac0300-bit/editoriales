@@ -16,7 +16,8 @@ const STATUS_COLORS = {
 }
 
 export default function Sales() {
-    const { data, formatCLP, addNewSale, updateSaleDetails, addAuditLog, reloadData } = useAuth()
+    const { data, formatCurrency, addNewSale, updateSaleDetails, addAuditLog, reloadData, taxRate, t } = useAuth()
+    const formatCLP = formatCurrency
 
     const sales = useMemo(() => data?.finances?.sales || [], [data])
     const books = useMemo(() => data?.books || [], [data])
@@ -441,7 +442,9 @@ export default function Sales() {
                 <SaleForm
                     books={books}
                     data={data}
-                    formatCLP={formatCLP}
+                    formatCLP={formatCurrency}
+                    taxRate={taxRate}
+                    t={t}
                     onClose={() => setShowAdd(false)}
                     onSave={async (saleData) => {
                         try {
@@ -526,7 +529,7 @@ export default function Sales() {
     )
 }
 
-function SaleForm({ books, data, formatCLP, onSave, onClose }) {
+function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
     const today = new Date().toISOString().slice(0, 10)
     const [form, setForm] = useState({
         bookId: '',
@@ -546,7 +549,8 @@ function SaleForm({ books, data, formatCLP, onSave, onClose }) {
     const unitPrice = parseInt(form.unitPrice?.toString().replace(/\D/g, '')) || 0
     const total = quantity * unitPrice
     // Neto / IVA breakdown
-    const neto = Math.round(total / 1.19)
+    const taxVal = 1 + (taxRate / 100)
+    const neto = Math.round(total / taxVal)
     const iva = total - neto
 
     const selectedBook = books.find(b => b.id === form.bookId)
@@ -657,9 +661,9 @@ function SaleForm({ books, data, formatCLP, onSave, onClose }) {
                     {/* Breakdown Neto/IVA/Total */}
                     <div className="bg-dark-100/50 p-4 rounded-xl border border-dark-300">
                         <div className="flex items-center justify-between text-xs text-dark-500">
-                            <span>Subtotal (Neto): {formatCLP(neto)}</span>
-                            <span>IVA (19%): {formatCLP(iva)}</span>
-                            <span className="text-sm text-emerald-400 font-bold ml-4">Total: {formatCLP(total)}</span>
+                            <span>{t('neto')}: {formatCLP(neto)}</span>
+                            <span>{t('iva')} ({taxRate}%): {formatCLP(iva)}</span>
+                            <span className="text-sm text-emerald-400 font-bold ml-4">{t('total')}: {formatCLP(total)}</span>
                         </div>
                     </div>
 

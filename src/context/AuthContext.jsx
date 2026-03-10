@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import initialData from '../data/initialData.json'
 import * as db from '../lib/supabaseService'
 import { supabase } from '../lib/supabase'
+import { translations } from '../lib/translations'
 
 const AuthContext = createContext(null)
 
@@ -10,6 +11,10 @@ export function AuthProvider({ children }) {
     const [data, setData] = useState(initialData)
     const [loading, setLoading] = useState(true)
     const [supabaseConnected, setSupabaseConnected] = useState(false)
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
+    const [language, setLanguage] = useState(localStorage.getItem('language') || 'es')
+    const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'CLP')
+    const [taxRate, setTaxRate] = useState(parseFloat(localStorage.getItem('tax_rate')) || 19)
     const reloadTimerRef = useRef(null)
     const lastLocalChangeRef = useRef(0)
 
@@ -120,6 +125,37 @@ export function AuthProvider({ children }) {
             localStorage.setItem('editorial_data', JSON.stringify(data))
         }
     }, [data, loading])
+
+    // Theme Management
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', theme === 'dark')
+        localStorage.setItem('theme', theme)
+    }, [theme])
+
+    const toggleTheme = useCallback(() => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark')
+    }, [])
+
+    const t = useCallback((key) => {
+        return translations[language][key] || key
+    }, [language])
+
+    const formatCurrency = useCallback((value) => {
+        const symbolMap = { 'CLP': '$', 'USD': '$', 'EUR': '€', 'BRL': 'R$' }
+        const symbol = symbolMap[currency] || '$'
+
+        if (currency === 'CLP') {
+            return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(value)
+        }
+        return new Intl.NumberFormat(language === 'en' ? 'en-US' : 'es-ES', {
+            style: 'currency',
+            currency: currency,
+            minimumFractionDigits: currency === 'CLP' ? 0 : 2
+        }).format(value)
+    }, [currency, language])
+
+    // Alias for compatibility
+    const formatCLP = formatCurrency
 
     const login = useCallback(async (email, password) => {
         // Asumimos que Supabase siempre intentará conectarse. Si no, tenemos fallback local.
@@ -425,13 +461,6 @@ export function AuthProvider({ children }) {
         }
     }, [user, reloadData])
 
-    const formatCLP = (amount) => {
-        return new Intl.NumberFormat('es-CL', {
-            style: 'currency',
-            currency: 'CLP',
-            minimumFractionDigits: 0
-        }).format(amount)
-    }
 
     const addDocument = useCallback(async (docData) => {
         lastLocalChangeRef.current = Date.now()
@@ -657,6 +686,9 @@ export function AuthProvider({ children }) {
         addSupplier, updateSupplier, deleteSupplier,
         addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder,
         addExpense, updateExpense, deleteExpense,
+        theme, toggleTheme,
+        language, setLanguage, t,
+        currency, setCurrency, taxRate, setTaxRate, formatCurrency, formatCLP,
         loading, supabaseConnected, reloadData
     }
 

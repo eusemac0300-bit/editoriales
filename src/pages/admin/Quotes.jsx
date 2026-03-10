@@ -6,7 +6,8 @@ import autoTable from 'jspdf-autotable'
 import { supabase } from '../../lib/supabase'
 
 export default function Quotes() {
-    const { data, addNewQuote, updateQuoteDetails, deleteExistingQuote, formatCLP, addAuditLog } = useAuth()
+    const { data, addNewQuote, updateQuoteDetails, deleteExistingQuote, formatCurrency, addAuditLog, taxRate, t } = useAuth()
+    const formatCLP = formatCurrency
     const [showAdd, setShowAdd] = useState(false)
     const [editingQuote, setEditingQuote] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
@@ -329,7 +330,8 @@ export default function Quotes() {
         // Tabla de Valores
         finalY += 20
         const total = specificPrice || quote.quotedAmount || 0
-        const neto = Math.round(total / 1.19)
+        const taxVal = 1 + (taxRate / 100)
+        const neto = Math.round(total / taxVal)
         const iva = total - neto
 
         doc.setFillColor(245, 245, 245)
@@ -346,7 +348,7 @@ export default function Quotes() {
         doc.text('Valor Neto:', pageMargin + 5, finalY + 18)
         doc.text(formatCLP(neto), pageMargin + 175, finalY + 18, { align: 'right' })
 
-        doc.text('IVA (19%):', pageMargin + 5, finalY + 26)
+        doc.text(`${t('iva')} (${taxRate}%):`, pageMargin + 5, finalY + 26)
         doc.text(formatCLP(iva), pageMargin + 175, finalY + 26, { align: 'right' })
 
         doc.setFont('helvetica', 'bold')
@@ -524,12 +526,12 @@ export default function Quotes() {
                                             <p className="text-[10px] text-dark-500 uppercase mb-1">Costo de Producción</p>
                                             <div className="bg-dark-200/50 p-2 rounded border border-dark-300 grid grid-cols-3 gap-2">
                                                 <div>
-                                                    <p className="text-[9px] text-dark-500">Neto</p>
-                                                    <p className="text-xs text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(Math.round(quote.quotedAmount / 1.19)) : '-'}</p>
+                                                    <p className="text-[9px] text-dark-500">{t('neto')}</p>
+                                                    <p className="text-xs text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[9px] text-dark-500">IVA (19%)</p>
-                                                    <p className="text-xs text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount - Math.round(quote.quotedAmount / 1.19)) : '-'}</p>
+                                                    <p className="text-[9px] text-dark-500">{t('iva')} ({taxRate}%)</p>
+                                                    <p className="text-xs text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount - Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[9px] text-primary-400 font-semibold">Total</p>

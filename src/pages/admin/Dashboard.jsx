@@ -1,15 +1,15 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react'
+import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, Activity } from 'lucide-react'
 
 export default function AdminDashboard() {
-    const { data, formatCLP } = useAuth()
+    const { data, formatCLP, t } = useAuth()
     const navigate = useNavigate()
     const { books, inventory, finances, alerts } = data
 
     const totalBooks = books.length
-    const published = books.filter(b => b.status === 'Publicado').length
-    const inProduction = books.filter(b => !['Publicado', 'Original'].includes(b.status)).length
+    const published = books.filter(b => b.status === 'Publicado' || b.status === 'Published').length
+    const inProduction = books.filter(b => !['Publicado', 'Original', 'Published'].includes(b.status)).length
 
     // Ventas
     const currentMonth = new Date().toISOString().slice(0, 7)
@@ -18,7 +18,7 @@ export default function AdminDashboard() {
     const incomeThisMonth = salesThisMonth.reduce((sum, s) => sum + (s.totalAmount || 0), 0)
 
     // Royalties
-    const pendingRoyalties = (finances?.royalties || []).filter(r => r.status === 'pendiente')
+    const pendingRoyalties = (finances?.royalties || []).filter(r => r.status === 'pendiente' || r.status === 'pending')
     const royaltiesAmount = pendingRoyalties.reduce((sum, r) => sum + (r.netRoyalty || 0), 0)
 
     const totalStock = (inventory?.physical || []).reduce((s, p) => s + (p.stock || 0), 0)
@@ -26,25 +26,28 @@ export default function AdminDashboard() {
     const criticalAlerts = (alerts || []).filter(a => !a.read).length
 
     const stats = [
-        { label: 'Libros Publicados', value: published, icon: BookOpen, color: 'from-primary to-primary-700', change: `${totalBooks} títulos en total`, link: '/admin/libros' },
-        { label: 'En Producción', value: inProduction, icon: TrendingUp, color: 'from-amber-500 to-amber-700', change: 'En diferentes etapas', link: '/admin/kanban' },
-        { label: 'Ventas (Mes)', value: formatCLP(incomeThisMonth), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${salesThisMonth.length} ventas en ${currentMonth}`, up: incomeThisMonth > 0, link: '/admin/ventas' },
-        { label: 'Regalías Pendientes', value: formatCLP(royaltiesAmount), icon: Users, color: 'from-purple-500 to-purple-700', change: `${pendingRoyalties.length} por aprobar / pagar`, link: '/admin/liquidaciones' },
-        { label: 'Stock Físico', value: `${totalStock} uds.`, icon: Package, color: 'from-blue-500 to-blue-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} alertas de stock` : 'Niveles normales', link: '/admin/inventario' },
-        { label: 'Alertas Activas', value: criticalAlerts, icon: AlertTriangle, color: 'from-orange-500 to-orange-700', change: criticalAlerts > 0 ? 'Requieren tu atención' : 'Sin pendientes', link: '/admin/alertas' },
+        { label: t('published_books'), value: published, icon: BookOpen, color: 'from-primary to-primary-700', change: `${totalBooks} ${t('titles').toLowerCase()}`, link: '/admin/libros' },
+        { label: t('in_production'), value: inProduction, icon: TrendingUp, color: 'from-amber-500 to-amber-700', change: t('production_pipeline'), link: '/admin/kanban' },
+        { label: t('sales_month'), value: formatCLP(incomeThisMonth), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${salesThisMonth.length} ${t('sales').toLowerCase()}`, up: incomeThisMonth > 0, link: '/admin/ventas' },
+        { label: t('pending_royalties'), value: formatCLP(royaltiesAmount), icon: Users, color: 'from-purple-500 to-purple-700', change: `${pendingRoyalties.length} ${t('pending').toLowerCase()}`, link: '/admin/liquidaciones' },
+        { label: t('physical_stock'), value: `${totalStock} uds.`, icon: Package, color: 'from-blue-500 to-blue-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} ${t('alerts').toLowerCase()}` : t('active'), link: '/admin/inventario' },
+        { label: t('active_alerts'), value: criticalAlerts, icon: AlertTriangle, color: 'from-orange-500 to-orange-700', change: criticalAlerts > 0 ? t('pending') : t('no_data'), link: '/admin/alertas' },
     ]
 
     const kanbanStages = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
     const statusColors = {
         'Original': 'badge-purple', 'Contratación': 'badge-yellow', 'Edición': 'badge-blue',
-        'Corrección': 'badge-yellow', 'Maquetación': 'badge-blue', 'Imprenta': 'badge-red', 'Publicado': 'badge-green'
+        'Corrección': 'badge-yellow', 'Maquetación': 'badge-blue', 'Imprenta': 'badge-red', 'Publicado': 'badge-green',
+        'Published': 'badge-green', 'Pending': 'badge-yellow'
     }
 
     return (
         <div className="space-y-6 fade-in">
-            <div>
-                <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-                <p className="text-dark-600 text-sm mt-1">Resumen general de la editorial</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{t('dashboard')}</h1>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{t('welcome')}, {useAuth().user?.name}</p>
+                </div>
             </div>
 
             {/* Stats grid */}
@@ -52,26 +55,26 @@ export default function AdminDashboard() {
                 {stats.map((stat, i) => (
                     <div
                         key={i}
-                        className="stat-card slide-up cursor-pointer group"
+                        className="glass-card p-5 slide-up cursor-pointer group"
                         style={{ animationDelay: `${i * 0.05}s` }}
                         onClick={() => navigate(stat.link)}
                     >
                         <div className="flex items-start justify-between">
                             <div>
-                                <p className="text-xs font-medium text-dark-600 uppercase tracking-wider">{stat.label}</p>
-                                <p className="text-2xl font-bold text-white mt-2">{stat.value}</p>
-                                <p className="text-xs text-dark-600 mt-1 flex items-center gap-1">
-                                    {stat.up && <ArrowUpRight className="w-3 h-3 text-emerald-400" />}
+                                <p className="text-xs font-semibold text-slate-500 dark:text-dark-600 uppercase tracking-wider">{stat.label}</p>
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">{stat.value}</p>
+                                <p className="text-xs text-slate-400 dark:text-dark-600 mt-1 flex items-center gap-1">
+                                    {stat.up && <ArrowUpRight className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />}
                                     {stat.change}
                                 </p>
                             </div>
-                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-${stat.color.split(' ')[0].replace('from-', '')}/20`}>
+                            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110`}>
                                 <stat.icon className="w-5 h-5 text-white" />
                             </div>
                         </div>
                         <div className="mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <span className="text-[10px] text-primary-300 font-medium">Ver sección</span>
-                            <ArrowUpRight className="w-3 h-3 text-primary-300" />
+                            <span className="text-[10px] text-primary-600 dark:text-primary-300 font-bold uppercase">{stat.view_section || t('view_section')}</span>
+                            <ArrowUpRight className="w-3 h-3 text-primary-600 dark:text-primary-300" />
                         </div>
                     </div>
                 ))}
@@ -81,24 +84,24 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Recent books */}
                 <div className="lg:col-span-2 glass-card p-5">
-                    <h2 className="text-sm font-semibold text-white mb-4">Libros Recientes</h2>
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">{t('recent_books')}</h2>
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-dark-300">
-                                    <th className="table-header text-left py-3 px-2">Título</th>
-                                    <th className="table-header text-left py-3 px-2">Autor</th>
-                                    <th className="table-header text-left py-3 px-2">Estado</th>
+                                <tr className="border-b border-slate-200 dark:border-dark-300">
+                                    <th className="table-header text-left py-3 px-2">{t('titles')}</th>
+                                    <th className="table-header text-left py-3 px-2">{t('authors')}</th>
+                                    <th className="table-header text-left py-3 px-2">{t('status')}</th>
                                     <th className="table-header text-right py-3 px-2">PVP</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {books.map(book => (
+                                {books.slice(0, 5).map(book => (
                                     <tr key={book.id} className="table-row">
-                                        <td className="py-3 px-2 text-sm font-medium text-white">{book.title}</td>
-                                        <td className="py-3 px-2 text-sm text-dark-700">{book.authorName}</td>
-                                        <td className="py-3 px-2"><span className={statusColors[book.status]}>{book.status}</span></td>
-                                        <td className="py-3 px-2 text-sm text-right text-dark-800">{book.pvp ? formatCLP(book.pvp) : '—'}</td>
+                                        <td className="py-3 px-2 text-sm font-semibold text-slate-900 dark:text-white">{book.title}</td>
+                                        <td className="py-3 px-2 text-sm text-slate-600 dark:text-dark-700">{book.authorName}</td>
+                                        <td className="py-3 px-2"><span className={statusColors[book.status] || 'badge-blue'}>{book.status}</span></td>
+                                        <td className="py-3 px-2 text-sm text-right text-slate-700 dark:text-dark-800 font-medium">{book.pvp ? formatCLP(book.pvp) : '—'}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -108,19 +111,19 @@ export default function AdminDashboard() {
 
                 {/* Pipeline */}
                 <div className="glass-card p-5">
-                    <h2 className="text-sm font-semibold text-white mb-4">Pipeline de Producción</h2>
-                    <div className="space-y-3">
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">{t('production_pipeline')}</h2>
+                    <div className="space-y-4">
                         {kanbanStages.map(stage => {
                             const count = books.filter(b => b.status === stage).length
                             const pct = totalBooks > 0 ? (count / totalBooks) * 100 : 0
-                            return (
+                            return (count > 0 || ['Edición', 'Imprenta'].includes(stage)) && (
                                 <div key={stage}>
-                                    <div className="flex justify-between text-xs mb-1">
-                                        <span className="text-dark-700">{stage}</span>
-                                        <span className="text-white font-medium">{count}</span>
+                                    <div className="flex justify-between text-xs mb-1.5">
+                                        <span className="text-slate-600 dark:text-dark-700 font-medium">{stage}</span>
+                                        <span className="text-slate-900 dark:text-white font-bold">{count}</span>
                                     </div>
-                                    <div className="h-2 bg-dark-300 rounded-full overflow-hidden">
-                                        <div className="h-full bg-gradient-to-r from-primary to-primary-300 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                                    <div className="h-2 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden">
+                                        <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                                     </div>
                                 </div>
                             )
@@ -131,23 +134,22 @@ export default function AdminDashboard() {
 
             {/* Recent audit log */}
             <div className="glass-card p-5">
-                <h2 className="text-sm font-semibold text-white mb-4">Actividad Reciente</h2>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-4 uppercase tracking-wider">{t('recent_activity')}</h2>
                 {data.auditLog.length === 0 ? (
                     <div className="text-center py-8">
-                        <Activity className="w-8 h-8 text-dark-600 mx-auto mb-3" />
-                        <p className="text-sm text-dark-600">No hay actividad registrada aún</p>
-                        <p className="text-xs text-dark-500 mt-1">Las acciones en la plataforma aparecerán aquí</p>
+                        <Activity className="w-8 h-8 text-slate-300 dark:text-dark-600 mx-auto mb-3" />
+                        <p className="text-sm text-slate-500 dark:text-dark-600 font-medium">{t('no_data')}</p>
                     </div>
                 ) : (
                     <div className="space-y-3">
                         {data.auditLog.slice(0, 5).map(log => (
-                            <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-dark-50/50">
-                                <div className="w-8 h-8 rounded-lg bg-dark-200 flex items-center justify-center text-xs font-bold text-primary-300 shrink-0">
+                            <div key={log.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-dark-200 transition-all border border-transparent hover:border-slate-200 dark:hover:border-dark-300">
+                                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary dark:text-primary-300 shrink-0 border border-primary/20">
                                     {log.userName.split(' ').map(w => w[0]).join('').slice(0, 2)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-white">{log.action}</p>
-                                    <p className="text-xs text-dark-600 mt-0.5">{log.userName} · {new Date(log.date).toLocaleDateString('es-CL')}</p>
+                                    <p className="text-sm text-slate-900 dark:text-white font-medium">{log.action}</p>
+                                    <p className="text-xs text-slate-500 dark:text-dark-600 mt-1">{log.userName} · {new Date(log.date).toLocaleDateString()}</p>
                                 </div>
                                 <span className={log.type === 'kanban' ? 'badge-blue' : log.type === 'finanzas' ? 'badge-green' : 'badge-yellow'}>{log.type}</span>
                             </div>
