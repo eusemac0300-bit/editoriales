@@ -5,7 +5,7 @@ import autoTable from 'jspdf-autotable'
 import {
     ShoppingCart, Plus, X, Search, TrendingUp,
     BookOpen, DollarSign, Calendar, Users, Package, BarChart3,
-    CheckCircle, XCircle, Download
+    CheckCircle, XCircle, Download, FileSpreadsheet
 } from 'lucide-react'
 
 const CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria', 'Consignación']
@@ -168,6 +168,41 @@ export default function Sales() {
         doc.save(`Venta_${sale.id.slice(-8)}.pdf`)
     }
 
+    // ✅ #5: Exportar a CSV
+    const handleExportCSV = () => {
+        if (filtered.length === 0) return alert('No hay datos para exportar')
+
+        const headers = ['Fecha', 'Libro', 'Canal', 'Tipo', 'Cliente', 'Documento', 'Cantidad', 'Precio Unitario', 'Total', 'Estado']
+
+        const rows = filtered.map(s => [
+            s.saleDate || '',
+            `"${(s.bookTitle || '').replace(/"/g, '""')}"`,
+            s.channel || '',
+            s.type || '',
+            `"${(s.clientName || '').replace(/"/g, '""')}"`,
+            s.documentRef || '',
+            s.quantity || 0,
+            s.unitPrice || 0,
+            s.totalAmount || 0,
+            s.status || ''
+        ])
+
+        // Add BOM for Excel UTF-8 display compatibility
+        const csvContent = '\uFEFF' + [
+            headers.join(','),
+            ...rows.map(r => r.join(','))
+        ].join('\n')
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.setAttribute('href', url)
+        link.setAttribute('download', `Ventas_Export_${new Date().toISOString().slice(0, 10)}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -178,12 +213,20 @@ export default function Sales() {
                     </h1>
                     <p className="text-sm text-dark-500 mt-1">Control de ingresos por canal, títulos y períodos</p>
                 </div>
-                <button
-                    onClick={() => setShowAdd(true)}
-                    className="btn-primary flex items-center gap-2 text-sm px-4 py-2.5 shadow-lg shadow-primary/20"
-                >
-                    <Plus className="w-4 h-4" /> Nueva Venta
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleExportCSV}
+                        className="btn-secondary flex items-center gap-2 text-sm px-4 py-2.5"
+                    >
+                        <FileSpreadsheet className="w-4 h-4" /> Exportar CSV
+                    </button>
+                    <button
+                        onClick={() => setShowAdd(true)}
+                        className="btn-primary flex items-center gap-2 text-sm px-4 py-2.5 shadow-lg shadow-primary/20"
+                    >
+                        <Plus className="w-4 h-4" /> Nueva Venta
+                    </button>
+                </div>
             </div>
 
             {/* KPI Cards */}
