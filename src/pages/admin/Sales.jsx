@@ -19,11 +19,13 @@ export default function Sales() {
 
     const sales = useMemo(() => data?.finances?.sales || [], [data])
     const books = useMemo(() => data?.books || [], [data])
+    const authors = useMemo(() => data?.users?.filter(u => u.role === 'AUTOR') || [], [data])
 
     const [showAdd, setShowAdd] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterChannel, setFilterChannel] = useState('')
     const [filterMonth, setFilterMonth] = useState('')
+    const [filterAuthor, setFilterAuthor] = useState('')  // ✅ #9 Filtro por autor
 
     // ── Stats ──────────────────────────────────────────────────────────────────
     const activeSales = useMemo(() => sales.filter(s => s.status !== 'Anulada'), [sales])
@@ -53,13 +55,37 @@ export default function Sales() {
         }
         if (filterChannel) list = list.filter(s => s.channel === filterChannel)
         if (filterMonth) list = list.filter(s => s.saleDate?.startsWith(filterMonth))
+        // ✅ #9: Author filter
+        if (filterAuthor) {
+            const authorBooks = books.filter(b => b.authorId === filterAuthor || b.authorName === authors.find(a => a.id === filterAuthor)?.name).map(b => b.id)
+            list = list.filter(s => authorBooks.includes(s.bookId))
+        }
         return list.sort((a, b) => new Date(b.saleDate) - new Date(a.saleDate))
-    }, [sales, searchTerm, filterChannel, filterMonth])
+    }, [sales, searchTerm, filterChannel, filterMonth, filterAuthor, books, authors])
 
+    // ✅ #8: Anular venta → reponer stock automáticamente
     const handleDelete = async (sale) => {
-        if (!window.confirm(`¿Anular venta de "${sale.bookTitle}"? El stock NO será repuesto automáticamente.`)) return
+        if (!window.confirm(`¿Anular venta de "${sale.bookTitle}"?\nSe repondrán ${sale.quantity} u. al inventario.`)) return
         await updateSaleDetails(sale.id, { status: 'Anulada' })
-        await addAuditLog(`Anuló venta: ${sale.bookTitle} (${sale.quantity} u. × ${sale.channel})`, 'ventas')
+
+        // Reponer stock
+        if (sale.bookId && sale.quantity > 0) {
+            const { data: invRows } = await supabase
+                .from('inventory_physical')
+                .select('id, stock, exits')
+                .eq('book_id', sale.bookId)
+                .order('id', { ascending: true })
+                .limit(1)
+            if (invRows && invRows.length > 0) {
+                const inv = invRows[0]
+                const newStock = (inv.stock || 0) + sale.quantity
+                const exits = (inv.exits || []).filter(e => e.ref !== `Venta ${sale.channel} – ${sale.id}`)
+                await supabase.from('inventory_physical').update({ stock: newStock, exits }).eq('id', inv.id)
+            }
+        }
+
+        await addAuditLog(`Anuló venta: "${sale.bookTitle}" (${sale.quantity} u. × ${sale.channel}) — stock repuesto`, 'ventas')
+        await reloadData()
     }
 
     return (
@@ -163,15 +189,26 @@ export default function Sales() {
                     <option value="">Todos los canales</option>
                     {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+                {/* ✅ #9 Filtro por autor */}
+                {authors.length > 0 && (
+                    <select
+                        value={filterAuthor}
+                        onChange={e => setFilterAuthor(e.target.value)}
+                        className="input-field text-sm"
+                    >
+                        <option value="">Todos los autores</option>
+                        {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    </select>
+                )}
                 <input
                     type="month"
                     value={filterMonth}
                     onChange={e => setFilterMonth(e.target.value)}
                     className="input-field text-sm"
                 />
-                {(searchTerm || filterChannel || filterMonth) && (
+                {(searchTerm || filterChannel || filterMonth || filterAuthor) && (
                     <button
-                        onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterMonth('') }}
+                        onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterMonth(''); setFilterAuthor('') }}
                         className="text-xs text-dark-500 hover:text-white flex items-center gap-1 px-2"
                     >
                         <X className="w-3 h-3" /> Limpiar
@@ -302,7 +339,22 @@ export default function Sales() {
                                         .update({ stock: newStock, exits })
                                         .eq('id', invRow.id)
                                     if (updErr) console.error('Stock update error:', updErr)
-                                    else console.log(`✅ Stock ${saleData.bookId}: ${invRow.stock} → ${newStock}`)
+                                    else {
+                                        console.log(`✅ Stock ${saleData.bookId}: ${invRow.stock} → ${newStock}`)
+                                        // ✅ #7: Alerta automática si stock bajo
+                                        const minStock = invRow.min_stock || 0
+                                        if (minStock > 0 && newStock <= minStock) {
+                                            await supabase.from('alerts').insert({
+                                                id: `alert-stock-${saleData.bookId}-${Date.now()}`,
+                                                tenant_id: finalSale.tenantId || 't1',
+                                                type: 'stock_bajo',
+                                                book_id: saleData.bookId,
+                                                message: `⚠️ Stock bajo: "${finalSale.bookTitle}" tiene solo ${newStock} u. (mínimo: ${minStock})`,
+                                                date: new Date().toISOString(),
+                                                read: false
+                                            })
+                                        }
+                                    }
                                 } else {
                                     console.warn('No inventory row found for book:', saleData.bookId)
                                 }
