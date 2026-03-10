@@ -5,22 +5,21 @@ export default function AuthorDashboard() {
     const { user, data, formatCLP } = useAuth()
 
     const myBooks = data.books.filter(b => b.authorId === user.id)
-    const myRoyalties = data.finances.royalties.filter(r => r.authorId === user.id)
-    const totalRoyalties = myRoyalties.reduce((s, r) => s + Math.max(0, r.netRoyalty), 0)
+    const myBookIds = myBooks.map(b => b.id)
+
+    // Ventas reales
+    const mySales = (data.finances?.sales || []).filter(s => s.status !== 'Anulada' && myBookIds.includes(s.bookId))
+    const totalSalesUnits = mySales.reduce((acc, sale) => acc + (sale.quantity || 0), 0)
+
+    // Liquidaciones
+    const myRoyalties = (data.finances?.royalties || []).filter(r => r.authorId === user.id)
+    const totalRoyalties = myRoyalties.filter(r => r.status === 'pagada').reduce((s, r) => s + (r.netRoyalty || 0), 0)
 
     const statusColors = {
         'Original': 'badge-purple', 'Contratación': 'badge-yellow', 'Edición': 'badge-blue',
-        'Corrección': 'badge-yellow', 'Maquetación': 'badge-blue', 'Imprenta': 'badge-red', 'Publicado': 'badge-green'
+        'Corrección': 'badge-yellow', 'Maquetación': 'badge-blue', 'Imprenta': 'badge-red', 'Publicado': 'badge-green',
+        'pendiente': 'badge-yellow', 'aprobada': 'text-primary-300 bg-primary/10 border border-primary/20', 'pagada': 'badge-green'
     }
-
-    // Simulate sales data
-    const totalSales = myBooks.reduce((s, b) => {
-        const physInv = data.inventory.physical.find(p => p.bookId === b.id)
-        const digInv = data.inventory.digital.find(d => d.bookId === b.id)
-        const physSales = physInv ? physInv.exits.filter(e => e.type === 'venta').reduce((acc, e) => acc + e.qty, 0) : 0
-        const digSales = digInv ? digInv.sales.reduce((acc, e) => acc + e.qty, 0) : 0
-        return s + physSales + digSales
-    }, 0)
 
     return (
         <div className="space-y-6 fade-in">
@@ -38,13 +37,13 @@ export default function AuthorDashboard() {
                 </div>
                 <div className="stat-card text-center">
                     <TrendingUp className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-white">{totalSales}</p>
-                    <p className="text-[10px] text-dark-600 uppercase">Ventas Totales</p>
+                    <p className="text-2xl font-bold text-white">{totalSalesUnits}</p>
+                    <p className="text-[10px] text-dark-600 uppercase">Ejemplares Vendidos</p>
                 </div>
                 <div className="stat-card text-center">
                     <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
                     <p className="text-lg font-bold text-emerald-400">{formatCLP(totalRoyalties)}</p>
-                    <p className="text-[10px] text-dark-600 uppercase">Regalías</p>
+                    <p className="text-[10px] text-dark-600 uppercase">Regalías Pagadas</p>
                 </div>
                 <div className="stat-card text-center">
                     <Clock className="w-5 h-5 text-amber-400 mx-auto mb-2" />
@@ -82,6 +81,45 @@ export default function AuthorDashboard() {
                         </div>
                     ))}
                 </div>
+            </div>
+
+            {/* Liquidaciones */}
+            <div className="glass-card p-5">
+                <h2 className="text-sm font-semibold text-white mb-4">Mis Liquidaciones</h2>
+                {myRoyalties.length === 0 ? (
+                    <div className="text-center py-6">
+                        <BarChart3 className="w-8 h-8 text-dark-600 mx-auto mb-2" />
+                        <p className="text-sm text-dark-500">Aún no hay liquidaciones registradas.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {myRoyalties.map(r => {
+                            const book = myBooks.find(b => b.id === r.bookId)
+                            return (
+                                <div key={r.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-3 rounded-lg bg-dark-50/50 hover:bg-dark-200/30 transition-colors">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColors[r.status] || 'badge-blue'}`}>
+                                                {r.status.toUpperCase()}
+                                            </span>
+                                            <p className="text-sm text-white font-medium">{book?.title || 'Libro desconocido'}</p>
+                                        </div>
+                                        <p className="text-xs text-dark-500">
+                                            Período: {r.period} · {r.totalUnitsSold} uds. vendidas ({r.royaltyPercent}% regalía)
+                                        </p>
+                                        {r.notes && <p className="text-[10px] text-dark-600 mt-1 italic">{r.notes}</p>}
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`text-lg font-bold font-mono ${(r.netRoyalty || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                            {formatCLP(r.netRoyalty || 0)}
+                                        </p>
+                                        <p className="text-[10px] text-dark-600 uppercase">Líquido a recibir</p>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     )
