@@ -541,6 +541,73 @@ export function AuthProvider({ children }) {
         }
     }, [supabaseConnected])
 
+    // ============ SUPPLIERS handlers ============
+    const addSupplier = useCallback(async (supplierData) => {
+        lastLocalChangeRef.current = Date.now()
+        const supplier = { ...supplierData, tenantId: user?.tenantId }
+        setData(prev => ({ ...prev, suppliers: [supplier, ...(prev.suppliers || [])] }))
+        if (supabaseConnected) {
+            await db.addSupplierToDb(user.tenantId, supplierData)
+        }
+    }, [user, supabaseConnected])
+
+    const updateSupplier = useCallback(async (id, updates) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({ ...prev, suppliers: (prev.suppliers || []).map(s => s.id === id ? { ...s, ...updates } : s) }))
+        if (supabaseConnected) {
+            await db.updateSupplierInDb(id, updates)
+        }
+    }, [supabaseConnected])
+
+    const deleteSupplier = useCallback(async (id) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({ ...prev, suppliers: (prev.suppliers || []).filter(s => s.id !== id) }))
+        if (supabaseConnected) {
+            await db.deleteSupplierFromDb(id)
+        }
+    }, [supabaseConnected])
+
+    // ============ PURCHASE ORDERS handlers ============
+    const addPurchaseOrder = useCallback(async (poData) => {
+        lastLocalChangeRef.current = Date.now()
+        const po = { ...poData, tenantId: user?.tenantId }
+        setData(prev => ({ ...prev, purchaseOrders: [po, ...(prev.purchaseOrders || [])] }))
+        if (supabaseConnected) {
+            await db.addPurchaseOrderToDb(user.tenantId, poData)
+        }
+    }, [user, supabaseConnected])
+
+    const updatePurchaseOrder = useCallback(async (id, updates) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({ ...prev, purchaseOrders: (prev.purchaseOrders || []).map(p => p.id === id ? { ...p, ...updates } : p) }))
+        if (supabaseConnected) {
+            await db.updatePurchaseOrderInDb(id, updates)
+        }
+    }, [supabaseConnected])
+
+    const deletePurchaseOrder = useCallback(async (id) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({ ...prev, purchaseOrders: (prev.purchaseOrders || []).filter(p => p.id !== id) }))
+        if (supabaseConnected) {
+            await db.deletePurchaseOrderFromDb(id)
+        }
+    }, [supabaseConnected])
+
+    const receivePurchaseOrder = useCallback(async (poId, quantity, bookId) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            purchaseOrders: (prev.purchaseOrders || []).map(p => p.id === poId ? { ...p, status: 'RECIBIDA', received_quantity: quantity } : p),
+            inventory: {
+                ...prev.inventory,
+                physical: (prev.inventory?.physical || []).map(i => i.bookId === bookId ? { ...i, stock: i.stock + quantity } : i)
+            }
+        }))
+        if (supabaseConnected) {
+            await db.receivePurchaseOrderInDb(poId, quantity, bookId, user.tenantId)
+        }
+    }, [user, supabaseConnected])
+
     const value = {
         user, data, setData, login, logout, hasPermission,
         isSuperAdmin, isAdmin, isFreelance, isAutor, resetWorkspace,
@@ -552,6 +619,8 @@ export function AuthProvider({ children }) {
         addDocument, editDocument, deleteDocument,
         addNewQuote, updateQuoteDetails, deleteExistingQuote,
         addNewSale, updateSaleDetails, deleteExistingSale,
+        addSupplier, updateSupplier, deleteSupplier,
+        addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder,
         loading, supabaseConnected, reloadData
     }
 

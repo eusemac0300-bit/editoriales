@@ -17,7 +17,9 @@ export async function loadAllData(tenantId) {
             { data: documents, error: docsErr },
             { data: quotes, error: quotesErr },
             { data: sales, error: salesErr },
-            { data: consignments, error: consignmentsErr }
+            { data: consignments, error: consignmentsErr },
+            { data: suppliers, error: suppliersErr },
+            { data: purchaseOrders, error: poErr }
         ] = await Promise.all([
             supabase.from('users').select('*').eq('tenant_id', tenantId),
             supabase.from('books').select('*').eq('tenant_id', tenantId),
@@ -31,7 +33,9 @@ export async function loadAllData(tenantId) {
             supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             supabase.from('sales').select('*, books(title)').eq('tenant_id', tenantId).order('sale_date', { ascending: false }),
-            supabase.from('consignments').select('*, books(title)').eq('tenant_id', tenantId).order('created_at', { ascending: false })
+            supabase.from('consignments').select('*, books(title)').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+            supabase.from('suppliers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }),
+            supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false })
         ])
 
         const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean)
@@ -40,7 +44,7 @@ export async function loadAllData(tenantId) {
             return null
         }
 
-        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr, salesErr, consignmentsErr].filter(Boolean)
+        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr, salesErr, consignmentsErr, suppliersErr, poErr].filter(Boolean)
         if (nonCriticalErrors.length > 0) {
             console.warn('Supabase non-critical load errors (missing features):', nonCriticalErrors)
         }
@@ -904,4 +908,106 @@ export async function deleteSaleFromDb(saleId) {
         .eq('id', saleId)
     if (error) console.error('Error deleting sale:', error)
     return !error
+}
+// ============ SUPPLIERS ============
+export async function addSupplierToDb(tenantId, supplierData) {
+    const { data, error } = await supabase
+        .from('suppliers')
+        .insert([{ ...supplierData, tenant_id: tenantId }])
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function updateSupplierInDb(supplierId, supplierData) {
+    const { data, error } = await supabase
+        .from('suppliers')
+        .update(supplierData)
+        .eq('id', supplierId)
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function deleteSupplierFromDb(supplierId) {
+    const { error } = await supabase
+        .from('suppliers')
+        .delete()
+        .eq('id', supplierId)
+    if (error) throw error
+    return true
+}
+
+// ============ PURCHASE ORDERS ============
+export async function addPurchaseOrderToDb(tenantId, poData) {
+    const { data, error } = await supabase
+        .from('purchase_orders')
+        .insert([{ ...poData, tenant_id: tenantId }])
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function updatePurchaseOrderInDb(poId, poData) {
+    const { data, error } = await supabase
+        .from('purchase_orders')
+        .update(poData)
+        .eq('id', poId)
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function deletePurchaseOrderFromDb(poId) {
+    const { error } = await supabase
+        .from('purchase_orders')
+        .delete()
+        .eq('id', poId)
+    if (error) throw error
+    return true
+}
+
+export async function receivePurchaseOrderInDb(poId, quantity, bookId, tenantId) {
+    // 1. Update PO status and received quantity
+    const { data: po, error: poErr } = await supabase
+        .from('purchase_orders')
+        .update({
+            status: 'RECIBIDA',
+            received_quantity: quantity
+        })
+        .eq('id', poId)
+        .select()
+        .single()
+
+    if (poErr) throw poErr
+
+    // 2. Update physical inventory
+    const { data: inv, error: invErr } = await supabase
+        .from('inventory_physical')
+        .select('*')
+        .eq('book_id', bookId)
+        .eq('tenant_id', tenantId)
+        .single()
+
+    if (invErr && invErr.code !== 'PGRST116') throw invErr
+
+    if (inv) {
+        const { error: upErr } = await supabase
+            .from('inventory_physical')
+            .update({ stock: inv.stock + quantity })
+            .eq('id', inv.id)
+        if (upErr) throw upErr
+    } else {
+        const { error: insErr } = await supabase
+            .from('inventory_physical')
+            .insert([{
+                book_id: bookId,
+                tenant_id: tenantId,
+                stock: quantity,
+                min_stock: 10
+            }])
+        if (insErr) throw insErr
+    }
+
+    return po
 }

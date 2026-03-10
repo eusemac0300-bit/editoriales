@@ -5,7 +5,7 @@ import { loadPermissions } from '../lib/permissions'
 import {
     BookOpen, LayoutDashboard, Package, Kanban, Calculator,
     DollarSign, FileText, Users, Bell, ClipboardList,
-    FolderOpen, LogOut, Menu, X, ChevronDown, AlertTriangle, Printer, ShoppingCart, Truck
+    FolderOpen, LogOut, Menu, X, ChevronDown, AlertTriangle, Printer, ShoppingCart, Truck, Contact, FileSpreadsheet
 } from 'lucide-react'
 
 const navItems = [
@@ -16,6 +16,8 @@ const navItems = [
     { to: '/admin/cotizaciones', icon: Printer, label: 'Cotizaciones' },
     { to: '/admin/ventas', icon: ShoppingCart, label: 'Ventas' },
     { to: '/admin/consignaciones', icon: Truck, label: 'Consignaciones' },
+    { to: '/admin/proveedores', icon: Contact, label: 'Proveedores' },
+    { to: '/admin/ordenes', icon: FileSpreadsheet, label: 'Órdenes' },
     { to: '/admin/liquidaciones', icon: DollarSign, label: 'Liquidaciones' },
     { to: '/admin/libros', icon: FileText, label: 'Títulos' },
     { to: '/admin/autores', icon: Users, label: 'Autores' },
