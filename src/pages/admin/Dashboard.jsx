@@ -10,22 +10,28 @@ export default function AdminDashboard() {
     const totalBooks = books.length
     const published = books.filter(b => b.status === 'Publicado').length
     const inProduction = books.filter(b => !['Publicado', 'Original'].includes(b.status)).length
-    const incomeInvoices = finances.invoices.filter(i => i.type === 'ingreso')
-    const expenseInvoices = finances.invoices.filter(i => i.type === 'egreso')
-    const totalIncome = incomeInvoices.reduce((s, i) => s + i.amount, 0)
-    const totalExpenses = expenseInvoices.reduce((s, i) => s + i.amount, 0)
-    const balance = totalIncome - totalExpenses
-    const totalStock = inventory.physical.reduce((s, p) => s + p.stock, 0)
-    const criticalAlerts = alerts.filter(a => !a.read).length
-    const lowStockCount = inventory.physical.filter(p => p.stock < p.minStock).length
+
+    // Ventas
+    const currentMonth = new Date().toISOString().slice(0, 7)
+    const activeSales = (finances?.sales || []).filter(s => s.status !== 'Anulada')
+    const salesThisMonth = activeSales.filter(s => s.saleDate?.startsWith(currentMonth))
+    const incomeThisMonth = salesThisMonth.reduce((sum, s) => sum + (s.totalAmount || 0), 0)
+
+    // Royalties
+    const pendingRoyalties = (finances?.royalties || []).filter(r => r.status === 'pendiente')
+    const royaltiesAmount = pendingRoyalties.reduce((sum, r) => sum + (r.netRoyalty || 0), 0)
+
+    const totalStock = (inventory?.physical || []).reduce((s, p) => s + (p.stock || 0), 0)
+    const lowStockCount = (inventory?.physical || []).filter(p => (p.minStock > 0 && p.stock <= p.minStock)).length
+    const criticalAlerts = (alerts || []).filter(a => !a.read).length
 
     const stats = [
-        { label: 'Libros Totales', value: totalBooks, icon: BookOpen, color: 'from-primary to-primary-700', change: `${published} publicados`, link: '/admin/libros' },
-        { label: 'En Producción', value: inProduction, icon: TrendingUp, color: 'from-amber-500 to-amber-700', change: `${books.filter(b => b.status === 'Original').length} manuscritos`, link: '/admin/kanban' },
-        { label: 'Ingresos', value: formatCLP(totalIncome), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${incomeInvoices.length} facturas registradas`, up: totalIncome > 0, link: '/admin/liquidaciones' },
-        { label: 'Egresos', value: formatCLP(totalExpenses), icon: ArrowDownRight, color: 'from-red-500 to-red-700', change: `${expenseInvoices.length} facturas · Balance: ${formatCLP(balance)}`, link: '/admin/escandallo' },
-        { label: 'Stock Físico', value: `${totalStock} uds.`, icon: Package, color: 'from-purple-500 to-purple-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} bajo mínimo` : 'Niveles normales', link: '/admin/inventario' },
-        { label: 'Alertas Activas', value: criticalAlerts, icon: AlertTriangle, color: 'from-orange-500 to-orange-700', change: criticalAlerts > 0 ? 'Requieren atención' : 'Sin alertas pendientes', link: '/admin/alertas' },
+        { label: 'Libros Publicados', value: published, icon: BookOpen, color: 'from-primary to-primary-700', change: `${totalBooks} títulos en total`, link: '/admin/libros' },
+        { label: 'En Producción', value: inProduction, icon: TrendingUp, color: 'from-amber-500 to-amber-700', change: 'En diferentes etapas', link: '/admin/kanban' },
+        { label: 'Ventas (Mes)', value: formatCLP(incomeThisMonth), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${salesThisMonth.length} ventas en ${currentMonth}`, up: incomeThisMonth > 0, link: '/admin/ventas' },
+        { label: 'Regalías Pendientes', value: formatCLP(royaltiesAmount), icon: Users, color: 'from-purple-500 to-purple-700', change: `${pendingRoyalties.length} por aprobar / pagar`, link: '/admin/liquidaciones' },
+        { label: 'Stock Físico', value: `${totalStock} uds.`, icon: Package, color: 'from-blue-500 to-blue-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} alertas de stock` : 'Niveles normales', link: '/admin/inventario' },
+        { label: 'Alertas Activas', value: criticalAlerts, icon: AlertTriangle, color: 'from-orange-500 to-orange-700', change: criticalAlerts > 0 ? 'Requieren tu atención' : 'Sin pendientes', link: '/admin/alertas' },
     ]
 
     const kanbanStages = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
