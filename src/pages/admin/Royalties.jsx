@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import {
     DollarSign, Download, CheckCircle, Clock, User, TrendingUp,
     BookOpen, BarChart3, Plus, RefreshCw, AlertCircle, Calendar,
-    ShoppingCart, Percent, CreditCard, FileText
+    ShoppingCart, Percent, CreditCard, FileText, Banknote, Check
 } from 'lucide-react'
 
 const PERIODS = [
@@ -23,6 +23,7 @@ export default function Royalties() {
     const [selectedPeriod, setSelectedPeriod] = useState('2026-03')
     const [generating, setGenerating] = useState(false)
     const [approving, setApproving] = useState(null)
+    const [paying, setPaying] = useState(null) // ✅ #4 Estado de pago
 
     const authors = useMemo(() => data.users.filter(u => u.role === 'AUTOR'), [data.users])
     const books = useMemo(() => data.books.filter(b => b.status === 'Publicado' && b.royaltyPercent > 0), [data.books])
@@ -126,6 +127,32 @@ export default function Royalties() {
         }
     }, [data.books, addAuditLog, formatCLP, reloadData])
 
+    // ── Marcar como Pagada ───────────────────────────────────────────────────
+    const handleMarkAsPaid = useCallback(async (royalty) => {
+        const ref = window.prompt(`Referencia de pago/transferencia para liquidación de ${royalty.authorName} (${formatCLP(royalty.netRoyalty)}):`)
+        if (ref === null) return // Canceled
+
+        setPaying(royalty.id)
+        try {
+            const { error } = await supabase
+                .from('royalties')
+                .update({
+                    status: 'pagada',
+                    paid_at: new Date().toISOString(),
+                    notes: ref ? `Ref pago: ${ref}` : 'Pago confirmado',
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', royalty.id)
+            if (error) throw error
+            const book = data.books.find(b => b.id === royalty.bookId)
+            await addAuditLog(`Marcó como pagada liquidación "${book?.title}" (${royalty.period}): ${formatCLP(royalty.netRoyalty)}`, 'finanzas')
+            await reloadData()
+        } catch (err) {
+            alert(`Error al registrar pago: ${err.message}`)
+        } finally {
+            setPaying(null)
+        }
+    }, [data.books, addAuditLog, formatCLP, reloadData])
     return (
         <div className="space-y-6 fade-in">
             {/* Header */}
@@ -333,7 +360,7 @@ export default function Royalties() {
                                             <span className={`text-lg font-bold font-mono ${(r.netRoyalty || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                                 {formatCLP(r.netRoyalty || 0)}
                                             </span>
-                                            {r.status === 'pendiente' ? (
+                                            {r.status === 'pendiente' && (
                                                 <button
                                                     onClick={() => handleApprove(r)}
                                                     disabled={approving === r.id}
@@ -342,10 +369,24 @@ export default function Royalties() {
                                                     <CheckCircle className="w-3 h-3" />
                                                     {approving === r.id ? 'Aprobando...' : 'Aprobar'}
                                                 </button>
-                                            ) : (
-                                                <span className="badge-green flex items-center gap-1 text-xs">
-                                                    <CheckCircle className="w-3 h-3" /> Aprobada
-                                                </span>
+                                            )}
+                                            {r.status === 'aprobada' && (
+                                                <button
+                                                    onClick={() => handleMarkAsPaid(r)}
+                                                    disabled={paying === r.id}
+                                                    className="btn-secondary bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20 text-xs px-3 py-1.5 flex items-center gap-1"
+                                                >
+                                                    <Banknote className="w-3 h-3" />
+                                                    {paying === r.id ? 'Registrando...' : 'Marcar Pagada'}
+                                                </button>
+                                            )}
+                                            {r.status === 'pagada' && (
+                                                <div className="flex flex-col items-end">
+                                                    <span className="badge-green flex items-center gap-1 text-[10px] bg-emerald-500/20 text-emerald-300">
+                                                        <Check className="w-3 h-3" /> Pagada
+                                                    </span>
+                                                    {r.notes && <span className="text-[9px] text-dark-500 mt-0.5">{r.notes}</span>}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
