@@ -32,6 +32,7 @@ import Sales from './pages/admin/Sales'
 import Consignments from './pages/admin/Consignments'
 import Suppliers from './pages/admin/Suppliers'
 import PurchaseOrders from './pages/admin/PurchaseOrders'
+import Expenses from './pages/admin/Expenses'
 
 // Freelance pages
 import FreelanceKanban from './pages/freelance/FreelanceKanban'
@@ -79,6 +80,7 @@ function AppRoutes() {
                 <Route path="consignaciones" element={<Consignments />} />
                 <Route path="proveedores" element={<Suppliers />} />
                 <Route path="ordenes" element={<PurchaseOrders />} />
+                <Route path="gastos" element={<Expenses />} />
                 <Route path="liquidaciones" element={<Royalties />} />
                 <Route path="libros" element={<Books />} />
                 <Route path="autores" element={<AuthorsPage />} />
