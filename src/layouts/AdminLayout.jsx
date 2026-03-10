@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { loadPermissions } from '../lib/permissions'
 import {
     BookOpen, LayoutDashboard, Package, Kanban, Calculator,
     DollarSign, FileText, Users, Bell, ClipboardList,
@@ -31,6 +32,10 @@ export default function AdminLayout() {
     const [profileOpen, setProfileOpen] = useState(false)
     const [isResetting, setIsResetting] = useState(false)
     const unreadAlerts = data.alerts.filter(a => !a.read).length
+
+    const permissions = loadPermissions()
+    const userRole = user?.role || 'ADMIN'
+    const allowedModules = permissions[userRole] || permissions['ADMIN']
 
     const handleLogout = () => {
         logout()
@@ -73,23 +78,25 @@ export default function AdminLayout() {
 
                     {/* Nav */}
                     <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                        {navItems.map(item => (
-                            <NavLink
-                                key={item.to}
-                                to={item.to}
-                                end={item.end}
-                                onClick={() => setSidebarOpen(false)}
-                                className={({ isActive }) => isActive ? 'sidebar-link-active' : 'sidebar-link'}
-                            >
-                                <item.icon className="w-4 h-4" />
-                                <span>{item.label}</span>
-                                {item.label === 'Alertas' && unreadAlerts > 0 && (
-                                    <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                                        {unreadAlerts}
-                                    </span>
-                                )}
-                            </NavLink>
-                        ))}
+                        {navItems
+                            .filter(item => allowedModules[item.label] !== false)
+                            .map(item => (
+                                <NavLink
+                                    key={item.to}
+                                    to={item.to}
+                                    end={item.end}
+                                    onClick={() => setSidebarOpen(false)}
+                                    className={({ isActive }) => isActive ? 'sidebar-link-active' : 'sidebar-link'}
+                                >
+                                    <item.icon className="w-4 h-4" />
+                                    <span>{item.label}</span>
+                                    {item.label === 'Alertas' && unreadAlerts > 0 && (
+                                        <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                            {unreadAlerts}
+                                        </span>
+                                    )}
+                                </NavLink>
+                            ))}
                     </nav>
 
                     {/* User section */}

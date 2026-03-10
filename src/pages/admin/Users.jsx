@@ -1,41 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { Users as UsersIcon, Shield, Edit3, Plus, Trash2, X, Save, Eye, EyeOff, AlertTriangle, RotateCcw, Check } from 'lucide-react'
+import { MODULES, DEFAULT_PERMISSIONS, loadPermissions } from '../../lib/permissions'
 
-const MODULES = [
-    'Dashboard', 'Inventario', 'Kanban', 'Escandallo', 'Liquidaciones',
-    'Libros / Contratos', 'Documentos', 'Usuarios', 'Auditoría',
-    'Alertas', 'Perfil Propio', 'Comentarios', 'Historial Pagos'
-]
-
-const DEFAULT_PERMISSIONS = {
-    ADMIN: {
-        'Dashboard': true, 'Inventario': true, 'Kanban': true, 'Escandallo': true,
-        'Liquidaciones': true, 'Libros / Contratos': true, 'Documentos': true,
-        'Usuarios': true, 'Auditoría': true, 'Alertas': true,
-        'Perfil Propio': true, 'Comentarios': true, 'Historial Pagos': false
-    },
-    FREELANCE: {
-        'Dashboard': false, 'Inventario': false, 'Kanban': true, 'Escandallo': false,
-        'Liquidaciones': false, 'Libros / Contratos': false, 'Documentos': false,
-        'Usuarios': false, 'Auditoría': false, 'Alertas': false,
-        'Perfil Propio': false, 'Comentarios': true, 'Historial Pagos': false
-    },
-    AUTOR: {
-        'Dashboard': true, 'Inventario': false, 'Kanban': false, 'Escandallo': false,
-        'Liquidaciones': false, 'Libros / Contratos': false, 'Documentos': false,
-        'Usuarios': false, 'Auditoría': false, 'Alertas': false,
-        'Perfil Propio': true, 'Comentarios': false, 'Historial Pagos': true
-    }
-}
-
-function loadPermissions() {
-    try {
-        const saved = localStorage.getItem('editorial_permissions')
-        if (saved) return JSON.parse(saved)
-    } catch { }
-    return DEFAULT_PERMISSIONS
-}
+const ROLES = ['ADMIN', 'FREELANCE', 'VENDEDOR', 'EDITOR']
+const ROLE_COLORS = { ADMIN: 'badge-blue', FREELANCE: 'badge-green', VENDEDOR: 'badge-yellow', EDITOR: 'badge-purple' }
+const ROLE_LABELS = { ADMIN: 'Administrador', FREELANCE: 'Freelance', VENDEDOR: 'Vendedor', EDITOR: 'Editor' }
 
 export default function UsersPage() {
     const { data, user, isAdmin, addNewUser, updateExistingUser, deleteExistingUser, addAuditLog } = useAuth()
@@ -45,9 +15,6 @@ export default function UsersPage() {
     const [filter, setFilter] = useState('TODOS')
     const [permissions, setPermissions] = useState(loadPermissions)
     const [saved, setSaved] = useState(false)
-
-    const roleColors = { ADMIN: 'badge-blue', FREELANCE: 'badge-green' }
-    const roleLabels = { ADMIN: 'Administrador', FREELANCE: 'Freelance' }
 
     const togglePermission = useCallback((role, module) => {
         setPermissions(prev => {
@@ -106,16 +73,16 @@ export default function UsersPage() {
             </div>
 
             {/* Role summary */}
-            <div className="grid grid-cols-2 gap-3">
-                {['ADMIN', 'FREELANCE'].map(role => (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {ROLES.map(role => (
                     <div
                         key={role}
                         className={`stat-card text-center cursor-pointer transition-all ${filter === role ? 'ring-2 ring-primary' : 'hover:ring-1 hover:ring-dark-400'}`}
                         onClick={() => setFilter(filter === role ? 'TODOS' : role)}
                     >
-                        <Shield className={`w-5 h-5 mx-auto mb-2 ${role === 'ADMIN' ? 'text-primary' : 'text-emerald-400'}`} />
+                        <Shield className={`w-5 h-5 mx-auto mb-2 ${role === 'ADMIN' ? 'text-primary' : role === 'VENDEDOR' ? 'text-yellow-400' : role === 'EDITOR' ? 'text-purple-400' : 'text-emerald-400'}`} />
                         <p className="text-2xl font-bold text-white">{data.users.filter(u => u.role === role).length}</p>
-                        <p className="text-[10px] text-dark-600 uppercase">{roleLabels[role]}s</p>
+                        <p className="text-[10px] text-dark-600 uppercase">{ROLE_LABELS[role]}s</p>
                     </div>
                 ))}
             </div>
@@ -144,7 +111,7 @@ export default function UsersPage() {
             {filter !== 'TODOS' && (
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-dark-600">Filtrado por:</span>
-                    <span className={roleColors[filter]}>{roleLabels[filter]}</span>
+                    <span className={ROLE_COLORS[filter]}>{ROLE_LABELS[filter]}</span>
                     <button onClick={() => setFilter('TODOS')} className="text-xs text-dark-500 hover:text-primary transition-colors">
                         <X className="w-3 h-3" />
                     </button>
@@ -155,14 +122,14 @@ export default function UsersPage() {
             <div className="glass-card divide-y divide-dark-300/50">
                 {filteredUsers.map(u => (
                     <div key={u.id} className="flex items-center gap-4 p-4 hover:bg-dark-200/30 transition-colors group">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 ${u.role === 'ADMIN' ? 'bg-gradient-to-br from-primary to-primary-700' : u.role === 'FREELANCE' ? 'bg-gradient-to-br from-emerald-500 to-emerald-700' : 'bg-gradient-to-br from-purple-500 to-purple-700'}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 ${u.role === 'ADMIN' ? 'bg-gradient-to-br from-primary to-primary-700' : u.role === 'VENDEDOR' ? 'bg-gradient-to-br from-yellow-500 to-yellow-600' : u.role === 'EDITOR' ? 'bg-gradient-to-br from-purple-500 to-purple-600' : 'bg-gradient-to-br from-emerald-500 to-emerald-700'}`}>
                             {u.avatar}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-white">{u.name}</p>
                             <p className="text-xs text-dark-600">{u.email} · {u.title}</p>
                         </div>
-                        <span className={roleColors[u.role]}>{roleLabels[u.role]}</span>
+                        <span className={ROLE_COLORS[u.role]}>{ROLE_LABELS[u.role] || u.role}</span>
 
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
@@ -243,16 +210,16 @@ export default function UsersPage() {
                         <thead>
                             <tr className="border-b border-dark-300">
                                 <th className="table-header text-left py-2 px-3">Módulo</th>
-                                <th className="table-header text-center py-2 px-3">Admin</th>
-                                <th className="table-header text-center py-2 px-3">Freelance</th>
-                                <th className="table-header text-center py-2 px-3">Autor</th>
+                                {ROLES.map(r => (
+                                    <th key={r} className="table-header text-center py-2 px-3">{ROLE_LABELS[r]}</th>
+                                ))}
                             </tr>
                         </thead>
                         <tbody>
                             {MODULES.map((mod, i) => (
                                 <tr key={i} className="border-b border-dark-300/30 hover:bg-dark-200/20 transition-colors">
                                     <td className="py-2 px-3 text-dark-800">{mod}</td>
-                                    {['ADMIN', 'FREELANCE'].map(role => {
+                                    {ROLES.map(role => {
                                         const allowed = permissions[role]?.[mod] ?? false
                                         return (
                                             <td key={role} className="py-2 px-3 text-center">
@@ -395,6 +362,8 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                         className="input-field text-sm"
                     >
                         <option value="ADMIN">Administrador</option>
+                        <option value="VENDEDOR">Vendedor</option>
+                        <option value="EDITOR">Editor / Productor</option>
                         <option value="FREELANCE">Freelance</option>
                     </select>
                 </div>
