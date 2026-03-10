@@ -8,7 +8,7 @@ import {
 const TYPES = ['IMPRENTA', 'DISEÑO', 'MAQUETACIÓN', 'CORRECCIÓN', 'AGENCIA', 'OTROS']
 
 export default function Suppliers() {
-    const { data, addSupplier, updateSupplier, deleteSupplier, addAuditLog } = useAuth()
+    const { data, addSupplier, updateSupplier, deleteSupplier, addAuditLog, t } = useAuth()
     const [search, setSearch] = useState('')
     const [filterType, setFilterType] = useState('TODOS')
     const [showForm, setShowForm] = useState(false)
@@ -150,7 +150,10 @@ export default function Suppliers() {
                             {s.address && (
                                 <div className="flex items-center gap-2">
                                     <MapPin className="w-3.5 h-3.5" />
-                                    <span className="truncate">{s.address}</span>
+                                    <span className="truncate">
+                                        {s.address}
+                                        {(s.comuna || s.ciudad) && `, ${[s.comuna, s.ciudad].filter(Boolean).join(', ')}`}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -228,7 +231,9 @@ function SupplierForm({ supplier, onSave, onCancel }) {
         email: supplier?.email || '',
         phone: supplier?.phone || '',
         tax_id: supplier?.tax_id || '',
-        address: supplier?.address || ''
+        address: supplier?.address || '',
+        comuna: supplier?.comuna || '',
+        ciudad: supplier?.ciudad || ''
     })
 
     const handleSubmit = (e) => {
@@ -298,12 +303,30 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                     />
                 </div>
                 <div className="col-span-2">
-                    <label className="text-xs text-dark-600 mb-1 block">Dirección Física</label>
+                    <label className="text-xs text-dark-600 mb-1 block">{t('address') || 'Dirección Física'}</label>
                     <input
                         value={form.address}
                         onChange={e => setForm({ ...form, address: e.target.value })}
                         className="input-field w-full text-sm"
-                        placeholder="Calle # Num, Ciudad"
+                        placeholder="Calle # Num"
+                    />
+                </div>
+                <div>
+                    <label className="text-xs text-dark-600 mb-1 block">{t('commune') || 'Comuna'}</label>
+                    <input
+                        value={form.comuna}
+                        onChange={e => setForm({ ...form, comuna: e.target.value })}
+                        className="input-field w-full text-sm"
+                        placeholder="Ej: Providencia"
+                    />
+                </div>
+                <div>
+                    <label className="text-xs text-dark-600 mb-1 block">{t('city') || 'Ciudad'}</label>
+                    <input
+                        value={form.ciudad}
+                        onChange={e => setForm({ ...form, ciudad: e.target.value })}
+                        className="input-field w-full text-sm"
+                        placeholder="Ej: Santiago"
                     />
                 </div>
             </div>

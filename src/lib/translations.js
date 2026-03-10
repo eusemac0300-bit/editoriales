@@ -77,6 +77,9 @@ export const translations = {
         view_section: 'Ver sección',
         currency: 'Moneda',
         tax_rate: 'Porcentaje Impuesto (%)',
+        commune: 'Comuna',
+        city: 'Ciudad',
+        address: 'Dirección',
     },
     en: {
         dashboard: 'Dashboard',
@@ -156,6 +159,9 @@ export const translations = {
         view_section: 'View section',
         currency: 'Currency',
         tax_rate: 'Tax Rate (%)',
+        commune: 'Commune',
+        city: 'City',
+        address: 'Address',
     },
     pt: {
         dashboard: 'Painel',
@@ -235,5 +241,8 @@ export const translations = {
         view_section: 'Ver seção',
         currency: 'Moeda',
         tax_rate: 'Taxa de Imposto (%)',
+        commune: 'Comuna',
+        city: 'Cidade',
+        address: 'Endereço',
     }
 }
