@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { supabase } from '../../lib/supabase'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import {
     ShoppingCart, Plus, X, Search, TrendingUp,
     BookOpen, DollarSign, Calendar, Users, Package, BarChart3,
-    CheckCircle, XCircle
+    CheckCircle, XCircle, Download
 } from 'lucide-react'
 
 const CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria', 'Consignación']
@@ -86,6 +87,85 @@ export default function Sales() {
 
         await addAuditLog(`Anuló venta: "${sale.bookTitle}" (${sale.quantity} u. × ${sale.channel}) — stock repuesto`, 'ventas')
         await reloadData()
+    }
+
+    // ✅ #2: Exportar venta a PDF
+    const handleDownloadPDF = (sale) => {
+        const doc = new jsPDF()
+
+        const primaryColor = [20, 184, 166] // teal-500
+        const secondaryColor = [31, 41, 55] // dark-800
+        const lightGray = [156, 163, 175] // gray-400
+
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(16)
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.text('COMPROBANTE DE VENTA', 20, 20)
+
+        doc.setDrawColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
+        doc.setLineWidth(0.5)
+        doc.line(20, 25, 190, 25)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(10)
+        doc.setTextColor(lightGray[0], lightGray[1], lightGray[2])
+        const dateStr = sale.saleDate ? new Date(sale.saleDate + 'T12:00:00').toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'
+        doc.text(`Fecha: ${dateStr}`, 190, 32, { align: 'right' })
+        doc.text(`Comprobante N°: ${sale.id.slice(-8).toUpperCase()}`, 190, 38, { align: 'right' })
+
+        doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
+        doc.setFont('helvetica', 'bold')
+        doc.text('Datos de la Venta', 20, 50)
+
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Cliente:`, 20, 60)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${sale.clientName || 'Consumidor Final'}`, 45, 60)
+
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Documento:`, 20, 68)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${sale.documentRef || 'No indica'}`, 45, 68)
+
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Canal:`, 20, 76)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${sale.channel} / ${sale.type}`, 45, 76)
+
+        autoTable(doc, {
+            startY: 90,
+            head: [['Detalle del Libro', 'Cant.', 'P. Unitario', 'Total']],
+            body: [
+                [
+                    { content: `${sale.bookTitle}\nISBN/ID: ${sale.bookId}` },
+                    sale.quantity,
+                    formatCLP(sale.unitPrice),
+                    formatCLP(sale.totalAmount)
+                ]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: primaryColor, textColor: [255, 255, 255] },
+            styles: { fontSize: 10, cellPadding: 5 }
+        })
+
+        const finalY = doc.lastAutoTable.finalY || 120
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(12)
+        doc.text(`Total Pagado: ${formatCLP(sale.totalAmount)}`, 190, finalY + 12, { align: 'right' })
+
+        if (sale.notes) {
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(9)
+            doc.setTextColor(100, 100, 100)
+            doc.text(`Notas: ${sale.notes}`, 20, finalY + 25, { maxWidth: 170 })
+        }
+
+        doc.setFont('helvetica', 'italic')
+        doc.setFontSize(8)
+        doc.setTextColor(lightGray[0], lightGray[1], lightGray[2])
+        doc.text('Documento generado automáticamente por el sistema editorial.', 105, 280, { align: 'center' })
+
+        doc.save(`Venta_${sale.id.slice(-8)}.pdf`)
     }
 
     return (
@@ -264,15 +344,24 @@ export default function Sales() {
                                                 {sale.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-4 py-3 flex justify-end gap-1">
                                             {sale.status !== 'Anulada' && (
-                                                <button
-                                                    onClick={() => handleDelete(sale)}
-                                                    className="p-1.5 bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
-                                                    title="Anular Venta"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={() => handleDownloadPDF(sale)}
+                                                        className="p-1.5 bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-500 hover:text-emerald-400 transition-colors"
+                                                        title="Descargar PDF"
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(sale)}
+                                                        className="p-1.5 bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
+                                                        title="Anular Venta"
+                                                    >
+                                                        <XCircle className="w-4 h-4" />
+                                                    </button>
+                                                </>
                                             )}
                                         </td>
                                     </tr>
