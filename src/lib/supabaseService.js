@@ -19,7 +19,8 @@ export async function loadAllData(tenantId) {
             { data: sales, error: salesErr },
             { data: consignments, error: consignmentsErr },
             { data: suppliers, error: suppliersErr },
-            { data: purchaseOrders, error: poErr }
+            { data: purchaseOrders, error: poErr },
+            { data: expenses, error: expErr }
         ] = await Promise.all([
             supabase.from('users').select('*').eq('tenant_id', tenantId),
             supabase.from('books').select('*').eq('tenant_id', tenantId),
@@ -35,7 +36,8 @@ export async function loadAllData(tenantId) {
             supabase.from('sales').select('*, books(title)').eq('tenant_id', tenantId).order('sale_date', { ascending: false }),
             supabase.from('consignments').select('*, books(title)').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             supabase.from('suppliers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }),
-            supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false })
+            supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false }),
+            supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId).order('date', { ascending: false })
         ])
 
         const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean)
@@ -44,7 +46,7 @@ export async function loadAllData(tenantId) {
             return null
         }
 
-        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr, salesErr, consignmentsErr, suppliersErr, poErr].filter(Boolean)
+        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr, salesErr, consignmentsErr, suppliersErr, poErr, expErr].filter(Boolean)
         if (nonCriticalErrors.length > 0) {
             console.warn('Supabase non-critical load errors (missing features):', nonCriticalErrors)
         }
@@ -262,6 +264,17 @@ export async function loadAllData(tenantId) {
             updatedAt: c.updated_at
         }))
 
+        const transformedExpenses = (expenses || []).map(e => ({
+            ...e,
+            supplierName: e.suppliers?.name || 'Proveedor Directo'
+        }))
+
+        const transformedPurchaseOrders = (purchaseOrders || []).map(po => ({
+            ...po,
+            bookTitle: po.books?.title || 'Libro Desconocido',
+            supplierName: po.suppliers?.name || 'Proveedor Desconocido'
+        }))
+
         return {
             users: transformedUsers,
             books: transformedBooks,
@@ -273,13 +286,16 @@ export async function loadAllData(tenantId) {
                 invoices: transformedInvoices,
                 royalties: transformedRoyalties,
                 sales: transformedSales,
-                consignments: transformedConsignments
+                consignments: transformedConsignments,
+                expenses: transformedExpenses
             },
             auditLog: transformedAudit,
             comments: transformedComments,
             alerts: transformedAlerts,
             documents: transformedDocuments,
-            quotes: transformedQuotes
+            quotes: transformedQuotes,
+            suppliers: suppliers || [],
+            purchaseOrders: transformedPurchaseOrders
         }
     } catch (err) {
         console.error('Failed to load data from Supabase:', err)
@@ -1010,4 +1026,33 @@ export async function receivePurchaseOrderInDb(poId, quantity, bookId, tenantId)
     }
 
     return po
+}
+
+// ============ EXPENSES ============
+export async function addExpenseToDb(tenantId, expenseData) {
+    const { data, error } = await supabase
+        .from('expenses')
+        .insert([{ ...expenseData, tenant_id: tenantId }])
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function updateExpenseInDb(expenseId, expenseData) {
+    const { data, error } = await supabase
+        .from('expenses')
+        .update(expenseData)
+        .eq('id', expenseId)
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function deleteExpenseFromDb(expenseId) {
+    const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', expenseId)
+    if (error) throw error
+    return true
 }

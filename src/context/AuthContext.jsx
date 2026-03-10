@@ -608,6 +608,41 @@ export function AuthProvider({ children }) {
         }
     }, [user, supabaseConnected])
 
+    // ============ EXPENSES handlers ============
+    const addExpense = useCallback(async (expenseData) => {
+        lastLocalChangeRef.current = Date.now()
+        const expense = { ...expenseData, tenantId: user?.tenantId }
+        setData(prev => ({
+            ...prev,
+            finances: { ...prev.finances, expenses: [expense, ...(prev.finances?.expenses || [])] }
+        }))
+        if (supabaseConnected) {
+            await db.addExpenseToDb(user.tenantId, expenseData)
+        }
+    }, [user, supabaseConnected])
+
+    const updateExpense = useCallback(async (id, updates) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            finances: { ...prev.finances, expenses: (prev.finances?.expenses || []).map(e => e.id === id ? { ...e, ...updates } : e) }
+        }))
+        if (supabaseConnected) {
+            await db.updateExpenseInDb(id, updates)
+        }
+    }, [supabaseConnected])
+
+    const deleteExpense = useCallback(async (id) => {
+        lastLocalChangeRef.current = Date.now()
+        setData(prev => ({
+            ...prev,
+            finances: { ...prev.finances, expenses: (prev.finances?.expenses || []).filter(e => e.id !== id) }
+        }))
+        if (supabaseConnected) {
+            await db.deleteExpenseFromDb(id)
+        }
+    }, [supabaseConnected])
+
     const value = {
         user, data, setData, login, logout, hasPermission,
         isSuperAdmin, isAdmin, isFreelance, isAutor, resetWorkspace,
@@ -621,6 +656,7 @@ export function AuthProvider({ children }) {
         addNewSale, updateSaleDetails, deleteExistingSale,
         addSupplier, updateSupplier, deleteSupplier,
         addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder,
+        addExpense, updateExpense, deleteExpense,
         loading, supabaseConnected, reloadData
     }
 
