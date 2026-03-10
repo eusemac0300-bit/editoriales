@@ -119,19 +119,26 @@ export async function loadAllData(tenantId) {
             status: i.status
         }))
 
-        // Transform royalties
+        // Transform royalties (new schema connected to sales)
         const transformedRoyalties = (royalties || []).map(r => ({
             id: r.id,
             authorId: r.author_id,
+            authorName: r.author_name || '',
             bookId: r.book_id,
             period: r.period,
-            totalSales: r.total_sales,
-            salesAmount: r.sales_amount,
-            royaltyPercent: r.royalty_percent,
-            grossRoyalty: r.gross_royalty,
-            advance: r.advance,
-            netRoyalty: r.net_royalty,
-            status: r.status
+            periodStart: r.period_start,
+            periodEnd: r.period_end,
+            totalSalesAmount: r.total_sales_amount || 0,
+            totalUnitsSold: r.total_units_sold || 0,
+            royaltyPercent: r.royalty_percent || 0,
+            grossRoyalty: r.gross_royalty || 0,
+            advanceDeducted: r.advance_deducted || 0,
+            netRoyalty: r.net_royalty || 0,
+            status: r.status || 'pendiente',
+            approvedAt: r.approved_at,
+            paidAt: r.paid_at,
+            notes: r.notes || '',
+            createdAt: r.created_at
         }))
 
         // Transform audit log

@@ -1,133 +1,357 @@
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { DollarSign, Download, CheckCircle, Clock, User } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import {
+    DollarSign, Download, CheckCircle, Clock, User, TrendingUp,
+    BookOpen, BarChart3, Plus, RefreshCw, AlertCircle, Calendar,
+    ShoppingCart, Percent, CreditCard, FileText
+} from 'lucide-react'
+
+const PERIODS = [
+    { label: 'Enero 2026', value: '2026-01', start: '2026-01-01', end: '2026-01-31' },
+    { label: 'Febrero 2026', value: '2026-02', start: '2026-02-01', end: '2026-02-28' },
+    { label: 'Marzo 2026', value: '2026-03', start: '2026-03-01', end: '2026-03-31' },
+    { label: 'Q1 2026', value: '2026-Q1', start: '2026-01-01', end: '2026-03-31' },
+    { label: 'Q2 2026', value: '2026-Q2', start: '2026-04-01', end: '2026-06-30' },
+    { label: 'Año 2026', value: '2026', start: '2026-01-01', end: '2026-12-31' },
+]
 
 export default function Royalties() {
-    const { data, approveRoyalty, formatCLP, addAuditLog } = useAuth()
+    const { data, formatCLP, addAuditLog, reloadData } = useAuth()
+
     const [selectedAuthor, setSelectedAuthor] = useState('all')
+    const [selectedPeriod, setSelectedPeriod] = useState('2026-03')
+    const [generating, setGenerating] = useState(false)
+    const [approving, setApproving] = useState(null)
 
-    const authors = data.users.filter(u => u.role === 'AUTOR')
-    const royalties = selectedAuthor === 'all' ? data.finances.royalties : data.finances.royalties.filter(r => r.authorId === selectedAuthor)
+    const authors = useMemo(() => data.users.filter(u => u.role === 'AUTOR'), [data.users])
+    const books = useMemo(() => data.books.filter(b => b.status === 'Publicado' && b.royaltyPercent > 0), [data.books])
+    const sales = useMemo(() => (data.finances?.sales || []).filter(s => s.status !== 'Anulada'), [data.finances])
+    const royalties = useMemo(() => data.finances?.royalties || [], [data.finances])
 
-    const handleApproveRoyalty = async (id) => {
-        await approveRoyalty(id)
-        const r = data.finances.royalties.find(r2 => r2.id === id)
-        const author = data.users.find(u => u.id === r?.authorId)
-        addAuditLog(`Aprobó liquidación ${formatCLP(r?.netRoyalty || 0)} para ${author?.name}`, 'finanzas')
-    }
+    // ── Calcular ventas reales por libro en el período ───────────────────────
+    const period = PERIODS.find(p => p.value === selectedPeriod) || PERIODS[2]
 
-    const approveAll = () => {
-        const pending = royalties.filter(r => r.status === 'pendiente')
-        pending.forEach(r => handleApproveRoyalty(r.id))
-    }
+    const salesByBook = useMemo(() => {
+        const map = {}
+        sales
+            .filter(s => s.saleDate >= period.start && s.saleDate <= period.end)
+            .forEach(s => {
+                if (!map[s.bookId]) map[s.bookId] = { units: 0, amount: 0 }
+                map[s.bookId].units += (s.quantity || 0)
+                map[s.bookId].amount += (s.totalAmount || 0)
+            })
+        return map
+    }, [sales, period])
 
-    // Calculate simulated royalties for books with sales
-    const getBookRoyalties = () => {
-        const result = []
-        data.books.filter(b => b.status === 'Publicado').forEach(book => {
-            const physicalInv = data.inventory.physical.find(p => p.bookId === book.id)
-            const digitalInv = data.inventory.digital.find(d => d.bookId === book.id)
-            const physicalSales = physicalInv ? physicalInv.exits.filter(e => e.type === 'venta').reduce((s, e) => s + (e.revenue || 0), 0) : 0
-            const digitalSales = digitalInv ? digitalInv.sales.reduce((s, e) => s + e.revenue, 0) : 0
-            const totalSales = physicalSales + digitalSales
-            const gross = Math.round(totalSales * (book.royaltyPercent / 100))
-            const net = gross - book.advance
-            result.push({ book, totalSales, gross, net, advance: book.advance })
+    // ── Liquidaciones calculadas (en tiempo real, sin guardar) ───────────────
+    const calculations = useMemo(() => books.map(book => {
+        const salesData = salesByBook[book.id] || { units: 0, amount: 0 }
+        const gross = Math.round(salesData.amount * (book.royaltyPercent / 100))
+        const advance = book.advance || 0
+        const net = gross - advance
+        // ¿Ya existe una liquidación guardada en este período?
+        const existing = royalties.find(r => r.bookId === book.id && r.period === selectedPeriod)
+        return { book, salesData, gross, advance, net, existing }
+    }), [books, salesByBook, royalties, selectedPeriod])
+
+    // Filtrar por autor
+    const filtered = useMemo(() => {
+        if (selectedAuthor === 'all') return calculations
+        return calculations.filter(c => {
+            const book = c.book
+            const author = data.users.find(u => u.id === book.authorId || u.name === book.authorName)
+            return author?.id === selectedAuthor
         })
-        return result
-    }
+    }, [calculations, selectedAuthor, data.users])
 
-    const bookRoyalties = getBookRoyalties()
+    // KPIs totales del período
+    const totalSalesAmount = useMemo(() => Object.values(salesByBook).reduce((s, b) => s + b.amount, 0), [salesByBook])
+    const totalGross = useMemo(() => filtered.reduce((s, c) => s + c.gross, 0), [filtered])
+    const totalNet = useMemo(() => filtered.reduce((s, c) => s + c.net, 0), [filtered])
+    const totalUnits = useMemo(() => Object.values(salesByBook).reduce((s, b) => s + b.units, 0), [salesByBook])
+
+    // ── Generar / guardar liquidación ────────────────────────────────────────
+    const handleGenerate = useCallback(async ({ book, salesData, gross, advance, net }) => {
+        setGenerating(book.id)
+        try {
+            const author = data.users.find(u => u.id === book.authorId || u.name === book.authorName)
+            const id = `roy-${book.id}-${selectedPeriod}-${Date.now()}`
+            const entry = {
+                id,
+                tenant_id: data.users[0]?.tenantId || 't1',
+                book_id: book.id,
+                author_id: author?.id || '',
+                author_name: author?.name || book.authorName || '',
+                period: selectedPeriod,
+                period_start: period.start,
+                period_end: period.end,
+                total_sales_amount: salesData.amount,
+                total_units_sold: salesData.units,
+                royalty_percent: book.royaltyPercent,
+                gross_royalty: gross,
+                advance_deducted: advance,
+                net_royalty: net,
+                status: 'pendiente',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }
+            const { error } = await supabase.from('royalties').insert(entry)
+            if (error) throw error
+            await addAuditLog(`Generó liquidación "${book.title}" (${period.label}): ${formatCLP(net)}`, 'finanzas')
+            await reloadData()
+        } catch (err) {
+            alert(`Error al generar: ${err.message}`)
+        } finally {
+            setGenerating(null)
+        }
+    }, [data.users, selectedPeriod, period, addAuditLog, formatCLP, reloadData])
+
+    // ── Aprobar liquidación ──────────────────────────────────────────────────
+    const handleApprove = useCallback(async (royalty) => {
+        setApproving(royalty.id)
+        try {
+            const { error } = await supabase
+                .from('royalties')
+                .update({ status: 'aprobada', approved_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+                .eq('id', royalty.id)
+            if (error) throw error
+            const book = data.books.find(b => b.id === royalty.bookId)
+            await addAuditLog(`Aprobó liquidación "${book?.title}" (${royalty.period}): ${formatCLP(royalty.netRoyalty)}`, 'finanzas')
+            await reloadData()
+        } catch (err) {
+            alert(`Error al aprobar: ${err.message}`)
+        } finally {
+            setApproving(null)
+        }
+    }, [data.books, addAuditLog, formatCLP, reloadData])
 
     return (
         <div className="space-y-6 fade-in">
+            {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <DollarSign className="w-6 h-6 text-primary" />Liquidaciones
+                        <DollarSign className="w-6 h-6 text-primary" /> Liquidaciones de Regalías
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">Cálculo: (Ventas × % Regalía) − Anticipo</p>
+                    <p className="text-dark-600 text-sm mt-1">
+                        Calculado desde ventas reales · Fórmula: (Ventas × % Regalía) − Anticipo
+                    </p>
                 </div>
-                <div className="flex gap-2">
-                    <select value={selectedAuthor} onChange={e => setSelectedAuthor(e.target.value)} className="input-field w-auto text-sm">
+                <div className="flex gap-2 flex-wrap">
+                    <select
+                        value={selectedPeriod}
+                        onChange={e => setSelectedPeriod(e.target.value)}
+                        className="input-field w-auto text-sm"
+                    >
+                        {PERIODS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                    </select>
+                    <select
+                        value={selectedAuthor}
+                        onChange={e => setSelectedAuthor(e.target.value)}
+                        className="input-field w-auto text-sm"
+                    >
                         <option value="all">Todos los autores</option>
                         {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
-                    <button onClick={approveAll} className="btn-primary text-sm" disabled={royalties.filter(r => r.status === 'pendiente').length === 0}>
-                        <CheckCircle className="w-4 h-4 inline mr-1" /> Aprobar Todas
-                    </button>
                 </div>
             </div>
 
-            {/* Royalty formula cards */}
-            <div className="space-y-4">
-                {bookRoyalties.map(({ book, totalSales, gross, net, advance }) => (
-                    <div key={book.id} className="glass-card p-5">
-                        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                            <div>
-                                <h3 className="text-white font-medium">{book.title}</h3>
-                                <p className="text-xs text-dark-600 flex items-center gap-1 mt-1">
-                                    <User className="w-3 h-3" /> {book.authorName} · {book.royaltyPercent}% regalía
-                                </p>
-                            </div>
-                            <div className="flex gap-2">
-                                <button className="btn-secondary text-xs px-3 py-1.5"><Download className="w-3 h-3 inline mr-1" /> Borrador</button>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-                            <div className="bg-dark-50 rounded-lg p-3">
-                                <p className="text-[10px] text-dark-600 uppercase">Total Ventas</p>
-                                <p className="text-lg font-bold text-white">{formatCLP(totalSales)}</p>
-                            </div>
-                            <div className="bg-dark-50 rounded-lg p-3">
-                                <p className="text-[10px] text-dark-600 uppercase">Regalía Bruta ({book.royaltyPercent}%)</p>
-                                <p className="text-lg font-bold text-primary-300">{formatCLP(gross)}</p>
-                            </div>
-                            <div className="bg-dark-50 rounded-lg p-3">
-                                <p className="text-[10px] text-dark-600 uppercase">Anticipo Descontado</p>
-                                <p className="text-lg font-bold text-amber-400">-{formatCLP(advance)}</p>
-                            </div>
-                            <div className={`rounded-lg p-3 ${net >= 0 ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
-                                <p className="text-[10px] text-dark-600 uppercase">Regalía Neta</p>
-                                <p className={`text-lg font-bold ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCLP(net)}</p>
-                            </div>
-                        </div>
-
-                        {/* Formula */}
-                        <div className="mt-3 p-2 bg-dark-50 rounded-lg">
-                            <p className="text-[10px] text-dark-500 font-mono text-center">
-                                ({formatCLP(totalSales)} × {book.royaltyPercent}%) − {formatCLP(advance)} = <span className={net >= 0 ? 'text-emerald-400' : 'text-red-400'}>{formatCLP(net)}</span>
-                            </p>
-                        </div>
+            {/* KPI Banner */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="glass-card p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                        <ShoppingCart className="w-4 h-4 text-blue-400" />
+                        <p className="text-[11px] text-dark-500 uppercase">Ventas del Período</p>
                     </div>
-                ))}
+                    <p className="text-xl font-bold text-blue-400 font-mono">{formatCLP(totalSalesAmount)}</p>
+                    <p className="text-[10px] text-dark-600 mt-1">{totalUnits} unidades vendidas</p>
+                </div>
+                <div className="glass-card p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Percent className="w-4 h-4 text-yellow-400" />
+                        <p className="text-[11px] text-dark-500 uppercase">Regalía Bruta</p>
+                    </div>
+                    <p className="text-xl font-bold text-yellow-400 font-mono">{formatCLP(totalGross)}</p>
+                    <p className="text-[10px] text-dark-600 mt-1">suma de todos los autores</p>
+                </div>
+                <div className="glass-card p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                        <CreditCard className="w-4 h-4 text-emerald-400" />
+                        <p className="text-[11px] text-dark-500 uppercase">Total a Pagar</p>
+                    </div>
+                    <p className={`text-xl font-bold font-mono ${totalNet >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {formatCLP(totalNet)}
+                    </p>
+                    <p className="text-[10px] text-dark-600 mt-1">neto después de anticipos</p>
+                </div>
+                <div className="glass-card p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                        <FileText className="w-4 h-4 text-purple-400" />
+                        <p className="text-[11px] text-dark-500 uppercase">Liquidaciones</p>
+                    </div>
+                    <p className="text-xl font-bold text-purple-400 font-mono">
+                        {royalties.filter(r => r.period === selectedPeriod).length}
+                    </p>
+                    <p className="text-[10px] text-dark-600 mt-1">
+                        {royalties.filter(r => r.period === selectedPeriod && r.status === 'aprobada').length} aprobadas
+                    </p>
+                </div>
             </div>
 
-            {/* Pending Approvals */}
-            {royalties.length > 0 && (
-                <div className="glass-card p-5">
-                    <h2 className="text-sm font-semibold text-white mb-4">Liquidaciones Registradas</h2>
-                    {royalties.map(r => {
-                        const author = data.users.find(u => u.id === r.authorId)
-                        const book = data.books.find(b => b.id === r.bookId)
-                        return (
-                            <div key={r.id} className="flex items-center justify-between py-3 border-b border-dark-300/50 last:border-0">
+            {/* Calculation Cards per book */}
+            <div className="space-y-4">
+                <h2 className="text-sm font-semibold text-dark-500 uppercase tracking-wide flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4" /> Cálculo por Título — {period.label}
+                </h2>
+
+                {filtered.length === 0 ? (
+                    <div className="glass-card p-10 text-center">
+                        <BookOpen className="w-10 h-10 text-dark-500 mx-auto mb-3" />
+                        <p className="text-white font-medium">Sin títulos publicados con regalía configurada</p>
+                        <p className="text-sm text-dark-500 mt-1">Configura el % de regalía en cada título desde la sección Títulos.</p>
+                    </div>
+                ) : (
+                    filtered.map(({ book, salesData, gross, advance, net, existing }) => (
+                        <div key={book.id} className="glass-card p-5">
+                            <div className="flex flex-col sm:flex-row items-start justify-between gap-3 mb-4">
                                 <div>
-                                    <p className="text-sm text-white font-medium">{author?.name} — {book?.title}</p>
-                                    <p className="text-xs text-dark-600">{r.period} · {r.totalSales} uds. vendidas</p>
+                                    <h3 className="text-white font-semibold">{book.title}</h3>
+                                    <p className="text-xs text-dark-600 flex items-center gap-1 mt-0.5">
+                                        <User className="w-3 h-3" />
+                                        {book.authorName || '—'} · {book.royaltyPercent}% regalía
+                                        {book.advance > 0 && <span className="ml-2 text-amber-500">· anticipo: {formatCLP(book.advance)}</span>}
+                                    </p>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <span className={`text-lg font-bold ${r.netRoyalty >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCLP(r.netRoyalty)}</span>
-                                    {r.status === 'pendiente' ? (
-                                        <button onClick={() => handleApproveRoyalty(r.id)} className="btn-primary text-xs px-3 py-1.5"><CheckCircle className="w-3 h-3 inline mr-1" /> Aprobar</button>
-                                    ) : (
-                                        <span className="badge-green"><CheckCircle className="w-3 h-3 inline mr-1" /> Aprobada</span>
-                                    )}
+
+                                {/* Action button */}
+                                {salesData.amount === 0 ? (
+                                    <span className="text-xs text-dark-600 italic flex items-center gap-1">
+                                        <AlertCircle className="w-3.5 h-3.5" /> Sin ventas en el período
+                                    </span>
+                                ) : existing ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1 ${existing.status === 'aprobada' ? 'badge-green' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+                                            {existing.status === 'aprobada' ? <><CheckCircle className="w-3 h-3" /> Aprobada</> : <><Clock className="w-3 h-3" /> Pendiente</>}
+                                        </span>
+                                        {existing.status === 'pendiente' && (
+                                            <button
+                                                onClick={() => handleApprove(existing)}
+                                                disabled={approving === existing.id}
+                                                className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1 disabled:opacity-60"
+                                            >
+                                                <CheckCircle className="w-3 h-3" />
+                                                {approving === existing.id ? 'Aprobando...' : 'Aprobar'}
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => handleGenerate({ book, salesData, gross, advance, net })}
+                                        disabled={generating === book.id}
+                                        className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5 border-primary/40 hover:border-primary disabled:opacity-60"
+                                    >
+                                        {generating === book.id
+                                            ? <><RefreshCw className="w-3 h-3 animate-spin" /> Generando...</>
+                                            : <><Plus className="w-3 h-3" /> Generar Liquidación</>}
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Metrics grid */}
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                <div className="bg-dark-200/60 rounded-lg p-3 text-center">
+                                    <p className="text-[10px] text-dark-500 uppercase mb-1">Unidades</p>
+                                    <p className="text-base font-bold text-blue-400">{salesData.units}</p>
+                                </div>
+                                <div className="bg-dark-200/60 rounded-lg p-3 text-center">
+                                    <p className="text-[10px] text-dark-500 uppercase mb-1">Ventas Netas</p>
+                                    <p className="text-base font-bold text-white font-mono">{formatCLP(salesData.amount)}</p>
+                                </div>
+                                <div className="bg-dark-200/60 rounded-lg p-3 text-center">
+                                    <p className="text-[10px] text-dark-500 uppercase mb-1">Regalía Bruta</p>
+                                    <p className="text-base font-bold text-yellow-400 font-mono">{formatCLP(gross)}</p>
+                                </div>
+                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
+                                    <p className="text-[10px] text-amber-400 uppercase mb-1">− Anticipo</p>
+                                    <p className="text-base font-bold text-amber-300 font-mono">−{formatCLP(advance)}</p>
+                                </div>
+                                <div className={`rounded-lg p-3 text-center ${net >= 0 ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
+                                    <p className={`text-[10px] uppercase mb-1 ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>= Regalía Neta</p>
+                                    <p className={`text-base font-bold font-mono ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCLP(net)}</p>
                                 </div>
                             </div>
-                        )
-                    })}
+
+                            {/* Formula bar */}
+                            <div className="mt-3 px-3 py-2 bg-dark-200/40 rounded-lg">
+                                <p className="text-[10px] text-dark-500 font-mono text-center">
+                                    ({formatCLP(salesData.amount)} × {book.royaltyPercent}%) − {formatCLP(advance)} = {' '}
+                                    <span className={net >= 0 ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}>{formatCLP(net)}</span>
+                                </p>
+                            </div>
+
+                            {/* Sales breakdown per channel */}
+                            {salesData.amount > 0 && (() => {
+                                const bookSales = sales.filter(s => s.bookId === book.id && s.saleDate >= period.start && s.saleDate <= period.end)
+                                const byChannel = {}
+                                bookSales.forEach(s => { byChannel[s.channel] = (byChannel[s.channel] || 0) + s.totalAmount })
+                                return Object.keys(byChannel).length > 0 ? (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {Object.entries(byChannel).map(([ch, amt]) => (
+                                            <span key={ch} className="text-[10px] bg-primary/10 border border-primary/20 text-primary-300 px-2 py-0.5 rounded-full">
+                                                {ch}: {formatCLP(amt)}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : null
+                            })()}
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* Saved Royalties History */}
+            {royalties.filter(r => r.period === selectedPeriod).length > 0 && (
+                <div className="glass-card p-5">
+                    <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-dark-500" /> Liquidaciones Guardadas — {period.label}
+                    </h2>
+                    <div className="divide-y divide-dark-300">
+                        {royalties
+                            .filter(r => r.period === selectedPeriod)
+                            .map(r => {
+                                const book = data.books.find(b => b.id === r.bookId)
+                                return (
+                                    <div key={r.id} className="flex items-center justify-between py-3">
+                                        <div>
+                                            <p className="text-sm text-white font-medium">{r.authorName} — {book?.title || r.bookId}</p>
+                                            <p className="text-xs text-dark-600">
+                                                {r.totalUnitsSold || 0} u. · Ventas: {formatCLP(r.totalSalesAmount)} · {r.royaltyPercent}%
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`text-lg font-bold font-mono ${(r.netRoyalty || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                {formatCLP(r.netRoyalty || 0)}
+                                            </span>
+                                            {r.status === 'pendiente' ? (
+                                                <button
+                                                    onClick={() => handleApprove(r)}
+                                                    disabled={approving === r.id}
+                                                    className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1"
+                                                >
+                                                    <CheckCircle className="w-3 h-3" />
+                                                    {approving === r.id ? 'Aprobando...' : 'Aprobar'}
+                                                </button>
+                                            ) : (
+                                                <span className="badge-green flex items-center gap-1 text-xs">
+                                                    <CheckCircle className="w-3 h-3" /> Aprobada
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                    </div>
                 </div>
             )}
         </div>
