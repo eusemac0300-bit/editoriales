@@ -446,11 +446,19 @@ export function AuthProvider({ children }) {
                     users: [user],
                     books: [],
                     inventory: { physical: [], digital: [] },
-                    finances: { invoices: [], royalties: [] },
+                    finances: { 
+                        invoices: [], 
+                        royalties: [],
+                        sales: [],
+                        consignments: [],
+                        expenses: []
+                    },
                     auditLog: [],
                     comments: [],
                     alerts: [],
-                    quotes: []
+                    quotes: [],
+                    suppliers: [],
+                    purchaseOrders: []
                 })
                 // Trigger a hard reload from db just to be sure
                 await reloadData()
@@ -672,9 +680,34 @@ export function AuthProvider({ children }) {
         }
     }, [supabaseConnected])
 
+    const loadDemo = useCallback(async () => {
+        if (!user || user.role !== 'ADMIN') return false
+        setLoading(true)
+        try {
+            await db.seedDemoData(user.tenantId, user.id)
+            await reloadData()
+            return true
+        } finally {
+            setLoading(false)
+        }
+    }, [user, reloadData])
+
+    const clearDemo = useCallback(async () => {
+        if (!user || user.role !== 'ADMIN') return false
+        setLoading(true)
+        try {
+            await db.clearDemoData(user.tenantId)
+            await reloadData()
+            return true
+        } finally {
+            setLoading(false)
+        }
+    }, [user, reloadData])
+
     const value = {
         user, data, setData, login, logout, hasPermission,
         isSuperAdmin, isAdmin, isFreelance, isAutor, resetWorkspace,
+        loadDemo, clearDemo,
         addAuditLog, updateBookStatus, addComment,
         markFreelanceOnboarded, formatCLP,
         addNewBook, updateBookDetails, deleteExistingBook, updateInventory, approveRoyalty,

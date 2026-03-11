@@ -20,7 +20,7 @@ export default function AuthorsPage() {
     if (!isAdmin()) {
         return (
             <div className="flex items-center justify-center h-64">
-                <p className="text-dark-600">No tienes permisos para ver esta sección.</p>
+                <p className="text-slate-500 dark:text-dark-600">No tienes permisos para ver esta sección.</p>
             </div>
         )
     }
@@ -29,10 +29,10 @@ export default function AuthorsPage() {
         <div className="space-y-6 fade-in">
             <div className="flex flex-col sm:flex-row justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <UsersIcon className="w-6 h-6 text-primary" />Directorio de Autores
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">{authors.length} autores registrados en catálogo</p>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{authors.length} autores registrados en catálogo</p>
                 </div>
                 <button onClick={() => { setShowAdd(!showAdd); setEditingUser(null) }} className="btn-primary text-sm h-10">
                     <Plus className="w-4 h-4 inline mr-1" /> Nuevo Autor
@@ -68,28 +68,28 @@ export default function AuthorsPage() {
                         try { return JSON.parse(u.bio) } catch { return {} }
                     })()
                     return (
-                        <div key={u.id} className="glass-card p-5 hover:bg-dark-200/30 transition-colors group flex flex-col gap-4">
+                        <div key={u.id} className="glass-card p-5 hover:bg-slate-50 dark:bg-dark-200/30 transition-colors group flex flex-col gap-4">
                             <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-white shrink-0 bg-gradient-to-br from-purple-500 to-purple-700">
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-slate-900 dark:text-white shrink-0 bg-gradient-to-br from-purple-500 to-purple-700">
                                     {u.avatar}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="text-lg font-medium text-white">{u.name}</h3>
-                                    <p className="text-sm text-dark-600 truncate">{u.email}</p>
-                                    {bio.rut && <p className="text-xs text-dark-500 mt-1 flex items-center gap-1"><FileText className="w-3 h-3" /> RUT: {bio.rut}</p>}
+                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">{u.name}</h3>
+                                    <p className="text-sm text-slate-500 dark:text-dark-600 truncate">{u.email}</p>
+                                    {bio.rut && <p className="text-xs text-slate-500 dark:text-dark-500 mt-1 flex items-center gap-1"><FileText className="w-3 h-3" /> RUT: {bio.rut}</p>}
                                 </div>
 
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
                                         onClick={() => { setEditingUser(u); setShowAdd(false) }}
-                                        className="p-2 rounded-lg hover:bg-dark-200 text-dark-600 hover:text-primary transition-all"
+                                        className="p-2 rounded-lg hover:bg-slate-50 dark:bg-dark-200 text-slate-500 dark:text-dark-600 hover:text-primary transition-all"
                                         title="Editar autor"
                                     >
                                         <Edit3 className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => setDeleteConfirm(u)}
-                                        className="p-2 rounded-lg hover:bg-red-500/10 text-dark-600 hover:text-red-400 transition-all"
+                                        className="p-2 rounded-lg hover:bg-red-500/10 text-slate-500 dark:text-dark-600 hover:text-red-400 transition-all"
                                         title="Eliminar autor"
                                     >
                                         <Trash2 className="w-4 h-4" />
@@ -98,11 +98,11 @@ export default function AuthorsPage() {
                             </div>
 
                             {/* Additional Metadata Display */}
-                            <div className="grid grid-cols-2 gap-2 text-xs text-dark-600 mt-2 bg-dark-50 p-3 rounded-lg">
-                                <div><span className="block text-[10px] text-dark-500 uppercase">País</span>{bio.country || 'No registrado'}</div>
-                                <div><span className="block text-[10px] text-dark-500 uppercase">Banco</span>{bio.bankName || 'No registrado'}</div>
-                                <div><span className="block text-[10px] text-dark-500 uppercase">Tipo Cta.</span>{bio.bankAccountType || '—'}</div>
-                                <div><span className="block text-[10px] text-dark-500 uppercase">Nº Cta.</span>{bio.bankAccountNumber ? '••••' + String(bio.bankAccountNumber).slice(-4) : '—'}</div>
+                            <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-dark-600 mt-2 bg-slate-50 dark:bg-dark-50 p-3 rounded-lg">
+                                <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">País</span>{bio.country || 'No registrado'}</div>
+                                <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">Banco</span>{bio.bankName || 'No registrado'}</div>
+                                <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">Tipo Cta.</span>{bio.bankAccountType || '—'}</div>
+                                <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">Nº Cta.</span>{bio.bankAccountNumber ? '••••' + String(bio.bankAccountNumber).slice(-4) : '—'}</div>
                             </div>
                         </div>
                     )
@@ -118,15 +118,15 @@ export default function AuthorsPage() {
                                 <AlertTriangle className="w-5 h-5 text-red-400" />
                             </div>
                             <div>
-                                <h3 className="text-sm font-semibold text-white">Eliminar Autor</h3>
-                                <p className="text-xs text-dark-600">Esta acción no se puede deshacer</p>
+                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Eliminar Autor</h3>
+                                <p className="text-xs text-slate-500 dark:text-dark-600">Esta acción no se puede deshacer</p>
                             </div>
                         </div>
-                        <p className="text-sm text-dark-800 mb-4">
-                            ¿Estás seguro de eliminar a <strong className="text-white">{deleteConfirm.name}</strong> ({deleteConfirm.email})?
+                        <p className="text-sm text-slate-700 dark:text-dark-800 mb-4">
+                            ¿Estás seguro de eliminar a <strong className="text-slate-900 dark:text-white">{deleteConfirm.name}</strong> ({deleteConfirm.email})?
                         </p>
                         <div className="flex gap-2 justify-end">
-                            <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-dark-600 hover:text-white transition-colors rounded-lg hover:bg-dark-200">
+                            <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm text-slate-500 dark:text-dark-600 hover:text-slate-900 dark:text-white transition-colors rounded-lg hover:bg-slate-50 dark:bg-dark-200">
                                 Cancelar
                             </button>
                             <button
@@ -208,10 +208,10 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
     return (
         <div className="glass-card p-5 slide-up">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-white">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                     {existingUser ? `Editar: ${existingUser.name}` : 'Registrar Nuevo Usuario'}
                 </h3>
-                <button onClick={onCancel} className="p-1 text-dark-600 hover:text-white transition-colors">
+                <button onClick={onCancel} className="p-1 text-slate-500 dark:text-dark-600 hover:text-slate-900 dark:text-white transition-colors">
                     <X className="w-4 h-4" />
                 </button>
             </div>
@@ -225,7 +225,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2">
-                    <label className="text-xs text-dark-600 mb-1 block">Nombre Completo *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Nombre Completo *</label>
                     <input
                         value={form.name}
                         onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
@@ -235,7 +235,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">Correo Electrónico *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Correo Electrónico *</label>
                     <input
                         type="email"
                         value={form.email}
@@ -246,7 +246,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">Contraseña *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Contraseña *</label>
                     <div className="relative">
                         <input
                             type={showPassword ? 'text' : 'password'}
@@ -259,18 +259,18 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-dark-500 hover:text-white transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:text-white transition-colors"
                         >
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                     </div>
                 </div>
 
-                <div className="sm:col-span-2 mt-4 pt-4 border-t border-dark-300">
-                    <h4 className="text-sm font-medium text-white mb-3">Datos para Liquidaciones y Fiscalidad</h4>
+                <div className="sm:col-span-2 mt-4 pt-4 border-t border-slate-200 dark:border-dark-300">
+                    <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3">Datos para Liquidaciones y Fiscalidad</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">RUT / Identificador Fiscal</label>
+                            <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">RUT / Identificador Fiscal</label>
                             <input
                                 value={form.bio.rut}
                                 onChange={e => setForm(p => ({ ...p, bio: { ...p.bio, rut: e.target.value } }))}
@@ -279,7 +279,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                             />
                         </div>
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">País de Residencia</label>
+                            <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">País de Residencia</label>
                             <select
                                 value={form.bio.country}
                                 onChange={e => setForm(p => ({ ...p, bio: { ...p.bio, country: e.target.value } }))}
@@ -295,7 +295,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                             </select>
                         </div>
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Retención de Impuestos (%)</label>
+                            <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Retención de Impuestos (%)</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -304,10 +304,10 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                                 className="input-field text-sm"
                                 placeholder="Ej: 13.75"
                             />
-                            <p className="text-[10px] text-dark-500 mt-1">Por defecto: 13.75% (Boleta Honorarios Chile 2024)</p>
+                            <p className="text-[10px] text-slate-500 dark:text-dark-500 mt-1">Por defecto: 13.75% (Boleta Honorarios Chile 2024)</p>
                         </div>
                         <div className="sm:col-span-2">
-                            <label className="text-xs text-dark-600 mb-1 block">Dirección Postal</label>
+                            <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Dirección Postal</label>
                             <input
                                 value={form.bio.address}
                                 onChange={e => setForm(p => ({ ...p, bio: { ...p.bio, address: e.target.value } }))}
@@ -318,11 +318,11 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                     </div>
                 </div>
 
-                <div className="sm:col-span-2 mt-2 pt-4 border-t border-dark-300">
-                    <h4 className="text-sm font-medium text-white mb-3">Datos Bancarios para Regalías</h4>
+                <div className="sm:col-span-2 mt-2 pt-4 border-t border-slate-200 dark:border-dark-300">
+                    <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3">Datos Bancarios para Regalías</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Banco</label>
+                            <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Banco</label>
                             <input
                                 value={form.bio.bankName}
                                 onChange={e => setForm(p => ({ ...p, bio: { ...p.bio, bankName: e.target.value } }))}
@@ -331,7 +331,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                             />
                         </div>
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Tipo de Cuenta</label>
+                            <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tipo de Cuenta</label>
                             <select
                                 value={form.bio.bankAccountType}
                                 onChange={e => setForm(p => ({ ...p, bio: { ...p.bio, bankAccountType: e.target.value } }))}
@@ -344,7 +344,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                             </select>
                         </div>
                         <div className="sm:col-span-2 lg:col-span-1">
-                            <label className="text-xs text-dark-600 mb-1 block">Número de Cuenta</label>
+                            <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Número de Cuenta</label>
                             <input
                                 value={form.bio.bankAccountNumber}
                                 onChange={e => setForm(p => ({ ...p, bio: { ...p.bio, bankAccountNumber: e.target.value } }))}
@@ -356,7 +356,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                 </div>
 
                 <div className="sm:col-span-2 flex justify-end gap-2 mt-2">
-                    <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-dark-600 hover:text-white transition-colors rounded-lg hover:bg-dark-200">
+                    <button type="button" onClick={onCancel} className="px-4 py-2 text-sm text-slate-500 dark:text-dark-600 hover:text-slate-900 dark:text-white transition-colors rounded-lg hover:bg-slate-50 dark:bg-dark-200">
                         Cancelar
                     </button>
                     <button type="submit" disabled={saving} className="btn-primary text-sm flex items-center gap-2">

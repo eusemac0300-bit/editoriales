@@ -311,7 +311,7 @@ export async function loadSuperAdminData() {
             { data: users, error: uErr }
         ] = await Promise.all([
             supabase.from('tenants').select('*').order('created_at', { ascending: false }),
-            supabase.from('users').select('id, tenant_id, email, name, role').eq('role', 'ADMIN')
+            supabase.from('users').select('*').order('created_at', { ascending: false })
         ])
 
         if (tErr || uErr) {
@@ -326,13 +326,43 @@ export async function loadSuperAdminData() {
     }
 }
 
+export async function superAdminDeleteUser(userId) {
+    try {
+        await supabase.from('comments').delete().eq('user_id', userId)
+        await supabase.from('audit_log').delete().eq('user_id', userId)
+        const { error } = await supabase.from('users').delete().eq('id', userId)
+        if (error) throw error
+        return true
+    } catch (err) {
+        console.error('Failed to delete user as superadmin:', err)
+        return false
+    }
+}
+
 // ============ USER AUTH ============
 export async function loginUser(email, password) {
+    // 1. Intentar inicio de sesión nativo en Supabase Auth (verifica contraseñas reales y confirmación de correo)
+    const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    })
+
+    if (authErr) {
+        console.warn('Supabase Auth Warning:', authErr.message)
+        // En caso de que el correo no esté confirmado, authErr.message dirá algo como "Email not confirmed"
+        // No detenemos el flujo completo aún para mantener retrocompatibilidad (cuentas legacy que no están en Supabase Auth)
+        // pero idealmente deberíamos retornar inmediatamente si el mensaje es de correo no confirmado.
+        if (authErr.message.includes('Email not confirmed')) {
+            throw new Error('Debes confirmar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada o spam.')
+        }
+    }
+
+    // 2. Buscar datos en nuestra tabla custom 'users' que conecta con el Tenant
     const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
-        .eq('password', password)
+        .eq('password', password) // Mantenemos verificación de fallback legacy
         .single()
 
     if (error || !data) return null
@@ -713,6 +743,18 @@ export async function updateUser(userId, updates) {
     return !error
 }
 
+export async function changeUserPassword(userId, newPassword) {
+    const { error } = await supabase
+        .from('users')
+        .update({
+            password: newPassword,
+            first_login: false
+        })
+        .eq('id', userId)
+    if (error) console.error('Error changing password:', error)
+    return !error
+}
+
 export async function deleteUser(userId) {
     // Delete related data first
     await supabase.from('comments').delete().eq('user_id', userId)
@@ -803,12 +845,178 @@ export async function deleteQuoteFromDb(quoteId) {
     return !error
 }
 
+
+export async function superAdminDeleteWorkspace(tenantId) {
+    if (!tenantId) return false;
+    try {
+        const tables = [
+            'inventory_physical', 'inventory_digital', 'consignments', 'escandallos',
+            'royalties', 'sales_items', 'sales', 'quote_items', 'quotes',
+            'po_items', 'purchase_orders', 'expenses', 'invoices',
+            'comments', 'audit_log', 'books', 'authors', 'clients', 'suppliers', 'alerts'
+        ];
+
+        for (const table of tables) {
+            await supabase.from(table).delete().eq('tenant_id', tenantId);
+        }
+
+        // delete all users belonging to tenant
+        await supabase.from('users').delete().eq('tenant_id', tenantId);
+
+        // delete tenant record itself
+        const { error } = await supabase.from('tenants').delete().eq('id', tenantId);
+        if (error) throw error;
+
+        return true;
+    } catch (err) {
+        console.error('Error deleting workspace completely:', err);
+        return false
+    }
+}
+
+export async function seedDemoData(tenantId, adminUserId) {
+    if (!tenantId) return
+    const now = new Date().toISOString()
+    const monthAgo = new Date(Date.now() - 2592000000).toISOString()
+
+    // Helper para UUID si la tabla lo exige
+    const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    const safeTenantId = isUUID(tenantId) ? tenantId : "00000000-0000-0000-0000-000000000000"; // Fallback para UUID
+
+    async function safeUpsert(table, data, label) {
+        try {
+            const { error } = await supabase.from(table).upsert(data, { onConflict: 'id' })
+            if (error) {
+                console.warn(`[Seeding] Fallo suave en ${label} (${table}):`, error.message)
+                // Caso especial: tenant_id UUID en tabla 'expenses'
+                if (table === 'expenses' && error.message.includes('uuid')) {
+                    const fixedData = data.map(item => ({ ...item, tenant_id: safeTenantId }))
+                    await supabase.from(table).upsert(fixedData)
+                }
+                return false
+            }
+            return true
+        } catch (err) {
+            console.error(`[Seeding] Error fatal en ${label}:`, err)
+            return false
+        }
+    }
+
+    try {
+        console.log(`[Seeding] 🚀 Iniciando carga robusta para ${tenantId}`)
+
+        // 1. Authors
+        const demoAuthors = [
+            { id: `demo_u1_${tenantId}`, tenant_id: tenantId, email: `autor1_${tenantId}@ejemplo.com`, password: 'demo', name: 'Isabel Allende (Demo)', role: 'AUTOR', avatar: 'IA', first_login: true },
+            { id: `demo_u2_${tenantId}`, tenant_id: tenantId, email: `autor2_${tenantId}@ejemplo.com`, password: 'demo', name: 'Jorge Luis Borges (Demo)', role: 'AUTOR', avatar: 'JB', first_login: true },
+            { id: `demo_u3_${tenantId}`, tenant_id: tenantId, email: `autor3_${tenantId}@ejemplo.com`, password: 'demo', name: 'Gabriela Mistral (Demo)', role: 'AUTOR', avatar: 'GM', first_login: true }
+        ]
+        await safeUpsert('users', demoAuthors, 'Autores')
+
+        // 2. Suppliers
+        const demoSuppliers = [
+            { id: `demo_sup1_${tenantId}`, tenant_id: tenantId, name: 'Imprenta Nacional', type: 'IMPRENTA', email: 'imprenta@demo.cl' },
+            { id: `demo_sup2_${tenantId}`, tenant_id: tenantId, name: 'Distribuidora Lector', type: 'DISTRIBUIDORA', email: 'ventas@lector.cl' }
+        ]
+        await safeUpsert('suppliers', demoSuppliers, 'Proveedores')
+
+        // 3. Books (10 records)
+        const titles = [
+            "El Laberinto de Papel", "Crónicas del Mañana", "Sinfonía en el Desierto",
+            "El Último Manuscrito", "Brisas del Sur", "Fragmentos de Silencio",
+            "La Ciudad de Cristal", "Relatos Perdidos", "Ecos de Montaña", "Poesía Reunida"
+        ]
+        const demoBooks = titles.map((title, i) => ({
+            id: `demo_b${i}_${tenantId}`,
+            tenant_id: tenantId,
+            title: title,
+            author_id: demoAuthors[i % 3].id,
+            author_name: demoAuthors[i % 3].name,
+            status: i < 6 ? 'Publicado' : 'Edición',
+            pvp: 15000 + (i * 1000),
+            isbn: `978-956-00-${100 + i}`,
+            sku: `DEMO-${i}`,
+            genre: i % 2 === 0 ? 'Novela' : 'Ensayo',
+            royalty_percent: 10,
+            advance: i === 0 ? 50000 : 0,
+            created_at: monthAgo
+        }))
+        await safeUpsert('books', demoBooks, 'Libros')
+
+        // 4. Inventory, Sales & Expenses
+        const demoInventory = demoBooks.map((b, i) => ({
+            tenant_id: tenantId,
+            book_id: b.id,
+            stock: Math.floor(100 + (Math.random() * 50)),
+            min_stock: 20
+        }))
+        await safeUpsert('inventory_physical', demoInventory, 'Stock')
+
+        const demoSales = demoBooks.filter(b => b.status === 'Publicado').map(b => ({
+            id: `demo_s_${b.id}`,
+            tenant_id: tenantId,
+            book_id: b.id,
+            book_title: b.title,
+            channel: 'Librerías',
+            quantity: 5,
+            unit_price: b.pvp,
+            total_amount: b.pvp * 5,
+            neto: Math.round(b.pvp * 5 / 1.19),
+            iva: Math.round(b.pvp * 5 * 0.19),
+            status: 'Completada',
+            sale_date: now
+        }))
+        await safeUpsert('sales', demoSales, 'Ventas')
+
+        const demoExpenses = [
+            { id: `demo_exp_1_${tenantId}`, tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción SaaS (Demo)', amount: 35000, date: now, status: 'PAGADO' },
+            { id: `demo_exp_2_${tenantId}`, tenant_id: tenantId, category: 'MARKETING', description: 'Publicidad RRSS (Demo)', amount: 120000, date: now, status: 'PAGADO' }
+        ]
+        await safeUpsert('expenses', demoExpenses, 'Gastos')
+
+        console.log(`[Seeding] ✅ Carga terminada para ${tenantId}`)
+    } catch (err) {
+        console.error('[Seeding] Error crítico:', err)
+    }
+}
+
+// Helper para IDs únicos si no tenemos crypto disponible fácilmente
+function iUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+
+
+
+
 // ============ SAAS ONBOARDING ============
 export async function createSaaSTenant(formData) {
-    const tenantId = `t${Date.now()}`
-    const userId = `u${Date.now()}`
+    // 1. Registro Seguro en Supabase Auth nativo (gatilla el envío de Email de Confirmación)
+    const { data: authData, error: authErr } = await supabase.auth.signUp({
+        email: formData.adminEmail,
+        password: formData.password,
+        options: {
+            data: {
+                name: formData.adminName,
+                editorial_name: formData.editorialName
+            }
+        }
+    })
 
-    // 1. Create Tenant
+    if (authErr && !authErr.message.includes('User already registered')) {
+        console.error('Supabase Auth Sign Up Error:', authErr)
+        // No bloqueamos la creación del tenant por límites de Supabase Auth
+        // ya que el sistema tiene fallback a la tabla pública 'users'.
+    }
+
+    // El UUID real que asignó el motor de Auth de Supabase (o un fallback)
+    const userId = authData?.user?.id || `u${Date.now()}`
+    const tenantId = `t${Date.now()}`
+
+    // 2. Create Tenant in DB
     const { error: tenantErr } = await supabase
         .from('tenants')
         .insert({
@@ -819,17 +1027,18 @@ export async function createSaaSTenant(formData) {
 
     if (tenantErr) {
         console.error('Error creating tenant:', tenantErr)
+        // Intentar rollback en Auth no es necesario ya que sin confirmar correo la cuenta no hace mucho, pero es buena práctica en apps más grandes.
         return { success: false, error: 'No se pudo crear el Workspace.' }
     }
 
-    // 2. Create Admin User
+    // 3. Create Admin User Link on custom Users Table
     const { error: userErr } = await supabase
         .from('users')
         .insert({
             id: userId,
             tenant_id: tenantId,
             email: formData.adminEmail,
-            password: formData.password,
+            password: formData.password, // Mantenido para retrocompatibilidad
             name: formData.adminName,
             role: 'ADMIN',
             avatar: formData.adminName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
@@ -837,12 +1046,22 @@ export async function createSaaSTenant(formData) {
             first_login: false
         })
 
+
     if (userErr) {
         console.error('Error creating admin user:', userErr)
-        return { success: false, error: 'No se pudo crear el usuario administrador.' }
+        return { success: false, error: 'No se pudo crear el entorno de usuario vinculado.' }
     }
 
-    return { success: true, tenantId, userId }
+    // Seed Demo Data so users can practice!
+    await seedDemoData(tenantId, userId);
+
+
+    return {
+        success: true,
+        tenantId,
+        userId,
+        message: `¡Workspace Creado!\n\nPor tu seguridad, hemos enviado un link de activación al correo ${formData.adminEmail}.\n\nDebes hacer click en el enlace para validar tu cuenta antes de ingresar.`
+    }
 }
 
 // ============ RESET DEMO DATA ============
@@ -850,23 +1069,22 @@ export async function resetTenantData(tenantId, adminUserId) {
     if (!tenantId || !adminUserId) return false
 
     try {
-        // Delete all data associated with this tenant
-        // Notice: Supabase ON DELETE CASCADE requires careful order, or simply dropping by tenant_id
-        await supabase.from('inventory_physical').delete().eq('tenant_id', tenantId)
-        await supabase.from('inventory_digital').delete().eq('tenant_id', tenantId)
-        await supabase.from('invoices').delete().eq('tenant_id', tenantId)
-        await supabase.from('royalties').delete().eq('tenant_id', tenantId)
-        await supabase.from('comments').delete().eq('tenant_id', tenantId)
-        await supabase.from('alerts').delete().eq('tenant_id', tenantId)
+        const tables = [
+            'inventory_physical', 'inventory_digital', 'consignments', 'escandallos',
+            'royalties', 'sales_items', 'sales', 'quote_items', 'quotes',
+            'po_items', 'purchase_orders', 'expenses', 'invoices',
+            'comments', 'audit_log', 'books', 'authors', 'clients', 'suppliers', 'alerts'
+        ];
 
-        // Books should be deleted after inventory (though CASCADE might cover it, it's safer to be explicit)
-        await supabase.from('books').delete().eq('tenant_id', tenantId)
-
-        // Delete audit log
-        await supabase.from('audit_log').delete().eq('tenant_id', tenantId)
+        for (const table of tables) {
+            await supabase.from(table).delete().eq('tenant_id', tenantId);
+        }
 
         // Delete all users EXCEPT the admin user initiating the reset
         await supabase.from('users').delete().eq('tenant_id', tenantId).neq('id', adminUserId)
+
+        // Re-seed demo data so the user can keep practicing
+        await seedDemoData(tenantId, adminUserId);
 
         return true
     } catch (err) {
@@ -1056,3 +1274,185 @@ export async function deleteExpenseFromDb(expenseId) {
     if (error) throw error
     return true
 }
+
+// ============ GLOBAL CONFIGURATION ============
+export async function getGlobalEmail() {
+    try {
+        // Primera opción: Intentar obtener desde el perfil del SuperAdmin (JSONB)
+        const { data: userData, error: userErr } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', 'eusemac@me.com')
+            .single()
+
+        if (userData && userData.social_links && userData.social_links.globalContactEmail) {
+            return userData.social_links.globalContactEmail
+        }
+
+        // Segunda opción: fallback a tabla de settings (por si la crearon en BD)
+        const { data, error } = await supabase
+            .from('admin_settings')
+            .select('contact_email')
+            .eq('id', 'global')
+            .single()
+
+        if (data && data.contact_email) return data.contact_email
+    } catch {
+        // ignorar errores
+    }
+
+    return 'eusemac@me.com'
+}
+
+export async function setGlobalEmail(email) {
+    try {
+        // Guardarlo en el perfil del SuperAdmin bajo social_links (JSONB)
+        const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', 'eusemac@me.com')
+            .single()
+
+        if (userData) {
+            const currentLinks = userData.social_links || {}
+            currentLinks.globalContactEmail = email
+            await supabase.from('users').update({ social_links: currentLinks }).eq('email', 'eusemac@me.com')
+        }
+
+        // También intentar en admin_settings por si existe
+        await supabase
+            .from('admin_settings')
+            .upsert({ id: 'global', contact_email: email })
+
+        return true
+    } catch {
+        // No fallar si admin_settings no existe
+        return true
+    }
+}
+// ============ SUPERADMIN ACTIONS ============
+export async function superAdminCreateTenant(name, plan = 'TRIAL') {
+    const tenantId = `t${Date.now()}`
+    const { data, error } = await supabase
+        .from('tenants')
+        .insert({
+            id: tenantId,
+            name,
+            plan,
+            created_at: new Date().toISOString()
+        })
+        .select()
+
+    if (error) {
+        console.error('Error creating tenant:', error)
+        return null
+    }
+    return data[0]
+}
+// ============ ONBOARDING REQUESTS ============
+export async function submitOnboardingRequest(requestData) {
+    const { data, error } = await supabase
+        .from('onboarding_requests')
+        .insert([requestData])
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function loadOnboardingRequests() {
+    const { data, error } = await supabase
+        .from('onboarding_requests')
+        .select('*')
+        .order('created_at', { ascending: false })
+    if (error) {
+        console.error('Error loading onboarding requests:', error)
+        return []
+    }
+    return data
+}
+
+export async function updateOnboardingStatus(requestId, status, notes = '') {
+    const { data, error } = await supabase
+        .from('onboarding_requests')
+        .update({ status, notes })
+        .eq('id', requestId)
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function superAdminApproveOnboarding(request) {
+    try {
+        // 1. Create Tenant
+        const tenantId = `t${Date.now()}`
+        const { error: tErr } = await supabase.from('tenants').insert({
+            id: tenantId,
+            name: request.editorial_name,
+            plan: 'TRIAL'
+        })
+        if (tErr) throw tErr
+
+        // 2. Create Admin User
+        // Note: For real SaaS, we would trigger an email invitation or similar.
+        // Here we force-create the admin user with a temporary password or the one from request if we had it.
+        // Since the user said "he should create his administrator", but also "I must validate",
+        // we can create a placeholder user or just use a standard password.
+        const userId = `u${Date.now()}`
+        const { error: uErr } = await supabase.from('users').insert({
+            id: userId,
+            tenant_id: tenantId,
+            email: request.admin_email,
+            password: 'bienvenido123', // Temporal password
+            name: request.admin_name,
+            role: 'ADMIN',
+            avatar: request.admin_name.split(' ').map(w => w[0]).join('').toUpperCase(),
+            first_login: true
+        })
+        if (uErr) throw uErr
+
+        // 3. Seed Demo Data so users can practice!
+        await seedDemoData(tenantId, userId);
+
+        // 4. Update Request
+        return { success: true, tenantId, userId, editorial_name: request.editorial_name }
+    } catch (err) {
+        console.error('Approval error:', err)
+        return { success: false, error: err.message }
+    }
+}
+export async function clearDemoData(tenantId) {
+    if (!tenantId) return false
+    try {
+        console.log(`[Cleaning] 🧹 Eliminando todo el rastro demo para tenant ${tenantId}...`)
+
+        const filter = { tenant_id: tenantId }
+
+        // Borrar por ID prefijado 'demo_'
+        const mainTables = [
+            'expenses', 'sales', 'inventory_physical', 'books', 'suppliers', 
+            'users', 'audit_log', 'comments', 'alerts', 'quotes', 
+            'purchase_orders', 'consignments', 'royalties', 'invoices', 'documents'
+        ]
+
+        for (const table of mainTables) {
+            const { error } = await supabase
+                .from(table)
+                .delete()
+                .match(filter)
+                .ilike('id', 'demo_%')
+
+            if (error) {
+                // Si falla por ID (quizás no existe o es UUID), intentamos por book_id si aplica
+                if (['inventory_physical', 'sales', 'royalties', 'consignments', 'comments', 'quotes', 'purchase_orders'].includes(table)) {
+                    await supabase.from(table).delete().match(filter).ilike('book_id', 'demo_%')
+                }
+            }
+        }
+
+        return true
+    } catch (err) {
+        console.error('Clear Demo Failure:', err)
+        return false
+    }
+}
+

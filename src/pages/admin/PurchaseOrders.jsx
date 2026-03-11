@@ -80,10 +80,10 @@ export default function PurchaseOrders() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <FileSpreadsheet className="w-6 h-6 text-primary" /> Órdenes de Producción
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">Órdenes de compra y recepción de libros en bodega</p>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Órdenes de compra y recepción de libros en bodega</p>
                 </div>
                 <button
                     onClick={() => { setEditing(null); setShowForm(true) }}
@@ -96,12 +96,12 @@ export default function PurchaseOrders() {
             {/* Stats & Filters */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="stat-card">
-                    <p className="text-[10px] text-dark-600 uppercase font-semibold">Órdenes Activas</p>
-                    <p className="text-2xl font-bold text-white">{pos.filter(p => p.status !== 'RECIBIDA' && p.status !== 'CANCELADA').length}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-semibold">Órdenes Activas</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{pos.filter(p => p.status !== 'RECIBIDA' && p.status !== 'CANCELADA').length}</p>
                 </div>
                 <div className="md:col-span-3 glass-card p-4 flex flex-col md:flex-row gap-4 items-center">
                     <div className="relative flex-1 w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-600" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-dark-600" />
                         <input
                             type="text"
                             placeholder="Buscar por Nro. Orden, Libro o Proveedor..."
@@ -125,7 +125,7 @@ export default function PurchaseOrders() {
             <div className="glass-card overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-dark-200/50 border-b border-dark-300">
+                        <thead className="bg-slate-50 dark:bg-dark-200/50 border-b border-slate-200 dark:border-dark-300">
                             <tr>
                                 <th className="px-4 py-3 text-left">Nro. Orden</th>
                                 <th className="px-4 py-3 text-left">Libro / Título</th>
@@ -139,37 +139,37 @@ export default function PurchaseOrders() {
                         </thead>
                         <tbody className="divide-y divide-dark-300/50">
                             {filtered.map(p => (
-                                <tr key={p.id} className="hover:bg-dark-200/30 transition-colors">
+                                <tr key={p.id} className="hover:bg-slate-50 dark:bg-dark-200/30 transition-colors">
                                     <td className="px-4 py-4 font-mono font-bold text-primary">{p.order_number}</td>
                                     <td className="px-4 py-4 min-w-[200px]">
-                                        <div className="flex items-center gap-3 text-white font-medium">
-                                            <div className="w-8 h-8 rounded-lg bg-dark-200 border border-dark-300 flex items-center justify-center shrink-0">
-                                                <BookOpen className="w-4 h-4 text-dark-500" />
+                                        <div className="flex items-center gap-3 text-slate-900 dark:text-white font-medium">
+                                            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-dark-200 border border-slate-200 dark:border-dark-300 flex items-center justify-center shrink-0">
+                                                <BookOpen className="w-4 h-4 text-slate-500 dark:text-dark-500" />
                                             </div>
                                             <span className="truncate">{p.bookTitle}</span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-4 text-dark-600">
+                                    <td className="px-4 py-4 text-slate-500 dark:text-dark-600">
                                         <div className="flex items-center gap-1">
                                             <Building2 className="w-3.5 h-3.5 opacity-50" />
                                             <span>{p.supplierName}</span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-4 text-dark-600">
+                                    <td className="px-4 py-4 text-slate-500 dark:text-dark-600">
                                         <div className="flex flex-col">
-                                            <span className="text-white text-xs">{p.date_ordered}</span>
-                                            {p.expected_date && <span className="text-[10px] text-dark-500 italic">Exp. {p.expected_date}</span>}
+                                            <span className="text-slate-900 dark:text-white text-xs">{p.date_ordered}</span>
+                                            {p.expected_date && <span className="text-[10px] text-slate-500 dark:text-dark-500 italic">Exp. {p.expected_date}</span>}
                                         </div>
                                     </td>
                                     <td className="px-4 py-4 text-right">
                                         <div className="flex flex-col items-end">
-                                            <span className="text-white font-mono">{p.expected_quantity}</span>
+                                            <span className="text-slate-900 dark:text-white font-mono">{p.expected_quantity}</span>
                                             {p.status === 'RECIBIDA' && (
                                                 <span className="text-[10px] text-emerald-400 font-mono">Rec. {p.received_quantity}</span>
                                             )}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-4 text-right font-mono text-white">
+                                    <td className="px-4 py-4 text-right font-mono text-slate-900 dark:text-white">
                                         {formatCLP(p.total_cost)}
                                     </td>
                                     <td className="px-4 py-4 text-center">
@@ -182,7 +182,7 @@ export default function PurchaseOrders() {
                                             {p.status !== 'RECIBIDA' && p.status !== 'CANCELADA' && (
                                                 <button
                                                     onClick={() => setReceiving(p)}
-                                                    className="p-2 hover:bg-emerald-500/10 rounded-lg text-dark-600 hover:text-emerald-400 transition-all"
+                                                    className="p-2 hover:bg-emerald-500/10 rounded-lg text-slate-500 dark:text-dark-600 hover:text-emerald-400 transition-all"
                                                     title="Recibir en bodega"
                                                 >
                                                     <Truck className="w-4 h-4" />
@@ -190,14 +190,14 @@ export default function PurchaseOrders() {
                                             )}
                                             <button
                                                 onClick={() => { setEditing(p); setShowForm(true) }}
-                                                className="p-2 hover:bg-dark-200 rounded-lg text-dark-600 hover:text-white transition-all"
+                                                className="p-2 hover:bg-slate-50 dark:bg-dark-200 rounded-lg text-slate-500 dark:text-dark-600 hover:text-slate-900 dark:text-white transition-all"
                                                 title="Editar orden"
                                             >
                                                 <Edit3 className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => setDeleting(p)}
-                                                className="p-2 hover:bg-red-500/10 rounded-lg text-dark-600 hover:text-red-400 transition-all"
+                                                className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 dark:text-dark-600 hover:text-red-400 transition-all"
                                                 title="Eliminar orden"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -213,7 +213,7 @@ export default function PurchaseOrders() {
                 {filtered.length === 0 && (
                     <div className="py-20 text-center">
                         <FileSpreadsheet className="w-12 h-12 text-dark-300 mx-auto mb-4 opacity-20" />
-                        <p className="text-dark-600">No se encontraron órdenes de compra que coincidan</p>
+                        <p className="text-slate-500 dark:text-dark-600">No se encontraron órdenes de compra que coincidan</p>
                     </div>
                 )}
             </div>
@@ -224,11 +224,11 @@ export default function PurchaseOrders() {
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowForm(false)} />
                     <div className="relative glass-card w-full max-w-2xl p-6 slide-up">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 {editing ? <Edit3 className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5 text-primary" />}
                                 {editing ? 'Editar Orden de Compra' : 'Nueva Orden de Compra'}
                             </h2>
-                            <button onClick={() => setShowForm(false)} className="text-dark-600 hover:text-white">
+                            <button onClick={() => setShowForm(false)} className="text-slate-500 dark:text-dark-600 hover:text-slate-900 dark:text-white">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -254,17 +254,17 @@ export default function PurchaseOrders() {
                                 <Truck className="w-6 h-6 text-emerald-400" />
                             </div>
                             <div>
-                                <h3 className="text-white font-bold text-lg">Recepción de Bodega</h3>
-                                <p className="text-xs text-dark-600">Orden: {receiving.order_number}</p>
+                                <h3 className="text-slate-900 dark:text-white font-bold text-lg">Recepción de Bodega</h3>
+                                <p className="text-xs text-slate-500 dark:text-dark-600">Orden: {receiving.order_number}</p>
                             </div>
                         </div>
 
-                        <div className="bg-dark-200 border border-dark-300 rounded-lg p-3 mb-6">
-                            <p className="text-xs text-dark-500 mb-1">Confirmar ingreso de stock para:</p>
-                            <p className="text-sm text-white font-semibold flex items-center gap-2">
+                        <div className="bg-slate-50 dark:bg-dark-200 border border-slate-200 dark:border-dark-300 rounded-lg p-3 mb-6">
+                            <p className="text-xs text-slate-500 dark:text-dark-500 mb-1">Confirmar ingreso de stock para:</p>
+                            <p className="text-sm text-slate-900 dark:text-white font-semibold flex items-center gap-2">
                                 <BookOpen className="w-3.5 h-3.5 text-primary" /> {receiving.bookTitle}
                             </p>
-                            <p className="text-xs text-dark-600 mt-2">Cantidad esperada: <span className="text-white font-mono">{receiving.expected_quantity}</span></p>
+                            <p className="text-xs text-slate-500 dark:text-dark-600 mt-2">Cantidad esperada: <span className="text-slate-900 dark:text-white font-mono">{receiving.expected_quantity}</span></p>
                         </div>
 
                         <form onSubmit={(e) => {
@@ -273,7 +273,7 @@ export default function PurchaseOrders() {
                             if (qty > 0) handleReceive(qty)
                         }}>
                             <div className="mb-6">
-                                <label className="text-xs text-dark-600 mb-1 block">Cantidad Efectivamente Recibida *</label>
+                                <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Cantidad Efectivamente Recibida *</label>
                                 <input
                                     name="qty"
                                     type="number"
@@ -282,13 +282,13 @@ export default function PurchaseOrders() {
                                     defaultValue={receiving.expected_quantity}
                                     className="input-field w-full text-center text-xl font-bold font-mono text-emerald-400"
                                 />
-                                <p className="text-[10px] text-dark-500 mt-2 leading-relaxed">
+                                <p className="text-[10px] text-slate-500 dark:text-dark-500 mt-2 leading-relaxed">
                                     Al procesar, los libros se sumarán automáticamente al stock físico actual en el módulo de Inventario.
                                 </p>
                             </div>
 
                             <div className="flex gap-3">
-                                <button type="button" onClick={() => setReceiving(null)} className="btn-secondary flex-1 py-2 text-sm text-dark-600">Cancelar</button>
+                                <button type="button" onClick={() => setReceiving(null)} className="btn-secondary flex-1 py-2 text-sm text-slate-500 dark:text-dark-600">Cancelar</button>
                                 <button type="submit" className="btn-primary flex-1 py-2 text-sm bg-emerald-500 hover:bg-emerald-600 border-emerald-600">Procesar Recepción</button>
                             </div>
                         </form>
@@ -306,16 +306,16 @@ export default function PurchaseOrders() {
                                 <AlertTriangle className="w-5 h-5 text-red-400" />
                             </div>
                             <div>
-                                <h3 className="text-white font-semibold">Eliminar Orden</h3>
-                                <p className="text-xs text-dark-600">Esta acción no se puede deshacer</p>
+                                <h3 className="text-slate-900 dark:text-white font-semibold">Eliminar Orden</h3>
+                                <p className="text-xs text-slate-500 dark:text-dark-600">Esta acción no se puede deshacer</p>
                             </div>
                         </div>
-                        <p className="text-sm text-dark-800 mb-6">
+                        <p className="text-sm text-slate-700 dark:text-dark-800 mb-6">
                             ¿Estás seguro de que deseas eliminar la orden <strong>{deleting.order_number}</strong>?
                             Si la desapareces, el historial de costos de esta producción también se perderá.
                         </p>
                         <div className="flex gap-3">
-                            <button onClick={() => setDeleting(null)} className="btn-secondary flex-1 py-2 text-sm text-dark-600">Cancelar</button>
+                            <button onClick={() => setDeleting(null)} className="btn-secondary flex-1 py-2 text-sm text-slate-500 dark:text-dark-600">Cancelar</button>
                             <button onClick={handleDelete} className="btn-primary flex-1 py-2 text-sm bg-red-500 hover:bg-red-600 border-red-600">Eliminar</button>
                         </div>
                     </div>
@@ -350,7 +350,7 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="col-span-1">
-                    <label className="text-xs text-dark-600 mb-1 block">Nro. Orden / OC *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Nro. Orden / OC *</label>
                     <input
                         required
                         value={form.order_number}
@@ -359,7 +359,7 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                     />
                 </div>
                 <div className="col-span-1">
-                    <label className="text-xs text-dark-600 mb-1 block">Estado</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Estado</label>
                     <select
                         value={form.status}
                         onChange={e => setForm({ ...form, status: e.target.value })}
@@ -369,7 +369,7 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                     </select>
                 </div>
                 <div className="col-span-1">
-                    <label className="text-xs text-dark-600 mb-1 block">Fecha Pedido *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Fecha Pedido *</label>
                     <input
                         type="date"
                         required
@@ -379,7 +379,7 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                     />
                 </div>
                 <div className="col-span-2">
-                    <label className="text-xs text-dark-600 mb-1 block">Proveedor / Imprenta *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Proveedor / Imprenta *</label>
                     <select
                         required
                         value={form.supplier_id}
@@ -391,7 +391,7 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                     </select>
                 </div>
                 <div className="col-span-1 text-center flex flex-col justify-center">
-                    <label className="text-xs text-dark-600 mb-1 block">Fecha Estimada Recepción</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Fecha Estimada Recepción</label>
                     <input
                         type="date"
                         value={form.expected_date}
@@ -400,7 +400,7 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                     />
                 </div>
                 <div className="col-span-3">
-                    <label className="text-xs text-dark-600 mb-1 block">Título del Libro a Producir *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Título del Libro a Producir *</label>
                     <select
                         required
                         value={form.book_id}
@@ -414,7 +414,7 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                     </select>
                 </div>
                 <div className="col-span-1">
-                    <label className="text-xs text-dark-600 mb-1 block">Cantidad Solicitada *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Cantidad Solicitada *</label>
                     <input
                         type="number"
                         required
@@ -426,20 +426,20 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                     />
                 </div>
                 <div className="col-span-2">
-                    <label className="text-xs text-dark-600 mb-1 block">Costo Total Producción (CLP)</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Costo Total Producción (CLP)</label>
                     <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-600" />
+                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-dark-600" />
                         <input
                             type="number"
                             value={form.total_cost}
                             onChange={e => setForm({ ...form, total_cost: parseFloat(e.target.value) })}
-                            className="input-field w-full text-sm pl-9 font-mono bg-dark-200/50"
+                            className="input-field w-full text-sm pl-9 font-mono bg-slate-50 dark:bg-dark-200/50"
                             placeholder="Monto total de la factura de imprenta"
                         />
                     </div>
                 </div>
                 <div className="col-span-3">
-                    <label className="text-xs text-dark-600 mb-1 block">Observaciones de la Producción</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Observaciones de la Producción</label>
                     <textarea
                         value={form.notes}
                         onChange={e => setForm({ ...form, notes: e.target.value })}
@@ -454,7 +454,7 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-[10px] text-primary/70 uppercase font-bold tracking-wider">Costo Unitario Proyectado</p>
-                        <p className="text-lg font-bold text-white font-mono">
+                        <p className="text-lg font-bold text-slate-900 dark:text-white font-mono">
                             {form.expected_quantity > 0 ? new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(form.total_cost / form.expected_quantity) : '$ 0'}
                         </p>
                     </div>
@@ -465,7 +465,7 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                 </div>
             </div>
 
-            <div className="flex gap-3 pt-4 border-t border-dark-300 mt-6">
+            <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-dark-300 mt-6">
                 <button type="button" onClick={onCancel} className="btn-secondary flex-1">Cancelar</button>
                 <button type="submit" className="btn-primary flex-1">
                     <Save className="w-4 h-4 mr-2" /> Guardar Orden

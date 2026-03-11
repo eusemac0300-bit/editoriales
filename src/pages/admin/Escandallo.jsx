@@ -109,10 +109,10 @@ export default function Escandallo() {
         <div className="space-y-6 fade-in">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Calculator className="w-6 h-6 text-primary" />Calculadora de Escandallo por Título (v2)
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Calculator className="w-6 h-6 text-primary" />Calculadora de Escandallo (Costos) por Título
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">Simulador de rentabilidad y punto de equilibrio por obra literaria.</p>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Simulador de rentabilidad y punto de equilibrio por obra literaria.</p>
                 </div>
                 <div className="flex gap-2">
                     <button
@@ -139,7 +139,7 @@ export default function Escandallo() {
             </div>
 
             <div className="glass-card p-5 border-l-4 border-l-primary">
-                <label className="text-sm font-semibold text-white mb-2 block flex items-center gap-2">
+                <label className="text-sm font-semibold text-slate-900 dark:text-white mb-2 block flex items-center gap-2">
                     <Book className="w-4 h-4 text-primary" /> Seleccionar Título
                 </label>
                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
@@ -171,15 +171,15 @@ export default function Escandallo() {
                 {/* Costs input */}
                 <div className="lg:col-span-1 space-y-4">
                     <div className="glass-card p-5">
-                        <h2 className="text-sm font-semibold text-white mb-4">Costos de Producción</h2>
+                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Costos de Producción</h2>
                         <div className="space-y-3">
                             {costItems.map(item => (
                                 <div key={item.key}>
-                                    <label className="text-xs text-dark-600 mb-1 flex items-center gap-1">
+                                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 flex items-center gap-1">
                                         <span>{item.icon}</span> {item.label}
                                     </label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-dark-500">$</span>
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-dark-500">$</span>
                                         <input
                                             type="text"
                                             value={costs[item.key] === 0 ? '' : new Intl.NumberFormat('es-CL').format(costs[item.key])}
@@ -197,12 +197,12 @@ export default function Escandallo() {
                     </div>
 
                     <div className="glass-card p-5">
-                        <h2 className="text-sm font-semibold text-white mb-4">Parámetros de Venta</h2>
+                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Parámetros de Venta</h2>
                         <div className="space-y-3">
                             <div>
-                                <label className="text-xs text-dark-600 mb-1 block">PVP (CLP)</label>
+                                <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">PVP (CLP)</label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-dark-500">$</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-dark-500">$</span>
                                     <input
                                         type="text"
                                         value={pvp === 0 ? '' : new Intl.NumberFormat('es-CL').format(pvp)}
@@ -216,7 +216,7 @@ export default function Escandallo() {
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs text-dark-600 mb-1 block">Tiraje (unidades)</label>
+                                <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tiraje (unidades)</label>
                                 <input
                                     type="text"
                                     value={tiraje === 0 ? '' : new Intl.NumberFormat('es-CL').format(tiraje)}
@@ -229,7 +229,7 @@ export default function Escandallo() {
                                 />
                             </div>
                             <div>
-                                <label className="text-xs text-dark-600 mb-1 block">% Regalía Autor</label>
+                                <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">% Regalía Autor</label>
                                 <input
                                     type="number"
                                     value={royalty === 0 ? '' : royalty}
@@ -252,84 +252,84 @@ export default function Escandallo() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div className="stat-card text-center">
                             <Target className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-white">{breakEven}</p>
-                            <p className="text-[10px] text-dark-600 uppercase">Punto de Equilibrio</p>
+                            <p className="text-2xl font-bold text-slate-900 dark:text-white">{breakEven}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Punto de Equilibrio</p>
                         </div>
                         <div className="stat-card text-center">
                             <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
-                            <p className="text-lg font-bold text-white">{formatCLP(costPerUnit)}</p>
-                            <p className="text-[10px] text-dark-600 uppercase">Costo Unitario</p>
+                            <p className="text-lg font-bold text-slate-900 dark:text-white">{formatCLP(costPerUnit)}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Costo Unitario</p>
                         </div>
                         <div className="stat-card text-center">
                             <TrendingUp className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
-                            <p className="text-lg font-bold text-white">{formatCLP(netMarginPerUnit)}</p>
-                            <p className="text-[10px] text-dark-600 uppercase">Margen/Ud.</p>
+                            <p className="text-lg font-bold text-slate-900 dark:text-white">{formatCLP(netMarginPerUnit)}</p>
+                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Margen/Ud.</p>
                         </div>
                         <div className="stat-card text-center">
                             <BarChart3 className="w-5 h-5 text-purple-400 mx-auto mb-2" />
                             <p className={`text-2xl font-bold ${marginPercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{marginPercent.toFixed(1)}%</p>
-                            <p className="text-[10px] text-dark-600 uppercase">Margen %</p>
+                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Margen %</p>
                         </div>
                     </div>
 
                     {/* Desglose visual */}
                     <div className="glass-card p-5">
-                        <h2 className="text-sm font-semibold text-white mb-4">Desglose de Costos</h2>
+                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Desglose de Costos</h2>
                         <div className="space-y-2">
                             {costItems.map(item => {
                                 const pct = totalCosts > 0 ? (costs[item.key] / totalCosts) * 100 : 0
                                 return (
                                     <div key={item.key} className="flex items-center gap-3">
-                                        <span className="text-xs text-dark-700 w-28 truncate">{item.label}</span>
-                                        <div className="flex-1 h-3 bg-dark-300 rounded-full overflow-hidden">
+                                        <span className="text-xs text-slate-600 dark:text-dark-700 w-28 truncate">{item.label}</span>
+                                        <div className="flex-1 h-3 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden">
                                             <div className="h-full bg-gradient-to-r from-primary to-primary-300 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                                         </div>
-                                        <span className="text-xs text-dark-800 w-20 text-right">{formatCLP(costs[item.key])}</span>
-                                        <span className="text-[10px] text-dark-600 w-12 text-right">{pct.toFixed(0)}%</span>
+                                        <span className="text-xs text-slate-700 dark:text-dark-800 w-20 text-right">{formatCLP(costs[item.key])}</span>
+                                        <span className="text-[10px] text-slate-500 dark:text-dark-600 w-12 text-right">{pct.toFixed(0)}%</span>
                                     </div>
                                 )
                             })}
-                            <div className="flex items-center gap-3 pt-2 border-t border-dark-300">
-                                <span className="text-xs text-white font-medium w-28">TOTAL</span>
+                            <div className="flex items-center gap-3 pt-2 border-t border-slate-200 dark:border-dark-300">
+                                <span className="text-xs text-slate-900 dark:text-white font-medium w-28">TOTAL</span>
                                 <div className="flex-1" />
-                                <span className="text-sm text-white font-bold w-20 text-right">{formatCLP(totalCosts)}</span>
-                                <span className="text-[10px] text-white w-12 text-right">100%</span>
+                                <span className="text-sm text-slate-900 dark:text-white font-bold w-20 text-right">{formatCLP(totalCosts)}</span>
+                                <span className="text-[10px] text-slate-900 dark:text-white w-12 text-right">100%</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Proyección */}
                     <div className="glass-card p-5">
-                        <h2 className="text-sm font-semibold text-white mb-4">Proyección Financiera</h2>
+                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Proyección Financiera</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div className="bg-dark-50 rounded-lg p-4">
-                                <p className="text-xs text-dark-600 uppercase mb-1">Ingreso Proyectado</p>
-                                <p className="text-xl font-bold text-white">{formatCLP(projectedRevenue)}</p>
-                                <p className="text-xs text-dark-500">{tiraje} uds. × {formatCLP(pvp)}</p>
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-4">
+                                <p className="text-xs text-slate-500 dark:text-dark-600 uppercase mb-1">Ingreso Proyectado</p>
+                                <p className="text-xl font-bold text-slate-900 dark:text-white">{formatCLP(projectedRevenue)}</p>
+                                <p className="text-xs text-slate-500 dark:text-dark-500">{tiraje} uds. × {formatCLP(pvp)}</p>
                             </div>
-                            <div className="bg-dark-50 rounded-lg p-4">
-                                <p className="text-xs text-dark-600 uppercase mb-1">Regalías Totales</p>
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-4">
+                                <p className="text-xs text-slate-500 dark:text-dark-600 uppercase mb-1">Regalías Totales</p>
                                 <p className="text-xl font-bold text-amber-400">{formatCLP(tiraje * royaltyPerUnit)}</p>
-                                <p className="text-xs text-dark-500">{royalty}% sobre ventas</p>
+                                <p className="text-xs text-slate-500 dark:text-dark-500">{royalty}% sobre ventas</p>
                             </div>
-                            <div className="bg-dark-50 rounded-lg p-4">
-                                <p className="text-xs text-dark-600 uppercase mb-1">Beneficio Neto</p>
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-4">
+                                <p className="text-xs text-slate-500 dark:text-dark-600 uppercase mb-1">Beneficio Neto</p>
                                 <p className={`text-xl font-bold ${projectedProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCLP(projectedProfit)}</p>
-                                <p className="text-xs text-dark-500">{projectedRevenue > 0 ? ((projectedProfit / projectedRevenue) * 100).toFixed(1) : 0}% del ingreso</p>
+                                <p className="text-xs text-slate-500 dark:text-dark-500">{projectedRevenue > 0 ? ((projectedProfit / projectedRevenue) * 100).toFixed(1) : 0}% del ingreso</p>
                             </div>
                         </div>
 
                         {/* Break-even bar */}
-                        <div className="mt-4 p-3 bg-dark-50 rounded-lg">
+                        <div className="mt-4 p-3 bg-slate-50 dark:bg-dark-50 rounded-lg">
                             <div className="flex justify-between text-xs mb-2">
-                                <span className="text-dark-600">Progreso al punto de equilibrio</span>
-                                <span className="text-white font-medium">{breakEven} / {tiraje} uds.</span>
+                                <span className="text-slate-500 dark:text-dark-600">Progreso al punto de equilibrio</span>
+                                <span className="text-slate-900 dark:text-white font-medium">{breakEven} / {tiraje} uds.</span>
                             </div>
-                            <div className="h-4 bg-dark-300 rounded-full overflow-hidden relative">
+                            <div className="h-4 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden relative">
                                 <div className="h-full bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500 rounded-full transition-all duration-700" style={{ width: `${Math.min(100, tiraje > 0 ? (breakEven / tiraje) * 100 : 0)}%` }} />
-                                <div className="absolute top-0 bottom-0 w-0.5 bg-white/50" style={{ left: `${tiraje > 0 ? (breakEven / tiraje) * 100 : 0}%` }} />
+                                <div className="absolute top-0 bottom-0 w-0.5 bg-white dark:bg-dark-200/50" style={{ left: `${tiraje > 0 ? (breakEven / tiraje) * 100 : 0}%` }} />
                             </div>
-                            <div className="flex justify-between text-[10px] text-dark-500 mt-1">
+                            <div className="flex justify-between text-[10px] text-slate-500 dark:text-dark-500 mt-1">
                                 <span>0</span>
                                 <span className="text-amber-400">← P.E. ({breakEven})</span>
                                 <span>{tiraje}</span>

@@ -18,6 +18,7 @@ export const translations = {
         documents: 'Documentos',
         audit: 'Auditoría',
         alerts: 'Alertas',
+        marketing: 'Marketing AI',
         logout: 'Cerrar Sesión',
         profile: 'Perfil',
         settings: 'Configuración',
@@ -80,6 +81,8 @@ export const translations = {
         commune: 'Comuna',
         city: 'Ciudad',
         address: 'Dirección',
+        load_demo: 'Cargar Ejemplos',
+        clear_demo: 'Borrar Ejemplos',
     },
     en: {
         dashboard: 'Dashboard',
@@ -100,6 +103,7 @@ export const translations = {
         documents: 'Documents',
         audit: 'Audit Log',
         alerts: 'Alerts',
+        marketing: 'Marketing AI',
         logout: 'Logout',
         profile: 'Profile',
         settings: 'Settings',
@@ -162,6 +166,8 @@ export const translations = {
         commune: 'Commune',
         city: 'City',
         address: 'Address',
+        load_demo: 'Load Examples',
+        clear_demo: 'Delete Examples',
     },
     pt: {
         dashboard: 'Painel',
@@ -182,6 +188,7 @@ export const translations = {
         documents: 'Documentos',
         audit: 'Log de Auditoria',
         alerts: 'Alertas',
+        marketing: 'Marketing AI',
         logout: 'Sair',
         profile: 'Perfil',
         settings: 'Configurações',
@@ -244,5 +251,7 @@ export const translations = {
         commune: 'Comuna',
         city: 'Cidade',
         address: 'Endereço',
-    }
+        load_demo: 'Carregar Exemplos',
+        clear_demo: 'Apagar Exemplos',
+    },
 }

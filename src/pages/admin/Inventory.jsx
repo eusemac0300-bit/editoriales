@@ -99,8 +99,8 @@ export default function Inventory() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Inventario</h1>
-                    <p className="text-dark-600 text-sm mt-1">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">Inventario</h1>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">
                         Gestión de stock físico y digital ·{' '}
                         <span className="text-primary font-medium">{publishedBooks.length} títulos publicados</span>
                     </p>
@@ -123,13 +123,13 @@ export default function Inventory() {
                     </button>
                     <button
                         onClick={() => setTab('fisico')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'fisico' ? 'bg-primary text-white' : 'bg-dark-200 text-dark-700'}`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'fisico' ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-dark-200 text-slate-600 dark:text-dark-700'}`}
                     >
                         <Package className="w-4 h-4 inline mr-1.5" />Físico
                     </button>
                     <button
                         onClick={() => setTab('digital')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'digital' ? 'bg-primary text-white' : 'bg-dark-200 text-dark-700'}`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${tab === 'digital' ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-dark-200 text-slate-600 dark:text-dark-700'}`}
                     >
                         <FileText className="w-4 h-4 inline mr-1.5" />Digital
                     </button>
@@ -138,7 +138,7 @@ export default function Inventory() {
 
             {/* Buscador */}
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-600" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-dark-600" />
                 <input
                     value={search}
                     onChange={e => setSearch(e.target.value)}
@@ -168,8 +168,8 @@ export default function Inventory() {
                 <div className="space-y-4">
                     {filteredEntries.length === 0 && (
                         <div className="glass-card p-8 text-center text-dark-600">
-                            <Package className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                            <p className="text-sm">No hay títulos publicados en inventario aún.</p>
+                            <Package className="w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-dark-300 opacity-50" />
+                            <p className="text-sm text-slate-500 dark:text-dark-600">No hay títulos publicados en inventario aún.</p>
                         </div>
                     )}
                     {filteredEntries.map(p => {
@@ -185,22 +185,22 @@ export default function Inventory() {
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <h3 className="text-white font-medium">{book?.title || p.bookId}</h3>
+                                            <h3 className="text-slate-900 dark:text-white font-medium">{book?.title || p.bookId}</h3>
                                             {isVirtual && (
                                                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-medium uppercase tracking-wide">
                                                     Sin stock
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-xs text-dark-600 mt-0.5">{book?.authorName} · {book?.isbn}</p>
+                                        <p className="text-xs text-slate-500 dark:text-dark-600 mt-0.5">{book?.authorName} · {book?.isbn}</p>
                                     </div>
 
                                     <div className="flex items-center gap-3">
-                                        <div className={`text-center px-4 py-2 rounded-lg ${isCritical ? 'bg-red-500/10 border border-red-500/20' : isVirtual ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-dark-50'}`}>
-                                            <p className={`text-2xl font-bold ${isCritical ? 'text-red-400' : isVirtual ? 'text-amber-400' : 'text-white'}`}>
+                                        <div className={`text-center px-4 py-2 rounded-lg ${isCritical ? 'bg-red-500/10 border border-red-500/20' : isVirtual ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-slate-50 dark:bg-dark-50'}`}>
+                                            <p className={`text-2xl font-bold ${isCritical ? 'text-red-500 dark:text-red-400' : isVirtual ? 'text-amber-500 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
                                                 {p.stock}
                                             </p>
-                                            <p className="text-[10px] text-dark-600 uppercase">Stock</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Stock</p>
                                         </div>
                                         {isCritical && !isVirtual && (
                                             <span className="badge-red">⚠️ Crítico</span>
@@ -228,34 +228,34 @@ export default function Inventory() {
                                 {!isVirtual && (
                                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <h4 className="text-xs font-medium text-dark-600 uppercase mb-2 flex items-center gap-1">
-                                                <TrendingUp className="w-3 h-3 text-emerald-400" /> Entradas
+                                            <h4 className="text-xs font-medium text-slate-500 dark:text-dark-600 uppercase mb-2 flex items-center gap-1">
+                                                <TrendingUp className="w-3 h-3 text-emerald-500 dark:text-emerald-400" /> Entradas
                                             </h4>
                                             {p.entries.length === 0 ? (
                                                 <p className="text-xs text-dark-500 italic">Sin entradas registradas</p>
                                             ) : (
                                                 p.entries.slice(-3).map((e, i) => (
-                                                    <div key={i} className="flex justify-between py-1.5 text-xs border-b border-dark-300/30">
-                                                        <span className="text-dark-700">{e.note || e.type}</span>
-                                                        <span className="text-emerald-400 font-medium">+{e.qty}</span>
+                                                    <div key={i} className="flex justify-between py-1.5 text-xs border-b border-slate-100 dark:border-dark-300/30">
+                                                        <span className="text-slate-600 dark:text-dark-700">{e.note || e.type}</span>
+                                                        <span className="text-emerald-500 dark:text-emerald-400 font-medium">+{e.qty}</span>
                                                     </div>
                                                 ))
                                             )}
                                         </div>
                                         <div>
-                                            <h4 className="text-xs font-medium text-dark-600 uppercase mb-2 flex items-center gap-1">
-                                                <TrendingDown className="w-3 h-3 text-red-400" /> Salidas
+                                            <h4 className="text-xs font-medium text-slate-500 dark:text-dark-600 uppercase mb-2 flex items-center gap-1">
+                                                <TrendingDown className="w-3 h-3 text-red-500 dark:text-red-400" /> Salidas
                                             </h4>
                                             {p.exits.length === 0 ? (
                                                 <p className="text-xs text-dark-500 italic">Sin salidas registradas</p>
                                             ) : (
                                                 p.exits.slice(-3).map((e, i) => (
-                                                    <div key={i} className="flex justify-between py-1.5 text-xs border-b border-dark-300/30">
+                                                    <div key={i} className="flex justify-between py-1.5 text-xs border-b border-slate-100 dark:border-dark-300/30">
                                                         <div className="flex items-center gap-1">
-                                                            <span className="text-dark-700">{e.note || e.type}</span>
-                                                            {e.type === 'cortesia' && <Gift className="w-3 h-3 text-amber-400" />}
+                                                            <span className="text-slate-600 dark:text-dark-700">{e.note || e.type}</span>
+                                                            {e.type === 'cortesia' && <Gift className="w-3 h-3 text-amber-500 dark:text-amber-400" />}
                                                         </div>
-                                                        <span className="text-red-400 font-medium">-{e.qty}</span>
+                                                        <span className="text-red-500 dark:text-red-400 font-medium">-{e.qty}</span>
                                                     </div>
                                                 ))
                                             )}
@@ -284,27 +284,27 @@ export default function Inventory() {
                             <div key={d.bookId} className="glass-card p-5">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <h3 className="text-white font-medium">{book?.title}</h3>
-                                        <p className="text-xs text-dark-600">{book?.authorName}</p>
+                                        <h3 className="text-slate-900 dark:text-white font-medium">{book?.title}</h3>
+                                        <p className="text-xs text-slate-500 dark:text-dark-600">{book?.authorName}</p>
                                     </div>
-                                    <span className="text-lg font-bold text-emerald-400">{formatCLP(totalDigitalSales)}</span>
+                                    <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCLP(totalDigitalSales)}</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 mb-4">
                                     {d.versions.map((v, i) => (
-                                        <div key={i} className="bg-dark-50 rounded-lg p-3">
+                                        <div key={i} className="bg-slate-50 dark:bg-dark-50 rounded-lg p-3">
                                             <span className="badge-blue mb-1">{v.format}</span>
-                                            <p className="text-xs text-dark-600 mt-1">v{v.version} · {v.uploadDate}</p>
+                                            <p className="text-xs text-slate-400 dark:text-dark-600 mt-1">v{v.version} · {v.uploadDate}</p>
                                         </div>
                                     ))}
                                 </div>
-                                <h4 className="text-xs font-medium text-dark-600 uppercase mb-2">Ventas Digitales</h4>
+                                <h4 className="text-xs font-medium text-slate-500 dark:text-dark-600 uppercase mb-2">Ventas Digitales</h4>
                                 <div className="space-y-1">
                                     {d.sales.map((s, i) => (
-                                        <div key={i} className="flex justify-between py-1.5 text-xs border-b border-dark-300/30">
-                                            <span className="text-dark-700">{s.platform} · {s.period}</span>
+                                        <div key={i} className="flex justify-between py-1.5 text-xs border-b border-slate-100 dark:border-dark-300/30">
+                                            <span className="text-slate-600 dark:text-dark-700">{s.platform} · {s.period}</span>
                                             <div className="flex gap-4">
-                                                <span className="text-dark-600">{s.qty} uds.</span>
-                                                <span className="text-emerald-400 font-medium">{formatCLP(s.revenue)}</span>
+                                                <span className="text-slate-500 dark:text-dark-600">{s.qty} uds.</span>
+                                                <span className="text-emerald-600 dark:text-emerald-400 font-medium">{formatCLP(s.revenue)}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -313,9 +313,9 @@ export default function Inventory() {
                         )
                     })}
                     {data.inventory.digital.length === 0 && (
-                        <div className="glass-card p-8 text-center text-dark-600">
-                            <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                            <p className="text-sm">No hay inventario digital registrado.</p>
+                        <div className="glass-card p-8 text-center">
+                            <FileText className="w-10 h-10 mx-auto mb-3 text-slate-300 dark:text-dark-300 opacity-50" />
+                            <p className="text-sm text-slate-500 dark:text-dark-600">No hay inventario digital registrado.</p>
                         </div>
                     )}
                 </div>
@@ -360,16 +360,16 @@ function AddMovementModal({ bookId, type, onClose, onSubmit, books, formatCLP })
         <div className="fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
             <div className="glass-card max-w-md w-full p-6 slide-up" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                         {type === 'entrada' ? 'Nueva Entrada de Stock' : 'Registrar Salida'}
                     </h3>
-                    <button onClick={onClose} className="p-1 text-dark-600 hover:text-white transition-colors">
+                    <button onClick={onClose} className="p-1 text-slate-400 dark:text-dark-600 hover:text-slate-900 dark:hover:text-white transition-colors">
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
                 {bookId ? (
-                    <p className="text-xs text-dark-600 mb-4 bg-dark-100 px-3 py-2 rounded-lg">{book?.title}</p>
+                    <p className="text-xs text-slate-600 dark:text-dark-600 mb-4 bg-slate-50 dark:bg-dark-100 px-3 py-2 rounded-lg">{book?.title}</p>
                 ) : (
                     <div className="mb-4">
                         <label className="text-xs text-dark-600 mb-1 block">Título</label>
@@ -463,7 +463,7 @@ function AddExistingTitleModal({ books, inventoryPhysical, onClose, onSubmit }) 
         <div className="fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
             <div className="glass-card max-w-md w-full p-6 slide-up" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                         <BookOpen className="w-5 h-5 text-primary" />
                         Agregar Título al Inventario
                     </h3>
@@ -471,7 +471,7 @@ function AddExistingTitleModal({ books, inventoryPhysical, onClose, onSubmit }) 
                         <X className="w-4 h-4" />
                     </button>
                 </div>
-                <p className="text-xs text-dark-600 mb-5">
+                <p className="text-xs text-slate-500 dark:text-dark-600 mb-5">
                     Usa esto para títulos ya impresos que solo necesitan mantención y distribución,
                     o libros que aún no tienen stock registrado en el sistema.
                 </p>

@@ -44,10 +44,10 @@ export default function Books() {
         <div className="space-y-6 fade-in">
             <div className="flex flex-col sm:flex-row justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <FileText className="w-6 h-6 text-primary" />Registro de Títulos
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">{filteredBooks.length} títulos en catálogo</p>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{filteredBooks.length} títulos en catálogo</p>
                 </div>
                 <button onClick={() => { setEditingBook(null); setShowAdd(!showAdd) }} className="btn-primary text-sm h-10">
                     <Plus className="w-4 h-4 inline mr-1" /> Nuevo Título
@@ -57,7 +57,7 @@ export default function Books() {
             {/* Filters */}
             <div className="glass-card p-4 flex flex-col md:flex-row gap-4 items-center">
                 <div className="relative flex-1 w-full">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-dark-500" />
                     <input
                         type="text"
                         placeholder="Buscar por título o autor..."
@@ -67,7 +67,7 @@ export default function Books() {
                     />
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto">
-                    <Filter className="w-4 h-4 text-dark-500" />
+                    <Filter className="w-4 h-4 text-slate-400 dark:text-dark-500" />
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
@@ -105,14 +105,14 @@ export default function Books() {
                         <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                                 onClick={() => setShowCodes(book)}
-                                className="p-1.5 bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-500/70 hover:text-emerald-400 transition-colors"
+                                className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-600 dark:text-emerald-500/70 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
                                 title="Ver Códigos QR e ISBN"
                             >
                                 <QrCode className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => { setEditingBook(book); setShowAdd(false) }}
-                                className="p-1.5 bg-dark-200 hover:bg-dark-300 rounded text-dark-500 hover:text-white transition-colors"
+                                className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-slate-200 dark:hover:bg-dark-300 rounded text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                                 title="Editar título"
                             >
                                 <Edit className="w-4 h-4" />
@@ -128,43 +128,43 @@ export default function Books() {
                         <div className="flex flex-col sm:flex-row items-start justify-between gap-3 pr-20">
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                    <h3 className="text-lg font-medium text-white">{book.title}</h3>
+                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">{book.title}</h3>
                                     <span className={statusColors[book.status]}>{book.status}</span>
                                 </div>
-                                <p className="text-sm text-dark-600 mt-1 flex items-center gap-1"><User className="w-3 h-3" /> {book.authorName}</p>
-                                <p className="text-xs text-dark-500 mt-1">{book.synopsis}</p>
+                                <p className="text-sm text-slate-500 dark:text-dark-600 mt-1 flex items-center gap-1"><User className="w-3 h-3" /> {book.authorName}</p>
+                                <p className="text-xs text-slate-400 dark:text-dark-500 mt-1">{book.synopsis}</p>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-4">
-                            <div className="bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-dark-600 uppercase">ISBN</p>
-                                <p className="text-xs text-white font-mono">{book.isbn || '—'}</p>
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">ISBN</p>
+                                <p className="text-xs text-slate-900 dark:text-white font-mono">{book.isbn || '—'}</p>
                             </div>
-                            <div className="bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-dark-600 uppercase">Género</p>
-                                <p className="text-xs text-white">{book.genre || '—'}</p>
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Género</p>
+                                <p className="text-xs text-slate-900 dark:text-white">{book.genre || '—'}</p>
                             </div>
-                            <div className="bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-dark-600 uppercase flex items-center gap-1"><DollarSign className="w-3 h-3" />PVP</p>
-                                <p className="text-xs text-white font-medium">{book.pvp ? formatCLP(book.pvp) : '—'}</p>
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase flex items-center gap-1"><DollarSign className="w-3 h-3" />PVP</p>
+                                <p className="text-xs text-slate-900 dark:text-white font-medium">{book.pvp ? formatCLP(book.pvp) : '—'}</p>
                             </div>
-                            <div className="bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-dark-600 uppercase flex items-center gap-1"><Percent className="w-3 h-3" />Regalía</p>
-                                <p className="text-xs text-white">{book.royaltyPercent}%</p>
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase flex items-center gap-1"><Percent className="w-3 h-3" />Regalía</p>
+                                <p className="text-xs text-slate-900 dark:text-white">{book.royaltyPercent}%</p>
                             </div>
-                            <div className="bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-dark-600 uppercase flex items-center gap-1"><Calendar className="w-3 h-3" />Vence</p>
-                                <p className="text-xs text-white">{book.contractExpiry || '—'}</p>
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase flex items-center gap-1"><Calendar className="w-3 h-3" />Vence</p>
+                                <p className="text-xs text-slate-900 dark:text-white">{book.contractExpiry || '—'}</p>
                             </div>
-                            <div className="bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-dark-600 uppercase flex items-center gap-1"><Calendar className="w-3 h-3" />Entrega Est.</p>
-                                <p className="text-xs text-white">{book.deliveryDate || '—'}</p>
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase flex items-center gap-1"><Calendar className="w-3 h-3" />Entrega Est.</p>
+                                <p className="text-xs text-slate-900 dark:text-white">{book.deliveryDate || '—'}</p>
                             </div>
                         </div>
                     </div>
                 ))}
                 {filteredBooks.length === 0 && (
-                    <div className="p-8 text-center text-dark-600 glass-card">
+                    <div className="p-8 text-center text-slate-500 dark:text-dark-600 glass-card">
                         No se encontraron títulos que coincidan con la búsqueda.
                     </div>
                 )}
@@ -211,12 +211,12 @@ function CodesModal({ book, onClose, formatCLP }) {
 
     return (
         <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-dark border border-primary/20 rounded-xl shadow-2xl max-w-2xl w-full p-6 slide-up flex flex-col items-center" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-dark border border-slate-200 dark:border-primary/20 rounded-xl shadow-2xl max-w-2xl w-full p-6 slide-up flex flex-col items-center" onClick={e => e.stopPropagation()}>
                 <div className="w-full flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <QrCode className="w-5 h-5 text-primary" /> Códigos Vectoriales: {book.title}
                     </h2>
-                    <button onClick={onClose} className="text-dark-500 hover:text-white transition-colors">
+                    <button onClick={onClose} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -224,11 +224,11 @@ function CodesModal({ book, onClose, formatCLP }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
                     {/* QR Code */}
                     <div className="flex flex-col items-center glass-card p-6">
-                        <h3 className="text-sm font-semibold text-white mb-4 text-center">QR Code (Ficha Completa)</h3>
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 text-center">QR Code (Ficha Completa)</h3>
                         <div className="bg-white p-3 rounded-lg flex items-center justify-center m-auto" id="qr-wrapper">
                             <QRCodeSVG value={qrData} size={160} level="L" />
                         </div>
-                        <p className="text-[10px] text-dark-500 text-center mt-3 leading-relaxed">Al escanear este código se obtienen los detalles del título para compartir.</p>
+                        <p className="text-[10px] text-slate-500 dark:text-dark-500 text-center mt-3 leading-relaxed">Al escanear este código se obtienen los detalles del título para compartir.</p>
                         <button onClick={() => downloadSvg('#qr-wrapper svg', `QR_${book.title.replace(/\s+/g, '_')}.svg`)} className="btn-secondary mt-4 w-full flex items-center justify-center gap-2 text-xs">
                             <Download className="w-3 h-3" /> Descargar QR (SVG)
                         </button>
@@ -236,7 +236,7 @@ function CodesModal({ book, onClose, formatCLP }) {
 
                     {/* Barcode / ISBN */}
                     <div className="flex flex-col items-center glass-card p-6">
-                        <h3 className="text-sm font-semibold text-white mb-4 text-center">Código de Barras (ISBN)</h3>
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 text-center">Código de Barras (ISBN)</h3>
                         {book.isbn ? (() => {
                             const numericIsbn = book.isbn.replace(/\D/g, '')
                             const isEAN13 = numericIsbn.length === 13
@@ -260,8 +260,8 @@ function CodesModal({ book, onClose, formatCLP }) {
                             )
                         })() : (
                             <div className="text-center mt-auto mb-auto bg-amber-500/10 border border-amber-500/20 p-4 rounded-lg">
-                                <p className="text-sm font-semibold text-amber-400 mb-2">Sin código ISBN</p>
-                                <p className="text-[10px] text-dark-500">Edita el libro y agrégale un código ISBN de 13 dígitos para generar este vector.</p>
+                                <p className="text-sm font-semibold text-amber-500 dark:text-amber-400 mb-2">Sin código ISBN</p>
+                                <p className="text-[10px] text-slate-500 dark:text-dark-500">Edita el libro y agrégale un código ISBN de 13 dígitos para generar este vector.</p>
                             </div>
                         )}
                     </div>
@@ -353,7 +353,7 @@ function BookForm({ data, initialData, onSave, onClose }) {
 
     return (
         <div className="glass-card p-5 slide-up border border-primary/30">
-            <h3 className="text-sm font-semibold text-white mb-4">{initialData ? 'Editar Título' : 'Registrar Nuevo Título'}</h3>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">{initialData ? 'Editar Título' : 'Registrar Nuevo Título'}</h3>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                 {/* ── Sección: Datos de Producción ── */}
@@ -432,8 +432,8 @@ function BookForm({ data, initialData, onSave, onClose }) {
                     <textarea value={form.synopsis} onChange={e => setForm(p => ({ ...p, synopsis: e.target.value }))} className="input-field text-sm" rows={2} />
                 </div>
 
-                <div className="sm:col-span-2 mt-2 pt-4 border-t border-dark-300">
-                    <h4 className="text-sm font-medium text-white mb-3">Detalles Físicos y Técnicos (Opcional)</h4>
+                <div className="sm:col-span-2 mt-2 pt-4 border-t border-slate-200 dark:border-dark-300">
+                    <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3">Detalles Físicos y Técnicos (Opcional)</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <div>
                             <label className="text-xs text-dark-600 mb-1 block">Ancho (cm)</label>
@@ -494,8 +494,8 @@ function BookForm({ data, initialData, onSave, onClose }) {
                     </div>
                 </div>
 
-                <div className="sm:col-span-2 mt-2 pt-4 border-t border-dark-300">
-                    <h4 className="text-sm font-medium text-white mb-3">Identificadores Adicionales (Opcional)</h4>
+                <div className="sm:col-span-2 mt-2 pt-4 border-t border-slate-200 dark:border-dark-300">
+                    <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3">Identificadores Adicionales (Opcional)</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <label className="text-xs text-dark-600 mb-1 block">SKU</label>
@@ -518,8 +518,8 @@ function BookForm({ data, initialData, onSave, onClose }) {
                 </div>
 
                 <div className="sm:col-span-2 mb-2">
-                    <label className="text-xs text-dark-600 mb-1 block">Imagen de Portada (Opcional)</label>
-                    <div className="flex items-center gap-4 p-3 bg-dark-200 border border-dark-300 rounded-lg">
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Imagen de Portada (Opcional)</label>
+                    <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-dark-200 border border-slate-200 dark:border-dark-300 rounded-lg">
                         {form.cover ? (
                             <img src={form.cover} alt="Cover preview" className="w-16 h-20 object-cover rounded shadow border border-dark-400" />
                         ) : (

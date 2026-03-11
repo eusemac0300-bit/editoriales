@@ -18,6 +18,10 @@ export default function Login() {
         try {
             const result = await login(email, password)
             if (result.success) {
+                if (result.user.firstLogin) {
+                    navigate('/activar-cuenta')
+                    return
+                }
                 const routes = { SUPERADMIN: '/superadmin', ADMIN: '/admin', FREELANCE: '/freelance', AUTOR: '/autor' }
                 navigate(routes[result.user.role] || '/admin')
             } else {
@@ -37,26 +41,26 @@ export default function Login() {
     ]
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-dark p-4 relative overflow-hidden">
-            {/* Animated background */}
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
+            {/* Animated background - More vibrant */}
             <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-primary/5 to-transparent rounded-full blur-3xl animate-pulse" />
-                <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-purple-500/5 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+                <div className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[140px] animate-pulse pointer-events-none" />
+                <div className="absolute -bottom-1/4 -right-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] animate-pulse pointer-events-none" style={{ animationDelay: '2s' }} />
             </div>
 
             <div className="w-full max-w-md relative z-10 fade-in">
                 {/* Logo */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-700 shadow-lg shadow-primary/30 mb-4">
-                        <BookOpen className="w-8 h-8 text-white" />
+                <div className="text-center mb-10">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-gradient-to-br from-primary to-primary-700 shadow-2xl shadow-primary/40 mb-6 ring-4 ring-white/5 hover:scale-110 hover:rotate-2 transition-all duration-300">
+                        <BookOpen className="w-10 h-10 text-white" />
                     </div>
-                    <h1 className="text-2xl font-bold text-white">Editorial Pro</h1>
-                    <p className="text-dark-600 mt-1 text-sm">Gestión editorial profesional</p>
+                    <h1 className="text-4xl font-black text-white tracking-tighter">Editorial <span className="text-primary">Pro</span></h1>
+                    <p className="text-slate-400 mt-2 font-medium tracking-tight">Gestión editorial profesional e inteligente</p>
                 </div>
 
                 {/* Login card */}
-                <div className="glass-card p-8">
-                    <h2 className="text-lg font-semibold text-white mb-6">Iniciar Sesión</h2>
+                <div className="glass-card bg-slate-900/60 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10">
+                    <h2 className="text-xl font-black text-white mb-8 tracking-tight">Iniciar Sesión</h2>
 
                     {error && (
                         <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm slide-up">
@@ -64,16 +68,16 @@ export default function Login() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-dark-700 mb-1.5">Email</label>
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email</label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-600" />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                    className="input-field pl-10"
+                                    className="input-field h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:bg-white/10"
                                     placeholder="tu@email.cl"
                                     required
                                 />
@@ -81,14 +85,14 @@ export default function Login() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-dark-700 mb-1.5">Contraseña</label>
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Contraseña</label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-600" />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
-                                    className="input-field pl-10"
+                                    className="input-field h-14 pl-12 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:bg-white/10"
                                     placeholder="••••••••"
                                     required
                                 />
@@ -118,20 +122,20 @@ export default function Login() {
                 </div>
 
                 {/* Demo users */}
-                <div className="mt-6 glass-card p-4">
-                    <p className="text-xs font-medium text-dark-600 uppercase tracking-wider mb-3">Usuarios de prueba</p>
-                    <div className="space-y-2">
+                <div className="mt-8 glass-card bg-slate-900/40 backdrop-blur-xl p-6 rounded-[2rem] border border-white/5 shadow-xl">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 text-center">Acceso Rápido (Demo)</p>
+                    <div className="space-y-3">
                         {demoUsers.map(u => (
                             <button
                                 key={u.email}
                                 onClick={() => { setEmail(u.email); setPassword(u.pass) }}
-                                className="w-full flex items-center justify-between p-2.5 rounded-lg bg-dark-50 hover:bg-dark-200 transition-all duration-200 group"
+                                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all duration-300 group"
                             >
-                                <div className="flex items-center gap-3">
-                                    <span className={`badge ${u.color} border`}>{u.role}</span>
-                                    <span className="text-sm text-dark-800">{u.email}</span>
+                                <div className="flex items-center gap-4">
+                                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${u.color} border border-current/20`}>{u.role}</span>
+                                    <span className="text-xs text-slate-300 font-medium">{u.email}</span>
                                 </div>
-                                <ArrowRight className="w-3.5 h-3.5 text-dark-500 group-hover:text-primary transition-colors" />
+                                <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-primary transition-all group-hover:translate-x-1" />
                             </button>
                         ))}
                     </div>

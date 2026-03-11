@@ -61,7 +61,7 @@ export default function Quotes() {
             case 'Presupuestada': return <FileText className="w-4 h-4 text-yellow-400" />
             case 'Aprobada': return <CheckCircle className="w-4 h-4 text-green-400" />
             case 'Rechazada': return <XCircle className="w-4 h-4 text-red-400" />
-            default: return <Clock className="w-4 h-4 text-dark-400" />
+            default: return <Clock className="w-4 h-4 text-slate-400 dark:text-dark-400" />
         }
     }
 
@@ -369,11 +369,11 @@ export default function Quotes() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <Printer className="w-6 h-6 text-primary" />
                         Cotizaciones a Imprenta
                     </h1>
-                    <p className="text-dark-500 text-sm mt-1">
+                    <p className="text-slate-500 dark:text-dark-500 text-sm mt-1">
                         Gestiona presupuestos y calcula los costos de impresión.
                     </p>
                 </div>
@@ -400,7 +400,7 @@ export default function Quotes() {
                     {/* Filtros */}
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
                         <div className="relative flex-1">
-                            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-dark-500" />
+                            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-dark-500" />
                             <input
                                 type="text"
                                 placeholder="Buscar por título o proveedor..."
@@ -410,7 +410,7 @@ export default function Quotes() {
                             />
                         </div>
                         <div className="flex items-center gap-2">
-                            <Filter className="w-5 h-5 text-dark-500" />
+                            <Filter className="w-5 h-5 text-slate-400 dark:text-dark-500" />
                             <select
                                 value={filterStatus}
                                 onChange={e => setFilterStatus(e.target.value)}
@@ -428,9 +428,9 @@ export default function Quotes() {
                     {/* Tarjetas de cotizaciones */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         {filteredQuotes.length === 0 ? (
-                            <div className="col-span-full text-center py-10 bg-dark-200/50 rounded-xl border border-dark-300">
-                                <Printer className="w-12 h-12 text-dark-500 mx-auto mb-3 opacity-50" />
-                                <p className="text-dark-500">No hay cotizaciones registradas con ese filtro.</p>
+                            <div className="col-span-full text-center py-10 bg-slate-100/50 dark:bg-dark-200/50 rounded-xl border border-slate-200 dark:border-dark-300">
+                                <Printer className="w-12 h-12 text-slate-300 dark:text-dark-500 mx-auto mb-3 opacity-50" />
+                                <p className="text-slate-500 dark:text-dark-500">No hay cotizaciones registradas con ese filtro.</p>
                             </div>
                         ) : (
                             filteredQuotes.map(quote => (
@@ -441,7 +441,7 @@ export default function Quotes() {
                                                 href={quote.quoteDocument}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="p-1.5 bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-400 hover:text-emerald-300 transition-colors"
+                                                className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-400 hover:text-emerald-300 transition-colors"
                                                 title="Ver Cotización (Documento Adjunto)"
                                             >
                                                 <ExternalLink className="w-4 h-4" />
@@ -450,7 +450,7 @@ export default function Quotes() {
                                         {quote.status === 'Aprobada' && (
                                             <button
                                                 onClick={() => handlePOGenerateClick(quote)}
-                                                className="p-1.5 bg-dark-200 hover:bg-green-500/20 rounded text-green-400 hover:text-green-300 transition-colors"
+                                                className="p-1.5 bg-slate-50 dark:bg-dark-200 hover:bg-green-500/20 rounded text-green-400 hover:text-green-300 transition-colors"
                                                 title="Generar Orden de Compra (OC)"
                                             >
                                                 <FileText className="w-4 h-4" />
@@ -458,21 +458,21 @@ export default function Quotes() {
                                         )}
                                         <button
                                             onClick={() => generateQuotePDF(quote)}
-                                            className="p-1.5 bg-dark-200 hover:bg-blue-500/20 rounded text-blue-400 hover:text-blue-300 transition-colors"
+                                            className="p-1.5 bg-slate-50 dark:bg-dark-200 hover:bg-blue-500/20 rounded text-blue-400 hover:text-blue-300 transition-colors"
                                             title="Descargar PDF de Solicitud"
                                         >
                                             <Download className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => setEditingQuote(quote)}
-                                            className="p-1.5 bg-dark-200 hover:bg-dark-300 rounded text-dark-500 hover:text-white transition-colors"
+                                            className="p-1.5 bg-slate-50 dark:bg-dark-200 hover:bg-slate-100 dark:bg-dark-300 rounded text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:text-white transition-colors"
                                             title="Editar"
                                         >
                                             <Edit className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(quote)}
-                                            className="p-1.5 bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
+                                            className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
                                             title="Eliminar"
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -482,7 +482,7 @@ export default function Quotes() {
                                     <div className="flex items-start justify-between pe-16">
                                         <div>
                                             <div className="flex items-center gap-3">
-                                                <h3 className="text-lg font-medium text-white">{quote.bookTitle}</h3>
+                                                <h3 className="text-lg font-medium text-slate-900 dark:text-white">{quote.bookTitle}</h3>
                                                 <div className="relative inline-block">
                                                     <select
                                                         value={quote.status}
@@ -495,27 +495,27 @@ export default function Quotes() {
                                                             backgroundSize: '1.2em 1.2em'
                                                         }}
                                                     >
-                                                        <option value="Solicitada" className="bg-dark-200 text-blue-400">Solicitada</option>
-                                                        <option value="Presupuestada" className="bg-dark-200 text-yellow-400">Presupuestada</option>
-                                                        <option value="Aprobada" className="bg-dark-200 text-green-400">Aprobada</option>
-                                                        <option value="Rechazada" className="bg-dark-200 text-red-400">Rechazada</option>
+                                                        <option value="Solicitada" className="bg-white dark:bg-dark-200 dark:bg-dark-200 text-blue-400">Solicitada</option>
+                                                        <option value="Presupuestada" className="bg-white dark:bg-dark-200 dark:bg-dark-200 text-yellow-400">Presupuestada</option>
+                                                        <option value="Aprobada" className="bg-white dark:bg-dark-200 dark:bg-dark-200 text-green-400">Aprobada</option>
+                                                        <option value="Rechazada" className="bg-white dark:bg-dark-200 dark:bg-dark-200 text-red-400">Rechazada</option>
                                                     </select>
                                                 </div>
                                             </div>
-                                            <p className="text-sm text-dark-500 mt-1 tabular-nums">ID: {quote.id}</p>
+                                            <p className="text-sm text-slate-400 dark:text-dark-500 mt-1 tabular-nums">ID: {quote.id}</p>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-dark-300">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-dark-300">
                                         <div>
-                                            <p className="text-[10px] text-dark-500 uppercase">Imprenta</p>
-                                            <p className="text-xs text-white font-medium">{quote.provider}</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase">Imprenta</p>
+                                            <p className="text-xs text-slate-900 dark:text-white font-medium">{quote.provider}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-dark-500 uppercase">
+                                            <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase">
                                                 {quote.approvedAmount ? 'Tiraje Aprobado' : 'Tirajes Propios'}
                                             </p>
-                                            <p className="text-xs text-white font-mono">
+                                            <p className="text-xs text-slate-900 dark:text-white font-mono">
                                                 {quote.approvedAmount
                                                     ? <span className="text-emerald-400 font-bold">{quote.approvedAmount} u.</span>
                                                     : `${[quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4].filter(v => v && v > 0).join(', ')} u.`
@@ -523,15 +523,15 @@ export default function Quotes() {
                                             </p>
                                         </div>
                                         <div className="col-span-2">
-                                            <p className="text-[10px] text-dark-500 uppercase mb-1">Costo de Producción</p>
-                                            <div className="bg-dark-200/50 p-2 rounded border border-dark-300 grid grid-cols-3 gap-2">
+                                            <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase mb-1">Costo de Producción</p>
+                                            <div className="bg-slate-50 dark:bg-dark-200/50 p-2 rounded border border-slate-200 dark:border-dark-300 grid grid-cols-3 gap-2">
                                                 <div>
-                                                    <p className="text-[9px] text-dark-500">{t('neto')}</p>
-                                                    <p className="text-xs text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
+                                                    <p className="text-[9px] text-slate-500 dark:text-dark-500">{t('neto')}</p>
+                                                    <p className="text-xs text-slate-900 dark:text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[9px] text-dark-500">{t('iva')} ({taxRate}%)</p>
-                                                    <p className="text-xs text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount - Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
+                                                    <p className="text-[9px] text-slate-500 dark:text-dark-500">{t('iva')} ({taxRate}%)</p>
+                                                    <p className="text-xs text-slate-900 dark:text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount - Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[9px] text-primary-400 font-semibold">Total</p>
@@ -540,27 +540,27 @@ export default function Quotes() {
                                             </div>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-dark-500 uppercase">Fecha Entrega</p>
-                                            <p className="text-xs text-white">{quote.deliveryDate ? new Date(quote.deliveryDate).toLocaleDateString() : 'Pendiente'}</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase">Fecha Entrega</p>
+                                            <p className="text-xs text-slate-900 dark:text-white font-medium">{quote.deliveryDate ? new Date(quote.deliveryDate).toLocaleDateString() : 'Pendiente'}</p>
                                         </div>
                                     </div>
 
                                     {/* Muestra rápida de detalles técnicos snapshots  */}
-                                    <div className="mt-4 bg-dark-200 rounded-lg p-3">
-                                        <h4 className="text-[10px] text-dark-500 uppercase mb-2 border-b border-dark-300 pb-1">Ficha Técnica Asociada</h4>
-                                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-dark-400">
-                                            <span><strong className="text-dark-500">Medida:</strong> {quote.bookWidth}x{quote.bookHeight}cm</span>
-                                            <span><strong className="text-dark-500">Págs(B/N):</strong> {quote.bookPagesBw}</span>
-                                            {quote.bookPagesColor > 0 && <span><strong className="text-dark-500">Págs(Color):</strong> {quote.bookPagesColor}</span>}
-                                            <span><strong className="text-dark-500">Tap/Sol:</strong> {quote.bookCoverType} / {quote.bookFlaps}</span>
-                                            <span><strong className="text-dark-500">Encuadernación:</strong> {quote.bindingType}</span>
-                                            {quote.extraFinishes && <span className="w-full mt-1 text-primary-400"><strong className="text-dark-500">Terminaciones Ex:</strong> {quote.extraFinishes}</span>}
+                                    <div className="mt-4 bg-slate-50 dark:bg-dark-200 rounded-lg p-3">
+                                        <h4 className="text-[10px] text-slate-400 dark:text-dark-500 uppercase mb-2 border-b border-slate-200 dark:border-dark-300 pb-1">Ficha Técnica Asociada</h4>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-dark-400">
+                                            <span><strong className="text-slate-400 dark:text-dark-500">Medida:</strong> {quote.bookWidth}x{quote.bookHeight}cm</span>
+                                            <span><strong className="text-slate-400 dark:text-dark-500">Págs(B/N):</strong> {quote.bookPagesBw}</span>
+                                            {quote.bookPagesColor > 0 && <span><strong className="text-slate-400 dark:text-dark-500">Págs(Color):</strong> {quote.bookPagesColor}</span>}
+                                            <span><strong className="text-slate-400 dark:text-dark-500">Tap/Sol:</strong> {quote.bookCoverType} / {quote.bookFlaps}</span>
+                                            <span><strong className="text-slate-400 dark:text-dark-500">Encuadernación:</strong> {quote.bindingType}</span>
+                                            {quote.extraFinishes && <span className="w-full mt-1 text-primary-400"><strong className="text-slate-400 dark:text-dark-500">Terminaciones Ex:</strong> {quote.extraFinishes}</span>}
                                         </div>
                                     </div>
 
                                     {/* Action Footers */}
                                     {quote.status === 'Aprobada' && (
-                                        <div className="mt-4 pt-4 border-t border-dark-300">
+                                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-dark-300">
                                             <button
                                                 onClick={() => handlePOGenerateClick(quote)}
                                                 className="w-full bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 border border-emerald-500/30 flex items-center justify-center gap-2 text-sm"
@@ -581,15 +581,15 @@ export default function Quotes() {
             {poModalQuote && (
                 <div className="fixed inset-0 bg-dark-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-in">
                     <div className="glass-card w-full max-w-sm p-6 slide-up border border-primary/30">
-                        <div className="flex justify-between items-center mb-4 border-b border-dark-300 pb-2">
-                            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                        <div className="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-dark-300 pb-2">
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 <FileText className="w-4 h-4 text-emerald-400" /> Confirmar Tiraje Aprobado
                             </h3>
-                            <button onClick={() => setPoModalQuote(null)} className="text-dark-500 hover:text-white transition-colors">
+                            <button onClick={() => setPoModalQuote(null)} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white transition-colors">
                                 <XCircle className="w-5 h-5" />
                             </button>
                         </div>
-                        <p className="text-xs text-dark-400 mb-4 bg-dark-200/50 p-3 rounded text-center">
+                        <p className="text-xs text-slate-500 dark:text-dark-400 mb-4 bg-slate-50 dark:bg-dark-200/50 p-3 rounded text-center">
                             Esta cotización posee varias opciones de tiraje propuestas por la imprenta. Selecciona la opción que estás aprobando para la Orden de Compra:
                         </p>
                         <div className="space-y-2">
@@ -604,15 +604,15 @@ export default function Quotes() {
                                             setPoModalQuote(null)
                                         })
                                     }}
-                                    className="w-full text-left p-3 rounded-lg bg-dark-200 hover:bg-emerald-500/10 border border-dark-400 hover:border-emerald-500/50 transition-all flex justify-between items-center group"
+                                    className="w-full text-left p-3 rounded-lg bg-slate-50 dark:bg-dark-200 hover:bg-emerald-500/10 border border-slate-300 dark:border-dark-400 hover:border-emerald-500/50 transition-all flex justify-between items-center group"
                                 >
                                     <div>
-                                        <span className="text-white font-medium pl-1 text-sm">{tObj.qty} unidades</span>
+                                        <span className="text-slate-900 dark:text-white font-medium pl-1 text-sm">{tObj.qty} unidades</span>
                                         {tObj.price > 0 && <span className="block pl-1 text-xs text-emerald-400">Total CLP: {formatCLP(tObj.price)}</span>}
                                     </div>
                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="text-[10px] text-emerald-400">Generar PDF</span>
-                                        <Download className="w-4 h-4 text-emerald-400" />
+                                        <span className="text-[10px] text-emerald-500 dark:text-emerald-400">Generar PDF</span>
+                                        <Download className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                                     </div>
                                 </button>
                             ))}
@@ -730,15 +730,15 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
 
     return (
         <div className="glass-card p-5 slide-up border border-primary/30">
-            <h3 className="text-sm font-semibold text-white mb-4">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
                 {isNew ? 'Nueva Solicitud de Cotización a Imprenta' : 'Actualizar Cotización'}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
 
                 {/* Book Selection (only writable on New) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-dark-300 pb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-slate-200 dark:border-dark-300 pb-4">
                     <div className="md:col-span-2">
-                        <label className="text-xs text-dark-600 mb-1 block">Libro a Cotizar</label>
+                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Libro a Cotizar</label>
                         {isNew ? (
                             <select
                                 value={form.bookId}
@@ -747,10 +747,10 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                                 required
                             >
                                 <option value="">Seleccione un título de la biblioteca...</option>
-                                {books.map(b => <option key={b.id} value={b.id}>{b.title} (ISBN: {b.isbn || 'N/A'})</option>)}
+                                {books.map(b => <option key={b.id} value={b.id} className="bg-white dark:bg-dark-200 dark:bg-dark-200 text-slate-900 dark:text-white">{b.title} (ISBN: {b.isbn || 'N/A'})</option>)}
                             </select>
                         ) : (
-                            <div className="input-field text-sm bg-dark-300 opacity-70 cursor-not-allowed text-white">
+                            <div className="input-field text-sm bg-slate-100 dark:bg-dark-300 opacity-70 cursor-not-allowed text-slate-900 dark:text-white">
                                 {initialData.bookTitle}
                             </div>
                         )}
@@ -758,7 +758,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                     </div>
 
                     <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Imprenta / Proveedor</label>
+                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Imprenta / Proveedor</label>
                         <input
                             value={form.provider}
                             onChange={e => setForm(p => ({ ...p, provider: e.target.value }))}
@@ -768,7 +768,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         />
                     </div>
                     <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Principal</label>
+                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tiraje Principal</label>
                         <input
                             type="number"
                             min="1"
@@ -791,10 +791,10 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         </button>
 
                         {showAltAmounts && (
-                            <div className="space-y-4 mt-2 p-4 bg-dark-200/50 rounded-lg border border-dark-300">
+                            <div className="space-y-4 mt-2 p-4 bg-slate-50 dark:bg-dark-200/50 rounded-lg border border-slate-200 dark:border-dark-300">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 1 (uds.)</label>
+                                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tiraje Alt. 1 (uds.)</label>
                                         <input
                                             type="number"
                                             min="0"
@@ -805,7 +805,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-dark-600 mb-1 block">Precio Tiraje Alt. 1 (Total CLP)</label>
+                                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Precio Tiraje Alt. 1 (Total CLP)</label>
                                         <input
                                             type="text"
                                             value={form.quotedAmountStr2}
@@ -817,7 +817,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 2 (uds.)</label>
+                                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tiraje Alt. 2 (uds.)</label>
                                         <input
                                             type="number"
                                             min="0"
@@ -828,7 +828,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-dark-600 mb-1 block">Precio Tiraje Alt. 2 (Total CLP)</label>
+                                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Precio Tiraje Alt. 2 (Total CLP)</label>
                                         <input
                                             type="text"
                                             value={form.quotedAmountStr3}
@@ -840,7 +840,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-xs text-dark-600 mb-1 block">Tiraje Alt. 3 (uds.)</label>
+                                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tiraje Alt. 3 (uds.)</label>
                                         <input
                                             type="number"
                                             min="0"
@@ -851,7 +851,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-dark-600 mb-1 block">Precio Tiraje Alt. 3 (Total CLP)</label>
+                                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Precio Tiraje Alt. 3 (Total CLP)</label>
                                         <input
                                             type="text"
                                             value={form.quotedAmountStr4}
@@ -866,7 +866,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                     </div>
 
                     <div className="md:col-span-1">
-                        <label className="text-xs text-dark-600 mb-1 block">Tipo de Encuadernación</label>
+                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tipo de Encuadernación</label>
                         <select
                             value={form.bindingType}
                             onChange={e => setForm(p => ({ ...p, bindingType: e.target.value }))}
@@ -881,7 +881,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         </select>
                     </div>
                     <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Otras Terminaciones Especiales</label>
+                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Otras Terminaciones Especiales</label>
                         <input
                             value={form.extraFinishes}
                             onChange={e => setForm(p => ({ ...p, extraFinishes: e.target.value }))}
@@ -894,7 +894,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                 {/* Followup & Prices */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Estado de Cotización</label>
+                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Estado de Cotización</label>
                         <select
                             value={form.status}
                             onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
@@ -907,9 +907,9 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         </select>
                     </div>
                     <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Monto Cotizado (Total CLP)</label>
+                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Monto Cotizado (Total CLP)</label>
                         <div className="relative mb-2">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-dark-500"><DollarSign className="w-3 h-3" /></span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-dark-500"><DollarSign className="w-3 h-3" /></span>
                             <input
                                 type="text"
                                 value={form.quotedAmountStr}
@@ -924,9 +924,9 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                                 const neto = Math.round(val / 1.19)
                                 const iva = val - neto
                                 return (
-                                    <div className="flex items-center gap-3 text-[10px] bg-dark-200/50 px-2 py-1.5 rounded border border-dark-300">
-                                        <span className="text-dark-400">Neto: <span className="text-white font-mono">{formatMoneyStr(neto)}</span></span>
-                                        <span className="text-dark-400">IVA: <span className="text-white font-mono">{formatMoneyStr(iva)}</span></span>
+                                    <div className="flex items-center gap-3 text-[10px] bg-slate-50 dark:bg-dark-200/50 px-2 py-1.5 rounded border border-slate-200 dark:border-dark-300">
+                                        <span className="text-slate-400 dark:text-dark-400">Neto: <span className="text-slate-900 dark:text-white font-mono">{formatMoneyStr(neto)}</span></span>
+                                        <span className="text-slate-400 dark:text-dark-400">IVA: <span className="text-slate-900 dark:text-white font-mono">{formatMoneyStr(iva)}</span></span>
                                     </div>
                                 )
                             }
@@ -934,7 +934,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         })()}
                     </div>
                     <div>
-                        <label className="text-xs text-dark-600 mb-1 block flex items-center gap-1"><Calendar className="w-3 h-3" /> Fecha Prevista Entrega</label>
+                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block flex items-center gap-1"><Calendar className="w-3 h-3" /> Fecha Prevista Entrega</label>
                         <input
                             type="date"
                             value={form.deliveryDate}
@@ -943,7 +943,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         />
                     </div>
                     <div className="md:col-span-3">
-                        <label className="text-xs text-dark-600 mb-1 block">Observaciones y Notas</label>
+                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Observaciones y Notas</label>
                         <textarea
                             value={form.notes}
                             onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
@@ -954,16 +954,16 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                     </div>
                 </div>
 
-                <div className="md:col-span-3 border-t border-dark-300 pt-4 pb-2">
-                    <label className="text-xs text-dark-600 mb-2 block">Adjuntar Cotización Recibida (Opcional)</label>
-                    <div className="flex items-center gap-4 bg-dark-200 p-3 rounded-lg border border-dark-300">
+                <div className="md:col-span-3 border-t border-slate-200 dark:border-dark-300 pt-4 pb-2">
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-2 block">Adjuntar Cotización Recibida (Opcional)</label>
+                    <div className="flex items-center gap-4 bg-slate-50 dark:bg-dark-200 p-3 rounded-lg border border-slate-200 dark:border-dark-300">
                         {form.quoteDocument ? (
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-emerald-500/20 rounded relative text-emerald-400">
                                     <FileText className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-white truncate max-w-[200px] sm:max-w-xs">Documento_Adjunto</p>
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-xs">Documento_Adjunto</p>
                                     <a href={form.quoteDocument} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary-400 hover:underline">Ver Documento</a>
                                     <button type="button" onClick={() => setForm(p => ({ ...p, quoteDocument: '' }))} className="text-[10px] text-red-400 hover:underline ml-3">Eliminar</button>
                                 </div>
@@ -990,7 +990,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                     </div>
                 </div>
 
-                <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-dark-300">
+                <div className="flex gap-2 justify-end mt-4 pt-4 border-t border-slate-200 dark:border-dark-300">
                     <button type="button" onClick={onClose} className="btn-secondary text-sm">Cancelar</button>
                     <button type="submit" className="btn-primary text-sm">{isNew ? 'Guardar Cotización' : 'Actualizar Cotización'}</button>
                 </div>

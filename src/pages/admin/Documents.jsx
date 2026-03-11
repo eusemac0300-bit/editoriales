@@ -184,10 +184,10 @@ export default function Documents() {
         <div className="space-y-6 fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <FolderOpen className="w-6 h-6 text-primary" />Gestión Documental
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">Repositorio de archivos (Contratos, Manuscritos, Portadas, Facturas)</p>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Repositorio de archivos (Contratos, Manuscritos, Portadas, Facturas)</p>
                 </div>
                 <div>
                     <input
@@ -206,21 +206,21 @@ export default function Documents() {
             {/* Upload Modal */}
             {showUploadModal && (
                 <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-dark-100 border border-dark-300 rounded-xl w-full max-w-md overflow-hidden slide-up relative">
+                    <div className="bg-white dark:bg-dark-100 border border-slate-200 dark:border-dark-300 rounded-xl w-full max-w-md overflow-hidden slide-up relative">
                         <button
                             onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName(''); setDocAmount('') }}
-                            className="absolute top-4 right-4 text-dark-500 hover:text-white"
+                            className="absolute top-4 right-4 text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:text-white"
                         >
                             <X className="w-5 h-5" />
                         </button>
                         <div className="p-6">
-                            <h3 className="text-lg font-bold text-white mb-4">
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
                                 {editingDoc ? 'Editar Documento' : 'Clasificar Documento'}
                             </h3>
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="text-xs text-dark-500 block mb-1">Nombre del Documento</label>
+                                    <label className="text-xs text-slate-500 dark:text-dark-500 block mb-1">Nombre del Documento</label>
                                     <input
                                         type="text"
                                         value={editDocName}
@@ -229,11 +229,11 @@ export default function Documents() {
                                         placeholder="Ingrese o modifique el nombre..."
                                     />
                                     {!editingDoc && file && (
-                                        <p className="text-xs text-dark-600 mt-2">Archivo original a subir: <span className="text-primary-400 truncate">{file.name}</span></p>
+                                        <p className="text-xs text-slate-500 dark:text-dark-600 mt-2">Archivo original a subir: <span className="text-primary-400 truncate">{file.name}</span></p>
                                     )}
                                 </div>
                                 <div>
-                                    <label className="text-xs text-dark-500 block mb-1">Tipo de Documento</label>
+                                    <label className="text-xs text-slate-500 dark:text-dark-500 block mb-1">Tipo de Documento</label>
                                     <select
                                         value={docType}
                                         onChange={(e) => setDocType(e.target.value)}
@@ -247,7 +247,7 @@ export default function Documents() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-xs text-dark-500 block mb-1">Monto ($) (Opcional)</label>
+                                    <label className="text-xs text-slate-500 dark:text-dark-500 block mb-1">Monto ($) (Opcional)</label>
                                     <input
                                         type="text"
                                         value={docAmount ? formatCLP(docAmount) : ''}
@@ -257,7 +257,7 @@ export default function Documents() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs text-dark-500 block mb-1">Vincular a un Título (Opcional)</label>
+                                    <label className="text-xs text-slate-500 dark:text-dark-500 block mb-1">Vincular a un Título (Opcional)</label>
                                     <select
                                         value={selectedBook}
                                         onChange={(e) => setSelectedBook(e.target.value)}
@@ -271,7 +271,7 @@ export default function Documents() {
                                 </div>
                             </div>
                         </div>
-                        <div className="p-4 border-t border-dark-300 bg-dark-50 flex justify-end gap-3">
+                        <div className="p-4 border-t border-slate-200 dark:border-dark-300 bg-slate-50 dark:bg-dark-50 flex justify-end gap-3">
                             <button
                                 onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName(''); setDocAmount('') }}
                                 className="btn-secondary text-sm"
@@ -294,7 +294,7 @@ export default function Documents() {
             <div className="glass-card overflow-x-auto">
                 <table className="w-full">
                     <thead>
-                        <tr className="border-b border-dark-300">
+                        <tr className="border-b border-slate-200 dark:border-dark-300">
                             <th className="table-header text-left py-3 px-4">Documento</th>
                             <th className="table-header text-left py-3 px-4">Títlo Relacionado</th>
                             <th className="table-header text-left py-3 px-4">Categoría</th>
@@ -310,28 +310,28 @@ export default function Documents() {
                                 <td className="py-3 px-4">
                                     <div className="flex items-center gap-2 max-w-[250px]">
                                         <FileText className={`w-4 h-4 flex-shrink-0 ${doc.format === 'PDF' ? 'text-red-400' : 'text-primary-300'}`} />
-                                        <span className="text-sm text-white truncate" title={doc.name}>{doc.name}</span>
+                                        <span className="text-sm text-slate-900 dark:text-white truncate" title={doc.name}>{doc.name}</span>
                                     </div>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-dark-700 truncate max-w-[150px]">{doc.book}</td>
+                                <td className="py-3 px-4 text-sm text-slate-600 dark:text-dark-700 truncate max-w-[150px]">{doc.book}</td>
                                 <td className="py-3 px-4">
                                     <span className={doc.type.includes('Factura') ? 'badge-red' : (doc.type === 'Contrato' ? 'badge-yellow' : 'badge-blue')}>
                                         {doc.type}
                                     </span>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-right text-dark-800">
+                                <td className="py-3 px-4 text-sm text-right text-slate-700 dark:text-dark-800">
                                     {doc.amount ? formatCLP(doc.amount) : "—"}
                                 </td>
                                 <td className="py-3 px-4 text-sm text-center">
-                                    <span className="text-dark-400 font-medium text-xs px-2 py-1 bg-dark-200 rounded border border-dark-300">{doc.format}</span>
+                                    <span className="text-slate-400 dark:text-dark-400 font-medium text-xs px-2 py-1 bg-slate-50 dark:bg-dark-200 rounded border border-slate-200 dark:border-dark-300">{doc.format}</span>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-right text-dark-600">{doc.date}</td>
+                                <td className="py-3 px-4 text-sm text-right text-slate-500 dark:text-dark-600">{doc.date}</td>
                                 <td className="py-3 px-4 text-center">
                                     <div className="flex items-center justify-center gap-2">
                                         {!doc.isInvoice && (
                                             <button
                                                 onClick={() => handleEditClick(doc)}
-                                                className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-primary hover:bg-primary/10 transition-all"
+                                                className="p-1.5 rounded-lg bg-slate-50 dark:bg-dark-200 text-slate-500 dark:text-dark-500 hover:text-primary hover:bg-primary/10 transition-all"
                                                 title="Editar Título o Vínculo del Documento"
                                             >
                                                 <Edit className="w-4 h-4" />
@@ -345,7 +345,7 @@ export default function Documents() {
                                                     setSelectedBook(b ? b.id : '')
                                                     handleUploadClick()
                                                 }}
-                                                className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-white hover:bg-dark-300 transition-all"
+                                                className="p-1.5 rounded-lg bg-slate-50 dark:bg-dark-200 text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:text-white hover:bg-slate-100 dark:bg-dark-300 transition-all"
                                                 title="Adjuntar Archivo Físico"
                                             >
                                                 <Upload className="w-4 h-4" />
@@ -353,7 +353,7 @@ export default function Documents() {
                                         )}
                                         <button
                                             onClick={() => handleDownload(doc)}
-                                            className={`p-1.5 rounded-lg transition-all ${doc.fileUrl ? 'bg-primary/10 text-primary hover:bg-primary hover:text-white cursor-pointer' : 'opacity-50 text-dark-600 cursor-not-allowed'}`}
+                                            className={`p-1.5 rounded-lg transition-all ${doc.fileUrl ? 'bg-primary/10 text-primary hover:bg-primary hover:text-slate-900 dark:text-white cursor-pointer' : 'opacity-50 text-slate-500 dark:text-dark-600 cursor-not-allowed'}`}
                                             title={doc.fileUrl ? "Descargar / Ver Archivo" : "No hay archivo subido"}
                                             disabled={!doc.fileUrl}
                                         >
@@ -362,7 +362,7 @@ export default function Documents() {
                                         {!doc.isInvoice && (
                                             <button
                                                 onClick={() => handleDelete(doc)}
-                                                className="p-1.5 rounded-lg bg-dark-200 text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                                className="p-1.5 rounded-lg bg-slate-50 dark:bg-dark-200 text-slate-500 dark:text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
                                                 title="Eliminar Documento"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -374,7 +374,7 @@ export default function Documents() {
                         ))}
                         {documents.length === 0 && (
                             <tr>
-                                <td colSpan="7" className="py-8 text-center text-dark-500 text-sm">No hay documentos ni facturas registrados.</td>
+                                <td colSpan="7" className="py-8 text-center text-slate-500 dark:text-dark-500 text-sm">No hay documentos ni facturas registrados.</td>
                             </tr>
                         )}
                     </tbody>

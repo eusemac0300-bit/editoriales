@@ -6,7 +6,7 @@ import {
     X, Save, AlertTriangle, Filter, ArrowDownCircle, DollarSign
 } from 'lucide-react'
 
-const CATEGORIES = ['SUELDOS', 'ARRIENDO', 'SERVICIOS', 'PUBLICIDAD', 'LOGÍSTICA', 'SOFTWARE', 'IMPUESTOS', 'OTROS']
+const CATEGORIES = ['SUELDOS', 'ARRIENDO', 'SERVICIOS', 'PUBLICIDAD', 'LOGÍSTICA', 'SOFTWARE', 'IMPUESTOS', 'PRODUCCIÓN', 'OTROS']
 const METHODS = ['TRANSFERENCIA', 'TARJETA', 'EFECTIVO', 'CHEQUE', 'OTRO']
 
 export default function Expenses() {
@@ -60,10 +60,10 @@ export default function Expenses() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <ArrowDownCircle className="w-6 h-6 text-red-400" /> Gastos Operativos
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <ArrowDownCircle className="w-6 h-6 text-red-500 dark:text-red-400" /> Gastos Operativos
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">Registra y controla los egresos de la editorial</p>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Registra y controla los egresos de la editorial</p>
                 </div>
                 <button
                     onClick={() => { setEditing(null); setShowForm(true) }}
@@ -76,12 +76,12 @@ export default function Expenses() {
             {/* Stats & Filters */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="stat-card border-red-500/10">
-                    <p className="text-[10px] text-dark-600 uppercase font-semibold">Total Seleccionado</p>
-                    <p className="text-2xl font-bold text-red-400 font-mono">{formatCLP(totalInMonth)}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-semibold">Total Seleccionado</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400 font-mono">{formatCLP(totalInMonth)}</p>
                 </div>
                 <div className="md:col-span-3 glass-card p-4 flex flex-col md:flex-row gap-4 items-center">
                     <div className="relative flex-1 w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-600" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-dark-600" />
                         <input
                             type="text"
                             placeholder="Buscar por descripción o proveedor..."
@@ -105,51 +105,51 @@ export default function Expenses() {
             <div className="glass-card overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-dark-200/50 border-b border-dark-300">
+                        <thead className="bg-slate-50 dark:bg-dark-200/50 border-b border-slate-200 dark:border-dark-300">
                             <tr>
-                                <th className="px-4 py-3 text-left">Fecha</th>
-                                <th className="px-4 py-3 text-left">Descripción / Detalle</th>
-                                <th className="px-4 py-3 text-left">Categoría</th>
-                                <th className="px-4 py-3 text-left">Proveedor</th>
-                                <th className="px-4 py-3 text-left">Método Pago</th>
-                                <th className="px-4 py-3 text-right">Monto</th>
-                                <th className="px-4 py-3 text-right">Acciones</th>
+                                <th className="px-4 py-3 text-left text-slate-500 dark:text-dark-600 font-semibold uppercase text-[10px]">Fecha</th>
+                                <th className="px-4 py-3 text-left text-slate-500 dark:text-dark-600 font-semibold uppercase text-[10px]">Descripción / Detalle</th>
+                                <th className="px-4 py-3 text-left text-slate-500 dark:text-dark-600 font-semibold uppercase text-[10px]">Categoría</th>
+                                <th className="px-4 py-3 text-left text-slate-500 dark:text-dark-600 font-semibold uppercase text-[10px]">Proveedor</th>
+                                <th className="px-4 py-3 text-left text-slate-500 dark:text-dark-600 font-semibold uppercase text-[10px]">Método Pago</th>
+                                <th className="px-4 py-3 text-right text-slate-500 dark:text-dark-600 font-semibold uppercase text-[10px]">Monto</th>
+                                <th className="px-4 py-3 text-right text-slate-500 dark:text-dark-600 font-semibold uppercase text-[10px]">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-dark-300/50 text-dark-800">
                             {filtered.map(e => (
-                                <tr key={e.id} className="hover:bg-dark-200/30 transition-colors group">
-                                    <td className="px-4 py-4 text-dark-600 font-mono text-xs">{e.date}</td>
-                                    <td className="px-4 py-4 font-medium text-white">{e.description}</td>
+                                <tr key={e.id} className="hover:bg-slate-50 dark:hover:bg-dark-200/30 transition-colors group">
+                                    <td className="px-4 py-4 text-slate-500 dark:text-dark-600 font-mono text-xs">{e.date}</td>
+                                    <td className="px-4 py-4 font-medium text-slate-900 dark:text-white">{e.description}</td>
                                     <td className="px-4 py-4">
-                                        <span className="px-2 py-0.5 rounded-full bg-dark-300 text-[10px] font-bold text-dark-600">
+                                        <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-dark-300 text-[10px] font-bold text-slate-600 dark:text-dark-600">
                                             {e.category}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-4 text-dark-600 flex items-center gap-2">
+                                    <td className="px-4 py-4 text-slate-500 dark:text-dark-600 flex items-center gap-2">
                                         <Building2 className="w-3.5 h-3.5 opacity-40" />
                                         {e.supplierName}
                                     </td>
-                                    <td className="px-4 py-4 text-dark-600">
+                                    <td className="px-4 py-4 text-slate-500 dark:text-dark-600">
                                         <div className="flex items-center gap-1.5 capitalize">
                                             <CreditCard className="w-3.5 h-3.5 opacity-40" />
                                             {e.payment_method?.toLowerCase() || '-'}
                                         </div>
                                     </td>
-                                    <td className="px-4 py-4 text-right font-mono font-bold text-red-400">
+                                    <td className="px-4 py-4 text-right font-mono font-bold text-red-600 dark:text-red-400">
                                         {formatCLP(e.amount)}
                                     </td>
                                     <td className="px-4 py-4 text-right">
                                         <div className="flex justify-end items-center gap-1 opacity-10 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => { setEditing(e); setShowForm(true) }}
-                                                className="p-2 hover:bg-dark-200 rounded-lg text-dark-600 hover:text-white transition-all"
+                                                className="p-2 hover:bg-slate-100 dark:hover:bg-dark-200 rounded-lg text-slate-400 dark:text-dark-600 hover:text-slate-900 dark:hover:text-white transition-all"
                                             >
                                                 <Edit3 className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => setDeleting(e)}
-                                                className="p-2 hover:bg-red-500/10 rounded-lg text-dark-600 hover:text-red-400 transition-all"
+                                                className="p-2 hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-dark-600 hover:text-red-500 dark:hover:text-red-400 transition-all"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -163,8 +163,8 @@ export default function Expenses() {
 
                 {filtered.length === 0 && (
                     <div className="py-20 text-center">
-                        <Receipt className="w-12 h-12 text-dark-300 mx-auto mb-4 opacity-20" />
-                        <p className="text-dark-600 italic">No se encontraron gastos registrados</p>
+                        <Receipt className="w-12 h-12 text-slate-200 dark:text-dark-300 mx-auto mb-4 opacity-20" />
+                        <p className="text-slate-500 dark:text-dark-600 italic">No se encontraron gastos registrados</p>
                     </div>
                 )}
             </div>

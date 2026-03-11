@@ -10,6 +10,8 @@ import SuperAdminLayout from './layouts/SuperAdminLayout'
 // Public SaaS pages
 import Landing from './pages/public/Landing'
 import Register from './pages/public/Register'
+import Onboarding from './pages/public/Onboarding'
+import FirstLoginPassword from './pages/public/FirstLoginPassword'
 
 // SuperAdmin pages
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
@@ -34,6 +36,7 @@ import Suppliers from './pages/admin/Suppliers'
 import PurchaseOrders from './pages/admin/PurchaseOrders'
 import Expenses from './pages/admin/Expenses'
 import Cashflow from './pages/admin/Cashflow'
+import Marketing from './pages/admin/Marketing'
 
 // Freelance pages
 import FreelanceKanban from './pages/freelance/FreelanceKanban'
@@ -51,8 +54,18 @@ function AppRoutes() {
             <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/validar-editorial" element={<Onboarding />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        )
+    }
+
+    if (user.firstLogin) {
+        return (
+            <Routes>
+                <Route path="/activar-cuenta" element={<FirstLoginPassword />} />
+                <Route path="*" element={<Navigate to="/activar-cuenta" replace />} />
             </Routes>
         )
     }
@@ -64,6 +77,7 @@ function AppRoutes() {
             <Route path="/" element={<Navigate to={homeUrl} replace />} />
             <Route path="/login" element={<Navigate to={homeUrl} replace />} />
             <Route path="/register" element={<Navigate to={homeUrl} replace />} />
+            <Route path="/activar-cuenta" element={<Navigate to={homeUrl} replace />} />
 
             {/* SuperAdmin routes */}
             <Route path="/superadmin" element={<RouteGuard allowedRoles={['SUPERADMIN']}><SuperAdminLayout /></RouteGuard>}>
@@ -91,6 +105,7 @@ function AppRoutes() {
                 <Route path="auditoria" element={<AuditLog />} />
                 <Route path="alertas" element={<Alerts />} />
                 <Route path="reportes" element={<Reports />} />
+                <Route path="marketing" element={<Marketing />} />
             </Route>
 
             {/* Freelance routes */}

@@ -1,0 +1,2 @@
+-- Modify users table to use Supabase Auth UUID if not already
+-- And add a verify function or mechanism if needed

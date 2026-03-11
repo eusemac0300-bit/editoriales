@@ -57,10 +57,10 @@ export default function Suppliers() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <Users className="w-6 h-6 text-primary" /> Directorio de Proveedores
                     </h1>
-                    <p className="text-dark-600 text-sm mt-1">Gestiona tus imprentas y colaboradores externos</p>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Gestiona tus imprentas y colaboradores externos</p>
                 </div>
                 <button
                     onClick={() => { setEditing(null); setShowForm(true) }}
@@ -73,12 +73,12 @@ export default function Suppliers() {
             {/* Stats & Filters */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="stat-card">
-                    <p className="text-[10px] text-dark-600 uppercase font-semibold">Total Proveedores</p>
-                    <p className="text-2xl font-bold text-white">{suppliers.length}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-semibold">Total Proveedores</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{suppliers.length}</p>
                 </div>
                 <div className="md:col-span-3 glass-card p-4 flex flex-col md:flex-row gap-4 items-center">
                     <div className="relative flex-1 w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-600" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-dark-600" />
                         <input
                             type="text"
                             placeholder="Buscar por nombre, contacto o RUT..."
@@ -104,31 +104,31 @@ export default function Suppliers() {
                     <div key={s.id} className="glass-card p-5 group hover:ring-1 hover:ring-primary/30 transition-all">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-xl bg-dark-200 flex items-center justify-center border border-dark-300">
+                                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-dark-200 flex items-center justify-center border border-slate-200 dark:border-dark-300">
                                     <Building2 className="w-6 h-6 text-primary" />
                                 </div>
                                 <div>
-                                    <h3 className="text-white font-semibold">{s.name}</h3>
+                                    <h3 className="text-slate-900 dark:text-white font-semibold">{s.name}</h3>
                                     <span className="badge-blue text-[10px]">{s.type}</span>
                                 </div>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => { setEditing(s); setShowForm(true) }}
-                                    className="p-2 hover:bg-dark-200 rounded-lg text-dark-600 hover:text-white transition-all"
+                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-50 dark:bg-dark-200 rounded-lg text-slate-400 dark:text-dark-600 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white transition-all"
                                 >
                                     <Edit3 className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => setDeleting(s)}
-                                    className="p-2 hover:bg-red-500/10 rounded-lg text-dark-600 hover:text-red-400 transition-all"
+                                    className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 dark:text-dark-600 hover:text-red-400 transition-all"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="space-y-2 text-sm text-dark-600">
+                        <div className="space-y-2 text-sm text-slate-500 dark:text-dark-600">
                             {s.contact_name && (
                                 <div className="flex items-center gap-2">
                                     <ShieldCheck className="w-3.5 h-3.5" />
@@ -159,8 +159,8 @@ export default function Suppliers() {
                         </div>
 
                         {s.tax_id && (
-                            <div className="mt-4 pt-4 border-t border-dark-300/50 flex justify-between items-center text-[10px]">
-                                <span className="text-dark-500 uppercase font-mono">ID Fiscal: {s.tax_id}</span>
+                            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-dark-300/50 flex justify-between items-center text-[10px]">
+                                <span className="text-slate-400 dark:text-dark-500 uppercase font-mono">ID Fiscal: {s.tax_id}</span>
                             </div>
                         )}
                     </div>
@@ -168,8 +168,8 @@ export default function Suppliers() {
 
                 {filtered.length === 0 && (
                     <div className="lg:col-span-2 py-20 text-center glass-card">
-                        <Building2 className="w-12 h-12 text-dark-300 mx-auto mb-4 opacity-20" />
-                        <p className="text-dark-600">No se encontraron proveedores que coincidan con la búsqueda</p>
+                        <Building2 className="w-12 h-12 text-slate-200 dark:text-dark-300 mx-auto mb-4 opacity-50" />
+                        <p className="text-slate-500 dark:text-dark-600">No se encontraron proveedores que coincidan con la búsqueda</p>
                     </div>
                 )}
             </div>
@@ -180,11 +180,11 @@ export default function Suppliers() {
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowForm(false)} />
                     <div className="relative glass-card w-full max-w-lg p-6 slide-up">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 {editing ? <Edit3 className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5 text-primary" />}
                                 {editing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
                             </h2>
-                            <button onClick={() => setShowForm(false)} className="text-dark-600 hover:text-white">
+                            <button onClick={() => setShowForm(false)} className="text-slate-400 dark:text-dark-600 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -204,11 +204,11 @@ export default function Suppliers() {
                                 <AlertTriangle className="w-5 h-5 text-red-400" />
                             </div>
                             <div>
-                                <h3 className="text-white font-semibold">Eliminar Proveedor</h3>
-                                <p className="text-xs text-dark-600">Esta acción no se puede deshacer</p>
+                                <h3 className="text-slate-900 dark:text-white font-semibold">Eliminar Proveedor</h3>
+                                <p className="text-xs text-slate-500 dark:text-dark-600">Esta acción no se puede deshacer</p>
                             </div>
                         </div>
-                        <p className="text-sm text-dark-800 mb-6">
+                        <p className="text-sm text-slate-700 dark:text-dark-800 mb-6">
                             ¿Estás seguro de que deseas eliminar a <strong>{deleting.name}</strong>?
                             Si tiene órdenes de compra asociadas, se mantendrán pero perderán el vínculo con este proveedor.
                         </p>
@@ -246,7 +246,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                    <label className="text-xs text-dark-600 mb-1 block">Razón Social / Nombre *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Razón Social / Nombre *</label>
                     <input
                         required
                         value={form.name}
@@ -256,7 +256,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">Tipo de Servicio *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tipo de Servicio *</label>
                     <select
                         value={form.type}
                         onChange={e => setForm({ ...form, type: e.target.value })}
@@ -266,7 +266,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                     </select>
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">RUT / ID Fiscal</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">RUT / ID Fiscal</label>
                     <input
                         value={form.tax_id}
                         onChange={e => setForm({ ...form, tax_id: e.target.value })}
@@ -275,7 +275,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">Nombre de Contacto</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Nombre de Contacto</label>
                     <input
                         value={form.contact_name}
                         onChange={e => setForm({ ...form, contact_name: e.target.value })}
@@ -284,7 +284,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">Teléfono</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Teléfono</label>
                     <input
                         value={form.phone}
                         onChange={e => setForm({ ...form, phone: e.target.value })}
@@ -293,7 +293,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                     />
                 </div>
                 <div className="col-span-2">
-                    <label className="text-xs text-dark-600 mb-1 block">Correo Electrónico</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Correo Electrónico</label>
                     <input
                         type="email"
                         value={form.email}
@@ -303,7 +303,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                     />
                 </div>
                 <div className="col-span-2">
-                    <label className="text-xs text-dark-600 mb-1 block">{t('address') || 'Dirección Física'}</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">{t('address') || 'Dirección Física'}</label>
                     <input
                         value={form.address}
                         onChange={e => setForm({ ...form, address: e.target.value })}
@@ -312,7 +312,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">{t('commune') || 'Comuna'}</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">{t('commune') || 'Comuna'}</label>
                     <input
                         value={form.comuna}
                         onChange={e => setForm({ ...form, comuna: e.target.value })}
@@ -321,7 +321,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">{t('city') || 'Ciudad'}</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">{t('city') || 'Ciudad'}</label>
                     <input
                         value={form.ciudad}
                         onChange={e => setForm({ ...form, ciudad: e.target.value })}
@@ -331,7 +331,7 @@ function SupplierForm({ supplier, onSave, onCancel }) {
                 </div>
             </div>
 
-            <div className="flex gap-3 pt-4 border-t border-dark-300 mt-6">
+            <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-dark-300 mt-6">
                 <button type="button" onClick={onCancel} className="btn-secondary flex-1">Cancelar</button>
                 <button type="submit" className="btn-primary flex-1">
                     <Save className="w-4 h-4 mr-2" /> Guardar Proveedor

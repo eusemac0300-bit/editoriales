@@ -7,11 +7,16 @@
     },
     "finances": {
         "invoices": [],
-        "royalties": []
+        "royalties": [],
+        "sales": [],
+        "consignments": [],
+        "expenses": []
     },
     "auditLog": [],
     "documents": [],
     "comments": [],
     "alerts": [],
-    "quotes": []
+    "quotes": [],
+    "suppliers": [],
+    "purchaseOrders": []
 }

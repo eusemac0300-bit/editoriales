@@ -231,7 +231,7 @@ export default function Register() {
             const result = await db.createSaaSTenant(formData)
             if (result.success) {
                 clearAttempts()
-                alert(`¡Felicidades! Se ha creado el Workspace para "${formData.editorialName}" con el plan ${formData.plan}.\nRedirigiendo al login...`)
+                alert(result.message || `¡Felicidades! Se ha creado el Workspace para "${formData.editorialName}".`)
                 navigate('/login')
             } else {
                 recordAttempt()
@@ -308,21 +308,21 @@ export default function Register() {
     }
 
     return (
-        <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4 selection:bg-primary/30 relative overflow-hidden">
-            {/* Background elements */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 selection:bg-primary/30 relative overflow-hidden">
+            {/* Background elements - Richer gradients */}
+            <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[140px] pointer-events-none animate-pulse" />
+            <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
 
             <div className="w-full max-w-md relative z-10 fade-in">
-                <div className="text-center mb-8">
-                    <Link to="/" className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-600 mb-6 shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
-                        <BookOpen className="w-8 h-8 text-white" />
+                <div className="text-center mb-10">
+                    <Link to="/" className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-gradient-to-br from-primary to-primary-600 mb-6 shadow-2xl shadow-primary/40 hover:scale-110 hover:rotate-3 transition-all duration-300 ring-4 ring-white/5">
+                        <BookOpen className="w-10 h-10 text-white" />
                     </Link>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">Potencia tu Editorial</h1>
-                    <p className="text-dark-600 mt-2">Control total sobre tus escandallos, regalías y catálogo</p>
+                    <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Potencia tu <span className="text-primary">Editorial</span></h1>
+                    <p className="text-slate-400 font-medium tracking-tight">Control total sobre escandallos y regalías</p>
                 </div>
 
-                <div className="glass-card p-8 shadow-2xl">
+                <div className="glass-card bg-slate-900/60 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10">
                     {error && (
                         <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-500 text-sm slide-up">
                             <AlertCircle className="w-5 h-5 shrink-0" />

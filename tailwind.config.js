@@ -33,7 +33,10 @@ export default {
                     700: '#8e919f',
                     800: '#b1b4c1',
                     900: '#d5d7e2',
-                }
+                },
+                surface: 'var(--bg-surface)',
+                card: 'var(--bg-card)',
+                'border-color': 'var(--border-color)',
             },
             fontFamily: {
                 inter: ['Inter', 'system-ui', 'sans-serif'],

@@ -235,3 +235,41 @@ body {
 .pulse-glow {
   animation: pulse-glow 2s infinite;
 }
+
+/* Animations for Landing Page Miniature */
+@keyframes mockCardMove {
+
+  0%,
+  15% {
+    transform: translate(0%, 0px) scale(1);
+    opacity: 1;
+  }
+
+  18%,
+  40% {
+    transform: translate(calc(100% + 0.75rem), -5px) scale(1.02) rotate(1deg);
+    opacity: 1;
+  }
+
+  43%,
+  65% {
+    transform: translate(calc(200% + 1.5rem), 8px) scale(0.98) rotate(-1deg);
+    opacity: 1;
+  }
+
+  68%,
+  85% {
+    transform: translate(calc(300% + 2.25rem), -2px) scale(1.03) rotate(0.5deg);
+    opacity: 1;
+  }
+
+  90%,
+  100% {
+    transform: translate(calc(300% + 2.25rem), -2px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.animate-mock-card {
+  animation: mockCardMove 12s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}

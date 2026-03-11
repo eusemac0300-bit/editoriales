@@ -3,11 +3,13 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import {
     Truck, Plus, Search, Building2, BookOpen, Clock, AlertTriangle, ArrowRightLeft,
-    DollarSign, XCircle, CheckCircle, Package
+    DollarSign, XCircle, CheckCircle, Package, FileText, Printer
 } from 'lucide-react'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 
 export default function Consignments() {
-    const { data, formatCLP, addAuditLog, reloadData } = useAuth()
+    const { user, data, formatCLP, addAuditLog, reloadData } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedAction, setSelectedAction] = useState(null) // { type: 'liquidate' | 'return', item }
@@ -44,7 +46,7 @@ export default function Consignments() {
         try {
             const newConsignment = {
                 id: `cons-${Date.now()}`,
-                tenant_id: data.users[0]?.tenantId || 't1',
+                tenant_id: user?.tenantId || 't1',
                 book_id: bookId,
                 client_name: clientName,
                 contact_info: fd.get('contactInfo') || '',
@@ -121,7 +123,7 @@ export default function Consignments() {
                 const saleId = `sale-${Date.now()}`
                 const { error: sErr } = await supabase.from('sales').insert({
                     id: saleId,
-                    tenant_id: data.users[0]?.tenantId || 't1',
+                    tenant_id: user?.tenantId || 't1',
                     book_id: item.bookId,
                     channel: 'Consignación',
                     type: 'B2B (Empresa / Librería)',
@@ -156,14 +158,67 @@ export default function Consignments() {
         }
     }
 
+    const printDispatchGuide = (item) => {
+        const doc = new jsPDF()
+
+        // Header
+        doc.setFontSize(20)
+        doc.setTextColor(16, 185, 129) // Emerald-500
+        doc.text("GUÍA DE DESPACHO / ALBARÁN", 14, 22)
+
+        doc.setFontSize(10)
+        doc.setTextColor(100, 100, 100)
+        doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString('es-CL')}`, 14, 30)
+        doc.text(`Nº Consignación: ${item.id.replace('cons-', '')}`, 14, 35)
+
+        // Company Details (Simulated)
+        doc.setFontSize(12)
+        doc.setTextColor(40, 40, 40)
+        doc.text("Datos del Cliente / Destino:", 14, 50)
+        doc.setFontSize(10)
+        doc.setTextColor(80, 80, 80)
+        doc.text(`Cliente/Librería: ${item.clientName}`, 14, 56)
+        doc.text(`Contacto: ${item.contactInfo || 'No registrado'}`, 14, 61)
+        doc.text(`Fecha de Despacho Original: ${new Date(item.sentDate).toLocaleDateString('es-CL')}`, 14, 66)
+
+        // Table
+        doc.autoTable({
+            startY: 75,
+            head: [['Título del Libro', 'Concepto', 'Cantidad Emitida']],
+            body: [
+                [item.bookTitle, 'Ejemplares en Depósito (Consignación)', item.sentQuantity.toString()]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+            styles: { fontSize: 10, cellPadding: 4 }
+        })
+
+        // Footer / Signatures
+        const finalY = doc.lastAutoTable.finalY || 100
+        doc.setFontSize(10)
+        doc.setTextColor(100, 100, 100)
+        doc.text("Observaciones:", 14, finalY + 15)
+        doc.setFontSize(9)
+        doc.text(item.notes || "Se despacha cantidad acordada bajo modalidad de depósito/consignación. El inventario es propiedad del editor hasta su facturación/liquidación.", 14, finalY + 22, { maxWidth: 180 })
+
+        doc.line(30, finalY + 60, 80, finalY + 60)
+        doc.text("Firma Entregador", 35, finalY + 65)
+
+        doc.line(130, finalY + 60, 180, finalY + 60)
+        doc.text("Firma Receptor", 137, finalY + 65)
+
+        // Save
+        doc.save(`Albaran_Despacho_${item.id.replace('cons-', '')}.pdf`)
+    }
+
     return (
         <div className="space-y-6 fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <Truck className="w-6 h-6 text-primary" /> Gestión de Consignaciones
                     </h1>
-                    <p className="text-sm text-dark-500 mt-1">
+                    <p className="text-sm text-slate-500 dark:text-dark-500 mt-1">
                         Despacho de stock, tracking de pendientes, liquidaciones y devoluciones.
                     </p>
                 </div>
@@ -173,7 +228,7 @@ export default function Consignments() {
             </div>
 
             <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-600" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-dark-600" />
                 <input
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
@@ -184,9 +239,9 @@ export default function Consignments() {
 
             {filtered.length === 0 ? (
                 <div className="glass-card p-12 text-center">
-                    <Building2 className="w-12 h-12 text-dark-500 mx-auto mb-4" />
-                    <h3 className="text-white font-medium mb-1">Sin consignaciones</h3>
-                    <p className="text-sm text-dark-500">Haz clic en "Despachar Libros" para enviar ejemplares a librerías.</p>
+                    <Building2 className="w-12 h-12 text-slate-300 dark:text-dark-500 mx-auto mb-4" />
+                    <h3 className="text-slate-900 dark:text-white font-medium mb-1">Sin consignaciones</h3>
+                    <p className="text-sm text-slate-500 dark:text-dark-500">Haz clic en "Despachar Libros" para enviar ejemplares a librerías.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -198,26 +253,26 @@ export default function Consignments() {
                                 {isActive ? (
                                     <div className="absolute top-0 right-0 w-1.5 h-full bg-primary" />
                                 ) : (
-                                    <div className="absolute top-0 right-0 w-1.5 h-full bg-dark-400" />
+                                    <div className="absolute top-0 right-0 w-1.5 h-full bg-slate-300 dark:bg-dark-400" />
                                 )}
 
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <p className="text-[10px] text-dark-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                        <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase tracking-wider mb-1 flex items-center gap-1">
                                             <Building2 className="w-3 h-3" /> {item.clientName}
                                         </p>
-                                        <h3 className="text-base font-bold text-white">{item.bookTitle}</h3>
-                                        <p className="text-xs text-dark-400 mt-0.5 px-0">Fecha despacho: {new Date(item.sentDate).toLocaleDateString('es-CL')}</p>
+                                        <h3 className="text-base font-bold text-slate-900 dark:text-white">{item.bookTitle}</h3>
+                                        <p className="text-xs text-slate-600 dark:text-dark-400 mt-0.5 px-0">Fecha despacho: {new Date(item.sentDate).toLocaleDateString('es-CL')}</p>
                                     </div>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive ? 'bg-primary/20 text-primary-300 border border-primary/30' : 'bg-dark-300 text-dark-500'}`}>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive ? 'bg-primary/20 text-primary-300 border border-primary/30' : 'bg-slate-200 dark:bg-dark-300 text-slate-500 dark:text-dark-500'}`}>
                                         {isActive ? 'ACTIVA' : 'CERRADA'}
                                     </span>
                                 </div>
 
                                 <div className="grid grid-cols-4 gap-2 mb-5">
-                                    <div className="bg-dark-100/50 rounded-lg p-2 text-center">
-                                        <p className="text-[10px] text-dark-500 uppercase">Enviados</p>
-                                        <p className="text-lg font-mono text-white mt-1">{item.sentQuantity}</p>
+                                    <div className="bg-slate-50 dark:bg-dark-100/50 rounded-lg p-2 text-center">
+                                        <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase">Enviados</p>
+                                        <p className="text-lg font-mono text-slate-900 dark:text-white mt-1">{item.sentQuantity}</p>
                                     </div>
                                     <div className="bg-emerald-500/10 rounded-lg p-2 text-center">
                                         <p className="text-[10px] text-emerald-500/70 uppercase">Vendidos</p>
@@ -227,24 +282,27 @@ export default function Consignments() {
                                         <p className="text-[10px] text-orange-500/70 uppercase">Devueltos</p>
                                         <p className="text-lg font-mono text-orange-400 mt-1">{item.returnedQuantity}</p>
                                     </div>
-                                    <div className={`rounded-lg p-2 text-center ${pending > 0 ? 'bg-primary/20' : 'bg-dark-200'}`}>
+                                    <div className={`rounded-lg p-2 text-center ${pending > 0 ? 'bg-primary/20' : 'bg-slate-100 dark:bg-dark-200'}`}>
                                         <p className="text-[10px] text-primary-300 uppercase">En Local</p>
-                                        <p className="text-lg font-bold font-mono text-white mt-1">{pending}</p>
+                                        <p className="text-lg font-bold font-mono text-slate-900 dark:text-white mt-1">{pending}</p>
                                     </div>
                                 </div>
 
                                 <div className="mt-auto flex gap-2">
+                                    <button onClick={() => printDispatchGuide(item)} className="p-2 btn-secondary text-slate-500 dark:text-dark-400 hover:text-primary dark:hover:text-primary-400" title="Imprimir Albarán / Guía">
+                                        <Printer className="w-4 h-4" />
+                                    </button>
                                     {isActive ? (
                                         <>
                                             <button onClick={() => setSelectedAction({ type: 'liquidate', item })} className="flex-1 btn-primary text-xs py-2 flex items-center justify-center gap-2">
                                                 <DollarSign className="w-3 h-3" /> Liquidar Venta
                                             </button>
-                                            <button onClick={() => setSelectedAction({ type: 'return', item })} className="flex-1 btn-secondary text-xs py-2 flex items-center justify-center gap-2 text-orange-400 hover:text-orange-300 border-orange-500/20">
-                                                <ArrowRightLeft className="w-3 h-3" /> Devolución
+                                            <button onClick={() => setSelectedAction({ type: 'return', item })} className="flex-1 btn-secondary text-xs py-2 flex items-center justify-center gap-2 text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 border-orange-500/20">
+                                                <ArrowRightLeft className="w-3 h-3" /> Devolver
                                             </button>
                                         </>
                                     ) : (
-                                        <p className="text-xs text-dark-500 italic w-full text-center">Consignación concluida (no hay stock pendiente)</p>
+                                        <p className="text-xs text-slate-500 dark:text-dark-500 italic w-full text-center flex items-center justify-center h-full">Consignación concluida</p>
                                     )}
                                 </div>
                             </div>
@@ -256,22 +314,22 @@ export default function Consignments() {
             {/* Modal de Despacho */}
             {showAdd && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-dark-100 rounded-2xl w-full max-w-lg border border-dark-300 shadow-2xl p-6">
+                    <div className="bg-white dark:bg-dark-100 rounded-2xl w-full max-w-lg border border-slate-200 dark:border-dark-300 shadow-2xl p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 <Truck className="w-5 h-5 text-primary" /> Crear Despacho
                             </h2>
-                            <button onClick={() => setShowAdd(false)} className="text-dark-500 hover:text-white transition-colors">
+                            <button onClick={() => setShowAdd(false)} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                                 <XCircle className="w-6 h-6" />
                             </button>
                         </div>
                         <form onSubmit={handleGenerate} className="space-y-4">
                             <div>
-                                <label className="block text-xs text-dark-500 uppercase tracking-wide mb-1">Librería / Cliente</label>
+                                <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Librería / Cliente</label>
                                 <input name="clientName" required type="text" className="input-field w-full" placeholder="Ej. Librería Antártica" />
                             </div>
                             <div>
-                                <label className="block text-xs text-dark-500 uppercase tracking-wide mb-1">Título a consignar</label>
+                                <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Título a consignar</label>
                                 <select name="bookId" required className="input-field w-full">
                                     <option value="">Selecciona un título...</option>
                                     {books.map(b => (
@@ -281,19 +339,19 @@ export default function Consignments() {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs text-dark-500 uppercase tracking-wide mb-1">Cantidad de Ejemplares</label>
+                                    <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Cantidad de Ejemplares</label>
                                     <input name="quantity" required type="number" min="1" className="input-field w-full" placeholder="0" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs text-dark-500 uppercase tracking-wide mb-1">Datos de Contacto (Opcional)</label>
+                                    <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Datos de Contacto (Opcional)</label>
                                     <input name="contactInfo" type="text" className="input-field w-full" placeholder="Email o teléfono" />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs text-dark-500 uppercase tracking-wide mb-1">Notas del despacho</label>
+                                <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Notas del despacho</label>
                                 <textarea name="notes" rows="2" className="input-field w-full" placeholder="Número de guía, observaciones, etc." />
                             </div>
-                            <div className="flex gap-3 pt-4 border-t border-dark-300">
+                            <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-dark-300">
                                 <button type="button" onClick={() => setShowAdd(false)} className="btn-secondary flex-1">Cancelar</button>
                                 <button type="submit" className="btn-primary flex-1">Registrar y Descontar Stock</button>
                             </div>
@@ -305,29 +363,29 @@ export default function Consignments() {
             {/* Modal de Acción (Liquidar / Devolver) */}
             {selectedAction && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-dark-100 rounded-2xl w-full max-w-sm border border-dark-300 shadow-2xl p-6">
+                    <div className="bg-white dark:bg-dark-100 rounded-2xl w-full max-w-sm border border-slate-200 dark:border-dark-300 shadow-2xl p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 {selectedAction.type === 'liquidate' ? (
-                                    <><DollarSign className="w-5 h-5 text-emerald-400" /> Liquidar Venta</>
+                                    <><DollarSign className="w-5 h-5 text-emerald-500 dark:text-emerald-400" /> Liquidar Venta</>
                                 ) : (
-                                    <><ArrowRightLeft className="w-5 h-5 text-orange-400" /> Registrar Devolución</>
+                                    <><ArrowRightLeft className="w-5 h-5 text-orange-500 dark:text-orange-400" /> Registrar Devolución</>
                                 )}
                             </h2>
-                            <button onClick={() => setSelectedAction(null)} className="text-dark-500 hover:text-white transition-colors">
+                            <button onClick={() => setSelectedAction(null)} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                                 <XCircle className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <div className="bg-dark-200/50 p-3 rounded-lg mb-4 text-sm">
-                            <p className="text-white font-medium">{selectedAction.item.bookTitle}</p>
-                            <p className="text-dark-400 text-xs mt-1">Librería: {selectedAction.item.clientName}</p>
-                            <p className="text-primary-300 text-xs mt-1 font-mono">Stock en local: {selectedAction.item.sentQuantity - selectedAction.item.soldQuantity - selectedAction.item.returnedQuantity} u.</p>
+                        <div className="bg-slate-50 dark:bg-dark-200/50 p-3 rounded-lg mb-4 text-sm">
+                            <p className="text-slate-900 dark:text-white font-medium">{selectedAction.item.bookTitle}</p>
+                            <p className="text-slate-500 dark:text-dark-400 text-xs mt-1">Librería: {selectedAction.item.clientName}</p>
+                            <p className="text-primary-600 dark:text-primary-300 text-xs mt-1 font-mono">Stock en local: {selectedAction.item.sentQuantity - selectedAction.item.soldQuantity - selectedAction.item.returnedQuantity} u.</p>
                         </div>
 
                         <form onSubmit={processAction} className="space-y-4">
                             <div>
-                                <label className="block text-xs text-dark-500 uppercase tracking-wide mb-1">Cantidad de Ejemplares</label>
+                                <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Cantidad de Ejemplares</label>
                                 <input
                                     name="quantity"
                                     required
@@ -335,14 +393,14 @@ export default function Consignments() {
                                     min="1"
                                     max={selectedAction.item.sentQuantity - selectedAction.item.soldQuantity - selectedAction.item.returnedQuantity}
                                     defaultValue={selectedAction.item.sentQuantity - selectedAction.item.soldQuantity - selectedAction.item.returnedQuantity}
-                                    className="input-field w-full text-lg font-mono font-bold"
+                                    className="input-field w-full text-lg font-mono font-bold text-slate-900 dark:text-white"
                                 />
                             </div>
 
                             {selectedAction.type === 'liquidate' && (
                                 <>
                                     <div>
-                                        <label className="block text-xs text-dark-500 uppercase tracking-wide mb-1">PVP Unitario Pactado</label>
+                                        <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">PVP Unitario Pactado</label>
                                         <input
                                             name="price"
                                             required
@@ -353,7 +411,7 @@ export default function Consignments() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs text-dark-500 uppercase tracking-wide mb-1">Doc. Ref. (Factura/Boleta)</label>
+                                        <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Doc. Ref. (Factura/Boleta)</label>
                                         <input name="documentRef" type="text" className="input-field w-full" placeholder="Nro Boleta..." />
                                     </div>
                                 </>
@@ -361,8 +419,8 @@ export default function Consignments() {
 
                             <div className="pt-2">
                                 <button type="submit" className={`w-full py-3 rounded-xl font-bold transition-all shadow-lg text-sm ${selectedAction.type === 'liquidate'
-                                        ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-400 hover:to-emerald-500 shadow-emerald-500/20'
-                                        : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-400 hover:to-orange-500 shadow-orange-500/20'
+                                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-400 hover:to-emerald-500 shadow-emerald-500/20'
+                                    : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-400 hover:to-orange-500 shadow-orange-500/20'
                                     }`}>
                                     Confirmar {selectedAction.type === 'liquidate' ? 'Liquidación' : 'Devolución'}
                                 </button>
