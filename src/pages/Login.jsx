@@ -55,12 +55,10 @@ export default function Login() {
                             <BookOpen className="w-10 h-10 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black text-white uppercase tracking-tighter">
-                                Editorial <span className="text-primary">Pro</span>
-                            </h1>
-                            <div className="mt-2 py-1 px-3 bg-primary text-white text-[10px] font-bold rounded-full inline-block animate-bounce">
-                                VERSIÓN: {new Date().toLocaleTimeString()} (V-LATEST)
-                            </div>
+                                <h1 className="text-4xl font-black text-white tracking-tighter">
+                                    Editorial <span className="text-primary">Pro</span>
+                                </h1>
+                                <p className="text-slate-400 mt-1 font-medium tracking-tight text-sm">Gestión editorial profesional</p>
                         </div>
                     </div>
                 </div>

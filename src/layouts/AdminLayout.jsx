@@ -160,7 +160,7 @@ export default function AdminLayout() {
                                     <div className="fixed inset-0 z-40" onClick={() => setSettingsOpen(false)} />
                                     <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-dark-100 rounded-2xl shadow-2xl border border-slate-200 dark:border-dark-300 z-50 overflow-hidden slide-up">
                                         <div className="p-4 border-b border-slate-100 dark:border-dark-300 bg-slate-50/50 dark:bg-dark-50/10">
-                                            <p className="text-xs font-bold text-slate-400 dark:text-dark-600 uppercase tracking-widest mb-3">{t('settings')} V-LATEST</p>
+                                            <p className="text-xs font-bold text-slate-400 dark:text-dark-600 uppercase tracking-widest mb-3">{t('settings')}</p>
 
                                             <div className="space-y-4">
                                                 {/* Theme Toggle */}
