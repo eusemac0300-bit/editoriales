@@ -30,43 +30,42 @@ export default function Marketing() {
         { title: '', copy: '', image: '' }
     ])
 
-    // Auto-generación al seleccionar libro (Click 1: Select -> Click 2: Auto Generate)
-    useEffect(() => {
-        if (selectedBookId) {
-            handleGenerate()
-        }
-    }, [selectedBookId, platform])
-
     const handleGenerate = () => {
-        if (!selectedBookId) return
+        if (!selectedBookId || !selectedBook) return
         setIsGenerating(true)
 
         // Simular generación por IA basada en datos reales
         setTimeout(() => {
+            // Re-chequeo por seguridad dentro del timeout
+            if (!selectedBook) {
+                setIsGenerating(false)
+                return
+            }
+
             const cover = selectedBook.cover || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800'
             
             if (platform === 'instagram_carousel') {
                 setCarouselSlides([
                     { 
-                        title: selectedBook.title, 
-                        copy: `¿Ya conoces la nueva obra de ${selectedBook.authorName}? ✨`, 
+                        title: selectedBook.title || 'Título', 
+                        copy: `¿Ya conoces la nueva obra de ${selectedBook.authorName || 'nuestro autor'}? ✨`, 
                         image: cover 
                     },
                     { 
                         title: 'Una historia única', 
-                        copy: selectedBook.synopsis?.substring(0, 100) + '...', 
+                        copy: selectedBook.synopsis?.substring(0, 100) + '...' || 'Descubre esta increíble historia...', 
                         image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=800' 
                     },
                     { 
                         title: 'Disponible ahora', 
-                        copy: `Consigue "${selectedBook.title}" en nuestra web o librerías favoritas. 🛒`, 
+                        copy: `Consigue "${selectedBook.title || 'el libro'}" en nuestra web o librerías favoritas. 🛒`, 
                         image: cover 
                     }
                 ])
             }
 
             setGeneratedContent({
-                copy: `📚 ¡GRAN LANZAMIENTO! \n\nEstamos muy emocionados de presentar "${selectedBook.title}" de ${selectedBook.authorName}. \n\n${selectedBook.synopsis?.substring(0, 150) || 'Una obra que redefine el género y nos invita a sumergirnos en una historia inolvidable.'}... \n\nYa disponible en todas las librerías. \n\n#EditorialPro #LibrosRecomendados #NovedadEditorial #LecturaRecomendada`,
+                copy: `📚 ¡GRAN LANZAMIENTO! \n\nEstamos muy emocionados de presentar "${selectedBook.title || 'novedad'}" de ${selectedBook.authorName || 'la editorial'}. \n\n${selectedBook.synopsis?.substring(0, 150) || 'Una obra que redefine el género y nos invita a sumergirnos en una historia inolvidable.'}... \n\nYa disponible en todas las librerías. \n\n#EditorialPro #LibrosRecomendados #NovedadEditorial #LecturaRecomendada`,
                 hashtags: `#${selectedBook.genre?.replace(/\s+/g, '') || 'Libros'} #bookstagram #${selectedBook.authorName?.replace(/\s+/g, '') || 'Autor'} #lectura`,
                 visualUrl: cover,
                 mockupType: platform
@@ -75,6 +74,13 @@ export default function Marketing() {
             setStep(3)
         }, 1500)
     }
+
+    // Auto-generación al seleccionar libro (Click 1: Select -> Click 2: Auto Generate)
+    useEffect(() => {
+        if (selectedBookId && selectedBook) {
+            handleGenerate()
+        }
+    }, [selectedBookId, platform, !!selectedBook])
 
     return (
         <div className="space-y-6 fade-in max-w-6xl mx-auto">
