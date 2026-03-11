@@ -17,29 +17,64 @@ export default function Marketing() {
 
     const selectedBook = data?.books?.find(b => b.id === selectedBookId)
 
+    const platforms = [
+        { id: 'instagram_post', icon: Instagram, label: 'Instagram Post', aspect: '1:1' },
+        { id: 'instagram_carousel', icon: Layout, label: 'Instagram Carousel', aspect: '1:1' },
+        { id: 'instagram_story', icon: Smartphone, label: 'Story / Reel', aspect: '9:16' },
+        { id: 'facebook_post', icon: Facebook, label: 'Facebook Post', aspect: '1.91:1' },
+    ]
+
+    const [carouselSlides, setCarouselSlides] = useState([
+        { title: '', copy: '', image: '' },
+        { title: '', copy: '', image: '' },
+        { title: '', copy: '', image: '' }
+    ])
+
+    // Auto-generación al seleccionar libro (Click 1: Select -> Click 2: Auto Generate)
+    useEffect(() => {
+        if (selectedBookId) {
+            handleGenerate()
+        }
+    }, [selectedBookId, platform])
+
     const handleGenerate = () => {
         if (!selectedBookId) return
         setIsGenerating(true)
 
-        // Simular generación por IA
+        // Simular generación por IA basada en datos reales
         setTimeout(() => {
+            const cover = selectedBook.cover || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800'
+            
+            if (platform === 'instagram_carousel') {
+                setCarouselSlides([
+                    { 
+                        title: selectedBook.title, 
+                        copy: `¿Ya conoces la nueva obra de ${selectedBook.authorName}? ✨`, 
+                        image: cover 
+                    },
+                    { 
+                        title: 'Una historia única', 
+                        copy: selectedBook.synopsis?.substring(0, 100) + '...', 
+                        image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=800' 
+                    },
+                    { 
+                        title: 'Disponible ahora', 
+                        copy: `Consigue "${selectedBook.title}" en nuestra web o librerías favoritas. 🛒`, 
+                        image: cover 
+                    }
+                ])
+            }
+
             setGeneratedContent({
-                copy: `📚 ¡GRAN LANZAMIENTO! \n\nEstamos muy emocionados de presentar "${selectedBook.title}" de ${selectedBook.authorName}. \n\nUna obra que redefine el género y nos invita a sumergirnos en una historia inolvidable. Ya disponible en todas las librerías. \n\n#EditorialPro #LibrosRecomendados #NovedadEditorial #LecturaRecomendada`,
-                hashtags: '#bookstagram #escritores #chileLee #literatura',
-                visualUrl: selectedBook.coverUrl || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800',
+                copy: `📚 ¡GRAN LANZAMIENTO! \n\nEstamos muy emocionados de presentar "${selectedBook.title}" de ${selectedBook.authorName}. \n\n${selectedBook.synopsis?.substring(0, 150) || 'Una obra que redefine el género y nos invita a sumergirnos en una historia inolvidable.'}... \n\nYa disponible en todas las librerías. \n\n#EditorialPro #LibrosRecomendados #NovedadEditorial #LecturaRecomendada`,
+                hashtags: `#${selectedBook.genre?.replace(/\s+/g, '') || 'Libros'} #bookstagram #${selectedBook.authorName?.replace(/\s+/g, '') || 'Autor'} #lectura`,
+                visualUrl: cover,
                 mockupType: platform
             })
             setIsGenerating(false)
             setStep(3)
-        }, 2000)
+        }, 1500)
     }
-
-    const platforms = [
-        { id: 'instagram_post', icon: Instagram, label: 'Instagram Post', aspect: '1:1' },
-        { id: 'instagram_story', icon: Smartphone, label: 'Story / Reel', aspect: '9:16' },
-        { id: 'facebook_post', icon: Facebook, label: 'Facebook Post', aspect: '1.91:1' },
-        { id: 'tiktok', icon: PlayCircle, label: 'TikTok Video', aspect: '9:16' },
-    ]
 
     return (
         <div className="space-y-6 fade-in max-w-6xl mx-auto">
@@ -166,24 +201,53 @@ export default function Marketing() {
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                                            <Layout className="w-4 h-4" /> Mockup Generado
+                                            <Layout className="w-4 h-4" /> 
+                                            {platform === 'instagram_carousel' ? 'Carrusel de 3 Slides' : 'Mockup Generado'}
                                         </h3>
                                         <span className="badge-emerald px-2 py-0.5 text-[10px] font-black uppercase">Optimizado para {platform.split('_')[0]}</span>
                                     </div>
-                                    <div className={`relative rounded-3xl bg-dark-500 shadow-2xl overflow-hidden border-4 border-white dark:border-dark-300 transition-all duration-500 ${platform.includes('story') ? 'aspect-[9/16] max-w-[320px] mx-auto' : 'aspect-square'}`}>
-                                        <img
-                                            src={generatedContent.visualUrl}
-                                            className="w-full h-full object-cover"
-                                            alt="Preview"
-                                        />
-                                        <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                                            <p className="text-white font-black text-lg drop-shadow-md leading-tight">{selectedBook.title}</p>
-                                            <p className="text-primary-300 font-bold text-xs uppercase tracking-widest mt-1">Novedad Editorial</p>
+
+                                    {platform === 'instagram_carousel' ? (
+                                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
+                                            {carouselSlides.map((slide, idx) => (
+                                                <div key={idx} className="min-w-[280px] snap-center space-y-3">
+                                                    <div className="aspect-square relative rounded-2xl bg-dark-500 shadow-xl overflow-hidden border-2 border-white dark:border-dark-300">
+                                                        <img src={slide.image} className="w-full h-full object-cover" alt={`Slide ${idx + 1}`} />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-5">
+                                                            <p className="text-white font-black text-sm uppercase tracking-wider mb-1">{slide.title}</p>
+                                                            <p className="text-white/80 text-[10px] font-medium leading-relaxed">{slide.copy}</p>
+                                                        </div>
+                                                        <div className="absolute top-3 right-3 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full">{idx + 1}/3</div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    </div>
-                                    <button className="btn-secondary w-full py-3 flex items-center justify-center gap-2 font-bold group">
+                                    ) : (
+                                        <div className={`relative rounded-3xl bg-dark-500 shadow-2xl overflow-hidden border-4 border-white dark:border-dark-300 transition-all duration-500 ${platform.includes('story') ? 'aspect-[9/16] max-w-[320px] mx-auto' : 'aspect-square'}`}>
+                                            <img
+                                                src={generatedContent.visualUrl}
+                                                className="w-full h-full object-cover"
+                                                alt="Preview"
+                                            />
+                                            {/* Overlays dinámicos según plataforma */}
+                                            <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
+                                                <p className="text-white font-black text-lg drop-shadow-md leading-tight mb-1">{selectedBook.title}</p>
+                                                <p className="text-primary-300 font-black text-[10px] uppercase tracking-[0.2em]">Novedad por {selectedBook.authorName}</p>
+                                            </div>
+                                            
+                                            {/* Marca de agua sutil */}
+                                            <div className="absolute top-4 left-4 flex items-center gap-1.5 opacity-40">
+                                                <div className="w-5 h-5 rounded-lg bg-primary flex items-center justify-center">
+                                                    <BookOpen className="w-3 h-3 text-white" />
+                                                </div>
+                                                <span className="text-[8px] font-bold text-white uppercase tracking-widest">EditorialPro</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <button className="btn-primary w-full py-3 flex items-center justify-center gap-2 font-bold group bg-emerald-600 border-emerald-500 hover:bg-emerald-700">
                                         <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-                                        Descargar Imagen (Ultra-HD)
+                                        Descargar Pack de Medios (ZIP)
                                     </button>
                                 </div>
 
@@ -192,41 +256,50 @@ export default function Marketing() {
                                     <div>
                                         <div className="flex items-center justify-between mb-4">
                                             <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                                                <Type className="w-4 h-4" /> Copy de la publicación
+                                                <Type className="w-4 h-4" /> Copy y Estrategia
                                             </h3>
-                                            <button className="text-primary hover:text-primary-600 transition-colors">
-                                                <RefreshCw className="w-4 h-4" />
+                                            <button 
+                                                onClick={handleGenerate}
+                                                className="text-primary hover:text-primary-600 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
+                                            >
+                                                <RefreshCw className="w-3 h-3" /> Regenerar
                                             </button>
                                         </div>
                                         <div className="glass-card p-5 bg-white dark:bg-dark-100 border border-slate-200 dark:border-dark-300 rounded-2xl">
-                                            <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed italic">
-                                                "{generatedContent.copy}"
+                                            <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                                                {generatedContent.copy}
                                             </p>
                                             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-dark-700 flex flex-wrap gap-2">
                                                 {generatedContent.hashtags.split(' ').map((h, i) => (
-                                                    <span key={i} className="text-[10px] font-bold text-primary dark:text-primary-400">{h}</span>
+                                                    <span key={i} className="px-2 py-1 rounded-lg bg-primary/5 text-[10px] font-bold text-primary border border-primary/10">{h}</span>
                                                 ))}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">Consejo Estratégico AI</h4>
+                                    <div className="p-5 rounded-2xl bg-primary/5 border border-primary/20 relative overflow-hidden">
+                                        <div className="absolute -right-4 -bottom-4 opacity-10">
+                                            <Sparkles className="w-20 h-20 text-primary" />
                                         </div>
-                                        <p className="text-xs text-slate-600 dark:text-dark-600 leading-relaxed font-medium">
-                                            Publica este contenido en un horario de alta interacción (entre 18:00 y 20:00 hrs).
-                                            Utiliza una música en tendencia si lo subes como Reel o TikTok para duplicar el alcance.
-                                        </p>
+                                        <div className="relative z-10">
+                                            <div className="flex items-center gap-3 mb-2 text-primary font-black text-xs uppercase tracking-widest">
+                                                <Sparkles className="w-4 h-4" /> Tip de Marketing
+                                            </div>
+                                            <p className="text-xs text-slate-600 dark:text-dark-600 leading-relaxed font-medium">
+                                                {platform === 'instagram_carousel' 
+                                                    ? "Los carruseles tienen 3 veces más interacción que los posts estáticos. Asegúrate de que la primera imagen sea impactante."
+                                                    : "Los posts con fotos de personas leyendo o bibliotecas reales suelen convertir mejor que los mockups simples."
+                                                }
+                                            </p>
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
-                                        <button className="btn-secondary py-3 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-tighter shadow-sm border border-slate-200">
-                                            <MessageSquare className="w-4 h-4" /> Generar Otro Copy
+                                        <button className="btn-secondary py-3 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-sm border border-slate-200">
+                                            <Share2 className="w-4 h-4" /> Compartir Directo
                                         </button>
-                                        <button className="btn-secondary py-3 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-tighter shadow-sm border border-slate-200">
-                                            <Palette className="w-4 h-4" /> Cambiar Diseño
+                                        <button className="btn-secondary py-3 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-sm border border-slate-200">
+                                            <Palette className="w-4 h-4" /> Estilo: Elegante
                                         </button>
                                     </div>
                                 </div>
