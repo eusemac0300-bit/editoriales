@@ -1,19 +1,25 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import {
     Instagram, Smartphone, Share2, Sparkles, Download,
     ArrowRight, Image as ImageIcon, MessageSquare,
     CheckCircle2, RefreshCw, Facebook, PlayCircle,
-    Layout, Type, Palette
+    Layout, Type, Palette, BookOpen, Layers
 } from 'lucide-react'
+import { toPng } from 'html-to-image'
+import JSZip from 'jszip'
 
 export default function Marketing() {
-    const { data, t } = useAuth()
+    const { data } = useAuth()
     const [selectedBookId, setSelectedBookId] = useState('')
     const [platform, setPlatform] = useState('instagram_post')
     const [isGenerating, setIsGenerating] = useState(false)
     const [generatedContent, setGeneratedContent] = useState(null)
-    const [step, setStep] = useState(1) // 1: Select, 2: Config, 3: Result
+    const [currentStyle, setCurrentStyle] = useState('Moderno')
+    
+    // Refs para captura de imagen
+    const singlePreviewRef = useRef(null)
+    const carouselRefs = useRef([])
 
     const selectedBook = data?.books?.find(b => b.id === selectedBookId)
 
@@ -23,6 +29,8 @@ export default function Marketing() {
         { id: 'instagram_story', icon: Smartphone, label: 'Story / Reel', aspect: '9:16' },
         { id: 'facebook_post', icon: Facebook, label: 'Facebook Post', aspect: '1.91:1' },
     ]
+
+    const stylesAvailable = ['Moderno', 'Clásico', 'Elegante', 'Negrita']
 
     const [carouselSlides, setCarouselSlides] = useState([
         { title: '', copy: '', image: '' },
@@ -34,9 +42,7 @@ export default function Marketing() {
         if (!selectedBookId || !selectedBook) return
         setIsGenerating(true)
 
-        // Simular generación por IA basada en datos reales
         setTimeout(() => {
-            // Re-chequeo por seguridad dentro del timeout
             if (!selectedBook) {
                 setIsGenerating(false)
                 return
@@ -48,98 +54,158 @@ export default function Marketing() {
                 setCarouselSlides([
                     { 
                         title: selectedBook.title || 'Título', 
-                        copy: `¿Ya conoces la nueva obra de ${selectedBook.authorName || 'nuestro autor'}? ✨`, 
+                        copy: `Descubre la nueva obra de ${selectedBook.authorName || 'nuestro autor'} ✨`, 
                         image: cover 
                     },
                     { 
                         title: 'Una historia única', 
-                        copy: selectedBook.synopsis?.substring(0, 100) + '...' || 'Descubre esta increíble historia...', 
+                        copy: selectedBook.synopsis?.substring(0, 100) + '...' || 'Sumérgete en una narrativa inolvidable...', 
                         image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=800' 
                     },
                     { 
-                        title: 'Disponible ahora', 
-                        copy: `Consigue "${selectedBook.title || 'el libro'}" en nuestra web o librerías favoritas. 🛒`, 
+                        title: 'Ya disponible', 
+                        copy: `Consigue tu ejemplar en nuestra web o librerías favoritas. 🛒`, 
                         image: cover 
                     }
                 ])
             }
 
             setGeneratedContent({
-                copy: `📚 ¡GRAN LANZAMIENTO! \n\nEstamos muy emocionados de presentar "${selectedBook.title || 'novedad'}" de ${selectedBook.authorName || 'la editorial'}. \n\n${selectedBook.synopsis?.substring(0, 150) || 'Una obra que redefine el género y nos invita a sumergirnos en una historia inolvidable.'}... \n\nYa disponible en todas las librerías. \n\n#EditorialPro #LibrosRecomendados #NovedadEditorial #LecturaRecomendada`,
+                copy: `📚 ¡NUEVO LANZAMIENTO! \n\nEstamos muy emocionados de presentar "${selectedBook.title || 'novedad'}" de ${selectedBook.authorName || 'la editorial'}. \n\n${selectedBook.synopsis?.substring(0, 150) || 'Una obra que redefine el género lector.'}... \n\nDisponible ya en todos los puntos de venta. \n\n#EditorialPro #LibrosRecomendados #NovedadEditorial #LecturaRecomendada`,
                 hashtags: `#${selectedBook.genre?.replace(/\s+/g, '') || 'Libros'} #bookstagram #${selectedBook.authorName?.replace(/\s+/g, '') || 'Autor'} #lectura`,
                 visualUrl: cover,
                 mockupType: platform
             })
             setIsGenerating(false)
-            setStep(3)
         }, 1500)
     }
 
-    // Auto-generación al seleccionar libro (Click 1: Select -> Click 2: Auto Generate)
     useEffect(() => {
         if (selectedBookId && selectedBook) {
             handleGenerate()
         }
-    }, [selectedBookId, platform, !!selectedBook])
+    }, [selectedBookId, platform])
+
+    // Acción de descarga individual
+    const downloadImage = async (ref, filename) => {
+        if (!ref.current) return
+        try {
+            const dataUrl = await toPng(ref.current, { quality: 0.95, pixelRatio: 2 })
+            const link = document.createElement('a')
+            link.download = filename
+            link.href = dataUrl
+            link.click()
+        } catch (err) {
+            console.error('Error descargando imagen:', err)
+        }
+    }
+
+    // Acción de descarga masiva (ZIP)
+    const downloadZip = async () => {
+        const zip = new JSZip()
+        const mediaFolder = zip.folder("marketing_pack")
+        
+        try {
+            if (platform === 'instagram_carousel') {
+                for (let i = 0; i < carouselSlides.length; i++) {
+                    const el = carouselRefs.current[i]
+                    if (el) {
+                        const dataUrl = await toPng(el, { quality: 0.95, pixelRatio: 2 })
+                        const base64Data = dataUrl.split(',')[1]
+                        mediaFolder.file(`slide_${i + 1}.png`, base64Data, { base64: true })
+                    }
+                }
+            } else if (singlePreviewRef.current) {
+                const dataUrl = await toPng(singlePreviewRef.current, { quality: 0.95, pixelRatio: 2 })
+                const base64Data = dataUrl.split(',')[1]
+                mediaFolder.file(`post_${selectedBook.title}.png`, base64Data, { base64: true })
+            }
+
+            const content = await zip.generateAsync({ type: "blob" })
+            const link = document.createElement('a')
+            link.href = URL.createObjectURL(content)
+            link.download = `Media_Pack_${selectedBook.title.replace(/\s+/g, '_')}.zip`
+            link.click()
+        } catch (err) {
+            console.error('Error creando ZIP:', err)
+        }
+    }
+
+    const getStyleClasses = () => {
+        switch (currentStyle) {
+            case 'Elegante': return 'font-serif bg-slate-50 text-slate-900 border-gold'
+            case 'Negrita': return 'font-black bg-black text-white'
+            case 'Clásico': return 'font-mono bg-white text-dark-900 border-dark-300'
+            default: return 'font-sans bg-dark-500 text-white border-white'
+        }
+    }
 
     return (
-        <div className="space-y-6 fade-in max-w-6xl mx-auto">
-            {/* Header con estilo IA */}
+        <div className="space-y-6 fade-in max-w-6xl mx-auto pb-20">
             <div className="relative p-8 rounded-3xl overflow-hidden glass-card border border-primary/20 bg-gradient-to-br from-primary/10 via-transparent to-emerald-500/10">
                 <div className="absolute top-0 right-0 p-8 opacity-20">
                     <Sparkles className="w-32 h-32 text-primary animate-pulse" />
                 </div>
-                <div className="relative z-10">
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                <div className="relative z-10 text-center md:text-left">
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center justify-center md:justify-start gap-3">
                         <Sparkles className="w-8 h-8 text-primary" />
-                        Generador de Marketing AI
+                        Marketing Maker AI
                     </h1>
                     <p className="text-slate-600 dark:text-dark-600 mt-2 max-w-2xl font-medium">
-                        Transforma los datos de tus libros en contenido profesional de redes sociales en segundos.
-                        Nuestra IA diseña el post perfecto para cada plataforma.
+                        Crea campañas completas en 2 clics. Genera carruseles, posts y copys profesionales listos para publicar.
                     </p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                {/* Panel de Control Izquierdo */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Control Panel */}
                 <div className="lg:col-span-4 space-y-6">
-                    <div className="glass-card p-6 shadow-sm border border-slate-200 dark:border-dark-300">
+                    <div className="glass-card p-6 border border-slate-200 dark:border-dark-300">
                         <div className="space-y-6">
-                            {/* PASO 1: Selección de Libro */}
                             <div>
-                                <label className="text-sm font-bold text-slate-800 dark:text-white mb-3 block flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center font-black">1</span>
-                                    Selecciona el Libro
-                                </label>
+                                <label className="text-xs font-black uppercase text-slate-400 mb-3 block">1. Libro Objetivo</label>
                                 <select
                                     value={selectedBookId}
                                     onChange={(e) => setSelectedBookId(e.target.value)}
-                                    className="input-field text-sm font-semibold"
+                                    className="input-field text-sm font-bold bg-slate-50 dark:bg-dark-200"
                                 >
-                                    <option value="">-- Elige un Título --</option>
+                                    <option value="">-- Seleccionar Título --</option>
                                     {data?.books?.map(b => (
                                         <option key={b.id} value={b.id}>{b.title}</option>
                                     ))}
                                 </select>
                             </div>
 
-                            {/* PASO 2: Plataforma */}
                             <div>
-                                <label className="text-sm font-bold text-slate-800 dark:text-white mb-3 block flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center font-black">2</span>
-                                    Elige Formato
-                                </label>
+                                <label className="text-xs font-black uppercase text-slate-400 mb-3 block">2. Formato Redes</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {platforms.map(p => (
                                         <button
                                             key={p.id}
                                             onClick={() => setPlatform(p.id)}
-                                            className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${platform === p.id ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'border-slate-200 dark:border-dark-300 hover:border-primary/50 text-slate-500 dark:text-dark-500'}`}
+                                            className={`p-3 rounded-2xl border flex flex-col items-center gap-2 transition-all duration-300 ${platform === p.id 
+                                                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105' 
+                                                : 'bg-white dark:bg-dark-100 border-slate-200 dark:border-dark-300 text-slate-400 hover:border-primary/50'}`}
                                         >
                                             <p.icon className="w-5 h-5" />
-                                            <span className="text-[10px] font-bold uppercase tracking-tight">{p.label}</span>
+                                            <span className="text-[9px] font-black uppercase tracking-tighter">{p.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-black uppercase text-slate-400 mb-3 block">3. Estilo Visual</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {stylesAvailable.map(s => (
+                                        <button
+                                            key={s}
+                                            onClick={() => setCurrentStyle(s)}
+                                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all ${currentStyle === s 
+                                                ? 'bg-dark-900 dark:bg-white text-white dark:text-dark-900 border-transparent shadow-md' 
+                                                : 'bg-transparent border-slate-200 dark:border-dark-300 text-slate-500 hover:border-primary'}`}
+                                        >
+                                            {s}
                                         </button>
                                     ))}
                                 </div>
@@ -148,165 +214,137 @@ export default function Marketing() {
                             <button
                                 onClick={handleGenerate}
                                 disabled={!selectedBookId || isGenerating}
-                                className="btn-primary w-full py-4 text-base font-bold flex items-center justify-center gap-3 shadow-xl shadow-primary/30 relative overflow-hidden group"
+                                className="btn-primary w-full py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl relative overflow-hidden group active:scale-95 transition-all"
                             >
-                                {isGenerating ? (
-                                    <>
-                                        <RefreshCw className="w-5 h-5 animate-spin" />
-                                        <span>Generando Magia AI...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles className="w-5 h-5 group-hover:scale-125 transition-transform" />
-                                        <span>Crear Publicación</span>
-                                    </>
-                                )}
+                                {isGenerating ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />}
+                                {isGenerating ? 'IA Pensando...' : 'Regenerar Contenido'}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Área de Previsualización */}
+                {/* Preview Area */}
                 <div className="lg:col-span-8">
                     {!generatedContent && !isGenerating ? (
-                        <div className="h-full min-h-[500px] border-2 border-dashed border-slate-300 dark:border-dark-400 rounded-3xl flex flex-col items-center justify-center p-12 text-center bg-slate-50/50 dark:bg-dark-50/10">
-                            <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-dark-200 flex items-center justify-center text-slate-400 dark:text-dark-500 mb-6">
-                                <ImageIcon className="w-10 h-10" />
-                            </div>
-                            <h3 className="text-xl font-bold dark:text-white mb-2">Previsualización de Contenido</h3>
-                            <p className="text-slate-500 dark:text-dark-600 max-w-sm">
-                                Selecciona un libro y haz clic en generar para ver cómo lucirá tu próxima publicación.
-                            </p>
+                        <div className="h-full min-h-[500px] border-4 border-dashed border-slate-100 dark:border-dark-400 rounded-[3rem] flex flex-col items-center justify-center p-12 text-center bg-slate-50/30">
+                            <Layers className="w-20 h-20 text-slate-200 dark:text-dark-500 mb-6" />
+                            <h3 className="text-2xl font-black dark:text-white mb-2 uppercase tracking-tighter">Sala de Diseño</h3>
+                            <p className="text-slate-500 font-medium max-w-xs">Selecciona un libro y mira la magia publicitaria en tiempo real.</p>
                         </div>
                     ) : isGenerating ? (
-                        <div className="h-full min-h-[500px] glass-card rounded-3xl flex flex-col items-center justify-center p-12 text-center overflow-hidden relative">
-                            <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent animate-pulse" />
-                            <div className="relative z-10 space-y-8">
-                                <div className="flex gap-4 items-center justify-center">
-                                    <div className="w-4 h-4 rounded-full bg-primary animate-bounce delay-75" />
-                                    <div className="w-4 h-4 rounded-full bg-emerald-500 animate-bounce delay-150" />
-                                    <div className="w-4 h-4 rounded-full bg-primary animate-bounce delay-300" />
-                                </div>
-                                <div>
-                                    <h4 className="text-2xl font-black text-slate-900 dark:text-white">Analizando catálogo...</h4>
-                                    <p className="text-slate-500 font-medium">Diseñando mockups profesionales para {selectedBook?.title}</p>
-                                </div>
-                                <div className="max-w-xs mx-auto space-y-2">
-                                    <div className="h-1.5 w-full bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden">
-                                        <div className="h-full bg-primary animate-progress-fast" />
-                                    </div>
-                                    <p className="text-[10px] uppercase font-black text-primary tracking-widest">IA Engine Active</p>
+                        <div className="h-full min-h-[500px] bg-slate-900 rounded-[3rem] flex flex-col items-center justify-center p-12 overflow-hidden relative border-8 border-slate-800">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent animate-pulse" />
+                            <div className="relative z-10 space-y-8 flex flex-col items-center">
+                                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                                <div className="text-center">
+                                    <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Diseñando para ti...</h4>
+                                    <p className="text-primary-300 font-bold text-xs uppercase tracking-widest mt-2">{selectedBook?.title}</p>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-6 slide-up">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                                {/* Visual Preview */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                                            <Layout className="w-4 h-4" /> 
-                                            {platform === 'instagram_carousel' ? 'Carrusel de 3 Slides' : 'Mockup Generado'}
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                                {/* Visual Mockup */}
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                            <ImageIcon className="w-4 h-4" /> Preview Final
                                         </h3>
-                                        <span className="badge-emerald px-2 py-0.5 text-[10px] font-black uppercase">Optimizado para {platform.split('_')[0]}</span>
+                                        <span className="bg-emerald-500/10 text-emerald-600 text-[9px] font-black px-2 py-1 rounded-full uppercase">Listo para Redes</span>
                                     </div>
 
                                     {platform === 'instagram_carousel' ? (
-                                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
-                                            {carouselSlides.map((slide, idx) => (
-                                                <div key={idx} className="min-w-[280px] snap-center space-y-3">
-                                                    <div className="aspect-square relative rounded-2xl bg-dark-500 shadow-xl overflow-hidden border-2 border-white dark:border-dark-300">
-                                                        <img src={slide.image} className="w-full h-full object-cover" alt={`Slide ${idx + 1}`} />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-5">
-                                                            <p className="text-white font-black text-sm uppercase tracking-wider mb-1">{slide.title}</p>
-                                                            <p className="text-white/80 text-[10px] font-medium leading-relaxed">{slide.copy}</p>
+                                        <div className="space-y-4">
+                                            <div className="flex gap-4 overflow-x-auto pb-6 snap-x hide-scrollbar">
+                                                {carouselSlides.map((slide, idx) => (
+                                                    <div key={idx} className="min-w-[300px] snap-center">
+                                                        <div 
+                                                            ref={el => carouselRefs.current[idx] = el}
+                                                            className={`aspect-square relative rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 ${getStyleClasses()} border-4`}
+                                                        >
+                                                            <img src={slide.image} className="w-full h-full object-cover opacity-90" alt="Slide" />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6">
+                                                                <p className="text-white font-black text-lg uppercase tracking-tight mb-2 leading-tight">{slide.title}</p>
+                                                                <p className="text-white/80 text-xs font-medium leading-relaxed max-w-[90%]">{slide.copy}</p>
+                                                            </div>
+                                                            <div className="absolute top-4 right-4 bg-primary/90 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg">LÁMINA {idx + 1}</div>
                                                         </div>
-                                                        <div className="absolute top-3 right-3 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full">{idx + 1}/3</div>
+                                                        <button 
+                                                            onClick={() => downloadImage({ current: carouselRefs.current[idx] }, `Slide_${idx+1}_${selectedBook.title}.png`)}
+                                                            className="w-full mt-3 py-2 text-[10px] font-bold text-slate-500 hover:text-primary transition-colors flex items-center justify-center gap-2"
+                                                        >
+                                                            <Download className="w-3 h-3" /> Descargar esta lámina
+                                                        </button>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className={`relative rounded-3xl bg-dark-500 shadow-2xl overflow-hidden border-4 border-white dark:border-dark-300 transition-all duration-500 ${platform.includes('story') ? 'aspect-[9/16] max-w-[320px] mx-auto' : 'aspect-square'}`}>
-                                            <img
-                                                src={generatedContent.visualUrl}
-                                                className="w-full h-full object-cover"
-                                                alt="Preview"
-                                            />
-                                            {/* Overlays dinámicos según plataforma */}
-                                            <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
-                                                <p className="text-white font-black text-lg drop-shadow-md leading-tight mb-1">{selectedBook.title}</p>
-                                                <p className="text-primary-300 font-black text-[10px] uppercase tracking-[0.2em]">Novedad por {selectedBook.authorName}</p>
+                                                ))}
                                             </div>
-                                            
-                                            {/* Marca de agua sutil */}
-                                            <div className="absolute top-4 left-4 flex items-center gap-1.5 opacity-40">
-                                                <div className="w-5 h-5 rounded-lg bg-primary flex items-center justify-center">
-                                                    <BookOpen className="w-3 h-3 text-white" />
-                                                </div>
-                                                <span className="text-[8px] font-bold text-white uppercase tracking-widest">EditorialPro</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <button className="btn-primary w-full py-3 flex items-center justify-center gap-2 font-bold group bg-emerald-600 border-emerald-500 hover:bg-emerald-700">
-                                        <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-                                        Descargar Pack de Medios (ZIP)
-                                    </button>
-                                </div>
-
-                                {/* Texts and Actions */}
-                                <div className="space-y-6">
-                                    <div>
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                                                <Type className="w-4 h-4" /> Copy y Estrategia
-                                            </h3>
-                                            <button 
-                                                onClick={handleGenerate}
-                                                className="text-primary hover:text-primary-600 transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
-                                            >
-                                                <RefreshCw className="w-3 h-3" /> Regenerar
+                                            <button onClick={downloadZip} className="btn-primary w-full py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 text-xs font-black uppercase tracking-widest">
+                                                <Layers className="w-4 h-4" /> Descargar Carrusel Completo (ZIP)
                                             </button>
                                         </div>
-                                        <div className="glass-card p-5 bg-white dark:bg-dark-100 border border-slate-200 dark:border-dark-300 rounded-2xl">
-                                            <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                                    ) : (
+                                        <div className="space-y-6">
+                                            <div 
+                                                ref={singlePreviewRef}
+                                                className={`relative rounded-[3rem] shadow-2xl overflow-hidden transition-all duration-500 border-8 ${getStyleClasses()} ${platform.includes('story') ? 'aspect-[9/16] max-w-[340px] mx-auto' : 'aspect-square'}`}
+                                            >
+                                                <img src={generatedContent.visualUrl} className="w-full h-full object-cover" alt="Post" />
+                                                <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black via-black/40 to-transparent">
+                                                    <p className="text-white font-black text-2xl drop-shadow-2xl leading-tight mb-2">{selectedBook.title}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-0.5 w-6 bg-primary" />
+                                                        <p className="text-primary-300 font-black text-[10px] uppercase tracking-[0.3em]">Nueva Obra Maestro</p>
+                                                    </div>
+                                                </div>
+                                                <div className="absolute top-6 left-6 flex items-center gap-2 bg-black/30 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/10">
+                                                    <BookOpen className="w-4 h-4 text-primary" />
+                                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">EditorialPro</span>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => downloadImage(singlePreviewRef, `Marketing_${selectedBook.title}.png`)} className="btn-primary w-full py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl text-xs font-black uppercase tracking-widest">
+                                                <Download className="w-4 h-4" /> Bajar en Alta Resolución (PNG)
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Copy and Stats */}
+                                <div className="space-y-8">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                                <Type className="w-4 h-4" /> Copy Social Media
+                                            </h3>
+                                            <button onClick={() => { navigator.clipboard.writeText(generatedContent.copy); alert('Copiado!') }} className="text-primary text-[10px] font-black uppercase hover:underline">Copiar Todo</button>
+                                        </div>
+                                        <div className="glass-card p-6 bg-white dark:bg-dark-100 border border-slate-200 dark:border-dark-300 rounded-[2rem] shadow-sm">
+                                            <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed font-medium">
                                                 {generatedContent.copy}
                                             </p>
-                                            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-dark-700 flex flex-wrap gap-2">
+                                            <div className="mt-6 pt-6 border-t border-slate-100 dark:border-dark-700 flex flex-wrap gap-2">
                                                 {generatedContent.hashtags.split(' ').map((h, i) => (
-                                                    <span key={i} className="px-2 py-1 rounded-lg bg-primary/5 text-[10px] font-bold text-primary border border-primary/10">{h}</span>
+                                                    <span key={i} className="px-3 py-1.5 rounded-xl bg-primary/5 text-[10px] font-black text-primary border border-primary/10">
+                                                        {h}
+                                                    </span>
                                                 ))}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="p-5 rounded-2xl bg-primary/5 border border-primary/20 relative overflow-hidden">
-                                        <div className="absolute -right-4 -bottom-4 opacity-10">
-                                            <Sparkles className="w-20 h-20 text-primary" />
-                                        </div>
+                                    <div className="p-6 rounded-[2rem] bg-indigo-500 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
+                                        <Sparkles className="absolute -right-6 -bottom-6 w-32 h-32 opacity-20 rotate-12 group-hover:scale-110 transition-transform" />
                                         <div className="relative z-10">
-                                            <div className="flex items-center gap-3 mb-2 text-primary font-black text-xs uppercase tracking-widest">
-                                                <Sparkles className="w-4 h-4" /> Tip de Marketing
-                                            </div>
-                                            <p className="text-xs text-slate-600 dark:text-dark-600 leading-relaxed font-medium">
+                                            <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] mb-3">
+                                                <Palette className="w-4 h-4" /> Tip Pro de Marketing
+                                            </h4>
+                                            <p className="text-xs font-bold leading-relaxed opacity-95">
                                                 {platform === 'instagram_carousel' 
-                                                    ? "Los carruseles tienen 3 veces más interacción que los posts estáticos. Asegúrate de que la primera imagen sea impactante."
-                                                    : "Los posts con fotos de personas leyendo o bibliotecas reales suelen convertir mejor que los mockups simples."
+                                                    ? 'Los carruseles generan curiosidad. Prueba el estilo "Negrita" para mayor contraste y sube el CTR de tus anuncios.'
+                                                    : 'Usa este contenido en "Historias" con el sticker de enlace a tu preventa para maximizar las conversiones inmediatas.'
                                                 }
                                             </p>
                                         </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button className="btn-secondary py-3 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-sm border border-slate-200">
-                                            <Share2 className="w-4 h-4" /> Compartir Directo
-                                        </button>
-                                        <button className="btn-secondary py-3 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-sm border border-slate-200">
-                                            <Palette className="w-4 h-4" /> Estilo: Elegante
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -314,26 +352,15 @@ export default function Marketing() {
                     )}
                 </div>
             </div>
-
-            {/* Historia de Generaciones */}
-            <div className="pt-10">
-                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                    <Share2 className="w-5 h-5 text-slate-400" /> Historial de Campañas
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="group relative aspect-square rounded-2xl bg-dark-500 overflow-hidden cursor-pointer border-2 border-transparent hover:border-primary transition-all">
-                            <img src={`https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200&sig=${i}`} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt="Historial" />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Download className="w-6 h-6 text-white" />
-                            </div>
-                        </div>
+            
+            {/* Global History - Visual Strip */}
+            <div className="mt-12 opacity-50 hover:opacity-100 transition-opacity">
+                 <h2 className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mb-6 text-center">Tus últimas creaciones</h2>
+                 <div className="flex gap-4 justify-center overflow-hidden grayscale hover:grayscale-0 transition-all">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="w-20 h-20 rounded-2xl bg-dark-500 border-2 border-slate-800 flex-shrink-0" />
                     ))}
-                    <div className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 dark:border-dark-400 flex flex-col items-center justify-center text-slate-400 hover:border-primary hover:text-primary transition-all cursor-pointer">
-                        <PlusIcon className="w-6 h-6 mb-2" />
-                        <span className="text-[10px] font-black uppercase">Nueva Capaña</span>
-                    </div>
-                </div>
+                 </div>
             </div>
         </div>
     )
