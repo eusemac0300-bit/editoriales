@@ -51,13 +51,16 @@ export default function Login() {
             <div className="w-full max-w-md relative z-10 fade-in">
                 {/* Logo */}
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-[2rem] bg-gradient-to-br from-primary to-primary-700 shadow-2xl shadow-primary/40 mb-6 ring-4 ring-white/5 hover:scale-110 hover:rotate-2 transition-all duration-300">
-                        <BookOpen className="w-10 h-10 text-white" />
+                    <div className="flex flex-col items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center shadow-xl shadow-primary/20 rotate-3 animate-pulse">
+                        <BookOpen className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="text-4xl font-black text-white tracking-tighter">Editorial <span className="text-primary">Pro</span></h1>
-                    <p className="text-slate-400 mt-2 font-medium tracking-tight">Gestión editorial profesional e inteligente</p>
+                    <div className="text-center">
+                        <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Editorial Pro</h1>
+                        <p className="text-[10px] text-primary font-bold tracking-[0.2em] uppercase mt-1">Sincronizado: {new Date().toLocaleTimeString()} (V-LATEST)</p>
+                    </div>
                 </div>
-
+                </div>
                 {/* Login card */}
                 <div className="glass-card bg-slate-900/60 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10">
                     <h2 className="text-xl font-black text-white mb-8 tracking-tight">Iniciar Sesión</h2>
