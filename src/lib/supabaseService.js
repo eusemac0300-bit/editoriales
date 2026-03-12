@@ -334,9 +334,10 @@ export async function loadAllData(tenantId) {
             comments: transformedComments,
             alerts: transformedAlerts,
             documents: transformedDocuments,
-            quotes: transformedQuotes,
-            suppliers: suppliers || [],
-            purchaseOrders: transformedPurchaseOrders
+            // If quotesErr is present, we return null so the AuthContext can decide to keep current memory data
+            quotes: quotesErr ? null : transformedQuotes,
+            suppliers: suppliersErr ? null : (suppliers || []),
+            purchaseOrders: poErr ? null : transformedPurchaseOrders
         }
     } catch (err) {
         console.error('Failed to load data from Supabase:', err)

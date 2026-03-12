@@ -40,8 +40,18 @@ export function AuthProvider({ children }) {
         try {
             const supabaseData = await db.loadAllData(tid)
             if (supabaseData) {
-                console.log('🔄 Data refreshed. Quotes count:', supabaseData.quotes?.length)
-                setData(supabaseData)
+                // Protect lists: if a list comes back as null (error in fetch), we keep the current one
+                setData(prev => ({
+                    ...supabaseData,
+                    quotes: supabaseData.quotes === null ? prev.quotes : supabaseData.quotes,
+                    suppliers: supabaseData.suppliers === null ? prev.suppliers : supabaseData.suppliers,
+                    purchaseOrders: supabaseData.purchaseOrders === null ? prev.purchaseOrders : supabaseData.purchaseOrders,
+                    finances: {
+                        ...supabaseData.finances,
+                        sales: supabaseData.finances.sales === null ? prev.finances.sales : supabaseData.finances.sales,
+                        expenses: supabaseData.finances.expenses === null ? prev.finances.expenses : supabaseData.finances.expenses
+                    }
+                }))
                 setSupabaseConnected(true)
                 console.log('🔄 Realtime: data refreshed for tenant', tid)
             }

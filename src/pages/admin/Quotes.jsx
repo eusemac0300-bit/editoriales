@@ -508,11 +508,11 @@ export default function Quotes() {
 
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-dark-300">
                                         <div>
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Imprenta</p>
+                                            <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">Imprenta</p>
                                             <p className="text-xs text-slate-900 dark:text-white font-medium">{quote.provider}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                                            <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">
                                                 {quote.approvedAmount ? 'Tiraje Aprobado' : 'Tirajes Propios'}
                                             </p>
                                             <p className="text-xs text-slate-900 dark:text-white font-mono">
@@ -523,7 +523,7 @@ export default function Quotes() {
                                             </p>
                                         </div>
                                         <div className="col-span-2">
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">Costo de Producción</p>
+                                            <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider mb-1">Costo de Producción</p>
                                             <div className="bg-slate-50 dark:bg-dark-200/50 p-2 rounded border border-slate-200 dark:border-dark-300 grid grid-cols-3 gap-2">
                                                 <div>
                                                     <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-medium">{t('neto')}</p>
@@ -540,7 +540,7 @@ export default function Quotes() {
                                             </div>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Fecha Entrega</p>
+                                            <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">Fecha Entrega</p>
                                             <p className="text-xs text-slate-900 dark:text-white font-medium">{quote.deliveryDate ? new Date(quote.deliveryDate).toLocaleDateString() : 'Pendiente'}</p>
                                         </div>
                                     </div>
@@ -554,7 +554,7 @@ export default function Quotes() {
                                             {quote.bookPagesColor > 0 && <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Págs(Color):</strong> {quote.bookPagesColor}</span>}
                                             <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Tap/Sol:</strong> {quote.bookCoverType} / {quote.bookFlaps}</span>
                                             <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Encuadernación:</strong> {quote.bindingType}</span>
-                                            {quote.extraFinishes && <span className="w-full mt-1 text-primary-400"><strong className="text-slate-400 dark:text-slate-400 font-semibold">Terminaciones Ex:</strong> {quote.extraFinishes}</span>}
+                                            {quote.extraFinishes && <span className="w-full mt-1 text-primary-400"><strong className="text-slate-600 dark:text-slate-300 font-semibold">Terminaciones Ex:</strong> {quote.extraFinishes}</span>}
                                         </div>
                                     </div>
 
