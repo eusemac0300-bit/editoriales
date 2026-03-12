@@ -89,7 +89,7 @@ export default function AdminLayout() {
                         <div>
                             <h1 className="font-bold text-white text-sm">Editorial Pro</h1>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">
-                                {t('admin_panel')} <span className="text-primary-400 block font-semibold">v2.0.5 Stable</span>
+                                {t('admin_panel')} <span className="text-primary-400 block font-semibold">v2.1.0 Stability</span>
                             </p>
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white">

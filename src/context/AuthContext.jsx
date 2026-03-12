@@ -51,13 +51,13 @@ export function AuthProvider({ children }) {
 
     // Debounced reload to avoid flooding
     const scheduleReload = useCallback(() => {
-        // Skip if change was triggered locally (within last 2 seconds)
-        if (Date.now() - lastLocalChangeRef.current < 2000) return
+        // Skip if change was triggered locally (within last 5 seconds to be safe)
+        if (Date.now() - lastLocalChangeRef.current < 5000) return
 
         if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current)
         reloadTimerRef.current = setTimeout(() => {
             reloadData()
-        }, 500)
+        }, 1000)
     }, [reloadData])
 
     // Load data from Supabase on mount ONLY if already logged in
@@ -113,13 +113,7 @@ export function AuthProvider({ children }) {
 
     const validateSession = useCallback(() => {
         if (!user?.tenantId) return false;
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.tenantId);
-        if (!isUUID) {
-            console.error('Action blocked: invalid tenantId format detected.');
-            localStorage.clear();
-            window.location.replace('/login?reason=invalid-session-v2');
-            return false;
-        }
+        // Allow any present tenantId to support both UUID and legacy/demo formats
         return true;
     }, [user])
 
@@ -158,7 +152,7 @@ export function AuthProvider({ children }) {
 
         // Polling fallback: reload every 15 seconds to catch any missed changes
         const pollInterval = setInterval(() => {
-            if (Date.now() - lastLocalChangeRef.current > 3000) {
+            if (Date.now() - lastLocalChangeRef.current > 10000) {
                 reloadData()
             }
         }, 15000)
@@ -601,11 +595,17 @@ export function AuthProvider({ children }) {
                     updatedAt: saved.updated_at
                 }
                 setData(prev => {
-                    const exists = (prev.quotes || []).some(q => q.id === tempId)
-                    console.log(`🧩 Mapping tempID ${tempId} to real ID ${saved.id}. Exists in current state: ${exists}`)
-                    return {
-                        ...prev,
-                        quotes: (prev.quotes || []).map(q => q.id === tempId ? finalQuote : q)
+                    const quotes = (prev.quotes || [])
+                    // Search by tempId or real ID (if reloadData already found it)
+                    const index = quotes.findIndex(q => q.id === tempId || q.id === saved.id)
+                    if (index >= 0) {
+                        const newQuotes = [...quotes]
+                        newQuotes[index] = finalQuote
+                        console.log(`🧩 Updated existing quote ${tempId} -> ${saved.id}`)
+                        return { ...prev, quotes: newQuotes }
+                    } else {
+                        console.log(`🧩 Quote ${saved.id} was missing from local state (nuked by reload?), adding it back.`)
+                        return { ...prev, quotes: [finalQuote, ...quotes] }
                     }
                 })
             } else {
@@ -650,13 +650,19 @@ export function AuthProvider({ children }) {
         if (supabaseConnected) {
             const saved = await db.addSaleToDb(sale)
             if (saved && saved.id) {
-                setData(prev => ({
-                    ...prev,
-                    finances: {
-                        ...prev.finances,
-                        sales: (prev.finances?.sales || []).map(s => s.id === tempId ? saved : s)
+                setData(prev => {
+                    const sales = (prev.finances?.sales || [])
+                    const index = sales.findIndex(s => s.id === tempId || s.id === saved.id)
+                    const updatedFinances = { ...prev.finances }
+                    if (index >= 0) {
+                        const newSales = [...sales]
+                        newSales[index] = saved
+                        updatedFinances.sales = newSales
+                    } else {
+                        updatedFinances.sales = [saved, ...sales]
                     }
-                }))
+                    return { ...prev, finances: updatedFinances }
+                })
             }
         }
     }, [user, supabaseConnected])
@@ -699,10 +705,17 @@ export function AuthProvider({ children }) {
         if (supabaseConnected) {
             const saved = await db.addSupplierToDb(user.tenantId, supplierData)
             if (saved && saved.id) {
-                setData(prev => ({
-                    ...prev,
-                    suppliers: (prev.suppliers || []).map(s => s.id === tempId ? saved : s)
-                }))
+                setData(prev => {
+                    const suppliers = (prev.suppliers || [])
+                    const index = suppliers.findIndex(s => s.id === tempId || s.id === saved.id)
+                    if (index >= 0) {
+                        const newSupps = [...suppliers]
+                        newSupps[index] = saved
+                        return { ...prev, suppliers: newSupps }
+                    } else {
+                        return { ...prev, suppliers: [saved, ...suppliers] }
+                    }
+                })
             }
         }
     }, [user, supabaseConnected])
@@ -732,10 +745,17 @@ export function AuthProvider({ children }) {
         if (supabaseConnected) {
             const saved = await db.addPurchaseOrderToDb(user.tenantId, poData)
             if (saved && saved.id) {
-                setData(prev => ({
-                    ...prev,
-                    purchaseOrders: (prev.purchaseOrders || []).map(p => p.id === tempId ? saved : p)
-                }))
+                setData(prev => {
+                    const orders = (prev.purchaseOrders || [])
+                    const index = orders.findIndex(p => p.id === tempId || p.id === saved.id)
+                    if (index >= 0) {
+                        const newOrders = [...orders]
+                        newOrders[index] = saved
+                        return { ...prev, purchaseOrders: newOrders }
+                    } else {
+                        return { ...prev, purchaseOrders: [saved, ...orders] }
+                    }
+                })
             }
         }
     }, [user, supabaseConnected])
@@ -783,13 +803,19 @@ export function AuthProvider({ children }) {
         if (supabaseConnected) {
             const saved = await db.addExpenseToDb(user.tenantId, expenseData)
             if (saved && saved.id) {
-                setData(prev => ({
-                    ...prev,
-                    finances: {
-                        ...prev.finances,
-                        expenses: (prev.finances?.expenses || []).map(e => e.id === tempId ? saved : e)
+                setData(prev => {
+                    const expenses = (prev.finances?.expenses || [])
+                    const index = expenses.findIndex(e => e.id === tempId || e.id === saved.id)
+                    const updatedFinances = { ...prev.finances }
+                    if (index >= 0) {
+                        const newExpenses = [...expenses]
+                        newExpenses[index] = saved
+                        updatedFinances.expenses = newExpenses
+                    } else {
+                        updatedFinances.expenses = [saved, ...expenses]
                     }
-                }))
+                    return { ...prev, finances: updatedFinances }
+                })
             }
         }
     }, [user, supabaseConnected])

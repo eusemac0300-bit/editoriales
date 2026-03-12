@@ -502,7 +502,7 @@ export default function Quotes() {
                                                     </select>
                                                 </div>
                                             </div>
-                                            <p className="text-sm text-slate-400 dark:text-slate-400 mt-1 tabular-nums transition-colors">ID: {quote.id}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-300 mt-1 tabular-nums transition-colors">ID: {quote.id}</p>
                                         </div>
                                     </div>
 
@@ -547,13 +547,13 @@ export default function Quotes() {
 
                                     {/* Muestra rápida de detalles técnicos snapshots  */}
                                     <div className="mt-4 bg-slate-50 dark:bg-dark-200 rounded-lg p-3">
-                                        <h4 className="text-[10px] text-slate-400 dark:text-slate-300 font-bold uppercase tracking-widest mb-2 border-b border-slate-200 dark:border-dark-300 pb-1">Ficha Técnica Asociada</h4>
+                                        <h4 className="text-[10px] text-slate-500 dark:text-slate-200 font-bold uppercase tracking-widest mb-2 border-b border-slate-200 dark:border-dark-300 pb-1">Ficha Técnica Asociada</h4>
                                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-300">
-                                            <span><strong className="text-slate-400 dark:text-slate-400 font-semibold">Medida:</strong> {quote.bookWidth}x{quote.bookHeight}cm</span>
-                                            <span><strong className="text-slate-400 dark:text-slate-400 font-semibold">Págs(B/N):</strong> {quote.bookPagesBw}</span>
-                                            {quote.bookPagesColor > 0 && <span><strong className="text-slate-400 dark:text-slate-400 font-semibold">Págs(Color):</strong> {quote.bookPagesColor}</span>}
-                                            <span><strong className="text-slate-400 dark:text-slate-400 font-semibold">Tap/Sol:</strong> {quote.bookCoverType} / {quote.bookFlaps}</span>
-                                            <span><strong className="text-slate-400 dark:text-slate-400 font-semibold">Encuadernación:</strong> {quote.bindingType}</span>
+                                            <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Medida:</strong> {quote.bookWidth}x{quote.bookHeight}cm</span>
+                                            <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Págs(B/N):</strong> {quote.bookPagesBw}</span>
+                                            {quote.bookPagesColor > 0 && <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Págs(Color):</strong> {quote.bookPagesColor}</span>}
+                                            <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Tap/Sol:</strong> {quote.bookCoverType} / {quote.bookFlaps}</span>
+                                            <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Encuadernación:</strong> {quote.bindingType}</span>
                                             {quote.extraFinishes && <span className="w-full mt-1 text-primary-400"><strong className="text-slate-400 dark:text-slate-400 font-semibold">Terminaciones Ex:</strong> {quote.extraFinishes}</span>}
                                         </div>
                                     </div>
