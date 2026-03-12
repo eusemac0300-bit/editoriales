@@ -96,18 +96,31 @@ export function AuthProvider({ children }) {
                 if (parsed.tenantId && !isUUID) {
                     console.warn('Session has invalid tenantId format:', parsed.tenantId);
                     localStorage.clear();
-                    window.location.href = '/login';
+                    window.location.replace('/login?reason=invalid-session');
                     return;
                 }
                 setUser(parsed)
                 init(parsed)
             } catch (e) {
+                console.error('Auth init error:', e);
                 setLoading(false)
             }
         } else {
             setLoading(false)
         }
     }, [])
+
+    const validateSession = useCallback(() => {
+        if (!user?.tenantId) return false;
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.tenantId);
+        if (!isUUID) {
+            console.error('Action blocked: invalid tenantId format detected.');
+            localStorage.clear();
+            window.location.replace('/login?reason=invalid-session-v2');
+            return false;
+        }
+        return true;
+    }, [user])
 
     // This useEffect handles reloading data when the user object changes (e.g., after login)
     useEffect(() => {
@@ -198,6 +211,10 @@ export function AuthProvider({ children }) {
         // Asumimos que Supabase siempre intentará conectarse. Si no, tenemos fallback local.
         const found = await db.loginUser(email, password)
         if (found && found.tenantId) {
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(found.tenantId);
+            if (!isUUID) {
+                return { success: false, error: 'Esta cuenta pertenece a una versión obsoleta. Por favor, regístrese de nuevo o contacte a soporte.' }
+            }
             setUser(found)
             localStorage.setItem('editorial_user', JSON.stringify(found))
 
@@ -634,6 +651,7 @@ export function AuthProvider({ children }) {
 
     // ============ SUPPLIERS handlers ============
     const addSupplier = useCallback(async (supplierData) => {
+        if (!validateSession()) return;
         lastLocalChangeRef.current = Date.now()
         const tempId = `sup_temp_${Date.now()}`
         const supplier = { id: tempId, ...supplierData, tenantId: user?.tenantId }
