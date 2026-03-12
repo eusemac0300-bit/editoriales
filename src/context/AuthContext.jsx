@@ -566,9 +566,42 @@ export function AuthProvider({ children }) {
         if (supabaseConnected) {
             const saved = await db.addQuoteToDb(quote)
             if (saved && saved.id) {
+                // Transform snake_case back to camelCase for consistency in memory
+                const finalQuote = {
+                    id: saved.id,
+                    bookId: saved.book_id,
+                    provider: saved.provider,
+                    requestedAmount: saved.requested_amount,
+                    requestedAmount2: saved.requested_amount_2,
+                    requestedAmount3: saved.requested_amount_3,
+                    requestedAmount4: saved.requested_amount_4,
+                    bindingType: saved.binding_type,
+                    extraFinishes: saved.extra_finishes,
+                    status: saved.status,
+                    quotedAmount: saved.quoted_amount,
+                    quotedAmount2: saved.quoted_amount_2,
+                    quotedAmount3: saved.quoted_amount_3,
+                    quotedAmount4: saved.quoted_amount_4,
+                    deliveryDate: saved.delivery_date,
+                    notes: saved.notes,
+                    bookTitle: saved.book_title,
+                    bookWidth: saved.book_width,
+                    bookHeight: saved.book_height,
+                    bookPagesBw: saved.book_pages_bw,
+                    bookPagesColor: saved.book_pages_color,
+                    bookCoverType: saved.book_cover_type,
+                    bookFlaps: saved.book_flaps,
+                    bookFlapWidth: saved.book_flap_width,
+                    bookInteriorPaper: saved.book_interior_paper,
+                    bookCoverPaper: saved.book_cover_paper,
+                    bookCoverFinish: saved.book_cover_finish,
+                    approvedAmount: saved.approved_amount,
+                    createdAt: saved.created_at,
+                    updatedAt: saved.updated_at
+                }
                 setData(prev => ({
                     ...prev,
-                    quotes: (prev.quotes || []).map(q => q.id === tempId ? saved : q)
+                    quotes: (prev.quotes || []).map(q => q.id === tempId ? finalQuote : q)
                 }))
             }
         }

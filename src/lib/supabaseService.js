@@ -818,7 +818,7 @@ export async function deleteUser(userId) {
 
 // ============ QUOTES ============
 export async function addQuoteToDb(quote) {
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('quotes')
         .insert({
             id: quote.id,
@@ -853,8 +853,14 @@ export async function addQuoteToDb(quote) {
             created_at: quote.createdAt,
             updated_at: quote.updatedAt
         })
-    if (error) console.error('Error adding quote:', error)
-    return !error
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Error adding quote:', error)
+        return null
+    }
+    return data
 }
 
 export async function updateQuoteInDb(quoteId, updates) {
