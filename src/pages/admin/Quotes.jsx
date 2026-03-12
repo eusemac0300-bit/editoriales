@@ -704,7 +704,6 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
 
         if (!initialData) {
             // New quote: snapshot the book data
-            quoteData.id = `q${Date.now()}`
             quoteData.createdAt = new Date().toISOString()
             quoteData.updatedAt = quoteData.createdAt
 

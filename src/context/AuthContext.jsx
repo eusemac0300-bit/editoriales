@@ -557,8 +557,9 @@ export function AuthProvider({ children }) {
 
     const addNewQuote = useCallback(async (quoteData) => {
         lastLocalChangeRef.current = Date.now()
+        // Ensure we have a clean tempId that won't be overwritten by form data
         const tempId = `q_temp_${Date.now()}`
-        const quote = { id: tempId, ...quoteData, tenantId: user?.tenantId }
+        const quote = { ...quoteData, id: tempId, tenantId: user?.tenantId }
         setData(prev => ({
             ...prev,
             quotes: [quote, ...(prev.quotes || [])]
