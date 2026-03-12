@@ -93,9 +93,9 @@ export function AuthProvider({ children }) {
                 const parsed = JSON.parse(savedUserRecord)
                 // Critical check: if the session has an invalid UUID format for tenantId, 
                 // we must force clear it to prevent 400 errors across the app
-                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsed.tenantId);
-                if (parsed.tenantId && !isUUID) {
-                    console.warn('Session has invalid tenantId format:', parsed.tenantId);
+                // Removed strict UUID check to support demo and legacy account formats
+                if (!parsed.tenantId) {
+                    console.warn('Session has no tenantId');
                     localStorage.clear();
                     window.location.replace('/login?reason=invalid-session');
                     return;
@@ -212,10 +212,6 @@ export function AuthProvider({ children }) {
         // Asumimos que Supabase siempre intentará conectarse. Si no, tenemos fallback local.
         const found = await db.loginUser(email, password)
         if (found && found.tenantId) {
-            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(found.tenantId);
-            if (!isUUID) {
-                return { success: false, error: 'Esta cuenta pertenece a una versión obsoleta. Por favor, regístrese de nuevo o contacte a soporte.' }
-            }
             setUser(found)
             localStorage.setItem('editorial_user', JSON.stringify(found))
 

@@ -4,15 +4,8 @@ import { supabase } from './supabase'
 export async function loadAllData(tenantId) {
     if (!tenantId) return null
     
-    // Check if tenantId is a valid UUID to avoid PostgreSQL syntax errors (22P02)
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId);
-    if (!isUUID && tenantId.length > 5) {
-        console.error('CRITICAL: tenantId is not a valid UUID:', tenantId)
-        // If it starts with 't' and we're in development, we might have legacy data
-        // but Supabase UUID columns will reject it.
-        return null
-    }
-
+    // We allow any tenantId that is present. The database uses TEXT for tenant_id columns.
+    // The previous UUID-only check was preventing demo and legacy accounts from loading certain data.
     try {
         const [
             usersRes,
@@ -47,10 +40,10 @@ export async function loadAllData(tenantId) {
             supabase.from('consignments').select('*, books(title)').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             
             // UUID enforced tables - skip if tenantId is not a UUID to avoid 400 errors
-            isUUID ? supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }) : Promise.resolve({ data: [], error: null }),
-            isUUID ? supabase.from('suppliers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }) : Promise.resolve({ data: [], error: null }),
-            isUUID ? supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false }) : Promise.resolve({ data: [], error: null }),
-            isUUID ? supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId).order('date', { ascending: false }) : Promise.resolve({ data: [], error: null })
+            supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+            supabase.from('suppliers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }),
+            supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false }),
+            supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId).order('date', { ascending: false })
         ])
 
         const users = usersRes.data;
