@@ -3,7 +3,7 @@ export const translations = {
         dashboard: 'Dashboard',
         inventory: 'Inventario',
         production: 'Producción',
-        escandallo: 'Escandallo',
+        escandallo: 'Escandallo (Costos)',
         quotes: 'Cotizaciones',
         sales: 'Ventas',
         consignments: 'Consignaciones',
