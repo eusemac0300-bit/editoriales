@@ -93,8 +93,8 @@ export function AuthProvider({ children }) {
                 // Critical check: if the session has an invalid UUID format for tenantId, 
                 // we must force clear it to prevent 400 errors across the app
                 const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsed.tenantId);
-                if (!isUUID && parsed.tenantId?.length > 5) {
-                    console.warn('Session has invalid tenantId format. Clearing storage.');
+                if (parsed.tenantId && !isUUID) {
+                    console.warn('Session has invalid tenantId format:', parsed.tenantId);
                     localStorage.clear();
                     window.location.href = '/login';
                     return;

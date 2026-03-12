@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import {
     Users, Plus, Search, Edit3, Trash2, Phone, Mail,
-    MapPin, Building2, ShieldCheck, X, Save, AlertTriangle
+    MapPin, Building2, ShieldCheck, X, Save, AlertTriangle,
+    Contact
 } from 'lucide-react'
 
 const TYPES = ['IMPRENTA', 'DISEÑO', 'MAQUETACIÓN', 'CORRECCIÓN', 'AGENCIA', 'OTROS']
