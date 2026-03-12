@@ -1,34 +1,50 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import initialData from '../data/initialData.json'
 import * as db from '../lib/supabaseService'
 import { supabase } from '../lib/supabase'
 import { translations } from '../lib/translations'
 
 const AuthContext = createContext(null)
 
+const initialData = {
+    users: [],
+    books: [],
+    inventory: { physical: [], digital: [] },
+    finances: { invoices: [], royalties: [], sales: [], consignments: [], expenses: [] },
+    auditLog: [],
+    comments: [],
+    alerts: [],
+    documents: [],
+    quotes: [],
+    suppliers: [],
+    purchaseOrders: []
+}
+
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [data, setData] = useState(initialData)
     const [loading, setLoading] = useState(true)
     const [supabaseConnected, setSupabaseConnected] = useState(false)
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
-    const [language, setLanguage] = useState(localStorage.getItem('language') || 'es')
-    const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'CLP')
-    const [taxRate, setTaxRate] = useState(parseFloat(localStorage.getItem('tax_rate')) || 19)
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+    const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'es')
+    const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'CLP')
+    const [taxRate, setTaxRate] = useState(() => parseFloat(localStorage.getItem('taxRate') || '0.19'))
     const reloadTimerRef = useRef(null)
+    // Reference to track if we're doing a local update to skip polling
     const lastLocalChangeRef = useRef(0)
 
     // Reload all data from Supabase
-    const reloadData = useCallback(async () => {
-        if (!user?.tenantId) return
+    const reloadData = useCallback(async (tenantIdOverride) => {
+        const tid = tenantIdOverride || user?.tenantId
+        if (!tid) return
+        
         try {
-            const supabaseData = await db.loadAllData(user.tenantId)
-            if (supabaseData && supabaseData.users && supabaseData.users.length > 0) {
+            const supabaseData = await db.loadAllData(tid)
+            if (supabaseData) {
                 setData(supabaseData)
-                console.log('🔄 Realtime: data refreshed for tenant', user.tenantId)
+                setSupabaseConnected(true)
+                console.log('🔄 Realtime: data refreshed for tenant', tid)
             }
         } catch (err) {
-            console.error('Realtime reload failed:', err)
         }
     }, [user?.tenantId])
 
@@ -72,9 +88,22 @@ export function AuthProvider({ children }) {
 
         const savedUserRecord = localStorage.getItem('editorial_user')
         if (savedUserRecord) {
-            const parsed = JSON.parse(savedUserRecord)
-            setUser(parsed)
-            init(parsed)
+            try {
+                const parsed = JSON.parse(savedUserRecord)
+                // Critical check: if the session has an invalid UUID format for tenantId, 
+                // we must force clear it to prevent 400 errors across the app
+                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsed.tenantId);
+                if (!isUUID && parsed.tenantId?.length > 5) {
+                    console.warn('Session has invalid tenantId format. Clearing storage.');
+                    localStorage.clear();
+                    window.location.href = '/login';
+                    return;
+                }
+                setUser(parsed)
+                init(parsed)
+            } catch (e) {
+                setLoading(false)
+            }
         } else {
             setLoading(false)
         }
@@ -400,7 +429,7 @@ export function AuthProvider({ children }) {
     const addNewUser = useCallback(async (userData) => {
         lastLocalChangeRef.current = Date.now()
         const newUser = {
-            id: `u${Date.now()}`,
+            id: db.iUUID(),
             tenantId: user?.tenantId,
             ...userData,
             avatar: userData.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),

@@ -217,6 +217,7 @@ export default function Suppliers() {
 }
 
 function SupplierForm({ supplier, onSave, onCancel }) {
+    const { t } = useAuth()
     const [form, setForm] = useState({
         name: supplier?.name || '',
         type: supplier?.type || 'IMPRENTA',

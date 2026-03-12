@@ -142,7 +142,7 @@ export default function SuperAdminDashboard() {
 
         // Use basic custom logic for direct user provision on selected tenant
         const userObj = {
-            id: `u${Date.now()}`,
+            id: db.iUUID(),
             tenantId: newUserData.tenant_id,
             email: newUserData.email,
             password: newUserData.password,

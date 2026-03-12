@@ -3,25 +3,36 @@ import { supabase } from './supabase'
 // ============ LOAD ALL DATA ============
 export async function loadAllData(tenantId) {
     if (!tenantId) return null
+    
+    // Check if tenantId is a valid UUID to avoid PostgreSQL syntax errors (22P02)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId);
+    if (!isUUID && tenantId.length > 5) {
+        console.error('CRITICAL: tenantId is not a valid UUID:', tenantId)
+        // If it starts with 't' and we're in development, we might have legacy data
+        // but Supabase UUID columns will reject it.
+        return null
+    }
+
     try {
         const [
-            { data: users, error: usersErr },
-            { data: books, error: booksErr },
-            { data: invPhysical, error: invPhysErr },
-            { data: invDigital, error: invDigErr },
-            { data: invoices, error: invoicesErr },
-            { data: royalties, error: royaltiesErr },
-            { data: auditLog, error: auditErr },
-            { data: comments, error: commentsErr },
-            { data: alerts, error: alertsErr },
-            { data: documents, error: docsErr },
-            { data: quotes, error: quotesErr },
-            { data: sales, error: salesErr },
-            { data: consignments, error: consignmentsErr },
-            { data: suppliers, error: suppliersErr },
-            { data: purchaseOrders, error: poErr },
-            { data: expenses, error: expErr }
+            usersRes,
+            booksRes,
+            invPhysRes,
+            invDigRes,
+            invoicesRes,
+            royaltiesRes,
+            auditRes,
+            commentsRes,
+            alertsRes,
+            docsRes,
+            quotesRes,
+            salesRes,
+            consignmentsRes,
+            suppliersRes,
+            poRes,
+            expensesRes
         ] = await Promise.all([
+            // TEXT columns (Legacy/Core)
             supabase.from('users').select('*').eq('tenant_id', tenantId),
             supabase.from('books').select('*').eq('tenant_id', tenantId),
             supabase.from('inventory_physical').select('*').eq('tenant_id', tenantId),
@@ -32,15 +43,52 @@ export async function loadAllData(tenantId) {
             supabase.from('comments').select('*').eq('tenant_id', tenantId).order('date', { ascending: true }),
             supabase.from('alerts').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
             supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
-            supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             supabase.from('sales').select('*, books(title)').eq('tenant_id', tenantId).order('sale_date', { ascending: false }),
             supabase.from('consignments').select('*, books(title)').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
-            supabase.from('suppliers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }),
-            supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false }),
-            supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId).order('date', { ascending: false })
+            
+            // UUID enforced tables - skip if tenantId is not a UUID to avoid 400 errors
+            isUUID ? supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }) : Promise.resolve({ data: [], error: null }),
+            isUUID ? supabase.from('suppliers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }) : Promise.resolve({ data: [], error: null }),
+            isUUID ? supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false }) : Promise.resolve({ data: [], error: null }),
+            isUUID ? supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId).order('date', { ascending: false }) : Promise.resolve({ data: [], error: null })
         ])
 
-        const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean)
+        const users = usersRes.data;
+        const books = booksRes.data;
+        const invPhysical = invPhysRes.data;
+        const invDigital = invDigRes.data;
+        const invoices = invoicesRes.data;
+        const royalties = royaltiesRes.data;
+        const auditLog = auditRes.data;
+        const comments = commentsRes.data;
+        const alerts = alertsRes.data;
+        const documents = docsRes.data;
+        const sales = salesRes.data;
+        const consignments = consignmentsRes.data;
+        const quotes = quotesRes.data;
+        const suppliers = suppliersRes.data;
+        const purchaseOrders = poRes.data;
+        const expenses = expensesRes.data;
+
+        const usersErr = usersRes.error;
+        const booksErr = booksRes.error;
+        const invPhysErr = invPhysRes.error;
+        const invoicesErr = invoicesRes.error; // Added invoicesErr
+        const auditErr = auditRes.error;
+        const invDigErr = invDigRes.error;
+        const royaltiesErr = royaltiesRes.error;
+        const commentsErr = commentsRes.error; // Added commentsErr
+        const alertsErr = alertsRes.error;
+        const docsErr = docsRes.error;
+        const quotesErr = quotesRes.error;
+        const salesErr = salesRes.error;
+        const consignmentsErr = consignmentsRes.error; // Fixed from .data to .error
+        const suppliersErr = suppliersRes.error;
+        const poErr = poRes.error;
+        const expErr = expensesRes.error;
+
+        const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean) // Updated criticalErrors
+        
         if (criticalErrors.length > 0) {
             console.error('Supabase critical load errors:', criticalErrors)
             return null
@@ -981,7 +1029,7 @@ export async function seedDemoData(tenantId, adminUserId) {
 }
 
 // Helper para IDs únicos si no tenemos crypto disponible fácilmente
-function iUUID() {
+export function iUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
@@ -1013,8 +1061,8 @@ export async function createSaaSTenant(formData) {
     }
 
     // El UUID real que asignó el motor de Auth de Supabase (o un fallback)
-    const userId = authData?.user?.id || `u${Date.now()}`
-    const tenantId = `t${Date.now()}`
+    const userId = authData?.user?.id || iUUID()
+    const tenantId = iUUID()
 
     // 2. Create Tenant in DB
     const { error: tenantErr } = await supabase
@@ -1332,7 +1380,7 @@ export async function setGlobalEmail(email) {
 }
 // ============ SUPERADMIN ACTIONS ============
 export async function superAdminCreateTenant(name, plan = 'TRIAL') {
-    const tenantId = `t${Date.now()}`
+    const tenantId = iUUID()
     const { data, error } = await supabase
         .from('tenants')
         .insert({
@@ -1384,7 +1432,7 @@ export async function updateOnboardingStatus(requestId, status, notes = '') {
 export async function superAdminApproveOnboarding(request) {
     try {
         // 1. Create Tenant
-        const tenantId = `t${Date.now()}`
+        const tenantId = iUUID()
         const { error: tErr } = await supabase.from('tenants').insert({
             id: tenantId,
             name: request.editorial_name,
@@ -1393,11 +1441,7 @@ export async function superAdminApproveOnboarding(request) {
         if (tErr) throw tErr
 
         // 2. Create Admin User
-        // Note: For real SaaS, we would trigger an email invitation or similar.
-        // Here we force-create the admin user with a temporary password or the one from request if we had it.
-        // Since the user said "he should create his administrator", but also "I must validate",
-        // we can create a placeholder user or just use a standard password.
-        const userId = `u${Date.now()}`
+        const userId = iUUID()
         const { error: uErr } = await supabase.from('users').insert({
             id: userId,
             tenant_id: tenantId,
