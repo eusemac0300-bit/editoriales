@@ -40,6 +40,7 @@ export function AuthProvider({ children }) {
         try {
             const supabaseData = await db.loadAllData(tid)
             if (supabaseData) {
+                console.log('🔄 Data refreshed. Quotes count:', supabaseData.quotes?.length)
                 setData(supabaseData)
                 setSupabaseConnected(true)
                 console.log('🔄 Realtime: data refreshed for tenant', tid)
@@ -557,16 +558,19 @@ export function AuthProvider({ children }) {
 
     const addNewQuote = useCallback(async (quoteData) => {
         lastLocalChangeRef.current = Date.now()
-        // Ensure we have a clean tempId that won't be overwritten by form data
-        const tempId = `q_temp_${Date.now()}`
+        // Use a UUID format even for temp to stay safe
+        const tempId = `q-${Math.random().toString(36).substr(2, 9)}`
         const quote = { ...quoteData, id: tempId, tenantId: user?.tenantId }
+        console.log('📝 Adding local quote:', tempId)
         setData(prev => ({
             ...prev,
             quotes: [quote, ...(prev.quotes || [])]
         }))
         if (supabaseConnected) {
+            console.log('☁️ Saving quote to DB...')
             const saved = await db.addQuoteToDb(quote)
             if (saved && saved.id) {
+                console.log('✅ Quote saved to DB. ID:', saved.id)
                 // Transform snake_case back to camelCase for consistency in memory
                 const finalQuote = {
                     id: saved.id,
@@ -600,10 +604,16 @@ export function AuthProvider({ children }) {
                     createdAt: saved.created_at,
                     updatedAt: saved.updated_at
                 }
-                setData(prev => ({
-                    ...prev,
-                    quotes: (prev.quotes || []).map(q => q.id === tempId ? finalQuote : q)
-                }))
+                setData(prev => {
+                    const exists = (prev.quotes || []).some(q => q.id === tempId)
+                    console.log(`🧩 Mapping tempID ${tempId} to real ID ${saved.id}. Exists in current state: ${exists}`)
+                    return {
+                        ...prev,
+                        quotes: (prev.quotes || []).map(q => q.id === tempId ? finalQuote : q)
+                    }
+                })
+            } else {
+                console.error('❌ Failed to save quote to DB')
             }
         }
     }, [user, supabaseConnected])
