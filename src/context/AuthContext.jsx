@@ -503,13 +503,20 @@ export function AuthProvider({ children }) {
 
     const addNewQuote = useCallback(async (quoteData) => {
         lastLocalChangeRef.current = Date.now()
-        const quote = { ...quoteData, tenantId: user?.tenantId }
+        const tempId = `q_temp_${Date.now()}`
+        const quote = { id: tempId, ...quoteData, tenantId: user?.tenantId }
         setData(prev => ({
             ...prev,
             quotes: [quote, ...(prev.quotes || [])]
         }))
         if (supabaseConnected) {
-            await db.addQuoteToDb(quote)
+            const saved = await db.addQuoteToDb(quote)
+            if (saved && saved.id) {
+                setData(prev => ({
+                    ...prev,
+                    quotes: (prev.quotes || []).map(q => q.id === tempId ? saved : q)
+                }))
+            }
         }
     }, [user, supabaseConnected])
 
@@ -537,7 +544,8 @@ export function AuthProvider({ children }) {
 
     const addNewSale = useCallback(async (saleData) => {
         lastLocalChangeRef.current = Date.now()
-        const sale = { ...saleData, tenantId: user?.tenantId }
+        const tempId = `s_temp_${Date.now()}`
+        const sale = { id: tempId, ...saleData, tenantId: user?.tenantId }
         setData(prev => ({
             ...prev,
             finances: {
@@ -546,7 +554,16 @@ export function AuthProvider({ children }) {
             }
         }))
         if (supabaseConnected) {
-            await db.addSaleToDb(sale)
+            const saved = await db.addSaleToDb(sale)
+            if (saved && saved.id) {
+                setData(prev => ({
+                    ...prev,
+                    finances: {
+                        ...prev.finances,
+                        sales: (prev.finances?.sales || []).map(s => s.id === tempId ? saved : s)
+                    }
+                }))
+            }
         }
     }, [user, supabaseConnected])
 
@@ -581,10 +598,17 @@ export function AuthProvider({ children }) {
     // ============ SUPPLIERS handlers ============
     const addSupplier = useCallback(async (supplierData) => {
         lastLocalChangeRef.current = Date.now()
-        const supplier = { ...supplierData, tenantId: user?.tenantId }
+        const tempId = `sup_temp_${Date.now()}`
+        const supplier = { id: tempId, ...supplierData, tenantId: user?.tenantId }
         setData(prev => ({ ...prev, suppliers: [supplier, ...(prev.suppliers || [])] }))
         if (supabaseConnected) {
-            await db.addSupplierToDb(user.tenantId, supplierData)
+            const saved = await db.addSupplierToDb(user.tenantId, supplierData)
+            if (saved && saved.id) {
+                setData(prev => ({
+                    ...prev,
+                    suppliers: (prev.suppliers || []).map(s => s.id === tempId ? saved : s)
+                }))
+            }
         }
     }, [user, supabaseConnected])
 
@@ -607,10 +631,17 @@ export function AuthProvider({ children }) {
     // ============ PURCHASE ORDERS handlers ============
     const addPurchaseOrder = useCallback(async (poData) => {
         lastLocalChangeRef.current = Date.now()
-        const po = { ...poData, tenantId: user?.tenantId }
+        const tempId = `po_temp_${Date.now()}`
+        const po = { id: tempId, ...poData, tenantId: user?.tenantId }
         setData(prev => ({ ...prev, purchaseOrders: [po, ...(prev.purchaseOrders || [])] }))
         if (supabaseConnected) {
-            await db.addPurchaseOrderToDb(user.tenantId, poData)
+            const saved = await db.addPurchaseOrderToDb(user.tenantId, poData)
+            if (saved && saved.id) {
+                setData(prev => ({
+                    ...prev,
+                    purchaseOrders: (prev.purchaseOrders || []).map(p => p.id === tempId ? saved : p)
+                }))
+            }
         }
     }, [user, supabaseConnected])
 
@@ -648,13 +679,23 @@ export function AuthProvider({ children }) {
     // ============ EXPENSES handlers ============
     const addExpense = useCallback(async (expenseData) => {
         lastLocalChangeRef.current = Date.now()
-        const expense = { ...expenseData, tenantId: user?.tenantId }
+        const tempId = `exp_temp_${Date.now()}`
+        const expense = { id: tempId, ...expenseData, tenantId: user?.tenantId }
         setData(prev => ({
             ...prev,
             finances: { ...prev.finances, expenses: [expense, ...(prev.finances?.expenses || [])] }
         }))
         if (supabaseConnected) {
-            await db.addExpenseToDb(user.tenantId, expenseData)
+            const saved = await db.addExpenseToDb(user.tenantId, expenseData)
+            if (saved && saved.id) {
+                setData(prev => ({
+                    ...prev,
+                    finances: {
+                        ...prev.finances,
+                        expenses: (prev.finances?.expenses || []).map(e => e.id === tempId ? saved : e)
+                    }
+                }))
+            }
         }
     }, [user, supabaseConnected])
 

@@ -18,9 +18,13 @@ export default function Suppliers() {
     const suppliers = data.suppliers || []
 
     const filtered = suppliers.filter(s => {
-        const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
-            (s.contact_name?.toLowerCase().includes(search.toLowerCase())) ||
-            (s.tax_id?.toLowerCase().includes(search.toLowerCase()))
+        if (!s) return false;
+        const name = (s.name || '').toLowerCase()
+        const contact = (s.contact_name || '').toLowerCase()
+        const tax = (s.tax_id || '').toLowerCase()
+        const query = search.toLowerCase()
+
+        const matchesSearch = name.includes(query) || contact.includes(query) || tax.includes(query)
         const matchesType = filterType === 'TODOS' || s.type === filterType
         return matchesSearch && matchesType
     })
