@@ -759,13 +759,28 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
 
                     <div>
                         <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Imprenta / Proveedor</label>
-                        <input
+                        <select
                             value={form.provider}
                             onChange={e => setForm(p => ({ ...p, provider: e.target.value }))}
-                            className="input-field text-sm"
-                            placeholder="Ej: Salesianos, Gráfica Andes..."
+                            className="input-field text-sm font-medium"
                             required
-                        />
+                        >
+                            <option value="">Seleccione una imprenta...</option>
+                            {(data.suppliers || [])
+                                .filter(s => s.type === 'IMPRENTA')
+                                .map(s => (
+                                    <option key={s.id} value={s.name} className="bg-white dark:bg-dark-200 text-slate-900 dark:text-white">
+                                        {s.name}
+                                    </option>
+                                ))
+                            }
+                            {form.provider && !(data.suppliers || []).some(s => s.name === form.provider && s.type === 'IMPRENTA') && (
+                                <option value={form.provider}>{form.provider} (Manual/Antiguo)</option>
+                            )}
+                        </select>
+                        {(data.suppliers || []).filter(s => s.type === 'IMPRENTA').length === 0 && (
+                            <p className="text-[10px] text-red-500 mt-1 italic">⚠️ Debes registrar imprentas primero en la sección de Proveedores.</p>
+                        )}
                     </div>
                     <div>
                         <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tiraje Principal</label>
