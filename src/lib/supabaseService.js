@@ -852,7 +852,7 @@ export async function addQuoteToDb(quote) {
 
     if (error) {
         console.error('Error adding quote:', error)
-        return null
+        throw error
     }
     return data
 }
@@ -1197,7 +1197,10 @@ export async function addSupplierToDb(tenantId, supplierData) {
         .from('suppliers')
         .insert([{ ...supplierData, tenant_id: tenantId }])
         .select()
-    if (error) throw error
+    if (error) {
+        console.error('Error adding supplier:', error)
+        throw error
+    }
     return data[0]
 }
 
@@ -1226,7 +1229,10 @@ export async function addPurchaseOrderToDb(tenantId, poData) {
         .from('purchase_orders')
         .insert([{ ...poData, tenant_id: tenantId }])
         .select()
-    if (error) throw error
+    if (error) {
+        console.error('Error adding PO:', error)
+        throw error
+    }
     return data[0]
 }
 
