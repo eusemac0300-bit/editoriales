@@ -104,71 +104,60 @@ export default function Suppliers() {
 
             {/* List */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filtered.map(s => (
-                    <div key={s.id} className="glass-card p-5 group hover:ring-1 hover:ring-primary/30 transition-all">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-dark-200 flex items-center justify-center border border-slate-200 dark:border-dark-300">
-                                    <Building2 className="w-6 h-6 text-primary" />
+                {filtered.map(s => {
+                    if (!s || !s.id) return null;
+                    return (
+                        <div key={s.id} className="glass-card p-5 group hover:ring-1 hover:ring-primary/30 transition-all">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-dark-200 flex items-center justify-center border border-slate-200 dark:border-dark-300">
+                                        <Building2 className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h3 className="text-slate-900 dark:text-white font-semibold truncate px-1">{s.name || 'Sin Nombre'}</h3>
+                                        <span className="badge-blue text-[10px]">{s.type || 'IMPRENTA'}</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-slate-900 dark:text-white font-semibold">{s.name}</h3>
-                                    <span className="badge-blue text-[10px]">{s.type}</span>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => { setEditing(s); setShowForm(true) }} className="p-2 hover:bg-slate-100 dark:hover:bg-dark-200 rounded-lg text-slate-400 dark:text-dark-600 hover:text-primary-600 transition-all">
+                                        <Edit3 className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => setDeleting(s)} className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-dark-600 hover:text-red-500 transition-all">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={() => { setEditing(s); setShowForm(true) }}
-                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-50 dark:bg-dark-200 rounded-lg text-slate-400 dark:text-dark-600 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white transition-all"
-                                >
-                                    <Edit3 className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => setDeleting(s)}
-                                    className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 dark:text-dark-600 hover:text-red-400 transition-all"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
 
-                        <div className="space-y-2 text-sm text-slate-500 dark:text-dark-600">
-                            {s.contact_name && (
-                                <div className="flex items-center gap-2">
-                                    <ShieldCheck className="w-3.5 h-3.5" />
-                                    <span>{s.contact_name}</span>
-                                </div>
-                            )}
-                            {s.email && (
-                                <div className="flex items-center gap-2">
-                                    <Mail className="w-3.5 h-3.5" />
-                                    <a href={`mailto:${s.email}`} className="hover:text-primary">{s.email}</a>
-                                </div>
-                            )}
-                            {s.phone && (
-                                <div className="flex items-center gap-2">
-                                    <Phone className="w-3.5 h-3.5" />
-                                    <a href={`tel:${s.phone}`} className="hover:text-primary">{s.phone}</a>
-                                </div>
-                            )}
-                            {s.address && (
-                                <div className="flex items-center gap-2">
-                                    <MapPin className="w-3.5 h-3.5" />
-                                    <span className="truncate">
-                                        {s.address}
-                                        {(s.comuna || s.ciudad) && `, ${[s.comuna, s.ciudad].filter(Boolean).join(', ')}`}
+                            <div className="space-y-3">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-slate-900 dark:text-white font-medium flex items-center gap-2 text-sm">
+                                        <Contact className="w-4 h-4 text-slate-400" />
+                                        {s.contact_name || 'Sin Contacto'}
                                     </span>
+                                    <span className="text-slate-400 dark:text-dark-500 uppercase font-mono text-[10px]">ID Fiscal: {s.tax_id || '-'}</span>
                                 </div>
-                            )}
-                        </div>
 
-                        {s.tax_id && (
-                            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-dark-300/50 flex justify-between items-center text-[10px]">
-                                <span className="text-slate-400 dark:text-dark-500 uppercase font-mono">ID Fiscal: {s.tax_id}</span>
+                                <div className="grid grid-cols-1 gap-2 border-t border-slate-100 dark:border-dark-300 pt-3">
+                                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-dark-700">
+                                        <Mail className="w-3.5 h-3.5" />
+                                        <span className="truncate">{s.email || '-'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-dark-700">
+                                        <Phone className="w-3.5 h-3.5" />
+                                        <span>{s.phone || '-'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-dark-700">
+                                        <MapPin className="w-3.5 h-3.5" />
+                                        <span className="truncate">
+                                            {s.address || 'Sin dirección'}
+                                            {(s.comuna || s.ciudad) && `, ${[s.comuna, s.ciudad].filter(Boolean).join(', ')}`}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                        )}
-                    </div>
-                ))}
+                        </div>
+                    )
+                })}
 
                 {filtered.length === 0 && (
                     <div className="lg:col-span-2 py-20 text-center glass-card">

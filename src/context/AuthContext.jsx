@@ -80,6 +80,13 @@ export function AuthProvider({ children }) {
         }
     }, [])
 
+    // This useEffect handles reloading data when the user object changes (e.g., after login)
+    useEffect(() => {
+        if (user && user.tenantId) {
+            reloadData().catch(err => console.error("Error reloading data after user change:", err))
+        }
+    }, [user, reloadData])
+
     // Subscribe to Supabase Realtime changes + Polling fallback
     useEffect(() => {
         if (!supabaseConnected) return
@@ -137,7 +144,8 @@ export function AuthProvider({ children }) {
     }, [])
 
     const t = useCallback((key) => {
-        return translations[language][key] || key
+        const langData = translations[language] || translations['es']
+        return langData[key] || key
     }, [language])
 
     const formatCurrency = useCallback((value) => {
@@ -211,11 +219,11 @@ export function AuthProvider({ children }) {
         lastLocalChangeRef.current = Date.now()
         if (!user) return
         const entry = {
-            id: `a${Date.now()}`,
-            tenantId: user.tenantId, // Multi-tenant isolation
+            id: `audit_${Date.now()}`,
+            tenantId: user?.tenantId,
             date: new Date().toISOString(),
-            userId: user.id,
-            userName: user.name,
+            userId: user?.id,
+            userName: user?.name || user?.email || 'Usuario',
             action,
             type
         }

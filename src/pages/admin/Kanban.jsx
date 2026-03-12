@@ -236,11 +236,11 @@ function CommentsModal({ book, onClose }) {
                             <div key={c.id} className={`p-3 rounded-lg ${c.role === 'ADMIN' ? 'bg-primary/5 border border-primary/10' : 'bg-slate-50 dark:bg-dark-50 border border-slate-200 dark:border-dark-300'}`}>
                                 <div className="flex items-center gap-2 mb-1">
                                     <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold ${c.role === 'ADMIN' ? 'bg-primary/10 text-primary-600 dark:text-primary-300' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
-                                        {c.userName.split(' ').map(w => w[0]).join('').slice(0, 2)}
+                                        {(c.userName || 'U').split(' ').map(w => w[0]).join('').slice(0, 2)}
                                     </div>
-                                    <span className="text-xs font-medium text-slate-900 dark:text-white">{c.userName}</span>
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${c.role === 'ADMIN' ? 'bg-primary/10 text-primary-600 dark:text-primary-300' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>{c.role}</span>
-                                    <span className="text-[10px] text-slate-400 dark:text-dark-500 ml-auto">{new Date(c.date).toLocaleDateString('es-CL')}</span>
+                                    <span className="text-xs font-medium text-slate-900 dark:text-white">{c.userName || 'Usuario'}</span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${c.role === 'ADMIN' ? 'bg-primary/10 text-primary-600 dark:text-primary-300' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>{c.role || 'Rol'}</span>
+                                    <span className="text-[10px] text-slate-400 dark:text-dark-500 ml-auto">{c.date ? new Date(c.date).toLocaleDateString('es-CL') : '-'}</span>
                                 </div>
                                 <p className="text-sm text-slate-700 dark:text-dark-800 leading-relaxed">{c.text}</p>
                                 <span className="inline-block mt-1 text-[10px] text-slate-400 dark:text-dark-500 bg-slate-100 dark:bg-dark-200 px-2 py-0.5 rounded">{c.category}</span>

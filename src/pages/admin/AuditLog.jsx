@@ -7,11 +7,17 @@ export default function AuditLog() {
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('all')
 
-    const logs = data.auditLog
+    const logs = (data.auditLog || [])
         .filter(l => typeFilter === 'all' || l.type === typeFilter)
-        .filter(l => !search || l.action.toLowerCase().includes(search.toLowerCase()) || l.userName.toLowerCase().includes(search.toLowerCase()))
+        .filter(l => {
+            if (!l || !l.action) return false
+            const matchesSearch = !search || 
+                l.action.toLowerCase().includes(search.toLowerCase()) || 
+                (l.userName || '').toLowerCase().includes(search.toLowerCase())
+            return matchesSearch
+        })
 
-    const types = ['all', ...new Set(data.auditLog.map(l => l.type))]
+    const types = ['all', ...new Set((data.auditLog || []).map(l => l.type).filter(Boolean))]
     const typeColors = { kanban: 'badge-blue', finanzas: 'badge-yellow', inventario: 'badge-purple', general: 'badge-green' }
 
     return (
@@ -45,14 +51,16 @@ export default function AuditLog() {
                     logs.map(log => (
                         <div key={log.id} className="flex items-start gap-4 p-4 hover:bg-slate-50 dark:hover:bg-dark-200/30 transition-colors">
                             <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-dark-200 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-300 shrink-0">
-                                {log.userName.split(' ').map(w => w[0]).join('').slice(0, 2)}
+                                {(log.userName || 'U').split(' ').map(w => w[0]).join('').slice(0, 2)}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm text-slate-900 dark:text-white font-medium">{log.action}</p>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-xs text-slate-500 dark:text-dark-600">{log.userName}</span>
+                                    <span className="text-xs text-slate-500 dark:text-dark-600">{log.userName || 'Usuario'}</span>
                                     <span className="text-slate-300 dark:text-dark-500">·</span>
-                                    <span className="text-xs text-slate-400 dark:text-dark-500">{new Date(log.date).toLocaleString('es-CL')}</span>
+                                    <span className="text-xs text-slate-400 dark:text-dark-500">
+                                        {log.date ? new Date(log.date).toLocaleString('es-CL') : '-'}
+                                    </span>
                                 </div>
                             </div>
                             <span className={typeColors[log.type] || 'badge-blue'}>{log.type}</span>

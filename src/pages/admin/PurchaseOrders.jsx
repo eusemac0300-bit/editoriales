@@ -28,9 +28,13 @@ export default function PurchaseOrders() {
     const pos = data.purchaseOrders || []
 
     const filtered = pos.filter(p => {
-        const matchesSearch = p.order_number.toLowerCase().includes(search.toLowerCase()) ||
-            (p.bookTitle?.toLowerCase().includes(search.toLowerCase())) ||
-            (p.supplierName?.toLowerCase().includes(search.toLowerCase()))
+        if (!p) return false
+        const orderNum = (p.order_number || '').toLowerCase()
+        const bookT = (p.bookTitle || '').toLowerCase()
+        const suppN = (p.supplierName || '').toLowerCase()
+        const s = search.toLowerCase()
+
+        const matchesSearch = orderNum.includes(s) || bookT.includes(s) || suppN.includes(s)
         const matchesStatus = filterStatus === 'TODOS' || p.status === filterStatus
         return matchesSearch && matchesStatus
     })

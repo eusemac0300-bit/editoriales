@@ -20,8 +20,12 @@ export default function Expenses() {
     const expenses = data.finances?.expenses || []
 
     const filtered = expenses.filter(e => {
-        const matchesSearch = e.description.toLowerCase().includes(search.toLowerCase()) ||
-            (e.supplierName?.toLowerCase().includes(search.toLowerCase()))
+        if (!e) return false
+        const desc = (e.description || '').toLowerCase()
+        const supp = (e.supplierName || '').toLowerCase()
+        const s = search.toLowerCase()
+
+        const matchesSearch = desc.includes(s) || supp.includes(s)
         const matchesCategory = filterCategory === 'TODAS' || e.category === filterCategory
         return matchesSearch && matchesCategory
     })

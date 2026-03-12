@@ -204,7 +204,9 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm text-slate-900 dark:text-white font-medium">{log.action}</p>
-                                    <p className="text-xs text-slate-500 dark:text-dark-600 mt-1">{log.userName} · {new Date(log.date).toLocaleDateString()}</p>
+                                    <p className="text-xs text-slate-500 dark:text-dark-600 mt-1">
+                                        {log.userName || 'Usuario'} · {log.date ? new Date(log.date).toLocaleDateString() : '-'}
+                                    </p>
                                 </div>
                                 <span className={log.type === 'kanban' ? 'badge-blue' : log.type === 'finanzas' ? 'badge-green' : 'badge-yellow'}>{log.type}</span>
                             </div>
