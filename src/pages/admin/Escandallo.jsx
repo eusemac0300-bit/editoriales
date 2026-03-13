@@ -47,14 +47,33 @@ export default function Escandallo() {
         if (selectedBookId && data?.books) {
             const book = data.books.find(b => b.id === selectedBookId)
             if (book) {
-                // Populate fields ONLY if they exist in DB, otherwise keep current (to allow simulation)
-                if (book.escandalloCosts) setCosts(book.escandalloCosts)
-                if (book.pvp) setPvp(book.pvp)
-                if (book.tiraje) setTiraje(book.tiraje)
-                if (book.royaltyPercent) setRoyalty(book.royaltyPercent)
+                // Use functional updates and spread to ensure all keys exist and avoid NaN
+                if (book.escandalloCosts) {
+                    setCosts(prev => ({
+                        ...prev,
+                        ...Object.fromEntries(
+                            Object.entries(book.escandalloCosts).map(([k, v]) => [k, Number(v) || 0])
+                        )
+                    }))
+                }
+                if (book.pvp) setPvp(Number(book.pvp) || 0)
+                if (book.tiraje) setTiraje(Number(book.tiraje) || 0)
+                if (book.royaltyPercent) setRoyalty(Number(book.royaltyPercent) || 0)
             }
         }
     }, [selectedBookId, data?.books])
+
+    // Formatting helper to avoid NaN in inputs
+    const formatInputValue = (val) => {
+        if (val === 0 || !val || isNaN(val)) return ''
+        return new Intl.NumberFormat('es-CL').format(val)
+    }
+
+    // Formatting helper for result cards
+    const formatSafeCLP = (val) => {
+        if (isNaN(val) || val === Infinity || val === -Infinity) return formatCLP(0)
+        return formatCLP(val)
+    }
 
     const resetCalculator = () => {
         setSelectedBookId('')
@@ -202,7 +221,7 @@ export default function Escandallo() {
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-dark-500">$</span>
                                         <input
                                             type="text"
-                                            value={costs[item.key] === 0 ? '' : new Intl.NumberFormat('es-CL').format(costs[item.key])}
+                                            value={formatInputValue(costs[item.key])}
                                             onChange={e => {
                                                 const val = e.target.value.replace(/\D/g, '')
                                                 setCosts(prev => ({ ...prev, [item.key]: val === '' ? 0 : parseInt(val, 10) }))
@@ -225,7 +244,7 @@ export default function Escandallo() {
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-dark-500">$</span>
                                     <input
                                         type="text"
-                                        value={pvp === 0 ? '' : new Intl.NumberFormat('es-CL').format(pvp)}
+                                        value={formatInputValue(pvp)}
                                         onChange={e => {
                                             const val = e.target.value.replace(/\D/g, '')
                                             setPvp(val === '' ? 0 : parseInt(val, 10))
@@ -239,7 +258,7 @@ export default function Escandallo() {
                                 <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tiraje (unidades)</label>
                                 <input
                                     type="text"
-                                    value={tiraje === 0 ? '' : new Intl.NumberFormat('es-CL').format(tiraje)}
+                                    value={formatInputValue(tiraje)}
                                     onChange={e => {
                                         const val = e.target.value.replace(/\D/g, '')
                                         setTiraje(val === '' ? 0 : parseInt(val, 10))
@@ -277,17 +296,19 @@ export default function Escandallo() {
                         </div>
                         <div className="stat-card text-center">
                             <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
-                            <p className="text-lg font-bold text-slate-900 dark:text-white">{formatCLP(costPerUnit)}</p>
+                            <p className="text-lg font-bold text-slate-900 dark:text-white">{formatSafeCLP(costPerUnit)}</p>
                             <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Costo Unitario</p>
                         </div>
                         <div className="stat-card text-center">
                             <TrendingUp className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
-                            <p className="text-lg font-bold text-slate-900 dark:text-white">{formatCLP(netMarginPerUnit)}</p>
+                            <p className="text-lg font-bold text-slate-900 dark:text-white">{formatSafeCLP(netMarginPerUnit)}</p>
                             <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Margen/Ud.</p>
                         </div>
                         <div className="stat-card text-center">
                             <BarChart3 className="w-5 h-5 text-purple-400 mx-auto mb-2" />
-                            <p className={`text-2xl font-bold ${marginPercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{marginPercent.toFixed(1)}%</p>
+                            <p className={`text-2xl font-bold ${(!isNaN(marginPercent) && marginPercent >= 0) ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {isNaN(marginPercent) ? '0.0' : marginPercent.toFixed(1)}%
+                            </p>
                             <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Margen %</p>
                         </div>
                     </div>
@@ -304,7 +325,7 @@ export default function Escandallo() {
                                         <div className="flex-1 h-3 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden">
                                             <div className="h-full bg-gradient-to-r from-primary to-primary-300 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                                         </div>
-                                        <span className="text-xs text-slate-700 dark:text-dark-800 w-20 text-right">{formatCLP(costs[item.key])}</span>
+                                        <span className="text-xs text-slate-700 dark:text-dark-800 w-20 text-right">{formatSafeCLP(costs[item.key])}</span>
                                         <span className="text-[10px] text-slate-500 dark:text-dark-600 w-12 text-right">{pct.toFixed(0)}%</span>
                                     </div>
                                 )
@@ -312,7 +333,7 @@ export default function Escandallo() {
                             <div className="flex items-center gap-3 pt-2 border-t border-slate-200 dark:border-dark-300">
                                 <span className="text-xs text-slate-900 dark:text-white font-medium w-28">TOTAL</span>
                                 <div className="flex-1" />
-                                <span className="text-sm text-slate-900 dark:text-white font-bold w-20 text-right">{formatCLP(totalCosts)}</span>
+                                <span className="text-sm text-slate-900 dark:text-white font-bold w-20 text-right">{formatSafeCLP(totalCosts)}</span>
                                 <span className="text-[10px] text-slate-900 dark:text-white w-12 text-right">100%</span>
                             </div>
                         </div>
@@ -324,17 +345,17 @@ export default function Escandallo() {
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-4">
                                 <p className="text-xs text-slate-500 dark:text-dark-600 uppercase mb-1">Ingreso Proyectado</p>
-                                <p className="text-xl font-bold text-slate-900 dark:text-white">{formatCLP(projectedRevenue)}</p>
-                                <p className="text-xs text-slate-500 dark:text-dark-500">{tiraje} uds. × {formatCLP(pvp)}</p>
+                                <p className="text-xl font-bold text-slate-900 dark:text-white">{formatSafeCLP(projectedRevenue)}</p>
+                                <p className="text-xs text-slate-500 dark:text-dark-500">{tiraje} uds. × {formatSafeCLP(pvp)}</p>
                             </div>
                             <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-4">
                                 <p className="text-xs text-slate-500 dark:text-dark-600 uppercase mb-1">Regalías Totales</p>
-                                <p className="text-xl font-bold text-amber-400">{formatCLP(tiraje * royaltyPerUnit)}</p>
+                                <p className="text-xl font-bold text-amber-400">{formatSafeCLP(tiraje * royaltyPerUnit)}</p>
                                 <p className="text-xs text-slate-500 dark:text-dark-500">{royalty}% sobre ventas</p>
                             </div>
                             <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-4">
                                 <p className="text-xs text-slate-500 dark:text-dark-600 uppercase mb-1">Beneficio Neto</p>
-                                <p className={`text-xl font-bold ${projectedProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCLP(projectedProfit)}</p>
+                                <p className={`text-xl font-bold ${projectedProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatSafeCLP(projectedProfit)}</p>
                                 <p className="text-xs text-slate-500 dark:text-dark-500">{projectedRevenue > 0 ? ((projectedProfit / projectedRevenue) * 100).toFixed(1) : 0}% del ingreso</p>
                             </div>
                         </div>
