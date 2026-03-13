@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban, QrCode, Download, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban, QrCode, Download, X, Calculator } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
 
@@ -12,6 +13,7 @@ const stageColors = {
 }
 
 export default function Books() {
+    const navigate = useNavigate()
     const { data, addNewBook, updateBookDetails, deleteExistingBook, formatCLP, addAuditLog } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
     const [editingBook, setEditingBook] = useState(null)
@@ -109,6 +111,13 @@ export default function Books() {
                                 title="Ver Códigos QR e ISBN"
                             >
                                 <QrCode className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => navigate(`/admin/escandallo?bookId=${book.id}`)}
+                                className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-primary/20 rounded text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                                title="Calculadora de Escandallo"
+                            >
+                                <Calculator className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => { setEditingBook(book); setShowAdd(false) }}
@@ -393,15 +402,18 @@ function BookForm({ data, initialData, onSave, onClose }) {
                             {initialData && <p className="text-[10px] text-dark-500 mt-1">Cambia la etapa arrastrando en el Tablero</p>}
                         </div>
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block flex items-center gap-1">
+                            <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
                                 <Calendar className="w-3 h-3" /> Fecha Estimada de Entrega
                             </label>
-                            <input
-                                type="date"
-                                value={form.deliveryDate}
-                                onChange={e => setForm(p => ({ ...p, deliveryDate: e.target.value }))}
-                                className="input-field text-sm"
-                            />
+                            <div className="max-w-[200px]">
+                                <input
+                                    type="date"
+                                    value={form.deliveryDate}
+                                    onChange={e => setForm(p => ({ ...p, deliveryDate: e.target.value }))}
+                                    className="input-field text-sm dark:bg-dark-300"
+                                    style={{ colorScheme: 'dark' }}
+                                />
+                            </div>
                         </div>
                         <div>
                             <label className="text-xs text-dark-600 mb-1 block">ISBN</label>

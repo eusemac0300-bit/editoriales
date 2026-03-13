@@ -371,12 +371,9 @@ export default function Quotes() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Printer className="w-6 h-6 text-primary" />
-                        Cotizaciones a Imprenta
+                        <Calculator className="w-6 h-6 text-primary" /> Gestión de Cotizaciones
                     </h1>
-                    <p className="text-slate-600 dark:text-dark-700 text-sm mt-1">
-                        Gestiona presupuestos y calcula los costos de impresión.
-                    </p>
+                    <p className="text-sm text-slate-700 dark:text-dark-800 mt-1">Simula costos, márgenes y precios de venta y gestiona presupuestos.</p>
                 </div>
                 
                 <div className="flex items-center gap-2">

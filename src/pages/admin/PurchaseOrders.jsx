@@ -373,13 +373,16 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                     </select>
                 </div>
                 <div className="col-span-1">
-                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Fecha Pedido *</label>
+                    <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" /> Fecha Pedido *
+                    </label>
                     <input
                         type="date"
                         required
                         value={form.date_ordered}
                         onChange={e => setForm({ ...form, date_ordered: e.target.value })}
-                        className="input-field w-full text-sm"
+                        className="input-field w-full text-sm dark:bg-dark-300"
+                        style={{ colorScheme: 'dark' }}
                     />
                 </div>
                 <div className="col-span-2">
@@ -394,13 +397,14 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                         {suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.type})</option>)}
                     </select>
                 </div>
-                <div className="col-span-1 text-center flex flex-col justify-center">
-                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Fecha Estimada Recepción</label>
+                <div className="col-span-1">
+                    <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block">Fecha Estimada Recepción</label>
                     <input
                         type="date"
                         value={form.expected_date}
                         onChange={e => setForm({ ...form, expected_date: e.target.value })}
-                        className="input-field w-full text-sm"
+                        className="input-field w-full text-sm dark:bg-dark-300"
+                        style={{ colorScheme: 'dark' }}
                     />
                 </div>
                 <div className="col-span-3">

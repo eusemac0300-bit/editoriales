@@ -273,13 +273,16 @@ function ExpenseForm({ expense, suppliers, onSave, onCancel }) {
                     </div>
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">Fecha *</label>
+                    <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" /> Fecha *
+                    </label>
                     <input
                         type="date"
                         required
                         value={form.date}
                         onChange={e => setForm({ ...form, date: e.target.value })}
-                        className="input-field w-full text-sm"
+                        className="input-field w-full text-sm dark:bg-dark-300"
+                        style={{ colorScheme: 'dark' }}
                     />
                 </div>
             </div>

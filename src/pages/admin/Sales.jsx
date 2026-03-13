@@ -337,12 +337,15 @@ export default function Sales() {
                         {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
                 )}
-                <input
-                    type="month"
-                    value={filterMonth}
-                    onChange={e => setFilterMonth(e.target.value)}
-                    className="input-field text-sm"
-                />
+                <div className="max-w-[150px]">
+                    <input
+                        type="month"
+                        value={filterMonth}
+                        onChange={e => setFilterMonth(e.target.value)}
+                        className="input-field text-sm w-full dark:bg-dark-300"
+                        style={{ colorScheme: 'dark' }}
+                    />
+                </div>
                 {(searchTerm || filterChannel || filterMonth || filterAuthor) && (
                     <button
                         onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterMonth(''); setFilterAuthor('') }}
@@ -669,13 +672,19 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
                     </div>
 
                     <div>
-                        <label className="text-xs text-dark-600 mb-1 block flex items-center gap-1"><Calendar className="w-3 h-3" /> Fecha</label>
-                        <input
-                            type="date"
-                            value={form.saleDate}
-                            onChange={e => setForm(p => ({ ...p, saleDate: e.target.value }))}
-                            className="input-field text-sm w-full"
-                        />
+                        <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" /> Fecha de Venta *
+                        </label>
+                        <div className="max-w-[200px]">
+                            <input
+                                type="date"
+                                value={form.saleDate}
+                                onChange={e => setForm(p => ({ ...p, saleDate: e.target.value }))}
+                                className="input-field text-sm w-full dark:bg-dark-300"
+                                style={{ colorScheme: 'dark' }}
+                                required
+                            />
+                        </div>
                     </div>
 
                     {/* Royalty preview */}

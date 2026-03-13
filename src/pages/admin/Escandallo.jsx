@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { Calculator, TrendingUp, Target, DollarSign, BarChart3, Save, Book } from 'lucide-react'
 
 export default function Escandallo() {
+    const [searchParams] = useSearchParams()
     const { formatCLP, data, updateBookDetails, addAuditLog } = useAuth()
     const getInitialState = (key, defaultVal) => {
+        if (key === 'bookId') {
+            const urlBookId = searchParams.get('bookId')
+            if (urlBookId) return urlBookId
+        }
         try {
             const saved = sessionStorage.getItem('escandallo_state_' + key)
             if (saved !== null) return JSON.parse(saved)
@@ -32,18 +38,23 @@ export default function Escandallo() {
     }, [selectedBookId, costs, pvp, tiraje, royalty])
 
     const handleBookChange = (bookId) => {
-        if (bookId === selectedBookId) return // Prevent duplicate processing
+        if (bookId === selectedBookId) return
         setSelectedBookId(bookId)
-        if (bookId) {
-            const book = data?.books?.find(b => b.id === bookId)
+    }
+
+    // Effect to load book data when selectedBookId changes
+    useEffect(() => {
+        if (selectedBookId && data?.books) {
+            const book = data.books.find(b => b.id === selectedBookId)
             if (book) {
-                setCosts(book.escandalloCosts || { edicion: 0, correccion: 0, maquetacion: 0, diseno: 0, impresion: 0, marketing: 0, distribucion: 0, otros: 0 })
-                setPvp(book.pvp || 0)
-                setTiraje(book.tiraje || 0)
-                setRoyalty(book.royaltyPercent || 0)
+                // Populate fields ONLY if they exist in DB, otherwise keep current (to allow simulation)
+                if (book.escandalloCosts) setCosts(book.escandalloCosts)
+                if (book.pvp) setPvp(book.pvp)
+                if (book.tiraje) setTiraje(book.tiraje)
+                if (book.royaltyPercent) setRoyalty(book.royaltyPercent)
             }
         }
-    }
+    }, [selectedBookId, data?.books])
 
     const handleClear = () => {
         if (window.confirm('¿Deseas limpiar todos los valores de la calculadora?')) {
@@ -64,12 +75,16 @@ export default function Escandallo() {
         if (!selectedBookId) return
         setIsSaving(true)
         try {
-            await updateBookDetails(selectedBookId, {
+            const success = await updateBookDetails(selectedBookId, {
                 escandalloCosts: costs,
                 pvp,
                 tiraje,
                 royaltyPercent: royalty
             })
+
+            if (!success) {
+                throw new Error('La base de datos rechazó la actualización. Verifique si las columnas necesarias existen.')
+            }
 
             const book = data.books.find(b => b.id === selectedBookId)
             if (book) {
@@ -78,7 +93,7 @@ export default function Escandallo() {
             alert('Escandallo guardado correctamente en la base de datos.')
         } catch (err) {
             console.error('Save failed', err)
-            alert('Error al guardar datos.')
+            alert('Error al guardar datos: ' + (err.message || 'Error desconocido'))
         } finally {
             setIsSaving(false)
         }
