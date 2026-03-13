@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { Printer, Plus, Search, Filter, Edit, Trash2, Calendar, FileText, CheckCircle, Clock, XCircle, DollarSign, Download, ChevronDown, ChevronRight, Upload, ExternalLink } from 'lucide-react'
+import { Printer, Plus, Search, Filter, Edit, Trash2, Calendar, FileText, CheckCircle, Clock, XCircle, DollarSign, Download, ChevronDown, ChevronRight, Upload, ExternalLink, List, LayoutGrid } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { supabase } from '../../lib/supabase'
@@ -13,6 +13,7 @@ export default function Quotes() {
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState('All')
     const [poModalQuote, setPoModalQuote] = useState(null)
+    const [viewMode, setViewMode] = useState('list')
 
     const quotesList = data.quotes || []
 
@@ -377,11 +378,32 @@ export default function Quotes() {
                         Gestiona presupuestos y calcula los costos de impresión.
                     </p>
                 </div>
-                {!showAdd && !editingQuote && (
-                    <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> Solicitar Cotización
-                    </button>
-                )}
+                
+                <div className="flex items-center gap-2">
+                    {!showAdd && !editingQuote && (
+                        <>
+                            <div className="flex bg-slate-100 dark:bg-dark-300 p-1 rounded-lg mr-2">
+                                <button 
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white dark:bg-dark-400 text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-dark-600'}`}
+                                    title="Vista de Lista"
+                                >
+                                    <List className="w-4 h-4" />
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-dark-400 text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-dark-600'}`}
+                                    title="Vista de Cuadrícula"
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2">
+                                <Plus className="w-4 h-4" /> Solicitar Cotización
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Formulario */}
@@ -425,155 +447,269 @@ export default function Quotes() {
                         </div>
                     </div>
 
-                    {/* Tarjetas de cotizaciones */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {filteredQuotes.length === 0 ? (
-                            <div className="col-span-full text-center py-10 bg-slate-100/50 dark:bg-dark-200/50 rounded-xl border border-slate-200 dark:border-dark-300">
-                                <Printer className="w-12 h-12 text-slate-300 dark:text-dark-500 mx-auto mb-3 opacity-50" />
-                                <p className="text-slate-500 dark:text-dark-500">No hay cotizaciones registradas con ese filtro.</p>
+                    {/* Listado de cotizaciones */}
+                    {filteredQuotes.length === 0 ? (
+                        <div className="text-center py-20 bg-slate-100/50 dark:bg-dark-200/50 rounded-xl border border-slate-200 dark:border-dark-300">
+                            <Printer className="w-12 h-12 text-slate-300 dark:text-dark-500 mx-auto mb-3 opacity-50" />
+                            <p className="text-slate-500 dark:text-dark-500">No hay cotizaciones registradas con ese filtro.</p>
+                        </div>
+                    ) : (
+                        viewMode === 'grid' ? (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {filteredQuotes.map(quote => (
+                                    <div key={quote.id} className="glass-card p-5 relative group border-l-4 border-l-primary/50">
+                                        <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {quote.quoteDocument && (
+                                                <a
+                                                    href={quote.quoteDocument}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-400 hover:text-emerald-300 transition-colors"
+                                                    title="Ver Cotización (Documento Adjunto)"
+                                                >
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </a>
+                                            )}
+                                            {quote.status === 'Aprobada' && (
+                                                <button
+                                                    onClick={() => handlePOGenerateClick(quote)}
+                                                    className="p-1.5 bg-slate-50 dark:bg-dark-200 hover:bg-green-500/20 rounded text-green-400 hover:text-green-300 transition-colors"
+                                                    title="Generar Orden de Compra (OC)"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => generateQuotePDF(quote)}
+                                                className="p-1.5 bg-slate-50 dark:bg-dark-200 hover:bg-blue-500/20 rounded text-blue-400 hover:text-blue-300 transition-colors"
+                                                title="Descargar PDF de Solicitud"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingQuote(quote)}
+                                                className="p-1.5 bg-slate-50 dark:bg-dark-200 hover:bg-slate-100 dark:bg-dark-300 rounded text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:text-white transition-colors"
+                                                title="Editar"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(quote)}
+                                                className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
+                                                title="Eliminar"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        <div className="flex items-start justify-between pe-16">
+                                            <div>
+                                                <div className="flex items-center gap-3">
+                                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">{quote.bookTitle}</h3>
+                                                    <div className="relative inline-block">
+                                                        <select
+                                                            value={quote.status}
+                                                            onChange={(e) => handleQuickStatusChange(quote, e.target.value)}
+                                                            className={`${statusColors[quote.status]} flex items-center gap-1 appearance-none pr-6 cursor-pointer outline-none font-medium hover:brightness-110 transition-all`}
+                                                            style={{
+                                                                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                                                                backgroundPosition: 'right 0.2rem center',
+                                                                backgroundRepeat: 'no-repeat',
+                                                                backgroundSize: '1.2em 1.2em'
+                                                            }}
+                                                        >
+                                                            <option value="Solicitada" className="bg-white dark:bg-dark-200 text-blue-400">Solicitada</option>
+                                                            <option value="Presupuestada" className="bg-white dark:bg-dark-200 text-yellow-400">Presupuestada</option>
+                                                            <option value="Aprobada" className="bg-white dark:bg-dark-200 text-green-400">Aprobada</option>
+                                                            <option value="Rechazada" className="bg-white dark:bg-dark-200 text-red-400">Rechazada</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm text-slate-500 dark:text-slate-300 mt-1 tabular-nums transition-colors">ID: {quote.id}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-dark-300">
+                                            <div>
+                                                <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">Imprenta</p>
+                                                <p className="text-xs text-slate-900 dark:text-white font-medium">{quote.provider}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">
+                                                    {quote.approvedAmount ? 'Tiraje Aprobado' : 'Tirajes Propios'}
+                                                </p>
+                                                <p className="text-xs text-slate-900 dark:text-white font-mono">
+                                                    {quote.approvedAmount
+                                                        ? <span className="text-emerald-400 font-bold">{quote.approvedAmount} u.</span>
+                                                        : `${[quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4].filter(v => v && v > 0).join(', ')} u.`
+                                                    }
+                                                </p>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider mb-1">Costo de Producción</p>
+                                                <div className="bg-slate-50 dark:bg-dark-200/50 p-2 rounded border border-slate-200 dark:border-dark-300 grid grid-cols-3 gap-2">
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-medium">{t('neto')}</p>
+                                                        <p className="text-xs text-slate-900 dark:text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-medium">{t('iva')} ({taxRate}%)</p>
+                                                        <p className="text-xs text-slate-900 dark:text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount - Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-primary-400 font-bold uppercase tracking-tight">Total</p>
+                                                        <p className="text-xs text-primary-400 font-mono font-bold blur-[0.2px]">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount) : 'Pte.'}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">Fecha Entrega</p>
+                                                <p className="text-xs text-slate-900 dark:text-white font-medium">{quote.deliveryDate ? new Date(quote.deliveryDate).toLocaleDateString() : 'Pendiente'}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Muestra rápida de detalles técnicos snapshots  */}
+                                        <div className="mt-4 bg-slate-50 dark:bg-dark-200 rounded-lg p-3">
+                                            <h4 className="text-[10px] text-slate-500 dark:text-slate-200 font-bold uppercase tracking-widest mb-2 border-b border-slate-200 dark:border-dark-300 pb-1">Ficha Técnica Asociada</h4>
+                                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-300">
+                                                <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Medida:</strong> {quote.bookWidth}x{quote.bookHeight}cm</span>
+                                                <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Págs(B/N):</strong> {quote.bookPagesBw}</span>
+                                                {quote.bookPagesColor > 0 && <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Págs(Color):</strong> {quote.bookPagesColor}</span>}
+                                                <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Tap/Sol:</strong> {quote.bookCoverType} / {quote.bookFlaps}</span>
+                                                <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Encuadernación:</strong> {quote.bindingType}</span>
+                                                {quote.extraFinishes && <span className="w-full mt-1 text-primary-400"><strong className="text-slate-600 dark:text-slate-300 font-semibold">Terminaciones Ex:</strong> {quote.extraFinishes}</span>}
+                                            </div>
+                                        </div>
+
+                                        {/* Action Footers */}
+                                        {quote.status === 'Aprobada' && (
+                                            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-dark-300">
+                                                <button
+                                                    onClick={() => handlePOGenerateClick(quote)}
+                                                    className="w-full bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 border border-emerald-500/30 flex items-center justify-center gap-2 text-sm"
+                                                >
+                                                    <FileText className="w-4 h-4" /> Generar Orden de Compra en PDF
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
                         ) : (
-                            filteredQuotes.map(quote => (
-                                <div key={quote.id} className="glass-card p-5 relative group border-l-4 border-l-primary/50">
-                                    <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {quote.quoteDocument && (
-                                            <a
-                                                href={quote.quoteDocument}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-400 hover:text-emerald-300 transition-colors"
-                                                title="Ver Cotización (Documento Adjunto)"
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                            </a>
-                                        )}
-                                        {quote.status === 'Aprobada' && (
-                                            <button
-                                                onClick={() => handlePOGenerateClick(quote)}
-                                                className="p-1.5 bg-slate-50 dark:bg-dark-200 hover:bg-green-500/20 rounded text-green-400 hover:text-green-300 transition-colors"
-                                                title="Generar Orden de Compra (OC)"
-                                            >
-                                                <FileText className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => generateQuotePDF(quote)}
-                                            className="p-1.5 bg-slate-50 dark:bg-dark-200 hover:bg-blue-500/20 rounded text-blue-400 hover:text-blue-300 transition-colors"
-                                            title="Descargar PDF de Solicitud"
-                                        >
-                                            <Download className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => setEditingQuote(quote)}
-                                            className="p-1.5 bg-slate-50 dark:bg-dark-200 hover:bg-slate-100 dark:bg-dark-300 rounded text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:text-white transition-colors"
-                                            title="Editar"
-                                        >
-                                            <Edit className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(quote)}
-                                            className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
-                                            title="Eliminar"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-
-                                    <div className="flex items-start justify-between pe-16">
-                                        <div>
-                                            <div className="flex items-center gap-3">
-                                                <h3 className="text-lg font-medium text-slate-900 dark:text-white">{quote.bookTitle}</h3>
-                                                <div className="relative inline-block">
-                                                    <select
-                                                        value={quote.status}
-                                                        onChange={(e) => handleQuickStatusChange(quote, e.target.value)}
-                                                        className={`${statusColors[quote.status]} flex items-center gap-1 appearance-none pr-6 cursor-pointer outline-none font-medium hover:brightness-110 transition-all`}
-                                                        style={{
-                                                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                                                            backgroundPosition: 'right 0.2rem center',
-                                                            backgroundRepeat: 'no-repeat',
-                                                            backgroundSize: '1.2em 1.2em'
-                                                        }}
-                                                    >
-                                                        <option value="Solicitada" className="bg-white dark:bg-dark-200 dark:bg-dark-200 text-blue-400">Solicitada</option>
-                                                        <option value="Presupuestada" className="bg-white dark:bg-dark-200 dark:bg-dark-200 text-yellow-400">Presupuestada</option>
-                                                        <option value="Aprobada" className="bg-white dark:bg-dark-200 dark:bg-dark-200 text-green-400">Aprobada</option>
-                                                        <option value="Rechazada" className="bg-white dark:bg-dark-200 dark:bg-dark-200 text-red-400">Rechazada</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <p className="text-sm text-slate-500 dark:text-slate-300 mt-1 tabular-nums transition-colors">ID: {quote.id}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-200 dark:border-dark-300">
-                                        <div>
-                                            <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">Imprenta</p>
-                                            <p className="text-xs text-slate-900 dark:text-white font-medium">{quote.provider}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">
-                                                {quote.approvedAmount ? 'Tiraje Aprobado' : 'Tirajes Propios'}
-                                            </p>
-                                            <p className="text-xs text-slate-900 dark:text-white font-mono">
-                                                {quote.approvedAmount
-                                                    ? <span className="text-emerald-400 font-bold">{quote.approvedAmount} u.</span>
-                                                    : `${[quote.requestedAmount, quote.requestedAmount2, quote.requestedAmount3, quote.requestedAmount4].filter(v => v && v > 0).join(', ')} u.`
-                                                }
-                                            </p>
-                                        </div>
-                                        <div className="col-span-2">
-                                            <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider mb-1">Costo de Producción</p>
-                                            <div className="bg-slate-50 dark:bg-dark-200/50 p-2 rounded border border-slate-200 dark:border-dark-300 grid grid-cols-3 gap-2">
-                                                <div>
-                                                    <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-medium">{t('neto')}</p>
-                                                    <p className="text-xs text-slate-900 dark:text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-medium">{t('iva')} ({taxRate}%)</p>
-                                                    <p className="text-xs text-slate-900 dark:text-white font-mono">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount - Math.round(quote.quotedAmount / (1 + taxRate / 100))) : '-'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] text-primary-400 font-bold uppercase tracking-tight">Total</p>
-                                                    <p className="text-xs text-primary-400 font-mono font-bold blur-[0.2px]">{quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount) : 'Pte.'}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold uppercase tracking-wider">Fecha Entrega</p>
-                                            <p className="text-xs text-slate-900 dark:text-white font-medium">{quote.deliveryDate ? new Date(quote.deliveryDate).toLocaleDateString() : 'Pendiente'}</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Muestra rápida de detalles técnicos snapshots  */}
-                                    <div className="mt-4 bg-slate-50 dark:bg-dark-200 rounded-lg p-3">
-                                        <h4 className="text-[10px] text-slate-500 dark:text-slate-200 font-bold uppercase tracking-widest mb-2 border-b border-slate-200 dark:border-dark-300 pb-1">Ficha Técnica Asociada</h4>
-                                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-300">
-                                            <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Medida:</strong> {quote.bookWidth}x{quote.bookHeight}cm</span>
-                                            <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Págs(B/N):</strong> {quote.bookPagesBw}</span>
-                                            {quote.bookPagesColor > 0 && <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Págs(Color):</strong> {quote.bookPagesColor}</span>}
-                                            <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Tap/Sol:</strong> {quote.bookCoverType} / {quote.bookFlaps}</span>
-                                            <span><strong className="text-slate-500 dark:text-slate-400 font-semibold">Encuadernación:</strong> {quote.bindingType}</span>
-                                            {quote.extraFinishes && <span className="w-full mt-1 text-primary-400"><strong className="text-slate-600 dark:text-slate-300 font-semibold">Terminaciones Ex:</strong> {quote.extraFinishes}</span>}
-                                        </div>
-                                    </div>
-
-                                    {/* Action Footers */}
-                                    {quote.status === 'Aprobada' && (
-                                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-dark-300">
-                                            <button
-                                                onClick={() => handlePOGenerateClick(quote)}
-                                                className="w-full bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 font-medium px-4 py-2.5 rounded-lg transition-all duration-200 border border-emerald-500/30 flex items-center justify-center gap-2 text-sm"
-                                            >
-                                                <FileText className="w-4 h-4" /> Generar Orden de Compra en PDF
-                                            </button>
-                                        </div>
-                                    )}
-
+                            <div className="glass-card overflow-hidden border border-slate-200 dark:border-dark-300">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
+                                        <thead>
+                                            <tr className="bg-slate-50 dark:bg-dark-200/50 border-b border-slate-200 dark:border-dark-300">
+                                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-dark-500">Obra</th>
+                                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-dark-500">Imprenta</th>
+                                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-dark-500 text-center">Tiraje(s)</th>
+                                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-dark-500">Precio Total</th>
+                                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-dark-500">Estado</th>
+                                                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-dark-500 text-right">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-dark-300">
+                                            {filteredQuotes.map(quote => (
+                                                <tr key={quote.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-200/30 transition-colors group">
+                                                    <td className="px-5 py-4">
+                                                        <p className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">{quote.bookTitle}</p>
+                                                        <p className="text-[10px] text-slate-400 dark:text-dark-500 mt-0.5 font-mono">{quote.id.split('-')[0]}</p>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
+                                                                <Printer className="w-3 h-3 text-primary-400" />
+                                                            </div>
+                                                            <span className="text-xs font-medium text-slate-600 dark:text-dark-600">{quote.provider}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-5 py-4 text-center">
+                                                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${quote.approvedAmount ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-100 dark:bg-dark-300 text-slate-600 dark:text-dark-600'}`}>
+                                                            {quote.approvedAmount ? `${quote.approvedAmount} u.` : `${quote.requestedAmount} u.`}
+                                                        </span>
+                                                        {(!quote.approvedAmount && (quote.requestedAmount2 || quote.requestedAmount3)) && (
+                                                            <span className="text-[9px] text-slate-400 block mt-1">+ alt.</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <p className="text-sm font-bold text-primary-400 font-mono">
+                                                            {quote.quotedAmount > 0 ? formatCLP(quote.quotedAmount) : <span className="text-slate-300 dark:text-dark-200 italic font-normal">Pte.</span>}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <div className="relative inline-block w-32">
+                                                            <select
+                                                                value={quote.status}
+                                                                onChange={(e) => handleQuickStatusChange(quote, e.target.value)}
+                                                                className={`${statusColors[quote.status]} w-full flex items-center gap-1 appearance-none pr-6 cursor-pointer outline-none font-bold hover:brightness-110 transition-all text-[10px] uppercase tracking-wider`}
+                                                                style={{
+                                                                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                                                                    backgroundPosition: 'right 0.2rem center',
+                                                                    backgroundRepeat: 'no-repeat',
+                                                                    backgroundSize: '1.2em 1.2em'
+                                                                }}
+                                                            >
+                                                                <option value="Solicitada" className="bg-white dark:bg-dark-200 text-blue-400">Solicitada</option>
+                                                                <option value="Presupuestada" className="bg-white dark:bg-dark-200 text-yellow-400">Presupuestada</option>
+                                                                <option value="Aprobada" className="bg-white dark:bg-dark-200 text-green-400">Aprobada</option>
+                                                                <option value="Rechazada" className="bg-white dark:bg-dark-200 text-red-400">Rechazada</option>
+                                                            </select>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            {quote.quoteDocument && (
+                                                                <a
+                                                                    href={quote.quoteDocument}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="p-1.5 hover:bg-emerald-500/10 rounded-lg text-emerald-400 transition-colors"
+                                                                    title="Ver Documento"
+                                                                >
+                                                                    <ExternalLink className="w-4 h-4" />
+                                                                </a>
+                                                            )}
+                                                            <button
+                                                                onClick={() => generateQuotePDF(quote)}
+                                                                className="p-1.5 hover:bg-blue-500/10 rounded-lg text-blue-400 transition-colors"
+                                                                title="Solicitud PDF"
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                            </button>
+                                                            {quote.status === 'Aprobada' && (
+                                                                <button
+                                                                    onClick={() => handlePOGenerateClick(quote)}
+                                                                    className="p-1.5 hover:bg-green-500/10 rounded-lg text-green-400 transition-colors"
+                                                                    title="Generar OC"
+                                                                >
+                                                                    <FileText className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => setEditingQuote(quote)}
+                                                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-dark-300 rounded-lg text-slate-500 dark:text-dark-500 transition-colors"
+                                                                title="Editar"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(quote)}
+                                                                className="p-1.5 hover:bg-red-500/10 rounded-lg text-red-500 transition-colors"
+                                                                title="Eliminar"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            ))
-                        )}
-                    </div>
+                            </div>
+                        )
+                    )}
                 </>
             )}
 
