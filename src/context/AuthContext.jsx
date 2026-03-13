@@ -36,7 +36,7 @@ const initialData = {
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [data, setData] = useState(initialData)
-    const [loading, setLoading] = useState(true)
+    const [initializing, setInitializing] = useState(true)
     const [supabaseConnected, setSupabaseConnected] = useState(true)
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
     const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'es')
@@ -80,17 +80,22 @@ export function AuthProvider({ children }) {
                 console.error('Session restore error:', e);
             }
         }
-        setLoading(false)
+        setInitializing(false)
     }, [])
 
     const login = useCallback(async (email, password) => {
-        const found = await db.loginUser(email, password)
-        if (found && found.tenantId) {
-            setUser(found)
-            localStorage.setItem('editorial_user', JSON.stringify(found))
-            return { success: true, user: found }
+        try {
+            const found = await db.loginUser(email, password)
+            if (found && found.tenantId) {
+                setUser(found)
+                localStorage.setItem('editorial_user', JSON.stringify(found))
+                return { success: true, user: found }
+            }
+            return { success: false, error: 'Credenciales incorrectas' }
+        } catch (err) {
+            console.error('Login error:', err)
+            return { success: false, error: 'Error de conexión con la base de datos profesional' }
         }
-        return { success: false, error: 'Credenciales incorrectas' }
     }, [])
 
     const logout = () => {
@@ -113,6 +118,7 @@ export function AuthProvider({ children }) {
     // ============ WRAPPED OPERATIONS (Ensuring IDs and TenantId) ============
 
     const addAuditLog = (action, type = 'general') => {
+        if (!user) return Promise.reject('No user session')
         return audit.addAuditLog({
             id: db.iUUID(),
             tenant_id: user.tenantId,
@@ -131,6 +137,7 @@ export function AuthProvider({ children }) {
     }
 
     const addComment = (bookId, text, category) => {
+        if (!user) return Promise.reject('No user session')
         return comments.addComment({
             id: db.iUUID(),
             tenantId: user.tenantId,
@@ -154,7 +161,7 @@ export function AuthProvider({ children }) {
     const updateBookDetails = (bookId, updates) => books.updateBook({ id: bookId, updates })
     const deleteExistingBook = (bookId) => books.deleteBook(bookId)
 
-    // ---- INVENTORY & FINANCES (Direct DB for now as they are complex) ----
+    // ---- INVENTORY & FINANCES ----
     const updateInventory = (bookId, updater) => {
         const physical = [...data.inventory.physical]
         const idx = physical.findIndex(p => p.bookId === bookId)
@@ -265,6 +272,8 @@ export function AuthProvider({ children }) {
         return new Intl.NumberFormat(language === 'en' ? 'en-US' : 'es-ES', { style: 'currency', currency, minimumFractionDigits: 2 }).format(value)
     }, [currency, language])
 
+    const isGlobalLoading = initializing || (user && queryLoading)
+
     const value = {
         user, data, setData, login, logout, hasPermission,
         isSuperAdmin: () => user?.role === 'SUPERADMIN',
@@ -286,7 +295,7 @@ export function AuthProvider({ children }) {
         theme, toggleTheme: () => setTheme(t => t === 'dark' ? 'light' : 'dark'),
         language, setLanguage, t,
         currency, setCurrency, taxRate, setTaxRate, formatCurrency,
-        loading: loading || queryLoading, supabaseConnected, reloadData: refetchData
+        loading: isGlobalLoading, supabaseConnected, reloadData: refetchData
     }
 
     useEffect(() => {
@@ -294,13 +303,21 @@ export function AuthProvider({ children }) {
         localStorage.setItem('theme', theme)
     }, [theme])
 
-    if (loading) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a', color: '#e2e8f0' }}>
-            <p>Conectando con la base de datos profesional...</p>
-        </div>
+    return (
+        <AuthContext.Provider value={value}>
+            {isGlobalLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a', color: '#e2e8f0' }}>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginBottom: '20px', fontSize: '24px', fontWeight: 'bold', color: '#3b82f6' }}>Editorial Pro</div>
+                        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+                        <p>Conectando con la base de datos profesional...</p>
+                    </div>
+                </div>
+            ) : (
+                children
+            )}
+        </AuthContext.Provider>
     )
-
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => {

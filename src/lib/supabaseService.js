@@ -18,9 +18,9 @@ export async function loadAllData(tenantId) {
             commentsRes,
             alertsRes,
             docsRes,
-            quotesRes,
             salesRes,
             consignmentsRes,
+            quotesRes,
             suppliersRes,
             poRes,
             expensesRes
