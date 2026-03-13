@@ -56,18 +56,22 @@ export default function Escandallo() {
         }
     }, [selectedBookId, data?.books])
 
+    const resetCalculator = () => {
+        setSelectedBookId('')
+        setCosts({ edicion: 0, correccion: 0, maquetacion: 0, diseno: 0, impresion: 0, marketing: 0, distribucion: 0, otros: 0 })
+        setPvp(0)
+        setTiraje(0)
+        setRoyalty(0)
+        sessionStorage.removeItem('escandallo_state_bookId')
+        sessionStorage.removeItem('escandallo_state_costs')
+        sessionStorage.removeItem('escandallo_state_pvp')
+        sessionStorage.removeItem('escandallo_state_tiraje')
+        sessionStorage.removeItem('escandallo_state_royalty')
+    }
+
     const handleClear = () => {
         if (window.confirm('¿Deseas limpiar todos los valores de la calculadora?')) {
-            setSelectedBookId('')
-            setCosts({ edicion: 0, correccion: 0, maquetacion: 0, diseno: 0, impresion: 0, marketing: 0, distribucion: 0, otros: 0 })
-            setPvp(0)
-            setTiraje(0)
-            setRoyalty(0)
-            sessionStorage.removeItem('escandallo_state_bookId')
-            sessionStorage.removeItem('escandallo_state_costs')
-            sessionStorage.removeItem('escandallo_state_pvp')
-            sessionStorage.removeItem('escandallo_state_tiraje')
-            sessionStorage.removeItem('escandallo_state_royalty')
+            resetCalculator()
         }
     }
 
@@ -91,6 +95,7 @@ export default function Escandallo() {
                 addAuditLog(`Actualizó escandallo para título: ${book.title}`, 'general')
             }
             alert('Escandallo guardado correctamente en la base de datos.')
+            resetCalculator()
         } catch (err) {
             console.error('Save failed', err)
             alert('Error al guardar datos: ' + (err.message || 'Error desconocido'))
