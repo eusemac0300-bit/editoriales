@@ -374,7 +374,7 @@ export default function Quotes() {
                         <Printer className="w-6 h-6 text-primary" />
                         Cotizaciones a Imprenta
                     </h1>
-                    <p className="text-slate-500 dark:text-dark-500 text-sm mt-1">
+                    <p className="text-slate-600 dark:text-dark-700 text-sm mt-1">
                         Gestiona presupuestos y calcula los costos de impresión.
                     </p>
                 </div>
@@ -876,12 +876,13 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                 {/* Book Selection (only writable on New) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-slate-200 dark:border-dark-300 pb-4">
                     <div className="md:col-span-2">
-                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Libro a Cotizar</label>
+                        <label className="text-xs text-slate-600 dark:text-dark-700 mb-1 block font-medium">Libro a Cotizar</label>
                         {isNew ? (
                             <select
                                 value={form.bookId}
                                 onChange={e => setForm(p => ({ ...p, bookId: e.target.value }))}
-                                className="input-field text-sm font-medium"
+                                className="input-field text-sm font-medium dark:bg-dark-300"
+                                style={{ colorScheme: 'dark' }}
                                 required
                             >
                                 <option value="">Seleccione un título de la biblioteca...</option>
@@ -896,11 +897,12 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                     </div>
 
                     <div>
-                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Imprenta / Proveedor</label>
+                        <label className="text-xs text-slate-600 dark:text-dark-700 mb-1 block font-medium">Imprenta / Proveedor</label>
                         <select
                             value={form.provider}
                             onChange={e => setForm(p => ({ ...p, provider: e.target.value }))}
-                            className="input-field text-sm font-medium"
+                            className="input-field text-sm font-medium dark:bg-dark-300"
+                            style={{ colorScheme: 'dark' }}
                             required
                         >
                             <option value="">Seleccione una imprenta...</option>
@@ -921,13 +923,14 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         )}
                     </div>
                     <div>
-                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tiraje Principal</label>
+                        <label className="text-xs text-slate-600 dark:text-dark-700 mb-1 block font-medium">Tiraje Principal</label>
                         <input
                             type="number"
                             min="1"
                             value={form.requestedAmount}
                             onChange={e => setForm(p => ({ ...p, requestedAmount: e.target.value }))}
-                            className="input-field text-sm"
+                            className="input-field text-sm dark:bg-dark-300"
+                            style={{ colorScheme: 'dark' }}
                             placeholder="Ej: 500"
                             required
                         />
@@ -1019,11 +1022,12 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                     </div>
 
                     <div className="md:col-span-1">
-                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Tipo de Encuadernación</label>
+                        <label className="text-xs text-slate-600 dark:text-dark-700 mb-1 block font-medium">Tipo de Encuadernación</label>
                         <select
                             value={form.bindingType}
                             onChange={e => setForm(p => ({ ...p, bindingType: e.target.value }))}
-                            className="input-field text-sm"
+                            className="input-field text-sm dark:bg-dark-300"
+                            style={{ colorScheme: 'dark' }}
                         >
                             <option value="Rústica Fresada PUR">Rústica Fresada PUR</option>
                             <option value="Rústica Cosida">Rústica Cosida</option>
@@ -1034,11 +1038,12 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         </select>
                     </div>
                     <div>
-                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Otras Terminaciones Especiales</label>
+                        <label className="text-xs text-slate-600 dark:text-dark-700 mb-1 block font-medium">Otras Terminaciones Especiales</label>
                         <input
                             value={form.extraFinishes}
                             onChange={e => setForm(p => ({ ...p, extraFinishes: e.target.value }))}
-                            className="input-field text-sm text-primary-300"
+                            className="input-field text-sm text-primary-300 dark:bg-dark-300"
+                            style={{ colorScheme: 'dark' }}
                             placeholder="Ej: Laca UV sectorizada, Cuño seco, Cinta marcapáginas..."
                         />
                     </div>
@@ -1047,11 +1052,12 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                 {/* Followup & Prices */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Estado de Cotización</label>
+                        <label className="text-xs text-slate-600 dark:text-dark-700 mb-1 block font-medium">Estado de Cotización</label>
                         <select
                             value={form.status}
                             onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
-                            className="input-field text-sm font-medium"
+                            className="input-field text-sm font-medium dark:bg-dark-300"
+                            style={{ colorScheme: 'dark' }}
                         >
                             <option value="Solicitada">Solicitada</option>
                             <option value="Presupuestada">Presupuestada</option>
@@ -1060,15 +1066,16 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         </select>
                     </div>
                     <div>
-                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Monto Cotizado (Total CLP)</label>
+                        <label className="text-xs text-slate-600 dark:text-dark-400 mb-1 block">Monto Cotizado (Total CLP)</label>
                         <div className="relative mb-2">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-dark-500"><DollarSign className="w-3 h-3" /></span>
                             <input
                                 type="text"
                                 value={form.quotedAmountStr}
                                 onChange={e => setForm(p => ({ ...p, quotedAmountStr: e.target.value.replace(/\D/g, '') }))}
-                                className="input-field pl-8 text-sm text-yellow-400 font-medium"
+                                className="input-field pl-8 text-sm text-yellow-400 font-medium dark:bg-dark-300"
                                 placeholder="0"
+                                style={{ colorScheme: 'dark' }}
                             />
                         </div>
                         {(() => {
@@ -1086,21 +1093,23 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                             return null
                         })()}
                     </div>
-                    <div>
-                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block flex items-center gap-1"><Calendar className="w-3 h-3" /> Fecha Prevista Entrega</label>
+                    <div className="max-w-[220px]">
+                        <label className="text-xs text-slate-600 dark:text-dark-700 mb-1 block flex items-center gap-1 font-medium"><Calendar className="w-3 h-3" /> Fecha Prevista Entrega</label>
                         <input
                             type="date"
                             value={form.deliveryDate}
                             onChange={e => setForm(p => ({ ...p, deliveryDate: e.target.value }))}
-                            className="input-field text-sm"
+                            className="input-field text-sm dark:bg-dark-300"
+                            style={{ colorScheme: 'dark' }}
                         />
                     </div>
                     <div className="md:col-span-3">
-                        <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Observaciones y Notas</label>
+                        <label className="text-xs text-slate-600 dark:text-dark-700 mb-1 block font-medium">Observaciones y Notas</label>
                         <textarea
                             value={form.notes}
                             onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-                            className="input-field text-sm"
+                            className="input-field text-sm dark:bg-dark-300"
+                            style={{ colorScheme: 'dark' }}
                             rows={3}
                             placeholder="Tiempos de entrega, retractilado individual, despacho a bodega..."
                         />
@@ -1108,7 +1117,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                 </div>
 
                 <div className="md:col-span-3 border-t border-slate-200 dark:border-dark-300 pt-4 pb-2">
-                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-2 block">Adjuntar Cotización Recibida (Opcional)</label>
+                    <label className="text-xs text-slate-600 dark:text-dark-700 mb-2 block font-medium">Adjuntar Cotización Recibida (Opcional)</label>
                     <div className="flex items-center gap-4 bg-slate-50 dark:bg-dark-200 p-3 rounded-lg border border-slate-200 dark:border-dark-300">
                         {form.quoteDocument ? (
                             <div className="flex items-center gap-3">
