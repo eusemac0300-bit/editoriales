@@ -701,6 +701,9 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
         delete quoteData.quotedAmountStr2
         delete quoteData.quotedAmountStr3
         delete quoteData.quotedAmountStr4
+        
+        // Ensure empty dates are null for Postgres compatibility
+        if (quoteData.deliveryDate === "") quoteData.deliveryDate = null;
 
         if (!initialData) {
             // New quote: snapshot the book data
