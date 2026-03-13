@@ -63,33 +63,28 @@ export async function loadAllData(tenantId) {
         const purchaseOrders = poRes.data;
         const expenses = expensesRes.data;
 
+        const isMissingTable = (err) => err?.code === 'PGRST116' || err?.message?.includes('does not exist') || err?.status === 404;
+
+        // Critical tables: users and books. If these are missing or failing (except 404), it's a critical error.
+        // Actually, if users is missing, we can't even login.
         const usersErr = usersRes.error;
         const booksErr = booksRes.error;
-        const invPhysErr = invPhysRes.error;
-        const invoicesErr = invoicesRes.error; // Added invoicesErr
-        const auditErr = auditRes.error;
-        const invDigErr = invDigRes.error;
-        const royaltiesErr = royaltiesRes.error;
-        const commentsErr = commentsRes.error; // Added commentsErr
-        const alertsErr = alertsRes.error;
-        const docsErr = docsRes.error;
-        const quotesErr = quotesRes.error;
-        const salesErr = salesRes.error;
-        const consignmentsErr = consignmentsRes.error; // Fixed from .data to .error
-        const suppliersErr = suppliersRes.error;
-        const poErr = poRes.error;
-        const expErr = expensesRes.error;
-
-        const criticalErrors = [usersErr, booksErr, invPhysErr, invoicesErr, auditErr, commentsErr].filter(Boolean) // Updated criticalErrors
         
-        if (criticalErrors.length > 0) {
-            console.error('Supabase critical load errors:', criticalErrors)
-            return null
+        if ((usersErr && !isMissingTable(usersErr)) || (booksErr && !isMissingTable(booksErr))) {
+            console.error('Supabase critical load errors:', { usersErr, booksErr });
+            return null;
         }
 
-        const nonCriticalErrors = [invDigErr, royaltiesErr, alertsErr, docsErr, quotesErr, salesErr, consignmentsErr, suppliersErr, poErr, expErr].filter(Boolean)
-        if (nonCriticalErrors.length > 0) {
-            console.warn('Supabase non-critical load errors (missing features):', nonCriticalErrors)
+        // List all errors to log them, but don't block the app for non-critical ones
+        const allErrors = [
+            usersRes.error, booksRes.error, invPhysRes.error, invDigRes.error, 
+            invoicesRes.error, royaltiesRes.error, auditRes.error, commentsRes.error, 
+            alertsRes.error, docsRes.error, quotesRes.error, salesRes.error, 
+            consignmentsRes.error, suppliersRes.error, poRes.error, expensesRes.error
+        ].filter(Boolean);
+
+        if (allErrors.length > 0) {
+            console.warn('Supabase load warnings (some tables might be missing):', allErrors);
         }
 
         // Transform snake_case to camelCase for books

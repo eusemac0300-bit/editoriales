@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import * as db from '../lib/supabaseService'
-import { supabase } from '../lib/supabase'
 import { translations } from '../lib/translations'
 import { useQueryClient } from '@tanstack/react-query'
 import { 
@@ -35,18 +34,21 @@ const initialData = {
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
-    const [data, setData] = useState(initialData)
     const [initializing, setInitializing] = useState(true)
-    const [supabaseConnected, setSupabaseConnected] = useState(true)
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
     const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'es')
     const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'CLP')
     const [taxRate, setTaxRate] = useState(() => parseFloat(localStorage.getItem('taxRate') || '0.19'))
     
     const queryClient = useQueryClient()
+    
+    // Core data fetch via React Query
     const { data: queryData, isLoading: queryLoading, refetch: refetchData } = useEditorialData(user?.tenantId)
     
-    // Mutations from React Query
+    // Stable data reference to avoid unnecessary re-renders in children
+    const data = useMemo(() => queryData || initialData, [queryData])
+
+    // Mutations
     const quotes = useQuotes(user?.tenantId)
     const books = useBooks(user?.tenantId)
     const users = useUsers(user?.tenantId)
@@ -57,13 +59,6 @@ export function AuthProvider({ children }) {
     const sales = useSales(user?.tenantId)
     const po = usePurchaseOrders(user?.tenantId)
     const expenses = useExpenses(user?.tenantId)
-
-    // Sync local state with React Query data for compatibility with legacy components
-    useEffect(() => {
-        if (queryData) {
-            setData(queryData)
-        }
-    }, [queryData])
 
     // Session recovery
     useEffect(() => {
@@ -78,6 +73,7 @@ export function AuthProvider({ children }) {
                 }
             } catch (e) {
                 console.error('Session restore error:', e);
+                localStorage.removeItem('editorial_user')
             }
         }
         setInitializing(false)
@@ -98,14 +94,13 @@ export function AuthProvider({ children }) {
         }
     }, [])
 
-    const logout = () => {
+    const logout = useCallback(() => {
         setUser(null)
-        setData(initialData)
         localStorage.removeItem('editorial_user')
         queryClient.clear()
-    }
+    }, [queryClient])
 
-    const hasPermission = (requiredRole) => {
+    const hasPermission = useCallback((requiredRole) => {
         if (!user) return false
         if (requiredRole === 'SUPERADMIN') return user.role === 'SUPERADMIN'
         if (user.role === 'SUPERADMIN') return true
@@ -113,11 +108,11 @@ export function AuthProvider({ children }) {
         if (requiredRole === 'FREELANCE' && (user.role === 'FREELANCE' || user.role === 'ADMIN')) return true
         if (requiredRole === 'AUTOR' && user.role === 'AUTOR') return true
         return user.role === requiredRole
-    }
+    }, [user])
 
-    // ============ WRAPPED OPERATIONS (Ensuring IDs and TenantId) ============
+    // ============ WRAPPED OPERATIONS ============
 
-    const addAuditLog = (action, type = 'general') => {
+    const addAuditLog = useCallback((action, type = 'general') => {
         if (!user) return Promise.reject('No user session')
         return audit.addAuditLog({
             id: db.iUUID(),
@@ -128,15 +123,15 @@ export function AuthProvider({ children }) {
             action,
             type
         })
-    }
+    }, [user, audit])
 
-    const updateBookStatus = async (bookId, newStatus) => {
+    const updateBookStatus = useCallback(async (bookId, newStatus) => {
         const bookObj = data.books.find(b => b.id === bookId)
         if (bookObj) addAuditLog(`Movió '${bookObj.title}' a ${newStatus}`, 'kanban')
         return books.updateBookStatus({ id: bookId, status: newStatus })
-    }
+    }, [data.books, books, addAuditLog])
 
-    const addComment = (bookId, text, category) => {
+    const addComment = useCallback((bookId, text, category) => {
         if (!user) return Promise.reject('No user session')
         return comments.addComment({
             id: db.iUUID(),
@@ -149,34 +144,28 @@ export function AuthProvider({ children }) {
             date: new Date().toISOString(),
             category
         })
-    }
+    }, [user, comments])
 
-    // ---- BOOKS ----
-    const addNewBook = (bookData) => books.addBook({ 
+    const addNewBook = useCallback((bookData) => books.addBook({ 
         ...bookData, 
         id: bookData.id || db.iUUID(), 
         tenantId: user?.tenantId,
         createdAt: bookData.createdAt || new Date().toISOString()
-    })
-    const updateBookDetails = (bookId, updates) => books.updateBook({ id: bookId, updates })
-    const deleteExistingBook = (bookId) => books.deleteBook(bookId)
+    }), [user?.tenantId, books])
 
-    // ---- INVENTORY & FINANCES ----
-    const updateInventory = (bookId, updater) => {
+    const updateBookDetails = useCallback((bookId, updates) => books.updateBook({ id: bookId, updates }), [books])
+    const deleteExistingBook = useCallback((bookId) => books.deleteBook(bookId), [books])
+
+    const updateInventory = useCallback((bookId, updater) => {
+        // This remains slightly legacy as it's a complex multi-step update
         const physical = [...data.inventory.physical]
         const idx = physical.findIndex(p => p.bookId === bookId)
         let updatedPhysical = idx >= 0 ? updater(physical[idx]) : updater(null, bookId)
         updatedPhysical.tenantId = user?.tenantId
         return db.upsertInventoryPhysical(bookId, updatedPhysical).then(() => refetchData())
-    }
+    }, [data.inventory.physical, user?.tenantId, refetchData])
 
-    const approveRoyalty = (royaltyId) => db.updateRoyaltyStatus(royaltyId, 'aprobada').then(() => refetchData())
-    const markAlertAsRead = (alertId) => db.markAlertRead(alertId).then(() => refetchData())
-    const markAllAlerts = () => db.markAllAlertsRead().then(() => refetchData())
-    const updateProfile = (userId, updates) => db.updateUserProfile(userId, updates).then(() => refetchData())
-
-    // ---- USERS ----
-    const addNewUser = (userData) => users.addUser({
+    const addNewUser = useCallback((userData) => users.addUser({
         id: userData.id || db.iUUID(),
         tenantId: user?.tenantId,
         ...userData,
@@ -184,64 +173,34 @@ export function AuthProvider({ children }) {
         firstLogin: userData.firstLogin !== undefined ? userData.firstLogin : userData.role === 'FREELANCE',
         socialLinks: userData.socialLinks || {},
         bio: userData.bio || null
-    })
-    const updateExistingUser = (userId, updates) => users.updateUser({ id: userId, updates })
-    const deleteExistingUser = (userId) => users.deleteUser(userId)
+    }), [user?.tenantId, users])
 
-    // ---- DOCUMENTS ----
-    const addDocument = (docData) => documents.addDocument({ 
-        ...docData, 
-        id: docData.id || db.iUUID(), 
-        tenantId: user?.tenantId 
-    })
-    const editDocument = (docId, updates) => documents.editDocument({ id: docId, updates })
-    const deleteDocument = (docId, fileUrl) => documents.deleteDocument({ id: docId, url: fileUrl })
+    const updateExistingUser = useCallback((userId, updates) => users.updateUser({ id: userId, updates }), [users])
+    const deleteExistingUser = useCallback((userId) => users.deleteUser(userId), [users])
 
-    // ---- QUOTES ----
-    const addNewQuote = (quoteData) => quotes.addQuote({ 
+    const addNewQuote = useCallback((quoteData) => quotes.addQuote({ 
         ...quoteData, 
         id: quoteData.id || db.iUUID(), 
         tenantId: user?.tenantId,
         status: quoteData.status || 'Solicitada',
         createdAt: quoteData.createdAt || new Date().toISOString()
-    })
-    const updateQuoteDetails = (quoteId, updates) => quotes.updateQuote({ id: quoteId, updates })
-    const deleteExistingQuote = (quoteId) => quotes.deleteQuote(quoteId)
+    }), [user?.tenantId, quotes])
 
-    // ---- SALES ----
-    const addNewSale = (saleData) => sales.addSale({ 
+    const updateQuoteDetails = useCallback((quoteId, updates) => quotes.updateQuote({ id: quoteId, updates }), [quotes])
+    const deleteExistingQuote = useCallback((quoteId) => quotes.deleteQuote(quoteId), [quotes])
+
+    const addNewSale = useCallback((saleData) => sales.addSale({ 
         ...saleData, 
         id: saleData.id || db.iUUID(), 
         tenantId: user?.tenantId 
-    })
-    const updateSaleDetails = (saleId, updates) => sales.updateSale({ id: saleId, updates })
-    const deleteExistingSale = (saleId) => sales.deleteSale(saleId)
+    }), [user?.tenantId, sales])
 
-    // ---- SUPPLIERS ----
-    const addSupplier = (supplierData) => suppliers.addSupplier({
-        ...supplierData,
-        id: supplierData.id || db.iUUID()
-    })
-    const updateSupplier = (supplierId, updates) => suppliers.updateSupplier({ id: supplierId, updates })
-    const deleteSupplier = (supplierId) => suppliers.deleteSupplier(supplierId)
-
-    // ---- PURCHASE ORDERS ----
-    const addPurchaseOrder = (poData) => po.addPurchaseOrder({
+    const addPurchaseOrder = useCallback((poData) => po.addPurchaseOrder({
         ...poData,
         id: poData.id || db.iUUID(),
         date_ordered: poData.date_ordered || new Date().toISOString()
-    })
-    const updatePurchaseOrder = (poId, updates) => po.updatePurchaseOrder({ id: poId, updates })
-    const deletePurchaseOrder = (poId) => po.deletePurchaseOrder(poId)
-    const receivePurchaseOrder = (poId, quantity, bookId) => po.receivePurchaseOrder({ poId, quantity, bookId })
+    }), [user?.tenantId, po])
 
-    // ---- EXPENSES ----
-    const addExpense = (expenseData) => expenses.addExpense({
-        ...expenseData,
-        id: expenseData.id || db.iUUID()
-    })
-
-    // ---- SYSTEM ----
     const resetWorkspace = async () => {
         if (!user || user.role !== 'ADMIN') return false
         const success = await db.resetTenantData(user.tenantId, user.id)
@@ -249,17 +208,6 @@ export function AuthProvider({ children }) {
         return success
     }
 
-    const markFreelanceOnboarded = () => {
-        const updatedUser = { ...user, firstLogin: false }
-        setUser(updatedUser)
-        localStorage.setItem('editorial_user', JSON.stringify(updatedUser))
-        return db.updateUserFirstLogin(user.id).then(() => refetchData())
-    }
-
-    const loadDemo = () => db.seedDemoData(user.tenantId).then(() => refetchData())
-    const clearDemo = () => db.clearDemoData(user.tenantId).then(() => refetchData())
-
-    // ---- UTILS ----
     const t = useCallback((key) => {
         const langData = translations[language] || translations['es']
         return langData[key] || key
@@ -274,29 +222,55 @@ export function AuthProvider({ children }) {
 
     const isGlobalLoading = initializing || (user && queryLoading)
 
-    const value = {
-        user, data, setData, login, logout, hasPermission,
+    const contextValue = useMemo(() => ({
+        user, data, login, logout, hasPermission,
         isSuperAdmin: () => user?.role === 'SUPERADMIN',
         isAdmin: () => user?.role === 'ADMIN',
         isFreelance: () => user?.role === 'FREELANCE',
         isAutor: () => user?.role === 'AUTOR',
-        resetWorkspace, loadDemo, clearDemo,
+        resetWorkspace, 
+        loadDemo: () => db.seedDemoData(user.tenantId).then(() => refetchData()), 
+        clearDemo: () => db.clearDemoData(user.tenantId).then(() => refetchData()),
         addAuditLog, updateBookStatus, addComment,
-        markFreelanceOnboarded, formatCLP: formatCurrency,
-        addNewBook, updateBookDetails, deleteExistingBook, updateInventory, approveRoyalty,
-        markAlertAsRead, markAllAlerts, updateProfile,
+        markFreelanceOnboarded: () => {
+             const updatedUser = { ...user, firstLogin: false }
+             setUser(updatedUser)
+             localStorage.setItem('editorial_user', JSON.stringify(updatedUser))
+             return db.updateUserFirstLogin(user.id).then(() => refetchData())
+        }, 
+        formatCLP: formatCurrency,
+        addNewBook, updateBookDetails, deleteExistingBook, updateInventory, 
+        approveRoyalty: (royaltyId) => db.updateRoyaltyStatus(royaltyId, 'aprobada').then(() => refetchData()),
+        markAlertAsRead: (alertId) => db.markAlertRead(alertId).then(() => refetchData()), 
+        markAllAlerts: () => db.markAllAlertsRead().then(() => refetchData()), 
+        updateProfile: (userId, updates) => db.updateUserProfile(userId, updates).then(() => refetchData()),
         addNewUser, updateExistingUser, deleteExistingUser,
-        addDocument, editDocument, deleteDocument,
+        addDocument: (docData) => documents.addDocument({ ...docData, id: docData.id || db.iUUID(), tenantId: user?.tenantId }),
+        editDocument: (docId, updates) => documents.editDocument({ id: docId, updates }),
+        deleteDocument: (docId, url) => documents.deleteDocument({ id: docId, url }),
         addNewQuote, updateQuoteDetails, deleteExistingQuote,
-        addNewSale, updateSaleDetails, deleteExistingSale,
-        addSupplier, updateSupplier, deleteSupplier,
-        addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder,
-        addExpense,
+        addNewSale, updateSaleDetails: (saleId, updates) => sales.updateSale({ id: saleId, updates }),
+        deleteExistingSale: (saleId) => sales.deleteSale(saleId),
+        addSupplier: (supplierData) => suppliers.addSupplier({ ...supplierData, id: supplierData.id || db.iUUID() }),
+        updateSupplier: (supplierId, updates) => suppliers.updateSupplier({ id: supplierId, updates }),
+        deleteSupplier: (supplierId) => suppliers.deleteSupplier(supplierId),
+        addPurchaseOrder, 
+        updatePurchaseOrder: (poId, updates) => po.updatePurchaseOrder({ id: poId, updates }), 
+        deletePurchaseOrder: (poId) => po.deletePurchaseOrder(poId), 
+        receivePurchaseOrder: (poId, qt, bId) => po.receivePurchaseOrder({ poId, quantity: qt, bookId: bId }),
+        addExpense: (expData) => expenses.addExpense({ ...expData, id: expData.id || db.iUUID() }),
         theme, toggleTheme: () => setTheme(t => t === 'dark' ? 'light' : 'dark'),
         language, setLanguage, t,
         currency, setCurrency, taxRate, setTaxRate, formatCurrency,
-        loading: isGlobalLoading, supabaseConnected, reloadData: refetchData
-    }
+        loading: isGlobalLoading, reloadData: refetchData
+    }), [
+        user, data, login, logout, hasPermission, addAuditLog, updateBookStatus, addComment, 
+        addNewBook, updateBookDetails, deleteExistingBook, updateInventory, refetchData,
+        addNewUser, updateExistingUser, deleteExistingUser,
+        addNewQuote, updateQuoteDetails, deleteExistingQuote,
+        addNewSale, sales, suppliers, documents, po, expenses,
+        theme, language, currency, taxRate, t, formatCurrency, isGlobalLoading
+    ])
 
     useEffect(() => {
         document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -304,17 +278,26 @@ export function AuthProvider({ children }) {
     }, [theme])
 
     return (
-        <AuthContext.Provider value={value}>
-            {isGlobalLoading ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a', color: '#e2e8f0' }}>
+        <AuthContext.Provider value={contextValue}>
+            {initializing ? (
+                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0f172a', color: '#e2e8f0' }}>
                     <div style={{ textAlign: 'center' }}>
                         <div style={{ marginBottom: '20px', fontSize: '24px', fontWeight: 'bold', color: '#3b82f6' }}>Editorial Pro</div>
-                        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-                        <p>Conectando con la base de datos profesional...</p>
+                        <p>Iniciando sistema...</p>
                     </div>
-                </div>
+                 </div>
             ) : (
-                children
+                <>
+                    {children}
+                    {user && queryLoading && (
+                        <div className="fixed inset-0 z-[9999] bg-dark-900/40 backdrop-blur-[2px] flex items-center justify-center">
+                            <div className="bg-dark-800 p-6 rounded-2xl border border-primary/20 shadow-2xl flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-300">
+                                <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                <p className="text-white font-medium text-sm tracking-wide">Actualizando datos...</p>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </AuthContext.Provider>
     )
