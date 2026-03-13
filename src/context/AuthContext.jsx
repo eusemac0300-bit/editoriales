@@ -13,7 +13,8 @@ import {
     useDocuments, 
     useSales, 
     usePurchaseOrders, 
-    useExpenses 
+    useExpenses,
+    useGlobalMeta
 } from '../hooks/useEditorialData'
 
 const AuthContext = createContext(null)
@@ -59,6 +60,7 @@ export function AuthProvider({ children }) {
     const sales = useSales(user?.tenantId)
     const po = usePurchaseOrders(user?.tenantId)
     const expenses = useExpenses(user?.tenantId)
+    const meta = useGlobalMeta(user?.tenantId)
 
     // Session recovery
     useEffect(() => {
@@ -232,18 +234,8 @@ export function AuthProvider({ children }) {
         loadDemo: () => db.seedDemoData(user.tenantId).then(() => refetchData()), 
         clearDemo: () => db.clearDemoData(user.tenantId).then(() => refetchData()),
         addAuditLog, updateBookStatus, addComment,
-        markFreelanceOnboarded: () => {
-             const updatedUser = { ...user, firstLogin: false }
-             setUser(updatedUser)
-             localStorage.setItem('editorial_user', JSON.stringify(updatedUser))
-             return db.updateUserFirstLogin(user.id).then(() => refetchData())
-        }, 
         formatCLP: formatCurrency,
         addNewBook, updateBookDetails, deleteExistingBook, updateInventory, 
-        approveRoyalty: (royaltyId) => db.updateRoyaltyStatus(royaltyId, 'aprobada').then(() => refetchData()),
-        markAlertAsRead: (alertId) => db.markAlertRead(alertId).then(() => refetchData()), 
-        markAllAlerts: () => db.markAllAlertsRead().then(() => refetchData()), 
-        updateProfile: (userId, updates) => db.updateUserProfile(userId, updates).then(() => refetchData()),
         addNewUser, updateExistingUser, deleteExistingUser,
         addDocument: (docData) => documents.addDocument({ ...docData, id: docData.id || db.iUUID(), tenantId: user?.tenantId }),
         editDocument: (docId, updates) => documents.editDocument({ id: docId, updates }),
@@ -259,6 +251,16 @@ export function AuthProvider({ children }) {
         deletePurchaseOrder: (poId) => po.deletePurchaseOrder(poId), 
         receivePurchaseOrder: (poId, qt, bId) => po.receivePurchaseOrder({ poId, quantity: qt, bookId: bId }),
         addExpense: (expData) => expenses.addExpense({ ...expData, id: expData.id || db.iUUID() }),
+        markFreelanceOnboarded: () => {
+             const updatedUser = { ...user, firstLogin: false }
+             setUser(updatedUser)
+             localStorage.setItem('editorial_user', JSON.stringify(updatedUser))
+             return meta.markFreelanceOnboarded(user.id)
+        },
+        approveRoyalty: meta.approveRoyalty,
+        markAlertAsRead: meta.markAlertRead,
+        markAllAlerts: meta.markAllAlertsRead,
+        updateProfile: (userId, updates) => meta.updateProfile({ id: userId, updates }),
         theme, toggleTheme: () => setTheme(t => t === 'dark' ? 'light' : 'dark'),
         language, setLanguage, t,
         currency, setCurrency, taxRate, setTaxRate, formatCurrency,

@@ -307,9 +307,42 @@ function BookForm({ data, initialData, onSave, onClose }) {
         legalDepositNumber: initialData?.legalDepositNumber || '',
         flapWidth: initialData?.flapWidth || '',
         // Nuevos campos de producción
-        entryStage: initialData?.status || 'Original',
         deliveryDate: initialData?.deliveryDate || ''
     })
+
+    useEffect(() => {
+        if (initialData) {
+            setForm({
+                title: initialData.title || '',
+                authorId: initialData.authorId || '',
+                authorName: initialData.authorName || '',
+                genre: initialData.genre || '',
+                status: initialData.status || 'Original',
+                isbn: initialData.isbn || '',
+                synopsis: initialData.synopsis || '',
+                pvp: initialData.pvp || 0,
+                royaltyPercent: initialData.royaltyPercent || 0,
+                advance: initialData.advance || 0,
+                advanceCurrency: initialData.advanceCurrency || 'CLP',
+                pageCount: initialData.pageCount || '',
+                width: initialData.width || '',
+                height: initialData.height || '',
+                coverType: initialData.coverType || '',
+                interiorPaper: initialData.interiorPaper || '',
+                coverPaper: initialData.coverPaper || '',
+                coverFinish: initialData.coverFinish || '',
+                cover: initialData.cover || '',
+                pagesColor: initialData.pagesColor || '',
+                sku: initialData.sku || '',
+                hasLegalDeposit: initialData.hasLegalDeposit || 'No',
+                legalDepositNumber: initialData.legalDepositNumber || '',
+                flapWidth: initialData.flapWidth || '',
+                entryStage: initialData.status || 'Original',
+                deliveryDate: initialData.deliveryDate || ''
+            })
+        }
+    }, [initialData])
+
     const authors = data.users.filter(u => u.role === 'AUTOR')
 
     const handleCoverUpload = async (e) => {

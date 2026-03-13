@@ -265,4 +265,39 @@ export function useExpenses(tenantId) {
     return { addExpense: addMutation.mutateAsync }
 }
 
-// We can add more specific hooks here as we migrate more features
+export function useGlobalMeta(tenantId) {
+    const queryClient = useQueryClient()
+    
+    const approveRoyaltyMutation = useMutation({
+        mutationFn: (id) => db.updateRoyaltyStatus(id, 'aprobada'),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+    })
+
+    const markAlertMutation = useMutation({
+        mutationFn: (id) => db.markAlertRead(id),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+    })
+
+    const markAllAlertsMutation = useMutation({
+        mutationFn: () => db.markAllAlertsRead(tenantId),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+    })
+
+    const updateProfileMutation = useMutation({
+        mutationFn: ({ id, updates }) => db.updateUserProfile(id, updates),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+    })
+
+    const markFreelanceOnboardedMutation = useMutation({
+        mutationFn: (userId) => db.updateUserFirstLogin(userId),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+    })
+
+    return {
+        approveRoyalty: approveRoyaltyMutation.mutateAsync,
+        markAlertRead: markAlertMutation.mutateAsync,
+        markAllAlertsRead: markAllAlertsMutation.mutateAsync,
+        updateProfile: updateProfileMutation.mutateAsync,
+        markFreelanceOnboarded: markFreelanceOnboardedMutation.mutateAsync
+    }
+}

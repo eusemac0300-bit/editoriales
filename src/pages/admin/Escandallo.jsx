@@ -47,18 +47,26 @@ export default function Escandallo() {
         if (selectedBookId && data?.books) {
             const book = data.books.find(b => b.id === selectedBookId)
             if (book) {
-                // Use functional updates and spread to ensure all keys exist and avoid NaN
-                if (book.escandalloCosts) {
-                    setCosts(prev => ({
-                        ...prev,
-                        ...Object.fromEntries(
-                            Object.entries(book.escandalloCosts).map(([k, v]) => [k, Number(v) || 0])
-                        )
-                    }))
+                // Explicitly set EVERY value. If it doesn't exist in the book, reset to default (0).
+                // This prevents values from previous books from "sticking".
+                const dbCosts = book.escandalloCosts || {}
+                const newCosts = {
+                    edicion: Number(dbCosts.edicion) || 0,
+                    correccion: Number(dbCosts.correccion) || 0,
+                    maquetacion: Number(dbCosts.maquetacion) || 0,
+                    diseno: Number(dbCosts.diseno) || 0,
+                    impresion: Number(dbCosts.impresion) || 0,
+                    marketing: Number(dbCosts.marketing) || 0,
+                    distribucion: Number(dbCosts.distribucion) || 0,
+                    otros: Number(dbCosts.otros) || 0
                 }
-                if (book.pvp) setPvp(Number(book.pvp) || 0)
-                if (book.tiraje) setTiraje(Number(book.tiraje) || 0)
-                if (book.royaltyPercent) setRoyalty(Number(book.royaltyPercent) || 0)
+                setCosts(newCosts)
+                setPvp(Number(book.pvp) || 0)
+                setTiraje(Number(book.tiraje) || 0)
+                setRoyalty(Number(book.royaltyPercent) || 0)
+            } else {
+                // If the user selects "-- Elige un Título --" or similar
+                resetCalculator()
             }
         }
     }, [selectedBookId, data?.books])
