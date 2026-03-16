@@ -82,53 +82,68 @@ export default function Books() {
                 </div>
             </div>
 
+            {/* Form Modal */}
             {(showAdd || editingBook) && (
-                <BookForm
-                    data={data}
-                    initialData={editingBook}
-                    onSave={async (bookData) => {
-                        if (editingBook) {
-                            await updateBookDetails(editingBook.id, bookData)
-                            addAuditLog(`Actualizó título: '${bookData.title}'`, 'general')
-                        } else {
-                            await addNewBook(bookData)
-                            addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
-                        }
-                        setShowAdd(false)
-                        setEditingBook(null)
-                    }}
-                    onClose={() => { setShowAdd(false); setEditingBook(null) }}
-                />
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { setShowAdd(false); setEditingBook(null) }} />
+                    <div className="relative glass-card w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 slide-up shadow-2xl border border-primary/20">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                {editingBook ? <Edit className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5 text-primary" />}
+                                {editingBook ? 'Editar Título' : 'Registrar Nuevo Título'}
+                            </h2>
+                            <button onClick={() => { setShowAdd(false); setEditingBook(null) }} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <BookForm
+                            data={data}
+                            initialData={editingBook}
+                            onSave={async (bookData) => {
+                                if (editingBook) {
+                                    await updateBookDetails(editingBook.id, bookData)
+                                    addAuditLog(`Actualizó título: '${bookData.title}'`, 'general')
+                                } else {
+                                    await addNewBook(bookData)
+                                    addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
+                                }
+                                setShowAdd(false)
+                                setEditingBook(null)
+                            }}
+                            onClose={() => { setShowAdd(false); setEditingBook(null) }}
+                        />
+                    </div>
+                </div>
             )}
 
             <div className="space-y-4">
                 {filteredBooks.map(book => (
                     <div key={book.id} className="glass-card p-5 relative group">
-                        <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute top-4 right-4 flex items-center gap-2 transition-opacity">
                             <button
                                 onClick={() => setShowCodes(book)}
-                                className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-600 dark:text-emerald-500/70 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                                className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-500/70 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors shadow-sm"
                                 title="Ver Códigos QR e ISBN"
                             >
                                 <QrCode className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => navigate(`/admin/escandallo?bookId=${book.id}`)}
-                                className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-primary/20 rounded text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                                className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-primary/20 rounded-lg text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors shadow-sm"
                                 title="Calculadora de Escandallo"
                             >
                                 <Calculator className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => { setEditingBook(book); setShowAdd(false) }}
-                                className="p-1.5 bg-slate-100 dark:bg-dark-200 hover:bg-slate-200 dark:hover:bg-dark-300 rounded text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-slate-200 dark:hover:bg-dark-300 rounded-lg text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
                                 title="Editar título"
                             >
                                 <Edit className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => handleDelete(book)}
-                                className="p-1.5 bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
+                                className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-red-500/20 rounded-lg text-red-500/70 hover:text-red-400 transition-colors shadow-sm"
                                 title="Eliminar título"
                             >
                                 <Trash2 className="w-4 h-4" />
@@ -393,10 +408,8 @@ function BookForm({ data, initialData, onSave, onClose }) {
     const formatMoney = (val) => val === 0 || val === '' ? '' : new Intl.NumberFormat('es-CL').format(val)
 
     return (
-        <div className="glass-card p-5 slide-up border border-primary/30">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">{initialData ? 'Editar Título' : 'Registrar Nuevo Título'}</h3>
+        <div className="space-y-4">
             <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
                 {/* ── Sección: Datos de Producción ── */}
                 <div className="sm:col-span-2 pb-3 border-b border-primary/20">
                     <h4 className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-2 mb-3">
@@ -423,15 +436,12 @@ function BookForm({ data, initialData, onSave, onClose }) {
                                 <Kanban className="w-3 h-3 text-primary" /> Etapa de Entrada *
                             </label>
                             <select
-                                value={form.entryStage}
-                                onChange={e => setForm(p => ({ ...p, entryStage: e.target.value }))}
+                                value={form.status || 'Original'}
+                                onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
                                 className="input-field text-sm"
-                                disabled={!!initialData}
-                                title={initialData ? 'Para cambiar la etapa, arrastra la tarjeta en el Tablero de Producción' : ''}
                             >
                                 {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
-                            {initialData && <p className="text-[10px] text-dark-500 mt-1">Cambia la etapa arrastrando en el Tablero</p>}
                         </div>
                         <div>
                             <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
@@ -453,6 +463,7 @@ function BookForm({ data, initialData, onSave, onClose }) {
                         </div>
                     </div>
                 </div>
+
                 <div>
                     <label className="text-xs text-dark-600 mb-1 block">PVP (CLP)</label>
                     <div className="relative">
@@ -591,9 +602,12 @@ function BookForm({ data, initialData, onSave, onClose }) {
                         </div>
                     </div>
                 </div>
-                <div className="sm:col-span-2 flex gap-2 justify-end mt-2">
+                <div className="sm:col-span-2 flex gap-2 justify-end mt-2 pt-4 border-t border-slate-200 dark:border-dark-300">
                     <button type="button" onClick={onClose} className="btn-secondary text-sm">Cancelar</button>
-                    <button type="submit" className="btn-primary text-sm">{initialData ? 'Guardar Cambios' : 'Registrar Título'}</button>
+                    <button type="submit" className="btn-primary text-sm flex items-center gap-2 px-6">
+                        <Save className="w-4 h-4" />
+                        {initialData ? 'Guardar Cambios' : 'Registrar Título'}
+                    </button>
                 </div>
             </form>
         </div>

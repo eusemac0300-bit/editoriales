@@ -40,23 +40,38 @@ export default function AuthorsPage() {
             </div>
 
             {/* Add/Edit Form */}
+            {/* Add/Edit Form Modal */}
             {(showAdd || editingUser) && (
-                <UserForm
-                    existingUser={editingUser}
-                    users={data.users}
-                    onSave={async (formData) => {
-                        if (editingUser) {
-                            await updateExistingUser(editingUser.id, formData)
-                            addAuditLog(`Editó usuario: '${formData.name || editingUser.name}'`, 'general')
-                        } else {
-                            const newUser = await addNewUser({ ...formData, role: 'AUTOR', bio: formData.bio || {} })
-                            addAuditLog(`Registró autor: '${newUser.name}'`, 'general')
-                        }
-                        setShowAdd(false)
-                        setEditingUser(null)
-                    }}
-                    onCancel={() => { setShowAdd(false); setEditingUser(null) }}
-                />
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { setShowAdd(false); setEditingUser(null) }} />
+                    <div className="relative glass-card w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 slide-up shadow-2xl border border-primary/20">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                {editingUser ? <Edit3 className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5 text-primary" />}
+                                {editingUser ? 'Editar Autor' : 'Registrar Nuevo Autor'}
+                            </h2>
+                            <button onClick={() => { setShowAdd(false); setEditingUser(null) }} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <UserForm
+                            existingUser={editingUser}
+                            users={data.users}
+                            onSave={async (formData) => {
+                                if (editingUser) {
+                                    await updateExistingUser(editingUser.id, formData)
+                                    addAuditLog(`Editó usuario: '${formData.name || editingUser.name}'`, 'general')
+                                } else {
+                                    const newUser = await addNewUser({ ...formData, role: 'AUTOR', bio: formData.bio || {} })
+                                    addAuditLog(`Registró autor: '${newUser.name}'`, 'general')
+                                }
+                                setShowAdd(false)
+                                setEditingUser(null)
+                            }}
+                            onCancel={() => { setShowAdd(false); setEditingUser(null) }}
+                        />
+                    </div>
+                </div>
             )}
 
             {/* Authors list */}
@@ -79,17 +94,17 @@ export default function AuthorsPage() {
                                     {bio.rut && <p className="text-xs text-slate-500 dark:text-dark-500 mt-1 flex items-center gap-1"><FileText className="w-3 h-3" /> RUT: {bio.rut}</p>}
                                 </div>
 
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-1 transition-opacity">
                                     <button
                                         onClick={() => { setEditingUser(u); setShowAdd(false) }}
-                                        className="p-2 rounded-lg hover:bg-slate-50 dark:bg-dark-200 text-slate-500 dark:text-dark-600 hover:text-primary transition-all"
+                                        className="p-2 rounded-lg bg-slate-100 dark:bg-dark-200 text-slate-500 dark:text-dark-600 hover:text-primary-600 dark:hover:text-primary transition-all shadow-sm"
                                         title="Editar autor"
                                     >
                                         <Edit3 className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => setDeleteConfirm(u)}
-                                        className="p-2 rounded-lg hover:bg-red-500/10 text-slate-500 dark:text-dark-600 hover:text-red-400 transition-all"
+                                        className="p-2 rounded-lg bg-slate-100 dark:bg-dark-200 hover:bg-red-500/10 text-slate-500 dark:text-dark-600 hover:text-red-400 transition-all shadow-sm"
                                         title="Eliminar autor"
                                     >
                                         <Trash2 className="w-4 h-4" />
@@ -206,15 +221,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
     }
 
     return (
-        <div className="glass-card p-5 slide-up">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {existingUser ? `Editar: ${existingUser.name}` : 'Registrar Nuevo Usuario'}
-                </h3>
-                <button onClick={onCancel} className="p-1 text-slate-500 dark:text-dark-600 hover:text-slate-900 dark:text-white transition-colors">
-                    <X className="w-4 h-4" />
-                </button>
-            </div>
+            <div className="space-y-4">
 
             {error && (
                 <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">

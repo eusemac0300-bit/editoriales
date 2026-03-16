@@ -119,11 +119,11 @@ export default function Suppliers() {
                                         <span className="badge-blue text-[10px]">{s.type || 'IMPRENTA'}</span>
                                     </div>
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => { setEditing(s); setShowForm(true) }} className="p-2 hover:bg-slate-100 dark:hover:bg-dark-200 rounded-lg text-slate-400 dark:text-dark-600 hover:text-primary-600 transition-all">
+                                <div className="flex gap-1 transition-opacity">
+                                    <button onClick={() => { setEditing(s); setShowForm(true) }} className="p-2 hover:bg-slate-100 dark:hover:bg-dark-200 rounded-lg text-slate-400 dark:text-dark-500 hover:text-primary-600 transition-all shadow-sm">
                                         <Edit3 className="w-4 h-4" />
                                     </button>
-                                    <button onClick={() => setDeleting(s)} className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-dark-600 hover:text-red-500 transition-all">
+                                    <button onClick={() => setDeleting(s)} className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-dark-500 hover:text-red-500 transition-all shadow-sm">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -172,7 +172,7 @@ export default function Suppliers() {
             {showForm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-                    <div className="relative glass-card w-full max-w-lg p-6 slide-up">
+                    <div className="relative glass-card w-full max-w-lg p-6 slide-up" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 {editing ? <Edit3 className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5 text-primary" />}
