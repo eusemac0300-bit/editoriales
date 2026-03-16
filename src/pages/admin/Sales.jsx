@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 
 const CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria', 'Consignación']
+const FORM_CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria']
 const TYPES = ['B2C (Consumidor final)', 'B2B (Empresa / Librería)']
 const STATUS_COLORS = {
     Completada: 'badge-green',
@@ -627,8 +628,11 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
                         <div>
                             <label className="text-xs text-dark-600 mb-1 block">Canal de Venta *</label>
                             <select value={form.channel} onChange={e => setForm(p => ({ ...p, channel: e.target.value }))} className="input-field text-sm w-full">
-                                {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
+                                {FORM_CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
+                            <p className="text-[10px] text-slate-500 mt-1">
+                                Las **consignaciones** deben registrarse en su sección propia para permitir liquidaciones posteriores.
+                            </p>
                         </div>
                         <div>
                             <label className="text-xs text-dark-600 mb-1 block">Tipo</label>
