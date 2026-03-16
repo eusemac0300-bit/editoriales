@@ -241,6 +241,7 @@ export default function PurchaseOrders() {
                             po={editing}
                             books={data.books}
                             suppliers={data.suppliers}
+                            quotes={data.quotes}
                             onSave={handleSave}
                             onCancel={() => setShowForm(false)}
                         />
@@ -329,7 +330,7 @@ export default function PurchaseOrders() {
     )
 }
 
-function POForm({ po, books, suppliers, onSave, onCancel }) {
+function POForm({ po, books, suppliers, quotes = [], onSave, onCancel }) {
     const [form, setForm] = useState({
         order_number: po?.order_number || `OC-${Date.now().toString().slice(-4)}`,
         supplier_id: po?.supplier_id || '',
@@ -339,7 +340,8 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
         status: po?.status || 'BORRADOR',
         total_cost: po?.total_cost || 0,
         expected_quantity: po?.expected_quantity || 0,
-        notes: po?.notes || ''
+        notes: po?.notes || '',
+        quote_id: po?.quote_id || ''
     })
 
     const handleSubmit = (e) => {
@@ -418,6 +420,30 @@ function POForm({ po, books, suppliers, onSave, onCancel }) {
                         <option value="">Selecciona el libro...</option>
                         {books.map(b => (
                             <option key={b.id} value={b.id}>{b.title} ({b.isbn || 'Sin ISBN'})</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="col-span-3">
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Cotización Asignada (Opcional)</label>
+                    <select
+                        value={form.quote_id}
+                        onChange={e => {
+                            const qId = e.target.value
+                            const q = quotes.find(quote => quote.id === qId)
+                            setForm({ 
+                                ...form, 
+                                quote_id: qId,
+                                total_cost: q ? q.total : form.total_cost,
+                                expected_quantity: q ? (q.quantity || form.expected_quantity) : form.expected_quantity
+                            })
+                        }}
+                        className="input-field w-full text-sm"
+                    >
+                        <option value="">Ninguna cotización seleccionada</option>
+                        {quotes.filter(q => q.status === 'Aprobada').map(q => (
+                            <option key={q.id} value={q.id}>
+                                {q.provider} - {q.bookTitle} ({new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(q.total)})
+                            </option>
                         ))}
                     </select>
                 </div>
