@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban, QrCode, Download, X, Calculator } from 'lucide-react'
+import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban, QrCode, Download, X, Calculator, Save } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
 
