@@ -85,7 +85,7 @@ export default function PurchaseOrders() {
             <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <FileSpreadsheet className="w-6 h-6 text-primary" /> Órdenes de Producción
+                        <FileSpreadsheet className="w-6 h-6 text-primary" /> Órdenes de Compra
                     </h1>
                     <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Órdenes de compra y recepción de libros en bodega</p>
                 </div>
@@ -100,7 +100,7 @@ export default function PurchaseOrders() {
             {/* Stats & Filters */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="stat-card">
-                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-semibold">Órdenes Activas</p>
+                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-semibold">Órdenes de Compra Activas</p>
                     <p className="text-2xl font-bold text-slate-900 dark:text-white">{pos.filter(p => p.status !== 'RECIBIDA' && p.status !== 'CANCELADA').length}</p>
                 </div>
                 <div className="md:col-span-3 glass-card p-4 flex flex-col md:flex-row gap-4 items-center">

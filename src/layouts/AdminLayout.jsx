@@ -54,7 +54,7 @@ export default function AdminLayout() {
     const moduleTranslationMap = {
         'dashboard': 'Dashboard', 'inventory': 'Inventario', 'production': 'Producción',
         'escandallo': 'Escandallo', 'quotes': 'Cotizaciones', 'sales': 'Ventas',
-        'consignments': 'Consignaciones', 'suppliers': 'Proveedores', 'orders': 'Órdenes',
+        'consignments': 'Consignaciones', 'suppliers': 'Proveedores', 'orders': 'Órdenes de Compra',
         'expenses': 'Gastos', 'cashflow': 'Flujo de Caja', 'royalties': 'Liquidaciones',
         'titles': 'Títulos', 'authors': 'Autores', 'users': 'Usuarios',
         'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing'
