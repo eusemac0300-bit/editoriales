@@ -438,7 +438,7 @@ export async function updateBook(bookId, updates) {
     if (updates.royaltyPercent !== undefined) dbUpdates.royalty_percent = updates.royaltyPercent
     if (updates.advance !== undefined) dbUpdates.advance = updates.advance
     if (updates.pvp !== undefined) dbUpdates.pvp = updates.pvp
-    if (updates.contractExpiry !== undefined) dbUpdates.contract_expiry = updates.contractExpiry
+    if (updates.contractExpiry !== undefined) dbUpdates.contract_expiry = updates.contractExpiry || null
     if (updates.synopsis !== undefined) dbUpdates.synopsis = updates.synopsis
     if (updates.genre !== undefined) dbUpdates.genre = updates.genre
     if (updates.isbn !== undefined) dbUpdates.isbn = updates.isbn
@@ -458,7 +458,9 @@ export async function updateBook(bookId, updates) {
     if (updates.sku !== undefined) dbUpdates.sku = updates.sku
     if (updates.hasLegalDeposit !== undefined) dbUpdates.has_legal_deposit = updates.hasLegalDeposit
     if (updates.legalDepositNumber !== undefined) dbUpdates.legal_deposit_number = updates.legalDepositNumber
-    if (updates.deliveryDate !== undefined) dbUpdates.delivery_date = updates.deliveryDate
+    if (updates.deliveryDate !== undefined) dbUpdates.delivery_date = updates.deliveryDate || null
+    if (updates.authorId !== undefined) dbUpdates.author_id = updates.authorId
+    if (updates.authorName !== undefined) dbUpdates.author_name = updates.authorName
 
     const { error } = await supabase
         .from('books')
@@ -649,7 +651,7 @@ export async function addBook(book) {
             royalty_percent: book.royaltyPercent,
             advance: book.advance,
             pvp: book.pvp,
-            contract_expiry: book.contractExpiry,
+            contract_expiry: book.contractExpiry || null,
             created_at: book.createdAt,
             cover: book.cover,
             synopsis: book.synopsis,
@@ -665,7 +667,8 @@ export async function addBook(book) {
             pages_color: book.pagesColor,
             sku: book.sku,
             has_legal_deposit: book.hasLegalDeposit,
-            legal_deposit_number: book.legalDepositNumber
+            legal_deposit_number: book.legalDepositNumber,
+            delivery_date: book.deliveryDate || null
         })
     if (error) console.error('Error adding book:', error)
     return !error

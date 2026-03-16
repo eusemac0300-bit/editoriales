@@ -323,11 +323,11 @@ function BookForm({ data, initialData, onSave, onClose }) {
                 pvp: initialData.pvp || 0,
                 royaltyPercent: initialData.royaltyPercent || 0,
                 advance: initialData.advance || 0,
-                advanceCurrency: initialData.advanceCurrency || 'CLP',
-                pageCount: initialData.pageCount || '',
                 width: initialData.width || '',
                 height: initialData.height || '',
+                pages: initialData.pages || '',
                 coverType: initialData.coverType || '',
+                flaps: initialData.flaps || '',
                 interiorPaper: initialData.interiorPaper || '',
                 coverPaper: initialData.coverPaper || '',
                 coverFinish: initialData.coverFinish || '',
@@ -337,7 +337,6 @@ function BookForm({ data, initialData, onSave, onClose }) {
                 hasLegalDeposit: initialData.hasLegalDeposit || 'No',
                 legalDepositNumber: initialData.legalDepositNumber || '',
                 flapWidth: initialData.flapWidth || '',
-                entryStage: initialData.status || 'Original',
                 deliveryDate: initialData.deliveryDate || ''
             })
         }
