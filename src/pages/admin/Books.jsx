@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban, QrCode, Download, X, Calculator, Save } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
+import EscandalloModal from '../../components/EscandalloModal'
 
 const STAGES = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
 const stageColors = {
@@ -20,6 +21,7 @@ export default function Books() {
     const [showCodes, setShowCodes] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterStatus, setFilterStatus] = useState('All')
+    const [showEscandallo, setShowEscandallo] = useState(null)
 
     const statusColors = {
         'Original': 'badge-purple', 'Contratación': 'badge-yellow', 'Edición': 'badge-blue',
@@ -116,6 +118,13 @@ export default function Books() {
                 </div>
             )}
 
+            {showEscandallo && (
+                <EscandalloModal
+                    book={showEscandallo}
+                    onClose={() => setShowEscandallo(null)}
+                />
+            )}
+
             <div className="space-y-4">
                 {filteredBooks.map(book => (
                     <div key={book.id} className="glass-card p-5 relative group">
@@ -128,9 +137,9 @@ export default function Books() {
                                 <QrCode className="w-4 h-4" />
                             </button>
                             <button
-                                onClick={() => navigate(`/admin/escandallo?bookId=${book.id}`)}
+                                onClick={() => setShowEscandallo(book)}
                                 className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-primary/20 rounded-lg text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors shadow-sm"
-                                title="Calculadora de Escandallo"
+                                title="Ver Costos y Escandallo"
                             >
                                 <Calculator className="w-4 h-4" />
                             </button>
