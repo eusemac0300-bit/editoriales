@@ -461,6 +461,8 @@ export async function updateBook(bookId, updates) {
     if (updates.deliveryDate !== undefined) dbUpdates.delivery_date = updates.deliveryDate || null
     if (updates.authorId !== undefined) dbUpdates.author_id = updates.authorId
     if (updates.authorName !== undefined) dbUpdates.author_name = updates.authorName
+    if (updates.finalPdfInterior !== undefined) dbUpdates.final_pdf_interior = updates.finalPdfInterior
+    if (updates.finalPdfCover !== undefined) dbUpdates.final_pdf_cover = updates.finalPdfCover
 
     const { error } = await supabase
         .from('books')
@@ -668,7 +670,9 @@ export async function addBook(book) {
             sku: book.sku,
             has_legal_deposit: book.hasLegalDeposit,
             legal_deposit_number: book.legalDepositNumber,
-            delivery_date: book.deliveryDate || null
+            delivery_date: book.deliveryDate || null,
+            final_pdf_interior: book.finalPdfInterior || null,
+            final_pdf_cover: book.finalPdfCover || null
         })
     if (error) console.error('Error adding book:', error)
     return !error
