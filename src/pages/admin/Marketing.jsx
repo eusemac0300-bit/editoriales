@@ -124,15 +124,12 @@ export default function Marketing() {
         if (!ref.current) return
         setIsDownloading(true)
         try {
-            // Animamos un poco la UI antes de capturar
-            await new Promise(r => setTimeout(r, 200))
+            // Un pequeño retraso para asegurar que los estilos base se aplican
+            await new Promise(r => setTimeout(r, 400))
             const dataUrl = await toPng(ref.current, { 
                 quality: 1, 
-                pixelRatio: 2,
+                pixelRatio: 2.5,
                 cacheBust: true,
-                style: {
-                    transform: 'none', // Quitamos transformaciones 3D durante la captura para evitar bugs de html-to-image
-                }
             })
             const link = document.createElement('a')
             link.download = filename
@@ -367,17 +364,28 @@ export default function Marketing() {
                                                     <div key={idx} className="min-w-[300px] snap-center">
                                                         <div 
                                                             ref={el => carouselRefs.current[idxToKey(idx)] = el}
-                                                            className={`aspect-square relative rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 ${getStyleClasses()} border-4`}
+                                                            className={`aspect-square relative rounded-[2.5rem] overflow-hidden shadow-2xl transition-all duration-300 ${getStyleClasses()} border-[6px]`}
                                                         >
-                                                            <img src={slide.image} className="w-full h-full object-cover opacity-80" alt="Slide" />
-                                                            <div className="absolute inset-x-0 bottom-0 top-1/4 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex flex-col justify-end p-8">
-                                                                <span className="text-primary text-[10px] font-black tracking-widest uppercase mb-2 bg-black/40 self-start px-3 py-1 rounded-full border border-white/10">{slide.badge}</span>
-                                                                <p className="text-white font-black text-2xl uppercase tracking-tight mb-3 leading-tight drop-shadow-lg">{slide.title}</p>
-                                                                <p className="text-white/80 text-xs font-semibold leading-relaxed max-w-[95%]">{slide.copy}</p>
+                                                            <img 
+                                                                src={slide.image} 
+                                                                crossOrigin="anonymous"
+                                                                className="w-full h-full object-cover opacity-80" 
+                                                                alt="Slide" 
+                                                            />
+                                                            <div className="absolute inset-x-0 bottom-0 top-[20%] bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-10 text-left">
+                                                                <div className="flex justify-between items-end mb-4">
+                                                                    <span className="text-primary text-[11px] font-black tracking-widest uppercase bg-primary/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-primary/30 shadow-lg">{slide.badge}</span>
+                                                                    <div className="flex gap-2 opacity-50">
+                                                                        <Instagram className="w-3.5 h-3.5 text-white" />
+                                                                        <Facebook className="w-3.5 h-3.5 text-white" />
+                                                                    </div>
+                                                                </div>
+                                                                <p className="text-white font-black text-3xl uppercase tracking-tight mb-4 leading-[1.1] drop-shadow-2xl">{slide.title}</p>
+                                                                <p className="text-white/80 text-[13px] font-semibold leading-relaxed max-w-[95%] italic">{slide.copy}</p>
                                                             </div>
                                                         </div>
                                                         <button 
-                                                            onClick={() => downloadImage({ current: carouselRefs.current[idx] }, `Campaign_${slide.badge}_${selectedBook.title}.png`)}
+                                                            onClick={() => downloadImage({ current: carouselRefs.current[idxToKey(idx)] }, `Campaign_${slide.badge}_${selectedBook.title.replace(/\s+/g,'_')}.png`)}
                                                             className="w-full mt-3 py-2 text-[10px] font-bold text-slate-500 hover:text-primary transition-colors flex items-center justify-center gap-2"
                                                         >
                                                             <Download className="w-3 h-3" /> Descargar {slide.badge}
@@ -385,18 +393,18 @@ export default function Marketing() {
                                                     </div>
                                                 ))}
                                             </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={downloadZip}
-                                        disabled={isDownloading || !generatedContent}
-                                        className="btn-primary flex-1 py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 text-[10px] font-black uppercase tracking-widest group flex items-center justify-center gap-3"
-                                    >
-                                        {isDownloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4 group-hover:scale-110 transition-transform" />}
-                                        {isDownloading ? 'Empacando...' : 'Descargar Todo (ZIP)'}
-                                    </button>
-                                </div>
-                            </div>
-                        ) : platform === 'video_script' ? (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={downloadZip}
+                                                    disabled={isDownloading || !generatedContent}
+                                                    className="btn-primary flex-1 py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 text-[10px] font-black uppercase tracking-widest group flex items-center justify-center gap-3"
+                                                >
+                                                    {isDownloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4 group-hover:scale-110 transition-transform" />}
+                                                    {isDownloading ? 'Empacando...' : 'Descargar Todo (ZIP)'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : platform === 'video_script' ? (
                                         <div className="bg-slate-900 border-8 border-slate-800 rounded-[3rem] p-8 aspect-[9/16] max-w-[340px] mx-auto shadow-2xl relative overflow-hidden">
                                             <div className="absolute top-0 left-0 w-full h-1 bg-primary animate-[scan_3s_infinite]"></div>
                                             <div className="space-y-6 relative z-10">
@@ -422,27 +430,60 @@ export default function Marketing() {
                                         </div>
                                     ) : (
                                         <div className="space-y-6">
-                                            {/* 3D BOOK PREVIEW EFFECT */}
-                                            <div className="flex justify-center py-10 perspective-1000">
-                                                <div 
-                                                    ref={singlePreviewRef}
-                                                    className={`relative w-64 h-80 transition-all duration-700 preserve-3d group-hover:rotate-y-20 shadow-[20px_20px_50px_rgba(0,0,0,0.5)] ${getStyleClasses()} border-0 rounded-r-lg`}
-                                                    style={{ transformStyle: 'preserve-3d', transform: 'rotateY(-15deg) rotateX(5deg)' }}
-                                                >
-                                                    <div className="absolute inset-0 bg-slate-200" style={{ transform: 'translateZ(-20px)' }}></div>
-                                                    <div className="absolute inset-y-0 left-0 w-5 bg-slate-300" style={{ transform: 'rotateY(-90deg) translateZ(-2.5px)' }}></div>
-                                                    <img src={generatedContent.visualUrl} className="w-full h-full object-cover rounded-r-sm shadow-inner" alt="Post" />
-                                                    <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none"></div>
+                                            <div 
+                                                ref={singlePreviewRef}
+                                                className={`relative overflow-hidden group rounded-[3rem] bg-gradient-to-br from-slate-900 via-slate-800 to-black p-12 border-8 shadow-2xl flex flex-col items-center justify-center ${getStyleClasses()}`}
+                                                style={{ aspectRatio: platform === 'instagram_story' ? '9/16' : '1:1', minHeight: '400px' }}
+                                            >
+                                                {/* Adorno de Fondo con Branding */}
+                                                <div className="absolute top-10 left-10 opacity-30 flex items-center gap-3">
+                                                     <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                                                        <BookOpen className="w-5 h-5 text-white" />
+                                                     </div>
+                                                     <span className="text-[11px] font-black tracking-[0.4em] uppercase text-white">EditorialPro AI</span>
                                                 </div>
+
+                                                {/* Mockup del Libro */}
+                                                <div className="relative z-10 py-10">
+                                                    <div className="perspective-1000">
+                                                        <div 
+                                                            className="relative w-48 h-64 md:w-52 md:h-72 transition-all duration-700 preserve-3d group-hover:rotate-y-20 shadow-[30px_30px_70px_rgba(0,0,0,0.8)] rounded-r-sm"
+                                                            style={{ transformStyle: 'preserve-3d', transform: 'rotateY(-20deg) rotateX(5deg)' }}
+                                                        >
+                                                            {/* Hojas / Grosor */}
+                                                            <div className="absolute inset-0 bg-white" style={{ transform: 'translateZ(-15px)', width: '98%' }}></div>
+                                                            <div className="absolute inset-y-0 left-0 w-4 bg-slate-300 shadow-inner" style={{ transform: 'rotateY(-90deg) translateZ(-2px)', width: '15px' }}></div>
+                                                            
+                                                            <img 
+                                                                src={generatedContent.visualUrl} 
+                                                                crossOrigin="anonymous"
+                                                                className="w-full h-full object-cover rounded-r-sm relative z-20" 
+                                                                alt="Book Mockup" 
+                                                            />
+                                                            <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/10 pointer-events-none z-30"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-center space-y-3 max-w-[85%] relative z-10">
+                                                    <p className="text-primary font-black text-[10px] uppercase tracking-[0.4em] drop-shadow-lg">Novedad Editorial</p>
+                                                    <h3 className="text-white font-black text-2xl uppercase tracking-tighter leading-none drop-shadow-2xl">{selectedBook.title}</h3>
+                                                    <div className="h-[2px] w-12 bg-primary/40 mx-auto rounded-full"></div>
+                                                    <p className="text-white/70 font-bold text-sm tracking-wide">{selectedBook.authorName}</p>
+                                                </div>
+
+                                                {/* Glossy Overlay */}
+                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent pointer-events-none"></div>
                                             </div>
 
                                             <button 
                                                 onClick={() => downloadImage(singlePreviewRef, `Marketing_Mockup_${selectedBook.title.replace(/\s+/g,'_')}.png`)} 
                                                 disabled={isDownloading}
-                                                className="btn-primary w-full py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3"
+                                                className="btn-primary w-full py-5 bg-primary border-primary hover:brightness-110 shadow-2xl shadow-primary/20 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 relative overflow-hidden group active:scale-[0.98] transition-all"
                                             >
-                                                {isDownloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                                                {isDownloading ? 'Generando Archivo...' : 'Descargar Mockup Premium'}
+                                                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                                                {isDownloading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                                                {isDownloading ? 'Generando Arte...' : 'Descargar Mockup 3D Premium'}
                                             </button>
                                         </div>
                                     )}
@@ -478,8 +519,8 @@ export default function Marketing() {
                                                 <Palette className="w-4 h-4" /> Tip Pro de Marketing
                                             </h4>
                                             <p className="text-xs font-bold leading-relaxed opacity-95">
-                                                {platform === 'instagram_carousel' 
-                                                    ? 'Los carruseles generan curiosidad. Prueba el estilo "Negrita" para mayor contraste y sube el CTR de tus anuncios.'
+                                                {platform === 'campaign_pack' 
+                                                    ? 'Un pack de campaña completo aumenta la tasa de conversión en un 40%. Sube estas piezas con 24h de separación.'
                                                     : 'Usa este contenido en "Historias" con el sticker de enlace a tu preventa para maximizar las conversiones inmediatas.'
                                                 }
                                             </p>
