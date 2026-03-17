@@ -5,10 +5,13 @@ import {
     ArrowRight, Image as ImageIcon, MessageSquare,
     CheckCircle2, RefreshCw, Facebook, PlayCircle,
     Layout, Type, Palette, BookOpen, Layers, 
-    Target, Brain, TrendingUp, Zap, Wand2, Eye
+    Target, Brain, TrendingUp, Zap, Wand2, Eye,
+    ChevronRight, Star
 } from 'lucide-react'
 import { toPng } from 'html-to-image'
 import JSZip from 'jszip'
+import { motion, AnimatePresence } from 'framer-motion'
+import confetti from 'canvas-confetti'
 
 export default function Marketing() {
     const { data } = useAuth()
@@ -110,6 +113,13 @@ export default function Marketing() {
                 ]
             })
             setIsGenerating(false)
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#6366f1', '#a855f7', '#ec4899', '#10b981'],
+                zIndex: 1000
+            })
         }, 2000)
     }
 
@@ -437,120 +447,144 @@ export default function Marketing() {
                                         </div>
                                     ) : (
                                         <div className="space-y-6">
-                                            <div 
+                                            <motion.div 
                                                 ref={singlePreviewRef}
-                                                className={`relative overflow-hidden group rounded-[4rem] bg-slate-950 p-12 border-[12px] border-slate-900 shadow-[0_60px_120px_-20px_rgba(0,0,0,1)] flex flex-col items-center justify-center transition-all duration-700 hover:border-primary/30`}
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className={`relative overflow-hidden group rounded-[4rem] bg-slate-950 p-12 border-[12px] border-slate-900 shadow-[0_60px_120px_-20px_rgba(0,0,0,1)] flex flex-col items-center justify-center transition-colors duration-700 hover:border-primary/40`}
                                                 style={{ aspectRatio: platform === 'instagram_story' ? '9/16' : '1:1', minHeight: '520px' }}
                                             >
-                                                {/* Dark Cinematic Background */}
-                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,_rgba(var(--primary-rgb),0.15),_transparent_70%)] pointer-events-none"></div>
-                                                <div className="absolute top-1/2 -left-32 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] animate-pulse"></div>
-                                                
-                                                {/* Premium Corner Branding */}
-                                                <div className="absolute top-14 left-14 flex items-center gap-4 opacity-70">
-                                                     <div className="w-14 h-14 rounded-[1.25rem] bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center p-3 shadow-2xl shadow-primary/40 rotate-6 border border-white/20">
-                                                        <Sparkles className="w-full h-full text-white" />
-                                                     </div>
-                                                     <div className="flex flex-col">
-                                                         <span className="text-[14px] font-black tracking-[0.5em] uppercase text-white leading-none">PRO-DESIGN</span>
-                                                         <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-primary mt-1">Marketing Suite</span>
-                                                     </div>
-                                                </div>
+                                                {/* Ambient Premium Lighting */}
+                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_var(--mouse-x,50%)_var(--mouse-y,40%),_rgba(var(--primary-rgb),0.25),_transparent_60%)] pointer-events-none opacity-80 mix-blend-screen"></div>
+                                                <div className="absolute -top-32 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-[100px] animate-pulse"></div>
+                                                <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] animate-pulse delay-1000"></div>
 
-                                                {/* Master 3D Book - Hardcover Effect */}
-                                                <div className="relative z-10 py-20 animate-float translate-y-[-20px]">
+                                                {/* Float and Tilt Controller */}
+                                                <motion.div 
+                                                    className="relative z-10 py-12"
+                                                    whileHover={{ rotateY: 28, rotateX: 12, rotateZ: -2, scale: 1.05 }}
+                                                    transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                                                >
                                                     <div className="perspective-[3000px]">
                                                         <div 
-                                                            className="relative w-56 h-80 md:w-64 md:h-96 preserve-3d transition-all duration-[2000ms] cubic-bezier(0.19, 1, 0.22, 1) group-hover:rotate-y-[28deg] group-hover:rotate-x-[12deg] shadow-[30px_60px_100px_-10px_rgba(0,0,0,0.9)]"
+                                                            className="relative w-56 h-84 md:w-64 md:h-96 preserve-3d animate-float"
                                                             style={{ 
                                                                 transformStyle: 'preserve-3d', 
-                                                                transform: 'rotateY(-25deg) rotateX(10deg) rotateZ(-3deg)' 
+                                                                transform: 'rotateY(-25deg) rotateX(10deg)' 
                                                             }}
                                                         >
-                                                            {/* Front Cover Wrap-around */}
-                                                            <div className="absolute inset-0 z-30 backface-hidden rounded-r-[4px] overflow-hidden border-l border-white/20 shadow-[-5px_0_15px_rgba(0,0,0,0.5)]" style={{ transform: 'translateZ(18px)' }}>
+                                                            {/* Luxury Hardcover Front */}
+                                                            <div className="absolute inset-0 z-30 backface-hidden rounded-r-[5px] overflow-hidden border-l border-white/20 shadow-[-10px_0_30px_rgba(0,0,0,0.6)]" style={{ transform: 'translateZ(20px)' }}>
                                                                 <img 
                                                                     src={generatedContent.visualUrl} 
                                                                     crossOrigin="anonymous"
                                                                     className="w-full h-full object-cover" 
                                                                     alt="Cover" 
                                                                 />
-                                                                {/* Surface Light Reflection */}
-                                                                <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/30 z-10"></div>
-                                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-[300%] -translate-x-full group-hover:translate-x-full transition-transform duration-[1500ms] ease-out"></div>
+                                                                {/* Moving Glint Overlay */}
+                                                                <motion.div 
+                                                                    className="absolute inset-x-0 top-0 h-[200%] bg-gradient-to-b from-white/20 via-transparent to-black/20 mix-blend-overlay"
+                                                                    animate={{ y: ["-50%", "0%"] }}
+                                                                    transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                                                                ></motion.div>
+                                                                <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/30"></div>
                                                             </div>
 
-                                                            {/* Luxury Spine */}
+                                                            {/* Premium Embossed Spine */}
                                                             <div 
-                                                                className="absolute top-0 bottom-0 left-0 w-10 bg-slate-800 z-20 origin-left border-r border-white/5"
+                                                                className="absolute top-0 bottom-0 left-0 w-12 bg-slate-900 z-20 origin-left border-r border-white/5 flex flex-col items-center py-8 gap-4 shadow-[inset_2px_0_20px_rgba(0,0,0,0.9)]"
                                                                 style={{ 
                                                                     transform: 'rotateY(-90deg)',
-                                                                    background: `linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url(${generatedContent.visualUrl})`,
-                                                                    backgroundSize: '1200% 100%',
+                                                                    backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.2)), url(${generatedContent.visualUrl})`,
+                                                                    backgroundSize: '1500% 100%',
                                                                     backgroundPosition: 'left center',
-                                                                    boxShadow: 'inset 2px 0 10px rgba(0,0,0,0.8)'
                                                                 }}
                                                             >
-                                                                <div className="absolute inset-x-0 bottom-6 flex justify-center opacity-30">
-                                                                    <BookOpen className="w-5 h-5 text-white -rotate-90" />
+                                                                <div className="w-full px-2 overflow-hidden">
+                                                                    <p className="text-white/80 font-black text-[10px] uppercase tracking-[0.3em] whitespace-nowrap rotate-90 origin-center translate-y-24 scale-90 text-center drop-shadow-lg [text-shadow:0_0_10px_rgba(255,255,255,0.4)]">
+                                                                        {selectedBook.title}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="mt-auto mb-4 opacity-40">
+                                                                    <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center p-1.5 rotate-90">
+                                                                        <Sparkles className="w-full h-full text-white" />
+                                                                    </div>
                                                                 </div>
                                                             </div>
 
-                                                            {/* Page Block (Side Fiber Texture) */}
+                                                            {/* Gold Page-Edge Side */}
                                                             <div 
-                                                                className="absolute top-[2px] bottom-[2px] right-0 w-10 z-10 origin-right rounded-r-[3px]"
+                                                                className="absolute top-[3px] bottom-[3px] right-0 w-12 z-10 origin-right rounded-r-[4px]"
                                                                 style={{ 
                                                                     transform: 'rotateY(90deg) translateZ(0px)',
-                                                                    background: 'repeating-linear-gradient(to right, #ffffff, #ffffff 1px, #f1f5f9 2px, #f1f5f9 3px)',
-                                                                    boxShadow: 'inset 8px 0 20px rgba(0,0,0,0.2)'
+                                                                    background: currentStyle === 'Elegante' 
+                                                                        ? 'repeating-linear-gradient(to right, #d4af37, #d4af37 1px, #f1f5f9 2px, #f1f5f9 3px)' 
+                                                                        : 'repeating-linear-gradient(to right, #ffffff, #ffffff 1px, #f1f5f9 2px, #f1f5f9 3px)',
+                                                                    boxShadow: 'inset 10px 0 30px rgba(0,0,0,0.3)'
                                                                 }}
                                                             ></div>
 
-                                                            {/* Top Block */}
-                                                            <div className="absolute top-0 left-0 right-0 h-10 z-10 origin-top bg-gradient-to-b from-white to-slate-200" style={{ transform: 'rotateX(90deg) translateZ(0px)' }}></div>
+                                                            {/* Top Side Block */}
+                                                            <div className="absolute top-0 left-0 right-0 h-12 z-10 origin-top bg-gradient-to-b from-white to-slate-300" style={{ transform: 'rotateX(90deg) translateZ(0px)' }}></div>
                                                             
-                                                            {/* Bottom Block & Global Shadow */}
-                                                            <div className="absolute bottom-0 left-0 right-0 h-10 z-10 origin-bottom bg-gradient-to-t from-white to-slate-300 shadow-[0_40px_80px_rgba(0,0,0,1)]" style={{ transform: 'rotateX(-90deg) translateZ(0px)' }}></div>
+                                                            {/* Interactive Shadow on Floor */}
+                                                            <div className="absolute bottom-0 left-0 right-0 h-10 z-10 origin-bottom bg-gradient-to-t from-white to-slate-400 shadow-[0_60px_100px_rgba(0,0,0,1)]" style={{ transform: 'rotateX(-90deg) translateZ(0px)' }}></div>
                                                         </div>
                                                     </div>
+                                                </motion.div>
+
+                                                {/* Cinematic Branding Overlays */}
+                                                <div className="absolute top-14 left-14 opacity-60 flex items-center gap-3">
+                                                     <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center p-3 border border-white/20 shadow-2xl backdrop-blur-md rotate-3">
+                                                        <Sparkles className="w-full h-full text-white" />
+                                                     </div>
+                                                     <div className="flex flex-col">
+                                                         <span className="text-[12px] font-black tracking-[0.4em] uppercase text-white leading-none">AI-DESIGN STUDIO</span>
+                                                         <span className="text-[8px] font-bold text-primary mt-1 uppercase tracking-widest">Premium Assets</span>
+                                                     </div>
                                                 </div>
 
-                                                {/* Dynamic Title Overlay */}
-                                                <div className="text-center space-y-4 max-w-[85%] relative z-20 mt-10 animate-in fade-in zoom-in duration-1000">
-                                                    <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-2xl mb-4 group-hover:scale-105 transition-transform">
-                                                        <Sparkles className="w-4 h-4 text-primary animate-spin-slow" />
-                                                        <span className="text-primary font-black text-[12px] uppercase tracking-[0.5em] drop-shadow-lg">EDICIÓN EXCLUSIVA</span>
-                                                    </div>
-                                                    <h3 className="text-white font-black text-4xl md:text-5xl uppercase tracking-tighter leading-none [text-shadow:0_15px_40px_rgba(0,0,0,0.9)] scale-110 mb-2">{selectedBook.title}</h3>
-                                                    <div className="h-[3px] w-32 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto rounded-full shadow-[0_0_20px_var(--primary)] mb-4"></div>
-                                                    <div className="flex items-center justify-center gap-4 text-white/70 font-black text-sm tracking-[0.2em] uppercase italic">
-                                                        <span>{selectedBook.authorName}</span>
-                                                        <div className="w-2 h-2 rounded-full bg-primary/40"></div>
-                                                        <span className="text-primary-400">2024</span>
+                                                <div className="text-center relative z-20 mt-8 max-w-[85%]">
+                                                    <motion.div 
+                                                        initial={{ y: 20, opacity: 0 }}
+                                                        animate={{ y: 0, opacity: 1 }}
+                                                        className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-primary/20 border border-primary/40 backdrop-blur-3xl mb-6"
+                                                    >
+                                                        <div className="w-2 h-2 rounded-full bg-primary animate-ping"></div>
+                                                        <span className="text-primary font-black text-[10px] uppercase tracking-[0.4em]">Official Release</span>
+                                                    </motion.div>
+                                                    <h3 className="text-white font-black text-4xl leading-tight uppercase tracking-tighter drop-shadow-2xl [text-shadow:0_10px_40px_rgba(0,0,0,0.8)] mb-2 italic">
+                                                        {selectedBook.title}
+                                                    </h3>
+                                                    <div className="flex items-center justify-center gap-6 mt-6 opacity-60">
+                                                        <div className="flex items-center gap-2">
+                                                            <Star className="w-4 h-4 text-white fill-white" />
+                                                            <span className="text-white text-[10px] font-black uppercase tracking-widest leading-none mt-0.5">Gold Selection</span>
+                                                        </div>
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-700"></div>
+                                                        <span className="text-white text-[10px] font-black uppercase tracking-widest leading-none mt-0.5">{selectedBook.genre || 'Epic Edition'}</span>
                                                     </div>
                                                 </div>
 
-                                                {/* Ambient Lights */}
-                                                <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
-                                                <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none"></div>
-                                            </div>
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none opacity-80"></div>
+                                            </motion.div>
 
                                             <button 
                                                 onClick={() => downloadImage(singlePreviewRef, `Marketing_Mockup_${selectedBook.title.replace(/\s+/g,'_')}.png`)} 
                                                 disabled={isDownloading}
                                                 className="btn-primary w-full py-6 bg-primary border-primary hover:brightness-110 shadow-[0_20px_50px_rgba(var(--primary-rgb),0.3)] text-xs font-black uppercase tracking-[0.3em] flex items-center justify-center gap-4 relative overflow-hidden group active:scale-[0.97] transition-all"
                                             >
-                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1200ms]"></div>
                                                 {isDownloading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Download className="w-6 h-6 group-hover:translate-y-1 transition-transform" />}
-                                                {isDownloading ? 'PROCESANDO ARTE...' : 'DESCARGAR PIEZA DE LUJO (4K PNG)'}
+                                                {isDownloading ? 'PULIENDO ARTE...' : 'DESCARGAR MOCKUP DE LUJO'}
                                             </button>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Copy and Stats */}
+                                {/* Right Side - Copy and Mastertip */}
                                 <div className="space-y-8">
-                                    <div className="space-y-4">
+                                    <div className="space-y-6">
                                         <div className="flex items-center justify-between">
                                             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                                                 <Type className="w-4 h-4" /> Copy Social Media
