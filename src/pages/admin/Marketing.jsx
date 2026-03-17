@@ -361,70 +361,77 @@ export default function Marketing() {
                                         <div className="space-y-4">
                                             <div className="flex gap-4 overflow-x-auto pb-6 snap-x hide-scrollbar">
                                                 {carouselSlides.map((slide, idx) => (
-                                                    <div key={idx} className="min-w-[300px] snap-center">
+                                                    <div key={idx} className="min-w-[320px] snap-center">
                                                         <div 
                                                             ref={el => carouselRefs.current[idxToKey(idx)] = el}
-                                                            className={`aspect-square relative rounded-[2.5rem] overflow-hidden shadow-2xl transition-all duration-300 ${getStyleClasses()} border-[6px]`}
+                                                            className={`aspect-square relative rounded-[3rem] overflow-hidden shadow-2xl transition-all duration-500 ${getStyleClasses()} border-[8px] group/slide`}
                                                         >
                                                             <img 
                                                                 src={slide.image} 
                                                                 crossOrigin="anonymous"
-                                                                className="w-full h-full object-cover opacity-80" 
+                                                                className="w-full h-full object-cover opacity-90 group-hover/slide:scale-110 transition-transform duration-700" 
                                                                 alt="Slide" 
                                                             />
-                                                            <div className="absolute inset-x-0 bottom-0 top-[20%] bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-10 text-left">
+                                                            <div className="absolute inset-x-0 bottom-0 top-[30%] bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-10 text-left">
                                                                 <div className="flex justify-between items-end mb-4">
-                                                                    <span className="text-primary text-[11px] font-black tracking-widest uppercase bg-primary/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-primary/30 shadow-lg">{slide.badge}</span>
-                                                                    <div className="flex gap-2 opacity-50">
-                                                                        <Instagram className="w-3.5 h-3.5 text-white" />
-                                                                        <Facebook className="w-3.5 h-3.5 text-white" />
+                                                                    <span className="text-primary text-[10px] font-black tracking-widest uppercase bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-xl">{slide.badge}</span>
+                                                                    <div className="flex gap-3 opacity-40">
+                                                                        <Instagram className="w-4 h-4 text-white" />
+                                                                        <Facebook className="w-4 h-4 text-white" />
                                                                     </div>
                                                                 </div>
-                                                                <p className="text-white font-black text-3xl uppercase tracking-tight mb-4 leading-[1.1] drop-shadow-2xl">{slide.title}</p>
-                                                                <p className="text-white/80 text-[13px] font-semibold leading-relaxed max-w-[95%] italic">{slide.copy}</p>
+                                                                <p className="text-white font-black text-3xl uppercase tracking-tighter mb-4 leading-none drop-shadow-2xl">{slide.title}</p>
+                                                                <p className="text-white/80 text-xs font-semibold leading-relaxed max-w-[95%] italic line-clamp-2">{slide.copy}</p>
                                                             </div>
                                                         </div>
                                                         <button 
                                                             onClick={() => downloadImage({ current: carouselRefs.current[idxToKey(idx)] }, `Campaign_${slide.badge}_${selectedBook.title.replace(/\s+/g,'_')}.png`)}
-                                                            className="w-full mt-3 py-2 text-[10px] font-bold text-slate-500 hover:text-primary transition-colors flex items-center justify-center gap-2"
+                                                            className="w-full mt-4 py-3 text-[10px] font-black uppercase border border-slate-200 dark:border-dark-300 rounded-2xl text-slate-500 hover:text-primary hover:border-primary/50 transition-all flex items-center justify-center gap-2 bg-slate-50 dark:bg-dark-200"
                                                         >
                                                             <Download className="w-3 h-3" /> Descargar {slide.badge}
                                                         </button>
                                                     </div>
                                                 ))}
                                             </div>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={downloadZip}
-                                                    disabled={isDownloading || !generatedContent}
-                                                    className="btn-primary flex-1 py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 text-[10px] font-black uppercase tracking-widest group flex items-center justify-center gap-3"
-                                                >
-                                                    {isDownloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4 group-hover:scale-110 transition-transform" />}
-                                                    {isDownloading ? 'Empacando...' : 'Descargar Todo (ZIP)'}
-                                                </button>
-                                            </div>
+                                            <button
+                                                onClick={downloadZip}
+                                                disabled={isDownloading || !generatedContent}
+                                                className="btn-primary w-full py-5 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-2xl shadow-emerald-500/20 text-xs font-black uppercase tracking-[0.2em] group flex items-center justify-center gap-3 relative overflow-hidden"
+                                            >
+                                                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                                                {isDownloading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Layers className="w-5 h-5 group-hover:rotate-12 transition-transform" />}
+                                                {isDownloading ? 'Generando Pack ZIP...' : 'Descargar Pack Campaña Completo'}
+                                            </button>
                                         </div>
                                     ) : platform === 'video_script' ? (
-                                        <div className="bg-slate-900 border-8 border-slate-800 rounded-[3rem] p-8 aspect-[9/16] max-w-[340px] mx-auto shadow-2xl relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-full h-1 bg-primary animate-[scan_3s_infinite]"></div>
-                                            <div className="space-y-6 relative z-10">
+                                        <div className="bg-slate-950 border-[10px] border-slate-900 rounded-[3.5rem] p-10 aspect-[9/16] max-w-[360px] mx-auto shadow-2xl relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-full h-[6px] bg-primary animate-[scan_4s_infinite] shadow-[0_0_20px_var(--primary)] text-primary"></div>
+                                            <div className="space-y-8 relative z-10">
                                                 <div className="flex items-center gap-2 text-primary">
-                                                    <PlayCircle className="w-5 h-5" />
-                                                    <span className="text-xs font-black uppercase tracking-widest italic">Viral Script AI</span>
+                                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                                                        <PlayCircle className="w-6 h-6 animate-pulse" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[12px] font-black uppercase tracking-widest leading-none">Script AI</span>
+                                                        <span className="text-[8px] font-bold text-slate-500 uppercase mt-1">Video Marketing</span>
+                                                    </div>
                                                 </div>
-                                                <div className="space-y-4">
+                                                <div className="space-y-5">
                                                     {generatedContent.videoScript.map((step, i) => (
-                                                        <div key={i} className="bg-white/5 border border-white/10 p-4 rounded-2xl hover:border-primary/50 transition-colors group">
-                                                            <p className="text-[10px] font-black text-primary mb-1">{step.time}</p>
-                                                            <p className="text-xs text-white/90 font-medium leading-relaxed">{step.text}</p>
+                                                        <div key={i} className="bg-white/[0.03] border border-white/10 p-5 rounded-3xl hover:border-primary/50 transition-all group/step relative overflow-hidden">
+                                                            <p className="text-[10px] font-black text-primary mb-2 flex items-center gap-2">
+                                                                <span className="w-5 h-[1px] bg-primary/30"></span>
+                                                                {step.time}
+                                                            </p>
+                                                            <p className="text-[13px] text-white/90 font-medium leading-relaxed italic">"{step.text}"</p>
                                                         </div>
                                                     ))}
                                                 </div>
                                             </div>
-                                            <div className="absolute bottom-8 left-0 w-full px-8">
-                                                 <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-center">
-                                                    <p className="text-[8px] text-white/50 uppercase font-black tracking-widest mb-1 shadow-sm">Tip Audiencia</p>
-                                                    <p className="text-[10px] text-white font-bold">"Sube esto entre 18:00 y 21:00 para máximo alcance."</p>
+                                            <div className="absolute bottom-10 left-0 w-full px-10">
+                                                 <div className="p-4 bg-primary/10 backdrop-blur-xl rounded-[2rem] border border-primary/20 text-center shadow-2xl">
+                                                    <p className="text-[10px] text-white font-black uppercase tracking-[0.2em]">Viral Boost Tip</p>
+                                                    <p className="text-[11px] text-primary-200 mt-1 font-bold">"Sube este video entre las 19:00 y las 21:00 para máximo alcance."</p>
                                                  </div>
                                             </div>
                                         </div>
@@ -432,58 +439,110 @@ export default function Marketing() {
                                         <div className="space-y-6">
                                             <div 
                                                 ref={singlePreviewRef}
-                                                className={`relative overflow-hidden group rounded-[3rem] bg-gradient-to-br from-slate-900 via-slate-800 to-black p-12 border-8 shadow-2xl flex flex-col items-center justify-center ${getStyleClasses()}`}
-                                                style={{ aspectRatio: platform === 'instagram_story' ? '9/16' : '1:1', minHeight: '400px' }}
+                                                className={`relative overflow-hidden group rounded-[4rem] bg-slate-950 p-12 border-[12px] border-slate-900 shadow-[0_60px_120px_-20px_rgba(0,0,0,1)] flex flex-col items-center justify-center transition-all duration-700 hover:border-primary/30`}
+                                                style={{ aspectRatio: platform === 'instagram_story' ? '9/16' : '1:1', minHeight: '520px' }}
                                             >
-                                                {/* Adorno de Fondo con Branding */}
-                                                <div className="absolute top-10 left-10 opacity-30 flex items-center gap-3">
-                                                     <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                                                        <BookOpen className="w-5 h-5 text-white" />
+                                                {/* Dark Cinematic Background */}
+                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,_rgba(var(--primary-rgb),0.15),_transparent_70%)] pointer-events-none"></div>
+                                                <div className="absolute top-1/2 -left-32 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] animate-pulse"></div>
+                                                
+                                                {/* Premium Corner Branding */}
+                                                <div className="absolute top-14 left-14 flex items-center gap-4 opacity-70">
+                                                     <div className="w-14 h-14 rounded-[1.25rem] bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center p-3 shadow-2xl shadow-primary/40 rotate-6 border border-white/20">
+                                                        <Sparkles className="w-full h-full text-white" />
                                                      </div>
-                                                     <span className="text-[11px] font-black tracking-[0.4em] uppercase text-white">EditorialPro AI</span>
+                                                     <div className="flex flex-col">
+                                                         <span className="text-[14px] font-black tracking-[0.5em] uppercase text-white leading-none">PRO-DESIGN</span>
+                                                         <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-primary mt-1">Marketing Suite</span>
+                                                     </div>
                                                 </div>
 
-                                                {/* Mockup del Libro */}
-                                                <div className="relative z-10 py-10">
-                                                    <div className="perspective-1000">
+                                                {/* Master 3D Book - Hardcover Effect */}
+                                                <div className="relative z-10 py-20 animate-float translate-y-[-20px]">
+                                                    <div className="perspective-[3000px]">
                                                         <div 
-                                                            className="relative w-48 h-64 md:w-52 md:h-72 transition-all duration-700 preserve-3d group-hover:rotate-y-20 shadow-[30px_30px_70px_rgba(0,0,0,0.8)] rounded-r-sm"
-                                                            style={{ transformStyle: 'preserve-3d', transform: 'rotateY(-20deg) rotateX(5deg)' }}
+                                                            className="relative w-56 h-80 md:w-64 md:h-96 preserve-3d transition-all duration-[2000ms] cubic-bezier(0.19, 1, 0.22, 1) group-hover:rotate-y-[28deg] group-hover:rotate-x-[12deg] shadow-[30px_60px_100px_-10px_rgba(0,0,0,0.9)]"
+                                                            style={{ 
+                                                                transformStyle: 'preserve-3d', 
+                                                                transform: 'rotateY(-25deg) rotateX(10deg) rotateZ(-3deg)' 
+                                                            }}
                                                         >
-                                                            {/* Hojas / Grosor */}
-                                                            <div className="absolute inset-0 bg-white" style={{ transform: 'translateZ(-15px)', width: '98%' }}></div>
-                                                            <div className="absolute inset-y-0 left-0 w-4 bg-slate-300 shadow-inner" style={{ transform: 'rotateY(-90deg) translateZ(-2px)', width: '15px' }}></div>
+                                                            {/* Front Cover Wrap-around */}
+                                                            <div className="absolute inset-0 z-30 backface-hidden rounded-r-[4px] overflow-hidden border-l border-white/20 shadow-[-5px_0_15px_rgba(0,0,0,0.5)]" style={{ transform: 'translateZ(18px)' }}>
+                                                                <img 
+                                                                    src={generatedContent.visualUrl} 
+                                                                    crossOrigin="anonymous"
+                                                                    className="w-full h-full object-cover" 
+                                                                    alt="Cover" 
+                                                                />
+                                                                {/* Surface Light Reflection */}
+                                                                <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/30 z-10"></div>
+                                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-[300%] -translate-x-full group-hover:translate-x-full transition-transform duration-[1500ms] ease-out"></div>
+                                                            </div>
+
+                                                            {/* Luxury Spine */}
+                                                            <div 
+                                                                className="absolute top-0 bottom-0 left-0 w-10 bg-slate-800 z-20 origin-left border-r border-white/5"
+                                                                style={{ 
+                                                                    transform: 'rotateY(-90deg)',
+                                                                    background: `linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.3)), url(${generatedContent.visualUrl})`,
+                                                                    backgroundSize: '1200% 100%',
+                                                                    backgroundPosition: 'left center',
+                                                                    boxShadow: 'inset 2px 0 10px rgba(0,0,0,0.8)'
+                                                                }}
+                                                            >
+                                                                <div className="absolute inset-x-0 bottom-6 flex justify-center opacity-30">
+                                                                    <BookOpen className="w-5 h-5 text-white -rotate-90" />
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Page Block (Side Fiber Texture) */}
+                                                            <div 
+                                                                className="absolute top-[2px] bottom-[2px] right-0 w-10 z-10 origin-right rounded-r-[3px]"
+                                                                style={{ 
+                                                                    transform: 'rotateY(90deg) translateZ(0px)',
+                                                                    background: 'repeating-linear-gradient(to right, #ffffff, #ffffff 1px, #f1f5f9 2px, #f1f5f9 3px)',
+                                                                    boxShadow: 'inset 8px 0 20px rgba(0,0,0,0.2)'
+                                                                }}
+                                                            ></div>
+
+                                                            {/* Top Block */}
+                                                            <div className="absolute top-0 left-0 right-0 h-10 z-10 origin-top bg-gradient-to-b from-white to-slate-200" style={{ transform: 'rotateX(90deg) translateZ(0px)' }}></div>
                                                             
-                                                            <img 
-                                                                src={generatedContent.visualUrl} 
-                                                                crossOrigin="anonymous"
-                                                                className="w-full h-full object-cover rounded-r-sm relative z-20" 
-                                                                alt="Book Mockup" 
-                                                            />
-                                                            <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/10 pointer-events-none z-30"></div>
+                                                            {/* Bottom Block & Global Shadow */}
+                                                            <div className="absolute bottom-0 left-0 right-0 h-10 z-10 origin-bottom bg-gradient-to-t from-white to-slate-300 shadow-[0_40px_80px_rgba(0,0,0,1)]" style={{ transform: 'rotateX(-90deg) translateZ(0px)' }}></div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="text-center space-y-3 max-w-[85%] relative z-10">
-                                                    <p className="text-primary font-black text-[10px] uppercase tracking-[0.4em] drop-shadow-lg">Novedad Editorial</p>
-                                                    <h3 className="text-white font-black text-2xl uppercase tracking-tighter leading-none drop-shadow-2xl">{selectedBook.title}</h3>
-                                                    <div className="h-[2px] w-12 bg-primary/40 mx-auto rounded-full"></div>
-                                                    <p className="text-white/70 font-bold text-sm tracking-wide">{selectedBook.authorName}</p>
+                                                {/* Dynamic Title Overlay */}
+                                                <div className="text-center space-y-4 max-w-[85%] relative z-20 mt-10 animate-in fade-in zoom-in duration-1000">
+                                                    <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-2xl mb-4 group-hover:scale-105 transition-transform">
+                                                        <Sparkles className="w-4 h-4 text-primary animate-spin-slow" />
+                                                        <span className="text-primary font-black text-[12px] uppercase tracking-[0.5em] drop-shadow-lg">EDICIÓN EXCLUSIVA</span>
+                                                    </div>
+                                                    <h3 className="text-white font-black text-4xl md:text-5xl uppercase tracking-tighter leading-none [text-shadow:0_15px_40px_rgba(0,0,0,0.9)] scale-110 mb-2">{selectedBook.title}</h3>
+                                                    <div className="h-[3px] w-32 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto rounded-full shadow-[0_0_20px_var(--primary)] mb-4"></div>
+                                                    <div className="flex items-center justify-center gap-4 text-white/70 font-black text-sm tracking-[0.2em] uppercase italic">
+                                                        <span>{selectedBook.authorName}</span>
+                                                        <div className="w-2 h-2 rounded-full bg-primary/40"></div>
+                                                        <span className="text-primary-400">2024</span>
+                                                    </div>
                                                 </div>
 
-                                                {/* Glossy Overlay */}
-                                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent pointer-events-none"></div>
+                                                {/* Ambient Lights */}
+                                                <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
+                                                <div className="absolute bottom-0 inset-x-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none"></div>
                                             </div>
 
                                             <button 
                                                 onClick={() => downloadImage(singlePreviewRef, `Marketing_Mockup_${selectedBook.title.replace(/\s+/g,'_')}.png`)} 
                                                 disabled={isDownloading}
-                                                className="btn-primary w-full py-5 bg-primary border-primary hover:brightness-110 shadow-2xl shadow-primary/20 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 relative overflow-hidden group active:scale-[0.98] transition-all"
+                                                className="btn-primary w-full py-6 bg-primary border-primary hover:brightness-110 shadow-[0_20px_50px_rgba(var(--primary-rgb),0.3)] text-xs font-black uppercase tracking-[0.3em] flex items-center justify-center gap-4 relative overflow-hidden group active:scale-[0.97] transition-all"
                                             >
-                                                <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                                                {isDownloading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                                                {isDownloading ? 'Generando Arte...' : 'Descargar Mockup 3D Premium'}
+                                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                                {isDownloading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Download className="w-6 h-6 group-hover:translate-y-1 transition-transform" />}
+                                                {isDownloading ? 'PROCESANDO ARTE...' : 'DESCARGAR PIEZA DE LUJO (4K PNG)'}
                                             </button>
                                         </div>
                                     )}
@@ -512,16 +571,20 @@ export default function Marketing() {
                                         </div>
                                     </div>
 
-                                    <div className="p-6 rounded-[2rem] bg-indigo-500 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
-                                        <Sparkles className="absolute -right-6 -bottom-6 w-32 h-32 opacity-20 rotate-12 group-hover:scale-110 transition-transform" />
+                                    <div className="p-8 rounded-[3rem] bg-gradient-to-br from-indigo-600 to-violet-700 text-white shadow-2xl shadow-indigo-500/30 relative overflow-hidden group">
+                                        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
+                                        <Sparkles className="absolute -right-6 -top-6 w-32 h-32 opacity-10 rotate-12 group-hover:rotate-0 transition-all duration-1000" />
                                         <div className="relative z-10">
-                                            <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] mb-3">
-                                                <Palette className="w-4 h-4" /> Tip Pro de Marketing
-                                            </h4>
-                                            <p className="text-xs font-bold leading-relaxed opacity-95">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-md">
+                                                     <Palette className="w-5 h-5" />
+                                                </div>
+                                                <h4 className="text-xs font-black uppercase tracking-[0.3em]">Marketing Mastertip</h4>
+                                            </div>
+                                            <p className="text-sm font-bold leading-relaxed opacity-90 italic">
                                                 {platform === 'campaign_pack' 
-                                                    ? 'Un pack de campaña completo aumenta la tasa de conversión en un 40%. Sube estas piezas con 24h de separación.'
-                                                    : 'Usa este contenido en "Historias" con el sticker de enlace a tu preventa para maximizar las conversiones inmediatas.'
+                                                    ? 'Un pack de campaña completo aumenta la tasa de conversión en un 40%. Sube estas piezas con 24h de separación para maximizar el algoritmo.'
+                                                    : 'Usa este contenido en "Historias" con el sticker de enlace a tu preventa. Los mockups 3D generan un 65% más de clics que las portadas planas.'
                                                 }
                                             </p>
                                         </div>
