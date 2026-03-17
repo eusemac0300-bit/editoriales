@@ -1,3 +1,5 @@
+import { useState, useEffect, useRef } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import {
     Instagram, Smartphone, Share2, Sparkles, Download,
     ArrowRight, Image as ImageIcon, MessageSquare,
