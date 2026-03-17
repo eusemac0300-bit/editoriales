@@ -276,6 +276,12 @@ export default function Marketing() {
 
                 {/* Preview Area */}
                 <div className="lg:col-span-8">
+                    {!generatedContent && !isGenerating ? (
+                        <div className="h-full min-h-[500px] border-4 border-dashed border-slate-100 dark:border-dark-400 rounded-[3rem] flex flex-col items-center justify-center p-12 text-center bg-slate-50/30">
+                            <Layers className="w-20 h-20 text-slate-200 dark:text-dark-500 mb-6" />
+                            <h3 className="text-2xl font-black dark:text-white mb-2 uppercase tracking-tighter">Sala de Diseño</h3>
+                            <p className="text-slate-500 font-medium max-w-xs">Selecciona un libro y mira la magia publicitaria en tiempo real.</p>
+                        </div>
                     ) : isGenerating ? (
                         <div className="h-full min-h-[500px] bg-slate-900 rounded-[3rem] flex flex-col items-center justify-center p-12 overflow-hidden relative border-8 border-slate-800">
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent animate-pulse" />
@@ -290,7 +296,7 @@ export default function Marketing() {
                                 </div>
                             </div>
                         </div>
-                    ) : (
+                    ) : aiAnalysis && generatedContent ? (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
                             {/* Strategic Insight Card */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -444,7 +450,7 @@ export default function Marketing() {
                                 </div>
                             </div>
                         </div>
-                    )}
+                    ) : null}
                 </div>
             </div>
             
