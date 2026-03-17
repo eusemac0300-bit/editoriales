@@ -349,7 +349,14 @@ function POForm({ po, books, suppliers, quotes = [], onSave, onCancel }) {
         if (!form.supplier_id || !form.book_id || !form.expected_quantity) {
             return alert('Completa los campos obligatorios: Proveedor, Libro y Cantidad')
         }
-        onSave(form)
+
+        // Clean optional fields to be null if empty for Postgres compatibility
+        const cleanForm = {
+            ...form,
+            quote_id: form.quote_id || null
+        }
+
+        onSave(cleanForm)
     }
 
     return (

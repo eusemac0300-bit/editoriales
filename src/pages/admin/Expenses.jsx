@@ -240,7 +240,14 @@ function ExpenseForm({ expense, suppliers, onSave, onCancel }) {
     const handleSubmit = (e) => {
         e.preventDefault()
         if (!form.description || !form.amount) return alert('Descripción y Monto son obligatorios')
-        onSave(form)
+        
+        // Clean optional fields to be null if empty for Postgres compatibility
+        const cleanForm = {
+            ...form,
+            supplier_id: form.supplier_id || null
+        }
+        
+        onSave(cleanForm)
     }
 
     return (
