@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban, QrCode, Download, X, Calculator, Save, Package } from 'lucide-react'
+import { FileText, Plus, Calendar, Percent, DollarSign, User, Search, Filter, Edit, Trash2, Image as ImageIcon, Upload, Kanban, QrCode, Download, X, Calculator, Save, Package, Share2, Instagram, Facebook } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import Barcode from 'react-barcode'
 import EscandalloModal from '../../components/EscandalloModal'
@@ -727,17 +727,34 @@ function BookForm({ data, initialData, onSave, onClose }) {
                     <p className="mt-3 text-[10px] text-slate-500 dark:text-dark-600 italic">⚠️ Límite de 20MB por archivo para optimización de recursos.</p>
                 </div>
 
-                <div className="sm:col-span-2 mb-2">
-                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Imagen de Portada (Opcional)</label>
-                    <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-dark-200 border border-slate-200 dark:border-dark-300 rounded-lg">
+                <div className="sm:col-span-2 mb-2 pt-4 border-t border-slate-200 dark:border-dark-300">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-dark-600 mb-2 block uppercase tracking-wider flex items-center gap-2">
+                        <Share2 className="w-3.5 h-3.5 text-primary" /> Portada para Redes Sociales (IG, FB, Ads)
+                    </label>
+                    <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-dark-200/40 border border-slate-200 dark:border-dark-300 rounded-xl">
                         {form.cover ? (
-                            <img src={form.cover} alt="Cover preview" className="w-16 h-20 object-cover rounded shadow border border-dark-400" />
+                            <div className="relative group">
+                                <img src={form.cover} alt="Cover preview" className="w-20 h-24 object-cover rounded-lg shadow-md border border-dark-400 group-hover:brightness-75 transition-all" />
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-1 text-white">
+                                        <Instagram className="w-3.5 h-3.5" />
+                                        <Facebook className="w-3.5 h-3.5" />
+                                    </div>
+                                </div>
+                            </div>
                         ) : (
-                            <div className="w-16 h-20 bg-dark-300 rounded flex items-center justify-center border border-dark-400 border-dashed">
-                                <ImageIcon className="w-6 h-6 text-dark-500" />
+                            <div className="w-20 h-24 bg-dark-300/50 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-dark-400 text-dark-500 gap-2">
+                                <ImageIcon className="w-6 h-6 opacity-40" />
+                                <div className="flex gap-1 opacity-20">
+                                    <Instagram className="w-3 h-3" />
+                                    <Facebook className="w-3 h-3" />
+                                </div>
                             </div>
                         )}
                         <div className="flex-1">
+                            <h5 className="text-xs font-semibold text-slate-900 dark:text-white mb-1">Imagen de Visualización</h5>
+                            <p className="text-[10px] text-slate-500 dark:text-dark-600 mb-3 leading-relaxed">Esta imagen se utilizará como previsualización en la web y para generar contenido en redes sociales.</p>
+                            
                             <input
                                 type="file"
                                 accept="image/png, image/jpeg, image/webp"
@@ -746,14 +763,24 @@ function BookForm({ data, initialData, onSave, onClose }) {
                                 onChange={handleCoverUpload}
                                 disabled={isUploadingCover}
                             />
-                            <label
-                                htmlFor="cover-upload"
-                                className={`btn-secondary text-xs inline-flex items-center gap-2 cursor-pointer ${isUploadingCover ? 'opacity-50' : ''}`}
-                            >
-                                <Upload className="w-3 h-3" />
-                                {isUploadingCover ? 'Subiendo...' : 'Subir Imagen'}
-                            </label>
-                            <p className="text-[10px] text-dark-500 mt-2">Formatos aceptados: JPG, PNG, WEBP. Máx: 5MB.</p>
+                            <div className="flex gap-2">
+                                <label
+                                    htmlFor="cover-upload"
+                                    className={`btn-secondary text-[10px] py-1.5 px-3 inline-flex items-center gap-2 cursor-pointer ${isUploadingCover ? 'opacity-50' : ''}`}
+                                >
+                                    <Upload className="w-3 h-3" />
+                                    {isUploadingCover ? 'Subiendo...' : 'SUBIR IMAGEN'}
+                                </label>
+                                {form.cover && (
+                                    <button 
+                                        type="button"
+                                        onClick={() => setForm(p => ({ ...p, cover: '' }))}
+                                        className="p-1.5 hover:bg-rose-500/10 rounded-md text-slate-400 hover:text-rose-500 transition-colors"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
