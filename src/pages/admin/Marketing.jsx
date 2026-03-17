@@ -18,7 +18,10 @@ export default function Marketing() {
     const [generatedContent, setGeneratedContent] = useState(null)
     const [currentStyle, setCurrentStyle] = useState('Moderno')
     const [tone, setTone] = useState('Elogioso')
-    const [campaignStep, setCampaignStep] = useState('launch') // 'teaser', 'launch', 'proof'
+    const [isDownloading, setIsDownloading] = useState(false)
+    
+    // Helper para Refs estables
+    const idxToKey = (idx) => `slide-${idx}`
     
     // Refs para captura de imagen
     const singlePreviewRef = useRef(null)
@@ -119,14 +122,26 @@ export default function Marketing() {
     // Acción de descarga individual
     const downloadImage = async (ref, filename) => {
         if (!ref.current) return
+        setIsDownloading(true)
         try {
-            const dataUrl = await toPng(ref.current, { quality: 0.95, pixelRatio: 2 })
+            // Animamos un poco la UI antes de capturar
+            await new Promise(r => setTimeout(r, 200))
+            const dataUrl = await toPng(ref.current, { 
+                quality: 1, 
+                pixelRatio: 2,
+                cacheBust: true,
+                style: {
+                    transform: 'none', // Quitamos transformaciones 3D durante la captura para evitar bugs de html-to-image
+                }
+            })
             const link = document.createElement('a')
             link.download = filename
             link.href = dataUrl
             link.click()
         } catch (err) {
             console.error('Error descargando imagen:', err)
+        } finally {
+            setIsDownloading(false)
         }
     }
 
@@ -134,21 +149,30 @@ export default function Marketing() {
     const downloadZip = async () => {
         const zip = new JSZip()
         const mediaFolder = zip.folder("marketing_pack")
+        setIsDownloading(true)
         
         try {
-            if (platform === 'instagram_carousel') {
+            if (platform === 'campaign_pack') {
                 for (let i = 0; i < carouselSlides.length; i++) {
-                    const el = carouselRefs.current[i]
+                    const el = carouselRefs.current[idxToKey(i)]
                     if (el) {
-                        const dataUrl = await toPng(el, { quality: 0.95, pixelRatio: 2 })
+                        const dataUrl = await toPng(el, { 
+                            quality: 1, 
+                            pixelRatio: 2,
+                            cacheBust: true,
+                        })
                         const base64Data = dataUrl.split(',')[1]
                         mediaFolder.file(`slide_${i + 1}.png`, base64Data, { base64: true })
                     }
                 }
             } else if (singlePreviewRef.current) {
-                const dataUrl = await toPng(singlePreviewRef.current, { quality: 0.95, pixelRatio: 2 })
+                const dataUrl = await toPng(singlePreviewRef.current, { 
+                    quality: 1, 
+                    pixelRatio: 2,
+                    cacheBust: true,
+                })
                 const base64Data = dataUrl.split(',')[1]
-                mediaFolder.file(`post_${selectedBook.title}.png`, base64Data, { base64: true })
+                mediaFolder.file(`post_${selectedBook.title.replace(/\s+/g,'_')}.png`, base64Data, { base64: true })
             }
 
             const content = await zip.generateAsync({ type: "blob" })
@@ -158,6 +182,8 @@ export default function Marketing() {
             link.click()
         } catch (err) {
             console.error('Error creando ZIP:', err)
+        } finally {
+            setIsDownloading(false)
         }
     }
 
@@ -340,14 +366,14 @@ export default function Marketing() {
                                                 {carouselSlides.map((slide, idx) => (
                                                     <div key={idx} className="min-w-[300px] snap-center">
                                                         <div 
-                                                            ref={el => carouselRefs.current[idx] = el}
+                                                            ref={el => carouselRefs.current[idxToKey(idx)] = el}
                                                             className={`aspect-square relative rounded-3xl overflow-hidden shadow-2xl transition-all duration-300 ${getStyleClasses()} border-4`}
                                                         >
                                                             <img src={slide.image} className="w-full h-full object-cover opacity-80" alt="Slide" />
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-8">
-                                                                <span className="text-primary text-[9px] font-black tracking-widest uppercase mb-1">{slide.badge}</span>
-                                                                <p className="text-white font-black text-2xl uppercase tracking-tight mb-2 leading-tight">{slide.title}</p>
-                                                                <p className="text-white/80 text-xs font-medium leading-relaxed max-w-[95%]">{slide.copy}</p>
+                                                            <div className="absolute inset-x-0 bottom-0 top-1/4 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex flex-col justify-end p-8">
+                                                                <span className="text-primary text-[10px] font-black tracking-widest uppercase mb-2 bg-black/40 self-start px-3 py-1 rounded-full border border-white/10">{slide.badge}</span>
+                                                                <p className="text-white font-black text-2xl uppercase tracking-tight mb-3 leading-tight drop-shadow-lg">{slide.title}</p>
+                                                                <p className="text-white/80 text-xs font-semibold leading-relaxed max-w-[95%]">{slide.copy}</p>
                                                             </div>
                                                         </div>
                                                         <button 
@@ -359,11 +385,18 @@ export default function Marketing() {
                                                     </div>
                                                 ))}
                                             </div>
-                                            <button onClick={downloadZip} className="btn-primary w-full py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 text-xs font-black uppercase tracking-widest group">
-                                                <Layers className="w-4 h-4 group-hover:scale-110 transition-transform" /> Descargar Campaña Completa (ZIP)
-                                            </button>
-                                        </div>
-                                    ) : platform === 'video_script' ? (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={downloadZip}
+                                        disabled={isDownloading || !generatedContent}
+                                        className="btn-primary flex-1 py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl shadow-emerald-500/20 text-[10px] font-black uppercase tracking-widest group flex items-center justify-center gap-3"
+                                    >
+                                        {isDownloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4 group-hover:scale-110 transition-transform" />}
+                                        {isDownloading ? 'Empacando...' : 'Descargar Todo (ZIP)'}
+                                    </button>
+                                </div>
+                            </div>
+                        ) : platform === 'video_script' ? (
                                         <div className="bg-slate-900 border-8 border-slate-800 rounded-[3rem] p-8 aspect-[9/16] max-w-[340px] mx-auto shadow-2xl relative overflow-hidden">
                                             <div className="absolute top-0 left-0 w-full h-1 bg-primary animate-[scan_3s_infinite]"></div>
                                             <div className="space-y-6 relative z-10">
@@ -403,8 +436,13 @@ export default function Marketing() {
                                                 </div>
                                             </div>
 
-                                            <button onClick={() => downloadImage(singlePreviewRef, `Marketing_${selectedBook.title}.png`)} className="btn-primary w-full py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl text-xs font-black uppercase tracking-widest">
-                                                <Download className="w-4 h-4" /> Bajar Mockup 3D (PNG)
+                                            <button 
+                                                onClick={() => downloadImage(singlePreviewRef, `Marketing_Mockup_${selectedBook.title.replace(/\s+/g,'_')}.png`)} 
+                                                disabled={isDownloading}
+                                                className="btn-primary w-full py-4 bg-emerald-600 border-emerald-500 hover:bg-emerald-700 shadow-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3"
+                                            >
+                                                {isDownloading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                                {isDownloading ? 'Generando Archivo...' : 'Descargar Mockup Premium'}
                                             </button>
                                         </div>
                                     )}
