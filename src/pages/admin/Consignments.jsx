@@ -19,6 +19,7 @@ export default function Consignments() {
     const consignments = useMemo(() => data.finances?.consignments || [], [data.finances])
     const books = useMemo(() => data.books.filter(b => b.status === 'Publicado'), [data.books])
     const inventory = useMemo(() => data.inventory.physical || [], [data.inventory])
+    const sales = useMemo(() => data.finances?.sales || [], [data.finances])
 
     const filtered = useMemo(() => {
         let list = [...consignments]
@@ -226,18 +227,15 @@ export default function Consignments() {
         doc.text(`Fecha de Despacho: ${new Date(mainItem.sentDate).toLocaleDateString('es-CL')}`, 14, 68)
 
         // Table
-        const head = [['Pos.', 'Título del Libro', 'Cant.', 'Estado']]
-        const body = sameDispatch.map((it, idx) => [
-            (idx + 1).toString(),
-            it.bookTitle,
-            it.sentQuantity.toString(),
-            'En Consignación'
-        ])
-
-        autoTable(doc, {
+        doc.autoTable({
             startY: 75,
-            head: head,
-            body: body,
+            head: [['Pos.', 'Título del Libro', 'Cant.', 'Estado']],
+            body: sameDispatch.map((it, idx) => [
+                (idx + 1).toString(),
+                it.bookTitle,
+                it.sentQuantity.toString(),
+                'En Consignación'
+            ]),
             theme: 'grid',
             headStyles: { fillColor: [16, 185, 129], textColor: 255 },
             styles: { fontSize: 10, cellPadding: 4 },
@@ -343,43 +341,61 @@ export default function Consignments() {
                                         <thead>
                                             <tr className="bg-slate-50/30 dark:bg-dark-100/10">
                                                 <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest">Libro</th>
-                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Enviados</th>
-                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Vendidos</th>
-                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Devueltos</th>
-                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Saldo</th>
+                                                <th className="text-center py-4 px-2 font-black text-[10px] uppercase tracking-widest text-slate-400">Enviados</th>
+                                                <th className="text-center py-4 px-2 font-black text-[10px] uppercase tracking-widest text-slate-400">Ventas</th>
+                                                <th className="text-center py-4 px-2 font-black text-[10px] uppercase tracking-widest text-slate-400">Devueltos</th>
+                                                <th className="text-center py-4 px-2 font-black text-[10px] uppercase tracking-widest text-red-500/70">Merma</th>
+                                                <th className="text-center py-4 px-2 font-black text-[10px] uppercase tracking-widest text-slate-400">Saldo</th>
                                                 <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-dark-400">
                                             {group.items.map(it => {
-                                                const pendingItem = it.sentQuantity - it.soldQuantity - it.returnedQuantity
-                                                const itemActive = it.status === 'activa' && pendingItem > 0
-                                                const itemSales = (data.finances?.sales || []).filter(s => s.notes?.includes(`consignación ${it.id}`))
+                                                const itSales = sales.filter(s => s.bookId === it.bookId && s.notes?.includes(`consignación ${it.id}`))
+                                                const mermaQty = itSales.filter(s => s.channel.includes('Merma')).reduce((sum, s) => sum + s.quantity, 0)
+                                                const realSold = it.soldQuantity - mermaQty
+                                                const currentBalance = it.sentQuantity - it.soldQuantity - it.returnedQuantity
                                                 const isExpanded = expandedItem === it.id
+                                                const itemActive = it.status === 'activa' && currentBalance > 0
 
                                                 return (
                                                     <React.Fragment key={it.id}>
-                                                        <tr className="hover:bg-slate-50/50 dark:hover:bg-dark-300/10 transition-colors group/row">
-                                                            <td className="px-6 py-4">
+                                                        <tr className="border-b border-slate-100 dark:border-dark-300/30 hover:bg-slate-50/50 dark:hover:bg-dark-300/30 transition-colors group/row">
+                                                            <td className="py-4 px-4 overflow-hidden">
                                                                 <div className="flex items-center gap-3">
                                                                     <button 
                                                                         onClick={() => setExpandedItem(isExpanded ? null : it.id)}
-                                                                        className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-dark-200 flex items-center justify-center text-slate-500 hover:bg-primary/10 hover:text-primary transition-all"
+                                                                        className="p-1 rounded bg-slate-100 dark:bg-dark-300 text-slate-400 hover:bg-primary/20 hover:text-primary transition-all"
                                                                     >
-                                                                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                                                        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                                                                     </button>
-                                                                    <div className="w-8 h-10 bg-slate-100 dark:bg-dark-200 rounded flex items-center justify-center text-slate-400">
+                                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-dark-200 flex items-center justify-center text-slate-400 group-hover/row:bg-primary/10 group-hover/row:text-primary transition-all">
                                                                         <BookOpen className="w-4 h-4" />
                                                                     </div>
-                                                                    <span className="text-sm font-bold text-slate-700 dark:text-white uppercase tracking-tight">{it.bookTitle}</span>
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-xs font-black text-slate-900 dark:text-white truncate uppercase tracking-tight">{it.bookTitle}</p>
+                                                                    </div>
                                                                 </div>
                                                             </td>
-                                                            <td className="px-6 py-4 text-sm font-mono text-center font-bold text-slate-600 dark:text-dark-500">{it.sentQuantity}</td>
-                                                            <td className="px-6 py-4 text-sm font-mono text-center font-bold text-emerald-500">{it.soldQuantity}</td>
-                                                            <td className="px-6 py-4 text-sm font-mono text-center font-bold text-orange-400">{it.returnedQuantity}</td>
-                                                            <td className="px-6 py-4 text-center">
-                                                                <span className={`text-sm font-mono font-black ${pendingItem > 0 ? 'text-primary' : 'text-slate-300'}`}>
-                                                                    {pendingItem}
+                                                            <td className="text-center py-4 px-2 font-mono text-xs text-slate-500">{it.sentQuantity}</td>
+                                                            <td className="text-center py-4 px-2">
+                                                                <span className={`text-sm font-black font-mono ${realSold > 0 ? 'text-emerald-500' : 'text-slate-300'}`}>
+                                                                    {realSold}
+                                                                </span>
+                                                            </td>
+                                                            <td className="text-center py-4 px-2">
+                                                                <span className={`text-sm font-black font-mono ${it.returnedQuantity > 0 ? 'text-orange-500' : 'text-slate-300'}`}>
+                                                                    {it.returnedQuantity}
+                                                                </span>
+                                                            </td>
+                                                            <td className="text-center py-4 px-2">
+                                                                <span className={`text-sm font-black font-mono ${mermaQty > 0 ? 'text-red-500' : 'text-slate-300'}`}>
+                                                                    {mermaQty}
+                                                                </span>
+                                                            </td>
+                                                            <td className="text-center py-4 px-2">
+                                                                <span className={`text-sm font-black font-mono ${currentBalance > 0 ? 'text-primary' : 'text-slate-300'}`}>
+                                                                    {currentBalance}
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
@@ -414,7 +430,7 @@ export default function Consignments() {
                                                         </tr>
                                                         {isExpanded && (
                                                             <tr className="bg-slate-50/50 dark:bg-dark-400/10 shadow-inner">
-                                                                <td colSpan="6" className="px-6 py-4">
+                                                                <td colSpan="7" className="px-6 py-4">
                                                                     <div className="flex flex-col gap-3 max-w-2xl mx-auto">
                                                                         <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-200 dark:border-dark-400 pb-2 flex items-center gap-2">
                                                                             <Clock className="w-3 h-3" /> Historial de Movimientos "{it.bookTitle}"
