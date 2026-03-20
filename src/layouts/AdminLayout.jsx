@@ -23,7 +23,6 @@ const navItems = [
     },
     { to: '/admin/inventario', icon: Package, label: 'inventory' },
     { to: '/admin/kanban', icon: Kanban, label: 'production' },
-    { to: '/admin/maquetacion', icon: BookOpen, label: 'maquetacion' },
     { to: '/admin/escandallo', icon: Calculator, label: 'escandallo' },
     { to: '/admin/proveedores', icon: Contact, label: 'suppliers' },
     { to: '/admin/clientes', icon: Building, label: 'clients' },
@@ -73,7 +72,7 @@ export default function AdminLayout() {
         'expenses': 'Gastos', 'cashflow': 'Flujo de Caja', 'royalties': 'Liquidaciones',
         'titles': 'Títulos', 'authors': 'Autores', 'users': 'Usuarios',
         'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes', 'events': 'Ferias y Eventos',
-        'sales_group': 'Ventas', 'maquetacion': 'Maquetación Pro'
+        'sales_group': 'Ventas'
     }
 
     const handleLogout = () => {
