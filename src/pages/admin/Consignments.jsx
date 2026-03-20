@@ -13,6 +13,7 @@ export default function Consignments() {
     const [showAdd, setShowAdd] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedAction, setSelectedAction] = useState(null) // { type: 'liquidate' | 'return', item }
+    const [newItem, setNewItem] = useState({ clientName: '', contactInfo: '', notes: '', items: [{ bookId: '', quantity: 1 }] })
 
     const consignments = useMemo(() => data.finances?.consignments || [], [data.finances])
     const books = useMemo(() => data.books.filter(b => b.status === 'Publicado'), [data.books])
@@ -30,53 +31,82 @@ export default function Consignments() {
         return list
     }, [consignments, searchTerm])
 
+    const consignmentsGroups = useMemo(() => {
+        const groups = {}
+        filtered.forEach(c => {
+            const key = `${c.clientName}-${c.sentDate}`
+            if (!groups[key]) {
+                groups[key] = {
+                    key,
+                    clientName: c.clientName,
+                    sentDate: c.sentDate,
+                    items: []
+                }
+            }
+            groups[key].items.push(c)
+        })
+        return Object.values(groups).sort((a, b) => new Date(b.sentDate) - new Date(a.sentDate))
+    }, [filtered])
+
     const handleGenerate = async (e) => {
         e.preventDefault()
-        const fd = new FormData(e.target)
-        const bookId = fd.get('bookId')
-        const qty = parseInt(fd.get('quantity'), 10)
-        const clientName = fd.get('clientName')
+        const { clientName, contactInfo, notes, items } = newItem
 
-        if (!bookId || !qty || !clientName) return alert('Completa los campos obligatorios.')
+        if (!clientName || items.some(it => !it.bookId || !it.quantity)) {
+            return alert('Completa todos los campos y añade al menos un libro.')
+        }
 
-        const book = books.find(b => b.id === bookId)
-        const inv = inventory.find(i => i.bookId === bookId)
-        if (!inv || inv.stock < qty) return alert(`Stock insuficiente. Disponible: ${inv?.stock || 0}`)
+        // Validate stock for all
+        for (const it of items) {
+            const inv = inventory.find(i => i.bookId === it.bookId)
+            if (!inv || inv.stock < it.quantity) {
+                const book = books.find(b => b.id === it.bookId)
+                return alert(`Stock insuficiente para "${book?.title}". Disponible: ${inv?.stock || 0}`)
+            }
+        }
 
         try {
-            const newConsignment = {
-                id: `cons-${Date.now()}`,
-                tenant_id: user?.tenantId || 't1',
-                book_id: bookId,
-                client_name: clientName,
-                contact_info: fd.get('contactInfo') || '',
-                sent_date: new Date().toISOString().slice(0, 10),
-                sent_quantity: qty,
-                sold_quantity: 0,
-                returned_quantity: 0,
-                status: 'activa',
-                notes: fd.get('notes') || ''
+            const dispatchId = `disp-${Date.now()}`
+            const dateStr = new Date().toISOString().slice(0, 10)
+
+            for (const it of items) {
+                const book = books.find(b => b.id === it.bookId)
+                const inv = inventory.find(i => i.bookId === it.bookId)
+                const consId = `cons-${Date.now()}-${Math.floor(Math.random()*1000)}`
+
+                const newConsignment = {
+                    id: consId,
+                    tenant_id: user?.tenantId || 't1',
+                    book_id: it.bookId,
+                    client_name: clientName,
+                    contact_info: contactInfo,
+                    sent_date: dateStr,
+                    sent_quantity: it.quantity,
+                    sold_quantity: 0,
+                    returned_quantity: 0,
+                    status: 'activa',
+                    notes: `${notes}${items.length > 1 ? ` (Guía #${dispatchId})` : ''}`
+                }
+
+                const { error: cErr } = await supabase.from('consignments').insert(newConsignment)
+                if (cErr) throw cErr
+
+                // Deduct stock
+                const newStock = inv.stock - it.quantity
+                const newExits = [...(inv.exits || []), {
+                    date: dateStr,
+                    qty: it.quantity,
+                    ref: `Consignación a ${clientName} (${dispatchId})`
+                }]
+                await supabase.from('inventory_physical')
+                    .update({ stock: newStock, exits: newExits })
+                    .eq('id', inv.id)
             }
 
-            // Insert consignment
-            const { error: cErr } = await supabase.from('consignments').insert(newConsignment)
-            if (cErr) throw cErr
-
-            // Deduct stock
-            const newStock = inv.stock - qty
-            const newExits = [...(inv.exits || []), {
-                date: new Date().toISOString().slice(0, 10),
-                qty,
-                ref: `Consignación a ${clientName} (${newConsignment.id})`
-            }]
-            const { error: iErr } = await supabase.from('inventory_physical')
-                .update({ stock: newStock, exits: newExits })
-                .eq('id', inv.id)
-            if (iErr) throw iErr
-
-            await addAuditLog(`Registró consignación: ${qty} u. de "${book.title}" a ${clientName}. Nuevo stock: ${newStock}`, 'ventas')
+            await addAuditLog(`Registró despacho de ${items.length} títulos a ${clientName}. ID: ${dispatchId}`, 'ventas')
             await reloadData()
             setShowAdd(false)
+            setNewItem({ clientName: '', contactInfo: '', notes: '', items: [{ bookId: '', quantity: 1 }] })
         } catch (err) {
             alert('Error al registrar: ' + err.message)
         }
@@ -158,57 +188,74 @@ export default function Consignments() {
         }
     }
 
-    const printDispatchGuide = (item) => {
+    const printDispatchGuide = (mainItem) => {
+        // Encontrar otros items del mismo despacho (mismo cliente y fecha)
+        const sameDispatch = consignments.filter(c => 
+            c.clientName === mainItem.clientName && 
+            c.sentDate === mainItem.sentDate
+        )
+
         const doc = new jsPDF()
 
         // Header
-        doc.setFontSize(20)
+        doc.setFontSize(22)
         doc.setTextColor(16, 185, 129) // Emerald-500
-        doc.text("GUÍA DE DESPACHO / ALBARÁN", 14, 22)
+        doc.text("GUÍA DE DESPACHO / ALBARÁN", 14, 25)
 
         doc.setFontSize(10)
         doc.setTextColor(100, 100, 100)
-        doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString('es-CL')}`, 14, 30)
-        doc.text(`Nº Consignación: ${item.id.replace('cons-', '')}`, 14, 35)
+        doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString('es-CL')}`, 14, 32)
+        doc.text(`Cliente: ${mainItem.clientName}`, 14, 37)
 
-        // Company Details (Simulated)
+        // Details
         doc.setFontSize(12)
         doc.setTextColor(40, 40, 40)
-        doc.text("Datos del Cliente / Destino:", 14, 50)
+        doc.text("Datos de Entrega:", 14, 52)
         doc.setFontSize(10)
         doc.setTextColor(80, 80, 80)
-        doc.text(`Cliente/Librería: ${item.clientName}`, 14, 56)
-        doc.text(`Contacto: ${item.contactInfo || 'No registrado'}`, 14, 61)
-        doc.text(`Fecha de Despacho Original: ${new Date(item.sentDate).toLocaleDateString('es-CL')}`, 14, 66)
+        doc.text(`Destinatario: ${mainItem.clientName}`, 14, 58)
+        doc.text(`Contacto: ${mainItem.contactInfo || 'No registrado'}`, 14, 63)
+        doc.text(`Fecha de Despacho: ${new Date(mainItem.sentDate).toLocaleDateString('es-CL')}`, 14, 68)
 
         // Table
+        const head = [['Pos.', 'Título del Libro', 'Cant.', 'Estado']]
+        const body = sameDispatch.map((it, idx) => [
+            (idx + 1).toString(),
+            it.bookTitle,
+            it.sentQuantity.toString(),
+            'En Consignación'
+        ])
+
         doc.autoTable({
             startY: 75,
-            head: [['Título del Libro', 'Concepto', 'Cantidad Emitida']],
-            body: [
-                [item.bookTitle, 'Ejemplares en Depósito (Consignación)', item.sentQuantity.toString()]
-            ],
+            head: head,
+            body: body,
             theme: 'grid',
             headStyles: { fillColor: [16, 185, 129], textColor: 255 },
-            styles: { fontSize: 10, cellPadding: 4 }
+            styles: { fontSize: 10, cellPadding: 4 },
+            columnStyles: {
+                0: { cellWidth: 15 },
+                2: { cellWidth: 20, halign: 'center' },
+                3: { cellWidth: 40 }
+            }
         })
 
-        // Footer / Signatures
         const finalY = doc.lastAutoTable.finalY || 100
         doc.setFontSize(10)
         doc.setTextColor(100, 100, 100)
-        doc.text("Observaciones:", 14, finalY + 15)
+        doc.text("Notas y Condiciones:", 14, finalY + 15)
         doc.setFontSize(9)
-        doc.text(item.notes || "Se despacha cantidad acordada bajo modalidad de depósito/consignación. El inventario es propiedad del editor hasta su facturación/liquidación.", 14, finalY + 22, { maxWidth: 180 })
+        doc.text(mainItem.notes || "Mercadería entregada en calidad de consignación. Se requiere liquidación mensual de lo vendido y devolución de lo no comercializado en excelente estado.", 14, finalY + 22, { maxWidth: 180 })
 
-        doc.line(30, finalY + 60, 80, finalY + 60)
-        doc.text("Firma Entregador", 35, finalY + 65)
+        // Signatures
+        const signY = finalY + 60
+        doc.line(30, signY, 80, signY)
+        doc.text("Firma Entregador", 35, signY + 5)
 
-        doc.line(130, finalY + 60, 180, finalY + 60)
-        doc.text("Firma Receptor", 137, finalY + 65)
+        doc.line(130, signY, 180, signY)
+        doc.text("Firma Receptor - Timbre", 137, signY + 5)
 
-        // Save
-        doc.save(`Albaran_Despacho_${item.id.replace('cons-', '')}.pdf`)
+        doc.save(`Guia_Despacho_${mainItem.clientName.replace(/\s+/g,'_')}_${mainItem.sentDate}.pdf`)
     }
 
     return (
@@ -237,73 +284,112 @@ export default function Consignments() {
                 />
             </div>
 
-            {filtered.length === 0 ? (
-                <div className="glass-card p-12 text-center">
-                    <Building2 className="w-12 h-12 text-slate-300 dark:text-dark-500 mx-auto mb-4" />
-                    <h3 className="text-slate-900 dark:text-white font-medium mb-1">Sin consignaciones</h3>
-                    <p className="text-sm text-slate-500 dark:text-dark-500">Haz clic en "Despachar Libros" para enviar ejemplares a librerías.</p>
+            {consignmentsGroups.length === 0 ? (
+                <div className="glass-card p-12 text-center text-slate-400 dark:text-dark-500">
+                    <Building2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                    <h3 className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-sm mb-2">Sin Despachos Activos</h3>
+                    <p className="text-xs font-medium">Usa el botón "Despachar Libros" para registrar envíos a librerías.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filtered.map(item => {
-                        const pending = item.sentQuantity - item.soldQuantity - item.returnedQuantity
-                        const isActive = item.status === 'activa' && pending > 0
+                <div className="grid grid-cols-1 gap-6">
+                    {consignmentsGroups.map(group => {
+                        const totalSent = group.items.reduce((acc, it) => acc + it.sentQuantity, 0)
+                        const totalPending = group.items.reduce((acc, it) => acc + (it.sentQuantity - it.soldQuantity - it.returnedQuantity), 0)
+                        const isActive = group.items.some(it => it.status === 'activa')
+
                         return (
-                            <div key={item.id} className="glass-card p-5 relative overflow-hidden flex flex-col">
-                                {isActive ? (
-                                    <div className="absolute top-0 right-0 w-1.5 h-full bg-primary" />
-                                ) : (
-                                    <div className="absolute top-0 right-0 w-1.5 h-full bg-slate-300 dark:bg-dark-400" />
-                                )}
-
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase tracking-wider mb-1 flex items-center gap-1">
-                                            <Building2 className="w-3 h-3" /> {item.clientName}
-                                        </p>
-                                        <h3 className="text-base font-bold text-slate-900 dark:text-white">{item.bookTitle}</h3>
-                                        <p className="text-xs text-slate-600 dark:text-dark-400 mt-0.5 px-0">Fecha despacho: {new Date(item.sentDate).toLocaleDateString('es-CL')}</p>
+                            <div key={group.key} className="glass-card overflow-hidden border border-slate-200 dark:border-dark-300 group hover:shadow-xl transition-all">
+                                <div className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50 dark:bg-dark-200/20 border-b border-slate-100 dark:border-dark-400">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-white dark:bg-dark-100 shadow-sm flex items-center justify-center text-primary">
+                                            <Truck className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">{group.clientName}</h3>
+                                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${isActive ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-slate-200 text-slate-500'}`}>
+                                                    {isActive ? 'Activo' : 'Cerrado'}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-500 font-bold flex items-center gap-2">
+                                                <Clock className="w-3 h-3" /> Despachado el {new Date(group.sentDate).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive ? 'bg-primary/20 text-primary-300 border border-primary/30' : 'bg-slate-200 dark:bg-dark-300 text-slate-500 dark:text-dark-500'}`}>
-                                        {isActive ? 'ACTIVA' : 'CERRADA'}
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-4 gap-2 mb-5">
-                                    <div className="bg-slate-50 dark:bg-dark-100/50 rounded-lg p-2 text-center">
-                                        <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase">Enviados</p>
-                                        <p className="text-lg font-mono text-slate-900 dark:text-white mt-1">{item.sentQuantity}</p>
-                                    </div>
-                                    <div className="bg-emerald-500/10 rounded-lg p-2 text-center">
-                                        <p className="text-[10px] text-emerald-500/70 uppercase">Vendidos</p>
-                                        <p className="text-lg font-mono text-emerald-400 mt-1">{item.soldQuantity}</p>
-                                    </div>
-                                    <div className="bg-orange-500/10 rounded-lg p-2 text-center">
-                                        <p className="text-[10px] text-orange-500/70 uppercase">Devueltos</p>
-                                        <p className="text-lg font-mono text-orange-400 mt-1">{item.returnedQuantity}</p>
-                                    </div>
-                                    <div className={`rounded-lg p-2 text-center ${pending > 0 ? 'bg-primary/20' : 'bg-slate-100 dark:bg-dark-200'}`}>
-                                        <p className="text-[10px] text-primary-300 uppercase">En Local</p>
-                                        <p className="text-lg font-bold font-mono text-slate-900 dark:text-white mt-1">{pending}</p>
+                                    <div className="flex items-center gap-3 w-full md:w-auto">
+                                        <div className="text-right hidden sm:block mr-4">
+                                            <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Estado de Carga</p>
+                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{totalPending} de {totalSent} ejemplares en local</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => printDispatchGuide(group.items[0])}
+                                            className="flex-1 md:flex-none p-3 rounded-2xl bg-white dark:bg-dark-100 border border-slate-200 dark:border-dark-400 text-slate-600 hover:text-primary transition-all shadow-sm flex items-center justify-center gap-2 text-xs font-bold"
+                                        >
+                                            <Printer className="w-4 h-4" /> Guía
+                                        </button>
                                     </div>
                                 </div>
-
-                                <div className="mt-auto flex gap-2">
-                                    <button onClick={() => printDispatchGuide(item)} className="p-2 btn-secondary text-slate-500 dark:text-dark-400 hover:text-primary dark:hover:text-primary-400" title="Imprimir Albarán / Guía">
-                                        <Printer className="w-4 h-4" />
-                                    </button>
-                                    {isActive ? (
-                                        <>
-                                            <button onClick={() => setSelectedAction({ type: 'liquidate', item })} className="flex-1 btn-primary text-xs py-2 flex items-center justify-center gap-2">
-                                                <DollarSign className="w-3 h-3" /> Liquidar Venta
-                                            </button>
-                                            <button onClick={() => setSelectedAction({ type: 'return', item })} className="flex-1 btn-secondary text-xs py-2 flex items-center justify-center gap-2 text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 border-orange-500/20">
-                                                <ArrowRightLeft className="w-3 h-3" /> Devolver
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <p className="text-xs text-slate-500 dark:text-dark-500 italic w-full text-center flex items-center justify-center h-full">Consignación concluida</p>
-                                    )}
+                                <div className="p-0">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-50/30 dark:bg-dark-100/10">
+                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest">Libro</th>
+                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Enviados</th>
+                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Vendidos</th>
+                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Devueltos</th>
+                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Saldo</th>
+                                                <th className="px-6 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-dark-400">
+                                            {group.items.map(it => {
+                                                const pendingItem = it.sentQuantity - it.soldQuantity - it.returnedQuantity
+                                                const itemActive = it.status === 'activa' && pendingItem > 0
+                                                return (
+                                                    <tr key={it.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-300/10 transition-colors">
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-10 bg-slate-100 dark:bg-dark-200 rounded flex items-center justify-center text-slate-400">
+                                                                    <BookOpen className="w-4 h-4" />
+                                                                </div>
+                                                                <span className="text-sm font-bold text-slate-700 dark:text-white uppercase tracking-tight">{it.bookTitle}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm font-mono text-center font-bold text-slate-600 dark:text-dark-500">{it.sentQuantity}</td>
+                                                        <td className="px-6 py-4 text-sm font-mono text-center font-bold text-emerald-500">{it.soldQuantity}</td>
+                                                        <td className="px-6 py-4 text-sm font-mono text-center font-bold text-orange-400">{it.returnedQuantity}</td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className={`text-sm font-mono font-black ${pendingItem > 0 ? 'text-primary' : 'text-slate-300'}`}>
+                                                                {pendingItem}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            {itemActive ? (
+                                                                <div className="flex justify-end gap-2">
+                                                                    <button 
+                                                                        onClick={() => setSelectedAction({ type: 'liquidate', item: it })}
+                                                                        className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all"
+                                                                        title="Liquidar Venta"
+                                                                    >
+                                                                        <DollarSign className="w-4 h-4" />
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={() => setSelectedAction({ type: 'return', item: it })}
+                                                                        className="p-2 rounded-lg bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white transition-all"
+                                                                        title="Registrar Devolución"
+                                                                    >
+                                                                        <ArrowRightLeft className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-[9px] font-black uppercase text-slate-300 tracking-widest">Liquidado</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         )
@@ -314,48 +400,120 @@ export default function Consignments() {
             {/* Modal de Despacho */}
             {showAdd && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-dark-100 rounded-2xl w-full max-w-lg border border-slate-200 dark:border-dark-300 shadow-2xl p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <Truck className="w-5 h-5 text-primary" /> Crear Despacho
-                            </h2>
-                            <button onClick={() => setShowAdd(false)} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors">
-                                <XCircle className="w-6 h-6" />
-                            </button>
+                    <div className="bg-white dark:bg-dark-100 rounded-[2.5rem] w-full max-w-2xl border border-slate-200 dark:border-dark-300 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-8 pb-4">
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-2">
+                                        <Truck className="w-6 h-6 text-primary" /> Nuevo Despacho
+                                    </h2>
+                                    <p className="text-slate-500 dark:text-dark-500 text-sm font-medium">Consignación de múltiples títulos.</p>
+                                </div>
+                                <button onClick={() => setShowAdd(false)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-300 transition-colors">
+                                    <XCircle className="w-6 h-6" />
+                                </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-6 mb-8">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 block tracking-widest">Cliente / Librería</label>
+                                    <input 
+                                        type="text" 
+                                        value={newItem.clientName}
+                                        onChange={e => setNewItem({...newItem, clientName: e.target.value})}
+                                        className="input-field w-full text-sm font-bold py-3" 
+                                        placeholder="Ej. Librería Antártica" 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 block tracking-widest">Contacto / Referencia</label>
+                                    <input 
+                                        type="text" 
+                                        value={newItem.contactInfo}
+                                        onChange={e => setNewItem({...newItem, contactInfo: e.target.value})}
+                                        className="input-field w-full text-sm font-bold py-3" 
+                                        placeholder="Email o Teléfono" 
+                                    />
+                                </div>
+                            </div>
                         </div>
-                        <form onSubmit={handleGenerate} className="space-y-4">
-                            <div>
-                                <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Librería / Cliente</label>
-                                <input name="clientName" required type="text" className="input-field w-full" placeholder="Ej. Librería Antártica" />
+
+                        <div className="flex-1 overflow-y-auto px-8 py-2">
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black uppercase text-slate-400 block tracking-widest flex justify-between items-center">
+                                    Títulos a Despachar
+                                    <button 
+                                        onClick={() => setNewItem({...newItem, items: [...newItem.items, { bookId: '', quantity: 1 }]})}
+                                        className="text-primary hover:underline"
+                                    >
+                                        + Añadir Título
+                                    </button>
+                                </label>
+                                
+                                {newItem.items.map((it, idx) => (
+                                    <div key={idx} className="flex gap-4 items-end bg-slate-50 dark:bg-dark-400/30 p-4 rounded-2xl relative group">
+                                        <div className="flex-[3] space-y-2">
+                                            <label className="text-[9px] font-bold text-slate-500">Libro</label>
+                                            <select 
+                                                value={it.bookId}
+                                                onChange={e => {
+                                                    const ni = [...newItem.items]
+                                                    ni[idx].bookId = e.target.value
+                                                    setNewItem({...newItem, items: ni})
+                                                }}
+                                                className="input-field w-full text-xs font-bold"
+                                            >
+                                                <option value="">Seleccionar...</option>
+                                                {books.map(b => (
+                                                    <option key={b.id} value={b.id}>{b.title} (Stock: {inventory.find(inv => inv.bookId === b.id)?.stock || 0})</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="flex-1 space-y-2">
+                                            <label className="text-[9px] font-bold text-slate-500">Cantidad</label>
+                                            <input 
+                                                type="number" 
+                                                value={it.quantity}
+                                                onChange={e => {
+                                                    const ni = [...newItem.items]
+                                                    ni[idx].quantity = parseInt(e.target.value) || 0
+                                                    setNewItem({...newItem, items: ni})
+                                                }}
+                                                className="input-field w-full text-xs font-bold" 
+                                            />
+                                        </div>
+                                        {newItem.items.length > 1 && (
+                                            <button 
+                                                onClick={() => {
+                                                    const ni = newItem.items.filter((_, i) => i !== idx)
+                                                    setNewItem({...newItem, items: ni})
+                                                }}
+                                                className="p-3 text-slate-400 hover:text-red-500 transition-colors"
+                                            >
+                                                <XCircle className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                            <div>
-                                <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Título a consignar</label>
-                                <select name="bookId" required className="input-field w-full">
-                                    <option value="">Selecciona un título...</option>
-                                    {books.map(b => (
-                                        <option key={b.id} value={b.id}>{b.title} (Stock: {inventory.find(i => i.bookId === b.id)?.stock || 0})</option>
-                                    ))}
-                                </select>
+                        </div>
+
+                        <div className="p-8 pt-6 bg-slate-50 dark:bg-dark-300/50">
+                            <div className="flex gap-4">
+                                <button 
+                                    onClick={() => setShowAdd(false)} 
+                                    className="flex-1 px-6 py-4 rounded-2xl border border-slate-200 dark:border-dark-400 text-xs font-black uppercase tracking-widest hover:bg-white dark:hover:bg-dark-100 transition-all font-sans text-slate-500"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={handleGenerate}
+                                    className="flex-[2] px-6 py-4 bg-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-primary-600 transition-all shadow-lg shadow-primary/25"
+                                >
+                                    Efectuar Despacho y Generar Guía
+                                </button>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Cantidad de Ejemplares</label>
-                                    <input name="quantity" required type="number" min="1" className="input-field w-full" placeholder="0" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Datos de Contacto (Opcional)</label>
-                                    <input name="contactInfo" type="text" className="input-field w-full" placeholder="Email o teléfono" />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Notas del despacho</label>
-                                <textarea name="notes" rows="2" className="input-field w-full" placeholder="Número de guía, observaciones, etc." />
-                            </div>
-                            <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-dark-300">
-                                <button type="button" onClick={() => setShowAdd(false)} className="btn-secondary flex-1">Cancelar</button>
-                                <button type="submit" className="btn-primary flex-1">Registrar y Descontar Stock</button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
             )}

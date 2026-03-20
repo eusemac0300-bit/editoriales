@@ -443,7 +443,8 @@ function BookForm({ data, initialData, onSave, onClose }) {
             authorName: author?.name || '',
             advance: parseInt(form.advance.toString().replace(/\D/g, ''), 10) || 0,
             pvp: parseInt(form.pvp.toString().replace(/\D/g, ''), 10) || 0,
-            royaltyPercent: parseFloat(form.royaltyPercent) || 0
+            royaltyPercent: parseFloat(form.royaltyPercent) || 0,
+            deliveryDate: form.deliveryDate || null
         }
 
         if (!initialData) {

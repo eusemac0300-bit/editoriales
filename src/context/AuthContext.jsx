@@ -110,12 +110,32 @@ export function AuthProvider({ children }) {
     const hasPermission = useCallback((requiredRole) => {
         if (!user) return false
         if (requiredRole === 'SUPERADMIN') return user.role === 'SUPERADMIN'
-        if (user.role === 'SUPERADMIN') return true
         if (user.role === 'ADMIN') return true
         if (requiredRole === 'FREELANCE' && (user.role === 'FREELANCE' || user.role === 'ADMIN')) return true
         if (requiredRole === 'AUTOR' && user.role === 'AUTOR') return true
         return user.role === requiredRole
     }, [user])
+    // ============ GLOBAL DATA SANITIZATION ============
+    const sanitizeDates = (obj) => {
+        if (!obj || typeof obj !== 'object') return obj
+        const newObj = Array.isArray(obj) ? [...obj] : { ...obj }
+        
+        for (const key in newObj) {
+            const val = newObj[key]
+            // If it's a date-related key and it's an empty or whitespace string, make it null
+            if (typeof val === 'string' && val.trim() === '' && (
+                key.toLowerCase().includes('date') || 
+                key.toLowerCase().includes('expiry') ||
+                key === 'start_date' ||
+                key === 'end_date'
+            )) {
+                newObj[key] = null
+            } else if (val && typeof val === 'object') {
+                newObj[key] = sanitizeDates(val)
+            }
+        }
+        return newObj
+    }
 
     // ============ WRAPPED OPERATIONS ============
 
@@ -153,14 +173,14 @@ export function AuthProvider({ children }) {
         })
     }, [user, comments])
 
-    const addNewBook = useCallback((bookData) => books.addBook({ 
+    const addNewBook = useCallback((bookData) => books.addBook(sanitizeDates({ 
         ...bookData, 
         id: bookData.id || db.iUUID(), 
         tenantId: user?.tenantId,
         createdAt: bookData.createdAt || new Date().toISOString()
-    }), [user?.tenantId, books])
+    })), [user?.tenantId, books])
 
-    const updateBookDetails = useCallback((bookId, updates) => books.updateBook({ id: bookId, updates }), [books])
+    const updateBookDetails = useCallback((bookId, updates) => books.updateBook({ id: bookId, updates: sanitizeDates(updates) }), [books])
     const deleteExistingBook = useCallback((bookId) => books.deleteBook(bookId), [books])
 
     const updateInventory = useCallback((bookId, updater) => {
@@ -185,28 +205,28 @@ export function AuthProvider({ children }) {
     const updateExistingUser = useCallback((userId, updates) => users.updateUser({ id: userId, updates }), [users])
     const deleteExistingUser = useCallback((userId) => users.deleteUser(userId), [users])
 
-    const addNewQuote = useCallback((quoteData) => quotes.addQuote({ 
+    const addNewQuote = useCallback((quoteData) => quotes.addQuote(sanitizeDates({ 
         ...quoteData, 
         id: quoteData.id || db.iUUID(), 
         tenantId: user?.tenantId,
         status: quoteData.status || 'Solicitada',
         createdAt: quoteData.createdAt || new Date().toISOString()
-    }), [user?.tenantId, quotes])
+    })), [user?.tenantId, quotes])
 
-    const updateQuoteDetails = useCallback((quoteId, updates) => quotes.updateQuote({ id: quoteId, updates }), [quotes])
+    const updateQuoteDetails = useCallback((quoteId, updates) => quotes.updateQuote({ id: quoteId, updates: sanitizeDates(updates) }), [quotes])
     const deleteExistingQuote = useCallback((quoteId) => quotes.deleteQuote(quoteId), [quotes])
 
-    const addNewSale = useCallback((saleData) => sales.addSale({ 
+    const addNewSale = useCallback((saleData) => sales.addSale(sanitizeDates({ 
         ...saleData, 
         id: saleData.id || db.iUUID(), 
         tenantId: user?.tenantId 
-    }), [user?.tenantId, sales])
+    })), [user?.tenantId, sales])
 
-    const addPurchaseOrder = useCallback((poData) => po.addPurchaseOrder({
+    const addPurchaseOrder = useCallback((poData) => po.addPurchaseOrder(sanitizeDates({
         ...poData,
         id: poData.id || db.iUUID(),
         date_ordered: poData.date_ordered || new Date().toISOString()
-    }), [user?.tenantId, po])
+    })), [user?.tenantId, po])
 
     const resetWorkspace = async () => {
         if (!user || user.role !== 'ADMIN') return false
@@ -246,7 +266,7 @@ export function AuthProvider({ children }) {
         editDocument: (docId, updates) => documents.editDocument({ id: docId, updates }),
         deleteDocument: (docId, url) => documents.deleteDocument({ id: docId, url }),
         addNewQuote, updateQuoteDetails, deleteExistingQuote,
-        addNewSale, updateSaleDetails: (saleId, updates) => sales.updateSale({ id: saleId, updates }),
+        addNewSale, updateSaleDetails: (saleId, updates) => sales.updateSale({ id: saleId, updates: sanitizeDates(updates) }),
         deleteExistingSale: (saleId) => sales.deleteSale(saleId),
         addSupplier: (supplierData) => suppliers.addSupplier({ ...supplierData, id: supplierData.id || db.iUUID() }),
         updateSupplier: (supplierId, updates) => suppliers.updateSupplier({ id: supplierId, updates }),
@@ -255,15 +275,15 @@ export function AuthProvider({ children }) {
         updateExistingClient: (clientId, updates) => clientsData.updateClient({ id: clientId, updates }),
         deleteExistingClient: (clientId) => clientsData.deleteClient(clientId),
         addPurchaseOrder, 
-        addNewEvent: (eventData, items) => eventsData.addEvent({ eventData, items }),
-        updateEvent: (id, updates) => eventsData.updateEvent({ id, updates }),
+        addNewEvent: (eventData, items) => eventsData.addEvent({ eventData: sanitizeDates(eventData), items }),
+        updateEvent: (id, updates) => eventsData.updateEvent({ id, updates: sanitizeDates(updates) }),
         settleEvent: (id, itemsData) => eventsData.settleEvent({ id, itemsData }),
         reopenEvent: (id) => eventsData.reopenEvent(id),
         deleteEvent: (id) => eventsData.deleteEvent(id),
-        updatePurchaseOrder: (poId, updates) => po.updatePurchaseOrder({ id: poId, updates }), 
+        updatePurchaseOrder: (poId, updates) => po.updatePurchaseOrder({ id: poId, updates: sanitizeDates(updates) }), 
         deletePurchaseOrder: (poId) => po.deletePurchaseOrder(poId), 
         receivePurchaseOrder: (poId, qt, bId) => po.receivePurchaseOrder({ poId, quantity: qt, bookId: bId }),
-        addExpense: (expData) => expenses.addExpense({ ...expData, id: expData.id || db.iUUID() }),
+        addExpense: (expData) => expenses.addExpense(sanitizeDates({ ...expData, id: expData.id || db.iUUID() })),
         markFreelanceOnboarded: () => {
              const updatedUser = { ...user, firstLogin: false }
              setUser(updatedUser)

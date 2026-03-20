@@ -138,7 +138,12 @@ export default function Events() {
         
         setIsSubmitting(true)
         try {
-            await addNewEvent(formData, formData.items)
+            const sanitizedData = {
+                ...formData,
+                startDate: formData.startDate || null,
+                endDate: formData.endDate || null
+            }
+            await addNewEvent(sanitizedData, formData.items)
             // generateDispatchPDF(formData, formData.items) // Removido auto-generación por solicitud del usuario
             setIsCreateModalOpen(false)
             setFormData({ name: '', startDate: new Date().toISOString().split('T')[0], endDate: '', location: '', notes: '', items: [] })
