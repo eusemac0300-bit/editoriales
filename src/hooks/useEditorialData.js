@@ -368,6 +368,10 @@ export function useEvents(tenantId) {
         addEvent: addMutation.mutateAsync,
         updateEvent: updateMutation.mutateAsync,
         settleEvent: settleMutation.mutateAsync,
+        reopenEvent: useMutation({
+            mutationFn: (id) => db.reopenEventInDb(id),
+            onSuccess: () => queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        }).mutateAsync,
         deleteEvent: deleteMutation.mutateAsync
     }
 }

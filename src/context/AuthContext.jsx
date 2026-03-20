@@ -258,6 +258,7 @@ export function AuthProvider({ children }) {
         addNewEvent: (eventData, items) => eventsData.addEvent({ eventData, items }),
         updateEvent: (id, updates) => eventsData.updateEvent({ id, updates }),
         settleEvent: (id, itemsData) => eventsData.settleEvent({ id, itemsData }),
+        reopenEvent: (id) => eventsData.reopenEvent(id),
         deleteEvent: (id) => eventsData.deleteEvent(id),
         updatePurchaseOrder: (poId, updates) => po.updatePurchaseOrder({ id: poId, updates }), 
         deletePurchaseOrder: (poId) => po.deletePurchaseOrder(poId), 

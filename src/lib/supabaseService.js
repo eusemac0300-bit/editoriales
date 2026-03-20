@@ -1750,6 +1750,78 @@ export async function settleEventInDb(eventId, itemsData) {
     return true
 }
 
+export async function reopenEventInDb(eventId) {
+    // 1. Get event and items with titles
+    const { data: event, error: fetchErr } = await supabase
+        .from('events')
+        .select(`
+            id, name, tenant_id,
+            items:event_items(*)
+        `)
+        .eq('id', eventId)
+        .single()
+    
+    if (fetchErr) throw fetchErr
+
+    // 2. Revert inventory for "returned" items
+    const items = event.items || []
+    for (const item of items) {
+        if (item.returned_qty > 0) {
+            const { data: inv } = await supabase
+                .from('inventory_physical')
+                .select('*')
+                .eq('book_id', item.book_id)
+                .single()
+            
+            if (inv) {
+                // Subtract returned_qty from stock (undoing the settle)
+                const newStock = Math.max(0, (inv.stock || 0) - item.returned_qty)
+                // Remove the "retorno" entry from history
+                const updatedEntries = (inv.entries || []).filter(e => e.reason !== `Retorno de Feria: ${event.name}`)
+                
+                await supabase
+                    .from('inventory_physical')
+                    .update({ 
+                        stock: newStock, 
+                        entries: updatedEntries 
+                    })
+                    .eq('id', inv.id)
+            }
+        }
+    }
+
+    // 3. Delete Sales associated with this event
+    // Since we don't have a direct link to sales, we use the notes pattern used in settleEventInDb
+    const searchNote = `Venta originada en evento: ${event.name}`
+    const { error: saleErr } = await supabase
+        .from('sales')
+        .delete()
+        .eq('channel', 'Feria / Evento')
+        .eq('notes', searchNote)
+    
+    if (saleErr) {
+        console.warn('Could not delete sales during reopen', saleErr)
+    }
+
+    // 4. Update Event status and reset item counts
+    await supabase
+        .from('event_items')
+        .update({ 
+            sold_qty: 0, 
+            returned_qty: 0, 
+            lost_qty: 0 
+        })
+        .eq('event_id', eventId)
+
+    const { error: eventErr } = await supabase
+        .from('events')
+        .update({ status: 'open' })
+        .eq('id', eventId)
+    
+    if (eventErr) throw eventErr
+    return true
+}
+
 export async function deleteEventFromDb(eventId) {
     const { error } = await supabase
         .from('events')

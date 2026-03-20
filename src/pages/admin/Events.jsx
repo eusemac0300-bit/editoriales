@@ -5,14 +5,14 @@ import {
     BookOpen, CheckCircle2, ChevronRight, 
     AlertTriangle, ArrowDownRight, Package, 
     TrendingUp, Calculator, Clock, MoreVertical,
-    X, Save, Trash2, Filter, FileText
+    X, Save, Trash2, Filter, FileText, RotateCcw
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
 export default function Events() {
     const { 
-        data, addNewEvent, updateEvent, settleEvent, deleteEvent, 
+        data, addNewEvent, updateEvent, settleEvent, reopenEvent, deleteEvent, 
         formatCLP, t 
     } = useAuth()
 
@@ -181,6 +181,20 @@ export default function Events() {
         }
     }
 
+    const handleReopenEvent = async (id) => {
+        if (!window.confirm('¿Deseas rectificar esta liquidación?\\n\\nEsto reabrirá el evento y eliminará las ventas automáticas generadas para que puedas volver a cuadrarlo correctamente.')) return
+        
+        setIsSubmitting(true)
+        try {
+            await reopenEvent(id)
+            alert('Evento reabierto. Ya puedes realizar la cuadratura nuevamente.')
+        } catch (err) {
+            alert('Error al reabrir evento: ' + err.message)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
             {/* Header / Stats */}
@@ -274,6 +288,15 @@ export default function Events() {
                                         >
                                             <FileText className="w-4 h-4" /> <span className="text-[10px] font-black uppercase">Guía</span>
                                         </button>
+                                        {event.status === 'closed' && (
+                                            <button 
+                                                onClick={() => handleReopenEvent(event.id)}
+                                                className="p-2 rounded-xl text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors border border-amber-500/10 flex items-center gap-2 px-3"
+                                                title="Reabrir para rectificar liquidación"
+                                            >
+                                                <RotateCcw className="w-4 h-4" /> <span className="text-[10px] font-black uppercase">Rectificar</span>
+                                            </button>
+                                        )}
                                         {event.status === 'open' && (
                                             <button 
                                                 onClick={() => handleOpenSettle(event)}
