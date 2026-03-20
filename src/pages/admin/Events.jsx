@@ -139,7 +139,7 @@ export default function Events() {
         setIsSubmitting(true)
         try {
             await addNewEvent(formData, formData.items)
-            generateDispatchPDF(formData, formData.items) // Generar Guía PDF automáticamente
+            // generateDispatchPDF(formData, formData.items) // Removido auto-generación por solicitud del usuario
             setIsCreateModalOpen(false)
             setFormData({ name: '', startDate: new Date().toISOString().split('T')[0], endDate: '', location: '', notes: '', items: [] })
         } catch (err) {
@@ -267,6 +267,13 @@ export default function Events() {
                                         </div>
                                     </div>
                                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                                        <button 
+                                            onClick={() => generateDispatchPDF(event, event.items)}
+                                            className="p-2 rounded-xl text-primary hover:bg-primary/5 transition-colors border border-primary/10 flex items-center gap-2 px-3"
+                                            title="Imprimir Guía de Despacho"
+                                        >
+                                            <FileText className="w-4 h-4" /> <span className="text-[10px] font-black uppercase">Guía</span>
+                                        </button>
                                         {event.status === 'open' && (
                                             <button 
                                                 onClick={() => handleOpenSettle(event)}
@@ -465,7 +472,7 @@ export default function Events() {
                                 onClick={handleCreateEvent}
                                 className="flex-[2] px-6 py-4 bg-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-primary-600 transition-all shadow-lg shadow-primary/25 disabled:opacity-50"
                             >
-                                {isSubmitting ? 'Guardando...' : 'Iniciar Feria y Generar Guía'}
+                                {isSubmitting ? 'Guardando...' : 'Iniciar Feria'}
                             </button>
                         </div>
                     </div>

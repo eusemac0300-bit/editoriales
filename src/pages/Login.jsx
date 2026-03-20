@@ -58,7 +58,7 @@ export default function Login() {
                                 <h1 className="text-4xl font-black text-white tracking-tighter">
                                     Editorial <span className="text-primary">Pro</span>
                                 </h1>
-                                <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.3 (AutoBook Pro)</p>
+                                <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.4 (AutoBook Pro)</p>
                         </div>
                     </div>
                 </div>
