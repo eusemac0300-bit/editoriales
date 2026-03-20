@@ -1604,8 +1604,8 @@ export async function addEventToDb(tenantId, eventData, items) {
         .from('events')
         .insert([{
             name: eventData.name,
-            start_date: eventData.startDate,
-            end_date: eventData.endDate,
+            start_date: eventData.startDate || null,
+            end_date: eventData.endDate || null,
             location: eventData.location,
             notes: eventData.notes,
             status: 'open',
@@ -1664,8 +1664,8 @@ export async function updateEventInDb(eventId, updates) {
         .from('events')
         .update({
             name: updates.name,
-            start_date: updates.startDate,
-            end_date: updates.endDate,
+            start_date: updates.startDate || null,
+            end_date: updates.endDate || null,
             location: updates.location,
             notes: updates.notes,
             status: updates.status

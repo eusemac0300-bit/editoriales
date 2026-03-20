@@ -357,7 +357,8 @@ function POForm({ po, books, suppliers, quotes = [], onSave, onCancel }) {
         // Clean optional fields to be null if empty for Postgres compatibility
         const cleanForm = {
             ...form,
-            quote_id: form.quote_id || null
+            quote_id: form.quote_id || null,
+            expected_date: form.expected_date || null
         }
 
         onSave(cleanForm)

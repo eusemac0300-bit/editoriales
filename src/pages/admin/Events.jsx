@@ -258,7 +258,10 @@ export default function Events() {
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 dark:text-dark-700">
-                                                <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {event.startDate}</div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <Calendar className="w-3.5 h-3.5" /> 
+                                                    {event.startDate}{event.endDate ? ` — ${event.endDate}` : ''}
+                                                </div>
                                                 <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {event.location || 'N/A'}</div>
                                             </div>
                                         </div>
@@ -362,11 +365,20 @@ export default function Events() {
                                     />
                                 </div>
                                 <div>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Fecha Término (Opcional)</label>
+                                    <input 
+                                        type="date"
+                                        className="input-field"
+                                        value={formData.endDate}
+                                        onChange={e => setFormData(p=>({...p, endDate: e.target.value}))}
+                                    />
+                                </div>
+                                <div className="col-span-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Ubicación</label>
                                     <input 
                                         type="text"
                                         className="input-field"
-                                        placeholder="Gimnasio Municipal ..."
+                                        placeholder="Ej: Estación Mapocho, Santiago"
                                         value={formData.location}
                                         onChange={e => setFormData(p=>({...p, location: e.target.value}))}
                                     />
