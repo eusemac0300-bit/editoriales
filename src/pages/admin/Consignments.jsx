@@ -147,7 +147,7 @@ export default function Consignments() {
                     if (iErr) throw iErr
                 }
                 await addAuditLog(`Devolución consignación: ${qty} u. de "${item.bookTitle}" desde ${item.clientName}`, 'ventas')
-            } else if (type === 'liquidate') {
+            } else if (type === 'liquidate' || type === 'shrinkage') {
                 const price = parseFloat(fd.get('price')) || 0
                 const docRef = fd.get('documentRef') || ''
 
