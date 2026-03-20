@@ -454,7 +454,7 @@ export default function Consignments() {
                                                                                     <span className="text-slate-900 dark:text-white">{isShrink ? 'Merma / Baja:' : 'Liquidación de Venta:'}</span>
                                                                                     <span className={isShrink ? 'text-red-500' : 'text-emerald-500'}>-{sale.quantity} u.</span>
                                                                                     <span className="text-slate-400 text-[10px] font-medium ml-auto max-w-[150px] truncate">
-                                                                                        {isShrink ? sale.notes.replace('MERMA: ','') : `Ref: ${sale.documentRef || 'Sin Ref.'}`}
+                                                                                        {isShrink ? (sale.notes || '').replace('MERMA: ','') : `Ref: ${sale.documentRef || 'Sin Ref.'}`}
                                                                                     </span>
                                                                                 </div>
                                                                             )
