@@ -1,9 +1,9 @@
-import { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import {
-    Truck, Plus, Search, Building2, BookOpen, Clock, AlertTriangle, ArrowRightLeft,
-    DollarSign, XCircle, CheckCircle, Package, FileText, Printer
+    Truck, Search, Plus, XCircle, Printer, Building2, BookOpen, DollarSign, ArrowRightLeft, Clock,
+    ChevronDown, ChevronRight
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -13,6 +13,7 @@ export default function Consignments() {
     const [showAdd, setShowAdd] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedAction, setSelectedAction] = useState(null) // { type: 'liquidate' | 'return', item }
+    const [expandedItem, setExpandedItem] = useState(null) // ID of the consignment item
     const [newItem, setNewItem] = useState({ clientName: '', contactInfo: '', notes: '', items: [{ bookId: '', quantity: 1 }] })
 
     const consignments = useMemo(() => data.finances?.consignments || [], [data.finances])
@@ -346,47 +347,102 @@ export default function Consignments() {
                                             {group.items.map(it => {
                                                 const pendingItem = it.sentQuantity - it.soldQuantity - it.returnedQuantity
                                                 const itemActive = it.status === 'activa' && pendingItem > 0
+                                                const itemSales = (data.finances?.sales || []).filter(s => s.notes?.includes(`consignación ${it.id}`))
+                                                const isExpanded = expandedItem === it.id
+
                                                 return (
-                                                    <tr key={it.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-300/10 transition-colors">
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-10 bg-slate-100 dark:bg-dark-200 rounded flex items-center justify-center text-slate-400">
-                                                                    <BookOpen className="w-4 h-4" />
-                                                                </div>
-                                                                <span className="text-sm font-bold text-slate-700 dark:text-white uppercase tracking-tight">{it.bookTitle}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-sm font-mono text-center font-bold text-slate-600 dark:text-dark-500">{it.sentQuantity}</td>
-                                                        <td className="px-6 py-4 text-sm font-mono text-center font-bold text-emerald-500">{it.soldQuantity}</td>
-                                                        <td className="px-6 py-4 text-sm font-mono text-center font-bold text-orange-400">{it.returnedQuantity}</td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            <span className={`text-sm font-mono font-black ${pendingItem > 0 ? 'text-primary' : 'text-slate-300'}`}>
-                                                                {pendingItem}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-4 text-right">
-                                                            {itemActive ? (
-                                                                <div className="flex justify-end gap-2">
+                                                    <React.Fragment key={it.id}>
+                                                        <tr className="hover:bg-slate-50/50 dark:hover:bg-dark-300/10 transition-colors group/row">
+                                                            <td className="px-6 py-4">
+                                                                <div className="flex items-center gap-3">
                                                                     <button 
-                                                                        onClick={() => setSelectedAction({ type: 'liquidate', item: it })}
-                                                                        className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all"
-                                                                        title="Liquidar Venta"
+                                                                        onClick={() => setExpandedItem(isExpanded ? null : it.id)}
+                                                                        className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-dark-200 flex items-center justify-center text-slate-500 hover:bg-primary/10 hover:text-primary transition-all"
                                                                     >
-                                                                        <DollarSign className="w-4 h-4" />
+                                                                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                                                     </button>
-                                                                    <button 
-                                                                        onClick={() => setSelectedAction({ type: 'return', item: it })}
-                                                                        className="p-2 rounded-lg bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white transition-all"
-                                                                        title="Registrar Devolución"
-                                                                    >
-                                                                        <ArrowRightLeft className="w-4 h-4" />
-                                                                    </button>
+                                                                    <div className="w-8 h-10 bg-slate-100 dark:bg-dark-200 rounded flex items-center justify-center text-slate-400">
+                                                                        <BookOpen className="w-4 h-4" />
+                                                                    </div>
+                                                                    <span className="text-sm font-bold text-slate-700 dark:text-white uppercase tracking-tight">{it.bookTitle}</span>
                                                                 </div>
-                                                            ) : (
-                                                                <span className="text-[9px] font-black uppercase text-slate-300 tracking-widest">Liquidado</span>
-                                                            )}
-                                                        </td>
-                                                    </tr>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-sm font-mono text-center font-bold text-slate-600 dark:text-dark-500">{it.sentQuantity}</td>
+                                                            <td className="px-6 py-4 text-sm font-mono text-center font-bold text-emerald-500">{it.soldQuantity}</td>
+                                                            <td className="px-6 py-4 text-sm font-mono text-center font-bold text-orange-400">{it.returnedQuantity}</td>
+                                                            <td className="px-6 py-4 text-center">
+                                                                <span className={`text-sm font-mono font-black ${pendingItem > 0 ? 'text-primary' : 'text-slate-300'}`}>
+                                                                    {pendingItem}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                {itemActive ? (
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <button 
+                                                                            onClick={() => setSelectedAction({ type: 'liquidate', item: it })}
+                                                                            className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                                                                            title="Liquidar Venta"
+                                                                        >
+                                                                            <DollarSign className="w-4 h-4" />
+                                                                        </button>
+                                                                        <button 
+                                                                            onClick={() => setSelectedAction({ type: 'return', item: it })}
+                                                                            className="p-2 rounded-lg bg-orange-500/10 text-orange-600 hover:bg-orange-500 hover:text-white transition-all shadow-sm"
+                                                                            title="Registrar Devolución"
+                                                                        >
+                                                                            <ArrowRightLeft className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-[9px] font-black uppercase text-slate-300 tracking-widest bg-slate-100 dark:bg-dark-300 px-2 py-1 rounded">Cerrado</span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        {isExpanded && (
+                                                            <tr className="bg-slate-50/50 dark:bg-dark-400/10 shadow-inner">
+                                                                <td colSpan="6" className="px-6 py-4">
+                                                                    <div className="flex flex-col gap-3 max-w-2xl mx-auto">
+                                                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-200 dark:border-dark-400 pb-2 flex items-center gap-2">
+                                                                            <Clock className="w-3 h-3" /> Historial de Movimientos "{it.bookTitle}"
+                                                                        </h4>
+                                                                        
+                                                                        {/* Ship Event */}
+                                                                        <div className="flex items-center gap-4 text-xs font-bold py-2 border-l-2 border-primary/30 pl-4 ml-2">
+                                                                            <span className="text-slate-400 font-mono w-20">{new Date(it.sentDate).toLocaleDateString('es-CL')}</span>
+                                                                            <div className="w-2 h-2 rounded-full bg-primary" />
+                                                                            <span className="text-slate-900 dark:text-white">Despacho Inicial:</span>
+                                                                            <span className="text-primary">{it.sentQuantity} u.</span>
+                                                                        </div>
+
+                                                                        {/* Partial Sales */}
+                                                                        {itemSales.map(sale => (
+                                                                            <div key={sale.id} className="flex items-center gap-4 text-xs font-bold py-2 border-l-2 border-emerald-500/30 pl-4 ml-2">
+                                                                                <span className="text-slate-400 font-mono w-20">{new Date(sale.saleDate).toLocaleDateString('es-CL')}</span>
+                                                                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                                                                <span className="text-slate-900 dark:text-white">Liquidación de Venta:</span>
+                                                                                <span className="text-emerald-500">-{sale.quantity} u.</span>
+                                                                                <span className="text-slate-400 text-[10px] font-medium ml-auto">Ref: {sale.documentRef || 'Sin Ref.'}</span>
+                                                                            </div>
+                                                                        ))}
+
+                                                                        {/* Returns if any (tracked in audit or notes currently, but ideally we'd have a returns table) */}
+                                                                        {it.returnedQuantity > 0 && (
+                                                                            <div className="flex items-center gap-4 text-xs font-bold py-2 border-l-2 border-orange-500/30 pl-4 ml-2">
+                                                                                <span className="text-slate-400 font-mono w-20">Varios</span>
+                                                                                <div className="w-2 h-2 rounded-full bg-orange-500" />
+                                                                                <span className="text-slate-900 dark:text-white">Devoluciones Acumuladas:</span>
+                                                                                <span className="text-orange-500">-{it.returnedQuantity} u.</span>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {itemSales.length === 0 && it.returnedQuantity === 0 && (
+                                                                            <p className="text-[10px] text-slate-400 italic py-2">No hay movimientos parciales registrados aún.</p>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </React.Fragment>
                                                 )
                                             })}
                                         </tbody>
