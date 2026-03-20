@@ -6,7 +6,7 @@ import {
     DollarSign, XCircle, CheckCircle, Package, FileText, Printer
 } from 'lucide-react'
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 
 export default function Consignments() {
     const { user, data, formatCLP, addAuditLog, reloadData } = useAuth()
@@ -226,7 +226,7 @@ export default function Consignments() {
             'En Consignación'
         ])
 
-        doc.autoTable({
+        autoTable(doc, {
             startY: 75,
             head: head,
             body: body,
@@ -240,7 +240,7 @@ export default function Consignments() {
             }
         })
 
-        const finalY = doc.lastAutoTable.finalY || 100
+        const finalY = doc.lastAutoTable?.finalY || 100
         doc.setFontSize(10)
         doc.setTextColor(100, 100, 100)
         doc.text("Notas y Condiciones:", 14, finalY + 15)
@@ -255,7 +255,8 @@ export default function Consignments() {
         doc.line(130, signY, 180, signY)
         doc.text("Firma Receptor - Timbre", 137, signY + 5)
 
-        doc.save(`Guia_Despacho_${mainItem.clientName.replace(/\s+/g,'_')}_${mainItem.sentDate}.pdf`)
+        const fileName = (mainItem.clientName || 'Cliente').replace(/\s+/g,'_')
+        doc.save(`Guia_Despacho_${fileName}_${mainItem.sentDate || 'Hoy'}.pdf`)
     }
 
     return (
