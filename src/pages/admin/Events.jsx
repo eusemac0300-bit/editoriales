@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { 
     Tent, Plus, Search, Calendar, MapPin, 
@@ -114,7 +114,7 @@ export default function Events() {
     const handleAddItem = () => {
         setFormData(p => ({
             ...p,
-            items: [...p.items, { bookId: '', initialQty: 0 }]
+            items: [...p.items, { id: Math.random().toString(36).substr(2, 9), bookId: '', initialQty: 0 }]
         }))
     }
 
@@ -124,6 +124,13 @@ export default function Events() {
             items: p.items.filter((_, i) => i !== idx)
         }))
     }
+
+    // Asegurar que siempre haya al menos una fila al abrir el modal
+    useEffect(() => {
+        if (isCreateModalOpen && formData.items.length === 0) {
+            handleAddItem()
+        }
+    }, [isCreateModalOpen])
 
     const handleCreateEvent = async (e) => {
         e.preventDefault()
@@ -160,7 +167,7 @@ export default function Events() {
         // Validation: initial = sold + returned + lost
         const invalid = settleData.find(d => (d.soldQty + d.returnedQty + d.lostQty) !== d.initialQty)
         if (invalid) {
-            return alert(`La cuadratura de "${invalid.bookTitle}" no coincide. Cantidad inicial: ${invalid.initialQty}, Suma: ${invalid.soldQty + d.returnedQty + d.lostQty}`)
+            return alert(`La cuadratura de "${invalid.bookTitle}" no coincide. Cantidad inicial: ${invalid.initialQty}, Suma: ${invalid.soldQty + invalid.returnedQty + invalid.lostQty}`)
         }
 
         setIsSubmitting(true)
@@ -366,67 +373,71 @@ export default function Events() {
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Inventario a Despachar</h3>
-                                    <button 
-                                        type="button"
-                                        onClick={handleAddItem}
-                                        className="text-xs font-black text-primary hover:text-primary-600 transition-colors uppercase flex items-center gap-1"
-                                    >
-                                        <Plus className="w-4 h-4" /> Agregar Título
-                                    </button>
-                                </div>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-dark-50/10 p-4 rounded-2xl border border-slate-100 dark:border-dark-300/30">
+                                        <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                                            <Package className="w-4 h-4 text-primary" /> Inventario a Despachar
+                                        </h3>
+                                        <button 
+                                            type="button"
+                                            onClick={handleAddItem}
+                                            className="text-[10px] font-black text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-all uppercase flex items-center gap-1.5 border border-primary/20"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" /> Agregar Título
+                                        </button>
+                                    </div>
 
-                                <div className="space-y-3">
-                                    {formData.items.map((item, idx) => (
-                                        <div key={idx} className="flex gap-4 p-4 bg-slate-50 dark:bg-dark-50/10 rounded-2xl border border-dashed border-slate-200 dark:border-dark-300">
-                                            <div className="flex-1">
-                                                <select 
-                                                    required
-                                                    className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 p-0"
-                                                    value={item.bookId}
-                                                    onChange={e => {
-                                                        const nItems = [...formData.items]
-                                                        nItems[idx].bookId = e.target.value
-                                                        setFormData(p=>({...p, items: nItems}))
-                                                    }}
+                                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {formData.items.map((item, idx) => (
+                                            <div key={item.id || idx} className="flex gap-4 p-4 bg-white dark:bg-dark-100 rounded-2xl border border-slate-200 dark:border-dark-300 shadow-sm animate-in slide-in-from-right-2 duration-200">
+                                                <div className="flex-1 space-y-2">
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Título {idx + 1}</p>
+                                                    <select 
+                                                        required
+                                                        className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 p-0 text-slate-900 dark:text-white appearance-none"
+                                                        value={item.bookId}
+                                                        onChange={e => {
+                                                            const nItems = [...formData.items]
+                                                            nItems[idx] = { ...nItems[idx], bookId: e.target.value }
+                                                            setFormData(p => ({ ...p, items: nItems }))
+                                                        }}
+                                                    >
+                                                        <option value="" className="dark:bg-dark-100 text-slate-400">Selecciona un libro...</option>
+                                                        {data?.books?.filter(b => b.status !== 'archived').sort((a,b) => a.title.localeCompare(b.title)).map(b => (
+                                                            <option key={b.id} value={b.id} className="dark:bg-dark-100">{b.title}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="w-24 space-y-2 border-l border-slate-100 dark:border-dark-300 pl-4">
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">Cant.</p>
+                                                    <input 
+                                                        type="number" required min="1"
+                                                        className="w-full bg-transparent border-none text-sm font-black focus:ring-0 p-0 text-center text-primary"
+                                                        placeholder="0"
+                                                        value={item.initialQty || ''}
+                                                        onChange={e => {
+                                                            const nItems = [...formData.items]
+                                                            nItems[idx] = { ...nItems[idx], initialQty: parseInt(e.target.value) || 0 }
+                                                            setFormData(p => ({ ...p, items: nItems }))
+                                                        }}
+                                                    />
+                                                </div>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => handleRemoveItem(idx)}
+                                                    className="text-rose-400 hover:text-rose-600 transition-colors p-1"
                                                 >
-                                                    <option value="">Selecciona un libro...</option>
-                                                    {data?.books?.map(b => (
-                                                        <option key={b.id} value={b.id}>{b.title}</option>
-                                                    ))}
-                                                </select>
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
-                                            <div className="w-24">
-                                                <input 
-                                                    type="number" required min="1"
-                                                    className="w-full bg-transparent border-none text-sm font-bold focus:ring-0 p-0 text-center"
-                                                    placeholder="Cant."
-                                                    value={item.initialQty}
-                                                    onChange={e => {
-                                                        const nItems = [...formData.items]
-                                                        nItems[idx].initialQty = parseInt(e.target.value) || 0
-                                                        setFormData(p=>({...p, items: nItems}))
-                                                    }}
-                                                />
+                                        ))}
+                                        {formData.items.length === 0 && (
+                                            <div className="text-center py-12 text-slate-400 text-xs italic border-2 border-dashed border-slate-100 dark:border-dark-300 rounded-3xl">
+                                                No has agregado libros para llevar a la feria
                                             </div>
-                                            <button 
-                                                type="button" 
-                                                onClick={() => handleRemoveItem(idx)}
-                                                className="text-rose-400 hover:text-rose-600"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                    {formData.items.length === 0 && (
-                                        <div className="text-center py-8 text-slate-400 text-xs italic border-2 border-dashed border-slate-100 dark:border-dark-300 rounded-3xl">
-                                            No has agregado libros para llevar a la feria
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
                         </form>
 
                         <div className="p-8 border-t border-slate-100 dark:border-dark-300 flex gap-4">

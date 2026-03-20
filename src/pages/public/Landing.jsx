@@ -334,7 +334,7 @@ export default function Landing() {
                     <span className="text-xl font-bold text-slate-800 dark:text-white">EditorialPro</span>
                 </div>
                 <p className="mb-2">El motor financiero y operativo para la nueva generación de editoriales.</p>
-                <p>© {new Date().getFullYear()} EditorialPro. Todos los derechos reservados.</p>
+                <p>© {new Date().getFullYear()} EditorialPro. Todos los derechos reservados. <span className="text-primary font-bold ml-2">v3.1.2</span></p>
             </footer>
         </div>
     )

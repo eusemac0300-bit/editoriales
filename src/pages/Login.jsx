@@ -58,7 +58,7 @@ export default function Login() {
                                 <h1 className="text-4xl font-black text-white tracking-tighter">
                                     Editorial <span className="text-primary">Pro</span>
                                 </h1>
-                                <p className="text-slate-400 mt-1 font-medium tracking-tight text-sm">Gestión editorial profesional</p>
+                                <p className="text-slate-400 mt-1 font-medium tracking-tight text-sm">Gestión editorial profesional <span className="text-primary/60 text-[10px] ml-1">v3.1.2</span></p>
                         </div>
                     </div>
                 </div>

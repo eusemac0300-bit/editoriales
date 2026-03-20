@@ -1616,6 +1616,7 @@ export async function addEventToDb(tenantId, eventData, items) {
     if (eventErr) throw eventErr
 
     if (items && items.length > 0) {
+        // 1. Insert event items
         const { error: itemsErr } = await supabase
             .from('event_items')
             .insert(items.map(item => ({
@@ -1625,6 +1626,34 @@ export async function addEventToDb(tenantId, eventData, items) {
                 tenant_id: tenantId
             })))
         if (itemsErr) throw itemsErr
+
+        // 2. Automatically deduct from inventory (Stock Movement)
+        for (const item of items) {
+            const { data: inv } = await supabase
+                .from('inventory_physical')
+                .select('*')
+                .eq('book_id', item.bookId)
+                .single()
+            
+            if (inv) {
+                const newExit = {
+                    date: new Date().toISOString(),
+                    quantity: item.initialQty,
+                    reason: `Despacho a Feria: ${eventData.name}`,
+                    type: 'feria'
+                }
+                const updatedExits = [...(inv.exits || []), newExit]
+                const newStock = (inv.stock || 0) - item.initialQty
+                
+                await supabase
+                    .from('inventory_physical')
+                    .update({ 
+                        stock: newStock, 
+                        exits: updatedExits 
+                    })
+                    .eq('id', inv.id)
+            }
+        }
     }
 
     return event[0]
@@ -1648,7 +1677,14 @@ export async function updateEventInDb(eventId, updates) {
 }
 
 export async function settleEventInDb(eventId, itemsData) {
-    // 1. Update event_items with final counts
+    // 1. Get event details for metadata
+    const { data: event } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single()
+
+    // 2. Update event_items with final counts
     for (const item of itemsData) {
         const { error: itemErr } = await supabase
             .from('event_items')
@@ -1659,9 +1695,52 @@ export async function settleEventInDb(eventId, itemsData) {
             })
             .eq('id', item.id)
         if (itemErr) throw itemErr
+
+        // 3. Officializing Stock Return (increment central inventory)
+        if (item.returnedQty > 0) {
+            const { data: inv } = await supabase
+                .from('inventory_physical')
+                .select('*')
+                .eq('book_id', item.bookId)
+                .single()
+            
+            if (inv) {
+                const newEntry = {
+                    date: new Date().toISOString(),
+                    quantity: item.returnedQty,
+                    reason: `Retorno de Feria: ${event.name}`,
+                    type: 'retorno'
+                }
+                const updatedEntries = [...(inv.entries || []), newEntry]
+                const newStock = (inv.stock || 0) + item.returnedQty
+                
+                await supabase
+                    .from('inventory_physical')
+                    .update({ 
+                        stock: newStock, 
+                        entries: updatedEntries 
+                    })
+                    .eq('id', inv.id)
+            }
+        }
+
+        // 4. Officializing Sales (register as sales)
+        if (item.soldQty > 0) {
+            await supabase.from('sales').insert({
+                tenant_id: event.tenant_id,
+                book_id: item.bookId,
+                book_title: item.bookTitle || 'Venta Feria',
+                channel: 'Feria / Evento',
+                type: 'fisico',
+                quantity: item.soldQty,
+                sale_date: new Date().toISOString(),
+                status: 'finalizada',
+                notes: `Venta originada en evento: ${event.name}`
+            })
+        }
     }
 
-    // 2. Mark event as closed
+    // 5. Mark event as closed
     const { error: eventErr } = await supabase
         .from('events')
         .update({ status: 'closed' })
