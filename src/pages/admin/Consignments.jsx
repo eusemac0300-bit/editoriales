@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import {
     Truck, Search, Plus, XCircle, Printer, Building2, BookOpen, DollarSign, ArrowRightLeft, Clock,
-    ChevronDown, ChevronRight
+    ChevronDown, ChevronRight, AlertTriangle
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -12,7 +12,7 @@ export default function Consignments() {
     const { user, data, formatCLP, addAuditLog, reloadData } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
-    const [selectedAction, setSelectedAction] = useState(null) // { type: 'liquidate' | 'return', item }
+    const [selectedAction, setSelectedAction] = useState(null) // { type: 'liquidate' | 'return' | 'shrinkage', item }
     const [expandedItem, setExpandedItem] = useState(null) // ID of the consignment item
     const [newItem, setNewItem] = useState({ clientName: '', contactInfo: '', notes: '', items: [{ bookId: '', quantity: 1 }] })
 
@@ -150,26 +150,28 @@ export default function Consignments() {
                 const price = parseFloat(fd.get('price')) || 0
                 const docRef = fd.get('documentRef') || ''
 
-                // 1. Generate Sale (no stock deduction because it was already deducted when consigned)
+                const isShrinkage = selectedAction.type === 'shrinkage'
+                
+                // 1. Generate Sale Entry (Merma is a $0 sale that removes stock from bookstore but not from warehouse as it was already deducted)
                 const saleId = `sale-${Date.now()}`
                 const { error: sErr } = await supabase.from('sales').insert({
                     id: saleId,
                     tenant_id: user?.tenantId || 't1',
                     book_id: item.bookId,
-                    channel: 'Consignación',
+                    channel: isShrinkage ? 'Consignación (Merma)' : 'Consignación',
                     type: 'B2B (Empresa / Librería)',
                     client_name: item.clientName,
-                    document_ref: docRef,
+                    document_ref: isShrinkage ? 'Merma/Baja' : docRef,
                     sale_date: new Date().toISOString().slice(0, 10),
                     quantity: qty,
-                    unit_price: price,
-                    total_amount: qty * price,
-                    notes: `Liquidación de consignación ${item.id}`,
+                    unit_price: isShrinkage ? 0 : price,
+                    total_amount: isShrinkage ? 0 : (qty * price),
+                    notes: isShrinkage ? `MERMA: ${fd.get('shrinkageNotes')} (Consigne ID: ${item.id})` : `Liquidación de consignación ${item.id}`,
                     status: 'Completada'
                 })
                 if (sErr) throw sErr
 
-                // 2. Update consignment
+                // 2. Update consignment (We add to sold_quantity to effectively remove from bookstore balance)
                 const newSold = item.soldQuantity + qty
                 const isClosed = (newSold + item.returnedQuantity) >= item.sentQuantity
                 const { error: cErr } = await supabase.from('consignments')
@@ -179,7 +181,12 @@ export default function Consignments() {
                     }).eq('id', item.id)
                 if (cErr) throw cErr
 
-                await addAuditLog(`Liquidó venta por consignación: ${qty} u. de "${item.bookTitle}" (${item.clientName}) por ${formatCLP(qty * price)}`, 'ventas')
+                await addAuditLog(
+                    isShrinkage 
+                    ? `Registró MERMA en consignación: ${qty} u. de "${item.bookTitle}" (${item.clientName}). Motivo: ${fd.get('shrinkageNotes')}`
+                    : `Liquidó venta por consignación: ${qty} u. de "${item.bookTitle}" (${item.clientName}) por ${formatCLP(qty * price)}`, 
+                    'ventas'
+                )
             }
 
             await reloadData()
@@ -392,6 +399,13 @@ export default function Consignments() {
                                                                         >
                                                                             <ArrowRightLeft className="w-4 h-4" />
                                                                         </button>
+                                                                        <button 
+                                                                            onClick={() => setSelectedAction({ type: 'shrinkage', item: it })}
+                                                                            className="p-2 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                                                            title="Registrar Merma / Daño"
+                                                                        >
+                                                                            <AlertTriangle className="w-4 h-4" />
+                                                                        </button>
                                                                     </div>
                                                                 ) : (
                                                                     <span className="text-[9px] font-black uppercase text-slate-300 tracking-widest bg-slate-100 dark:bg-dark-300 px-2 py-1 rounded">Cerrado</span>
@@ -414,16 +428,21 @@ export default function Consignments() {
                                                                             <span className="text-primary">{it.sentQuantity} u.</span>
                                                                         </div>
 
-                                                                        {/* Partial Sales */}
-                                                                        {itemSales.map(sale => (
-                                                                            <div key={sale.id} className="flex items-center gap-4 text-xs font-bold py-2 border-l-2 border-emerald-500/30 pl-4 ml-2">
-                                                                                <span className="text-slate-400 font-mono w-20">{new Date(sale.saleDate).toLocaleDateString('es-CL')}</span>
-                                                                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                                                                <span className="text-slate-900 dark:text-white">Liquidación de Venta:</span>
-                                                                                <span className="text-emerald-500">-{sale.quantity} u.</span>
-                                                                                <span className="text-slate-400 text-[10px] font-medium ml-auto">Ref: {sale.documentRef || 'Sin Ref.'}</span>
-                                                                            </div>
-                                                                        ))}
+                                                                        {/* Partial Sales & Mermas */}
+                                                                        {itemSales.map(sale => {
+                                                                            const isShrink = sale.channel.includes('Merma')
+                                                                            return (
+                                                                                <div key={sale.id} className={`flex items-center gap-4 text-xs font-bold py-2 border-l-2 ${isShrink ? 'border-red-500/30' : 'border-emerald-500/30'} pl-4 ml-2`}>
+                                                                                    <span className="text-slate-400 font-mono w-20">{new Date(sale.saleDate).toLocaleDateString('es-CL')}</span>
+                                                                                    <div className={`w-2 h-2 rounded-full ${isShrink ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                                                                                    <span className="text-slate-900 dark:text-white">{isShrink ? 'Merma / Baja:' : 'Liquidación de Venta:'}</span>
+                                                                                    <span className={isShrink ? 'text-red-500' : 'text-emerald-500'}>-{sale.quantity} u.</span>
+                                                                                    <span className="text-slate-400 text-[10px] font-medium ml-auto max-w-[150px] truncate">
+                                                                                        {isShrink ? sale.notes.replace('MERMA: ','') : `Ref: ${sale.documentRef || 'Sin Ref.'}`}
+                                                                                    </span>
+                                                                                </div>
+                                                                            )
+                                                                        })}
 
                                                                         {/* Returns if any (tracked in audit or notes currently, but ideally we'd have a returns table) */}
                                                                         {it.returnedQuantity > 0 && (
@@ -583,8 +602,10 @@ export default function Consignments() {
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 {selectedAction.type === 'liquidate' ? (
                                     <><DollarSign className="w-5 h-5 text-emerald-500 dark:text-emerald-400" /> Liquidar Venta</>
-                                ) : (
+                                ) : selectedAction.type === 'return' ? (
                                     <><ArrowRightLeft className="w-5 h-5 text-orange-500 dark:text-orange-400" /> Registrar Devolución</>
+                                ) : (
+                                    <><AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400" /> Registrar Merma / Daño</>
                                 )}
                             </h2>
                             <button onClick={() => setSelectedAction(null)} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -632,12 +653,26 @@ export default function Consignments() {
                                 </>
                             )}
 
+                            {selectedAction.type === 'shrinkage' && (
+                                <div>
+                                    <label className="block text-xs text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-1">Motivo / Justificación de la Merma</label>
+                                    <textarea 
+                                        name="shrinkageNotes" 
+                                        required 
+                                        className="input-field w-full h-24 resize-none pt-3 text-sm"
+                                        placeholder="Ej: Libro mojado en vitrina, Robado en local, Dañado en transporte..."
+                                    />
+                                </div>
+                            )}
+
                             <div className="pt-2">
                                 <button type="submit" className={`w-full py-3 rounded-xl font-bold transition-all shadow-lg text-sm ${selectedAction.type === 'liquidate'
                                     ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-400 hover:to-emerald-500 shadow-emerald-500/20'
-                                    : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-400 hover:to-orange-500 shadow-orange-500/20'
+                                    : selectedAction.type === 'return'
+                                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-400 hover:to-orange-500 shadow-orange-500/20'
+                                    : 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-400 hover:to-red-500 shadow-red-500/20'
                                     }`}>
-                                    Confirmar {selectedAction.type === 'liquidate' ? 'Liquidación' : 'Devolución'}
+                                    Confirmar {selectedAction.type === 'liquidate' ? 'Liquidación' : selectedAction.type === 'return' ? 'Devolución' : 'Registro de Merma'}
                                 </button>
                             </div>
                         </form>

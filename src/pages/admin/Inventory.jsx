@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import {
     Package, Plus, Minus, Gift, TrendingDown, TrendingUp,
-    FileText, Search, BookOpen, AlertTriangle, X, Save
+    FileText, Search, BookOpen, AlertTriangle, X, Save,
+    ChevronDown, ChevronRight, Clock, Truck, Store
 } from 'lucide-react'
+import React from 'react'
 
 export default function Inventory() {
     const { data, updateInventory, formatCLP, addAuditLog } = useAuth()
@@ -11,6 +13,7 @@ export default function Inventory() {
     const [addModal, setAddModal] = useState(null)
     const [addTitleModal, setAddTitleModal] = useState(false)
     const [search, setSearch] = useState('')
+    const [expandedBookId, setExpandedBookId] = useState(null)
 
     const getBook = (id) => data.books.find(b => b.id === id)
 
@@ -176,101 +179,207 @@ export default function Inventory() {
                         const book = getBook(p.bookId)
                         const isCritical = p.stock < p.minStock
                         const isVirtual = p._virtual || p.stock === 0
+                        const isExpanded = expandedBookId === p.bookId
+
+                        // Get related data for history
+                        const relatedConsignments = (data.finances?.consignments || []).filter(c => c.bookId === p.bookId)
+                        const relatedSales = (data.finances?.sales || []).filter(s => s.bookId === p.bookId)
+                        const relatedEvents = (data.events || []).filter(e => e.items?.some(it => it.bookId === p.bookId))
 
                         return (
-                            <div
-                                key={p.bookId}
-                                className={`glass-card p-5 transition-all ${isVirtual ? 'border border-amber-500/20 bg-amber-500/5' : ''}`}
-                            >
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <h3 className="text-slate-900 dark:text-white font-medium">{book?.title || p.bookId}</h3>
-                                            {isVirtual && (
-                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-medium uppercase tracking-wide">
-                                                    Sin stock
-                                                </span>
-                                            )}
+                            <React.Fragment key={p.bookId}>
+                                <div
+                                    className={`glass-card p-5 transition-all hover:shadow-md cursor-pointer ${isVirtual ? 'border border-amber-500/20 bg-amber-500/5' : ''} ${isExpanded ? 'ring-2 ring-primary/20 bg-slate-50/50 dark:bg-dark-100/30' : ''}`}
+                                    onClick={() => setExpandedBookId(isExpanded ? null : p.bookId)}
+                                >
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-4 flex-1">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-dark-200 flex items-center justify-center text-slate-400">
+                                                {isExpanded ? <ChevronDown className="w-5 h-5 text-primary" /> : <ChevronRight className="w-5 h-5" />}
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <h3 className="text-slate-900 dark:text-white font-bold text-lg uppercase tracking-tight">{book?.title || p.bookId}</h3>
+                                                    {isVirtual && (
+                                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-medium uppercase tracking-wide">
+                                                            Sin stock
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-slate-500 dark:text-dark-600 mt-0.5">{book?.authorName} · {book?.isbn}</p>
+                                            </div>
                                         </div>
-                                        <p className="text-xs text-slate-500 dark:text-dark-600 mt-0.5">{book?.authorName} · {book?.isbn}</p>
-                                    </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <div className={`text-center px-4 py-2 rounded-lg ${isCritical ? 'bg-red-500/10 border border-red-500/20' : isVirtual ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-slate-50 dark:bg-dark-50'}`}>
-                                            <p className={`text-2xl font-bold ${isCritical ? 'text-red-500 dark:text-red-400' : isVirtual ? 'text-amber-500 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
-                                                {p.stock}
-                                            </p>
-                                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Stock</p>
-                                        </div>
-                                        {isCritical && !isVirtual && (
-                                            <span className="badge-red">⚠️ Crítico</span>
-                                        )}
-                                        <div className="flex gap-1">
-                                            <button
-                                                onClick={() => setAddModal({ bookId: p.bookId, type: 'entrada' })}
-                                                className="btn-primary text-xs px-3 py-2"
-                                            >
-                                                <Plus className="w-3 h-3 inline mr-1" />Entrada
-                                            </button>
-                                            {!isVirtual && (
+                                        <div className="flex items-center gap-6">
+                                            <div className="text-right">
+                                                <p className={`text-2xl font-black font-mono transition-colors ${isCritical ? 'text-red-500 animate-pulse' : isVirtual ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
+                                                    {p.stock}
+                                                </p>
+                                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-black tracking-widest">En Bodega</p>
+                                            </div>
+                                            
+                                            <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                                                 <button
-                                                    onClick={() => setAddModal({ bookId: p.bookId, type: 'salida' })}
-                                                    className="btn-secondary text-xs px-3 py-2"
+                                                    onClick={() => setAddModal({ bookId: p.bookId, type: 'entrada' })}
+                                                    className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500 hover:text-white transition-all"
+                                                    title="Registrar Entrada"
                                                 >
-                                                    <Minus className="w-3 h-3 inline mr-1" />Salida
+                                                    <Plus className="w-4 h-4" />
                                                 </button>
-                                            )}
+                                                {!isVirtual && (
+                                                    <button
+                                                        onClick={() => setAddModal({ bookId: p.bookId, type: 'salida' })}
+                                                        className="p-3 rounded-xl bg-slate-200 dark:bg-dark-200 text-slate-600 dark:text-dark-700 hover:bg-slate-300 dark:hover:bg-dark-300 transition-all"
+                                                        title="Registrar Salida"
+                                                    >
+                                                        <Minus className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Historial de movimientos */}
-                                {!isVirtual && (
-                                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <h4 className="text-xs font-medium text-slate-500 dark:text-dark-600 uppercase mb-2 flex items-center gap-1">
-                                                <TrendingUp className="w-3 h-3 text-emerald-500 dark:text-emerald-400" /> Entradas
-                                            </h4>
-                                            {p.entries.length === 0 ? (
-                                                <p className="text-xs text-dark-500 italic">Sin entradas registradas</p>
-                                            ) : (
-                                                p.entries.slice(-3).map((e, i) => (
-                                                    <div key={i} className="flex justify-between py-1.5 text-xs border-b border-slate-100 dark:border-dark-300/30">
-                                                        <span className="text-slate-600 dark:text-dark-700">{e.note || e.type}</span>
-                                                        <span className="text-emerald-500 dark:text-emerald-400 font-medium">+{e.qty}</span>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                        <div>
-                                            <h4 className="text-xs font-medium text-slate-500 dark:text-dark-600 uppercase mb-2 flex items-center gap-1">
-                                                <TrendingDown className="w-3 h-3 text-red-500 dark:text-red-400" /> Salidas
-                                            </h4>
-                                            {p.exits.length === 0 ? (
-                                                <p className="text-xs text-dark-500 italic">Sin salidas registradas</p>
-                                            ) : (
-                                                p.exits.slice(-3).map((e, i) => (
-                                                    <div key={i} className="flex justify-between py-1.5 text-xs border-b border-slate-100 dark:border-dark-300/30">
-                                                        <div className="flex items-center gap-1">
-                                                            <span className="text-slate-600 dark:text-dark-700">{e.note || e.type}</span>
-                                                            {e.type === 'cortesia' && <Gift className="w-3 h-3 text-amber-500 dark:text-amber-400" />}
+                                {/* Expanded History Sheet */}
+                                {isExpanded && (
+                                    <div className="mx-4 -mt-2 mb-4 p-6 bg-white dark:bg-dark-100/50 rounded-b-[2rem] border-x border-b border-slate-200 dark:border-dark-300 shadow-xl animate-in slide-in-from-top-4 duration-300">
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                            
+                                            {/* Column 1: Core Lifecycle */}
+                                            <div className="space-y-6">
+                                                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 mb-4">
+                                                    <Clock className="w-3 h-3 text-primary" /> Lifecycle Contable
+                                                </h4>
+                                                
+                                                <div className="relative pl-6 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100 dark:before:bg-dark-300">
+                                                    {/* Entries */}
+                                                    {p.entries.map((e, i) => (
+                                                        <div key={`en-${i}`} className="relative">
+                                                            <div className="absolute -left-[20px] top-1 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white dark:border-dark-100" />
+                                                            <p className="text-[11px] text-slate-500 font-mono mb-0.5">{new Date(e.date).toLocaleDateString('es-CL')}</p>
+                                                            <p className="text-xs font-bold text-slate-800 dark:text-white">Entrada: <span className="text-emerald-500">+{e.qty} u.</span></p>
+                                                            <p className="text-[10px] text-slate-400 italic mt-0.5">{e.note || 'Ingreso de imprenta'}</p>
                                                         </div>
-                                                        <span className="text-red-500 dark:text-red-400 font-medium">-{e.qty}</span>
+                                                    ))}
+
+                                                    {/* Sales (Direct & Others) */}
+                                                    {relatedSales.filter(s => s.channel === 'Venta Directa').map(s => (
+                                                        <div key={s.id} className="relative">
+                                                            <div className="absolute -left-[20px] top-1 w-2 h-2 rounded-full bg-primary border-2 border-white dark:border-dark-100" />
+                                                            <p className="text-[11px] text-slate-500 font-mono mb-0.5">{new Date(s.saleDate).toLocaleDateString('es-CL')}</p>
+                                                            <p className="text-xs font-bold text-slate-800 dark:text-white">Venta Directa: <span className="text-primary">-{s.quantity} u.</span></p>
+                                                            <p className="text-[10px] text-slate-400 mt-0.5">Monto: {formatCLP(s.total_amount)}</p>
+                                                        </div>
+                                                    ))}
+
+                                                    {/* Manual Exits */}
+                                                    {p.exits.map((e, i) => (
+                                                        <div key={`ex-${i}`} className="relative">
+                                                            <div className="absolute -left-[20px] top-1 w-2 h-2 rounded-full bg-red-400 border-2 border-white dark:border-dark-100" />
+                                                            <p className="text-[11px] text-slate-500 font-mono mb-0.5">{new Date(e.date).toLocaleDateString('es-CL')}</p>
+                                                            <p className="text-xs font-bold text-slate-800 dark:text-white">{e.type.toUpperCase()}: <span className="text-red-500">-{e.qty} u.</span></p>
+                                                            <p className="text-[10px] text-slate-400 italic mt-0.5">{e.note}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Column 2: Distribution & Bookstore Tracking */}
+                                            <div className="space-y-6">
+                                                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 mb-4">
+                                                    <Store className="w-3 h-3 text-amber-500" /> Estado en Librerías
+                                                </h4>
+                                                
+                                                {relatedConsignments.length === 0 ? (
+                                                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-dark-200/50 text-center">
+                                                        <p className="text-[10px] text-slate-400">Sin despachos a librerías registrados.</p>
                                                     </div>
-                                                ))
-                                            )}
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        {relatedConsignments.map(c => {
+                                                            const cSales = relatedSales.filter(s => s.notes?.includes(`consignación ${c.id}`))
+                                                            const mermas = cSales.filter(s => s.channel.includes('Merma'))
+                                                            const salesOnly = cSales.filter(s => !s.channel.includes('Merma'))
+                                                            const pending = c.sentQuantity - c.soldQuantity - c.returnedQuantity
+
+                                                            return (
+                                                                <div key={c.id} className="p-3 rounded-xl border border-slate-100 dark:border-dark-300 bg-slate-50/50 dark:bg-dark-200/20">
+                                                                    <div className="flex justify-between items-start mb-2">
+                                                                        <p className="text-xs font-bold text-slate-700 dark:text-white">{c.clientName}</p>
+                                                                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${pending > 0 ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-500'}`}>
+                                                                            {pending > 0 ? `${pending} Pend.` : 'Cerrado'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex gap-4 text-[10px] font-mono mb-3">
+                                                                        <span className="text-slate-500">Env: {c.sentQuantity}</span>
+                                                                        <span className="text-emerald-500">Ven: {c.soldQuantity}</span>
+                                                                        <span className="text-orange-500">Dev: {c.returnedQuantity}</span>
+                                                                    </div>
+
+                                                                    {mermas.length > 0 && (
+                                                                        <div className="space-y-1 pt-2 border-t border-slate-200 dark:border-dark-400">
+                                                                            <p className="text-[9px] font-black text-red-500 uppercase tracking-tighter">Mermas / Justificaciones:</p>
+                                                                            {mermas.map(m => (
+                                                                                <div key={m.id} className="flex flex-col gap-0.5">
+                                                                                    <div className="flex justify-between text-[10px] text-red-400">
+                                                                                        <span>-{m.quantity} u.</span>
+                                                                                        <span>{new Date(m.saleDate).toLocaleDateString('es-CL')}</span>
+                                                                                    </div>
+                                                                                    <p className="text-[9px] text-slate-500 leading-tight italic">"{m.notes.replace('MERMA: ','').split('(')[0]}"</p>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Column 3: Event Tracking */}
+                                            <div className="space-y-6">
+                                                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 mb-4">
+                                                    <Truck className="w-3 h-3 text-indigo-500" /> Presencia en Ferias
+                                                </h4>
+                                                
+                                                {relatedEvents.length === 0 ? (
+                                                    <div className="p-4 rounded-xl bg-slate-50 dark:bg-dark-200/50 text-center">
+                                                        <p className="text-[10px] text-slate-400">Sin participación en ventas de ferias aún.</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-3">
+                                                        {relatedEvents.map(e => {
+                                                            const item = e.items.find(it => it.bookId === p.bookId)
+                                                            const eSales = relatedSales.filter(s => s.channel === 'Feria' && s.client_name === e.name)
+                                                            const totalSold = eSales.reduce((sum, s) => sum + s.quantity, 0)
+
+                                                            return (
+                                                                <div key={e.id} className="p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/20 dark:bg-indigo-950/20">
+                                                                    <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">{e.name}</p>
+                                                                    <p className="text-[10px] text-indigo-400 mb-2">{new Date(e.startDate).toLocaleDateString('es-CL')}</p>
+                                                                    
+                                                                    <div className="flex justify-between items-center text-[10px] font-mono">
+                                                                        <span className="text-slate-500">Despachado: {item?.initialQty || 0}</span>
+                                                                        <span className="text-indigo-600 font-black">Vendido: {totalSold}</span>
+                                                                    </div>
+                                                                    <div className="mt-1 w-full h-1 bg-indigo-100 dark:bg-indigo-900/30 rounded-full overflow-hidden">
+                                                                        <div 
+                                                                            className="h-full bg-indigo-500" 
+                                                                            style={{ width: `${Math.min(100, (totalSold / (item?.initialQty || 1)) * 100)}%` }} 
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Mensaje cuando tiene stock 0 */}
-                                {isVirtual && (
-                                    <p className="text-xs text-dark-500 mt-3">
-                                        Este título está publicado pero aún no tiene ejemplares registrados.
-                                        Haz clic en <strong className="text-amber-400">Entrada</strong> para registrar el primer tiraje.
-                                    </p>
-                                )}
-                            </div>
+                            </React.Fragment>
                         )
                     })}
                 </div>
