@@ -23,7 +23,8 @@ export async function loadAllData(tenantId) {
             quotesRes,
             suppliersRes,
             poRes,
-            expensesRes
+            expensesRes,
+            clientsRes
         ] = await Promise.all([
             // TEXT columns (Legacy/Core)
             supabase.from('users').select('*').eq('tenant_id', tenantId),
@@ -43,7 +44,8 @@ export async function loadAllData(tenantId) {
             supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             supabase.from('suppliers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }),
             supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false }),
-            supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId).order('date', { ascending: false })
+            supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId).order('date', { ascending: false }),
+            supabase.from('clients').select('*').eq('tenant_id', tenantId).order('name', { ascending: true })
         ])
 
         const users = usersRes.data;
@@ -62,6 +64,7 @@ export async function loadAllData(tenantId) {
         const suppliers = suppliersRes.data;
         const purchaseOrders = poRes.data;
         const expenses = expensesRes.data;
+        const clients = clientsRes.data;
 
         const isMissingTable = (err) => err?.code === 'PGRST116' || err?.message?.includes('does not exist') || err?.status === 404;
 
@@ -72,12 +75,13 @@ export async function loadAllData(tenantId) {
         const suppliersErr = suppliersRes.error;
         const poErr = poRes.error;
         const expErr = expensesRes.error;
+        const clientsErr = clientsRes.error;
 
         const allErrors = [
             usersErr, booksErr, invPhysRes.error, invDigRes.error, 
             invoicesRes.error, royaltiesRes.error, auditRes.error, commentsRes.error, 
             alertsRes.error, docsRes.error, quotesErr, salesRes.error, 
-            consignmentsRes.error, suppliersErr, poErr, expErr
+            consignmentsRes.error, suppliersErr, poErr, expErr, clientsErr
         ].filter(Boolean);
 
         if (allErrors.length > 0) {
@@ -335,7 +339,8 @@ export async function loadAllData(tenantId) {
             // If quotesErr is present, we return null so the AuthContext can decide to keep current memory data
             quotes: quotesErr ? null : transformedQuotes,
             suppliers: suppliersErr ? null : (suppliers || []),
-            purchaseOrders: poErr ? null : transformedPurchaseOrders
+            purchaseOrders: poErr ? null : transformedPurchaseOrders,
+            clients: clientsErr ? null : (clients || [])
         }
     } catch (err) {
         console.error('Failed to load data from Supabase:', err)
@@ -1229,6 +1234,38 @@ export async function deleteSupplierFromDb(supplierId) {
     return true
 }
 
+// ============ CLIENTS ============
+export async function addClientToDb(tenantId, clientData) {
+    const { data, error } = await supabase
+        .from('clients')
+        .insert([{ ...clientData, tenant_id: tenantId }])
+        .select()
+    if (error) {
+        console.error('Error adding client:', error)
+        throw error
+    }
+    return data[0]
+}
+
+export async function updateClientInDb(clientId, clientData) {
+    const { data, error } = await supabase
+        .from('clients')
+        .update(clientData)
+        .eq('id', clientId)
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function deleteClientFromDb(clientId) {
+    const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', clientId)
+    if (error) throw error
+    return true
+}
+
 // ============ PURCHASE ORDERS ============
 export async function addPurchaseOrderToDb(tenantId, poData) {
     const { data, error } = await supabase
@@ -1303,7 +1340,31 @@ export async function receivePurchaseOrderInDb(poId, quantity, bookId, tenantId)
         if (insErr) throw insErr
     }
 
-    return po
+    // 3. Update Book's Escandallo Costs with the REAL production cost
+    const unitCost = po.total_cost / quantity
+    const { data: book, error: bookFetchErr } = await supabase
+        .from('books')
+        .select('escandallo_costs')
+        .eq('id', bookId)
+        .single()
+    
+    if (!bookFetchErr && book) {
+        const currentCosts = book.escandallo_costs || {}
+        const updatedCosts = {
+            ...currentCosts,
+            impresion: Math.round(unitCost) // Actualizamos el costo de impresión real
+        }
+        
+        await supabase
+            .from('books')
+            .update({ 
+                escandallo_costs: updatedCosts,
+                tiraje: quantity // Actualizamos el tiraje real también
+            })
+            .eq('id', bookId)
+    }
+
+    return true
 }
 
 // ============ EXPENSES ============

@@ -14,7 +14,8 @@ import {
     useSales, 
     usePurchaseOrders, 
     useExpenses,
-    useGlobalMeta
+    useGlobalMeta,
+    useClients
 } from '../hooks/useEditorialData'
 
 const AuthContext = createContext(null)
@@ -30,7 +31,8 @@ const initialData = {
     documents: [],
     quotes: [],
     suppliers: [],
-    purchaseOrders: []
+    purchaseOrders: [],
+    clients: []
 }
 
 export function AuthProvider({ children }) {
@@ -61,6 +63,7 @@ export function AuthProvider({ children }) {
     const po = usePurchaseOrders(user?.tenantId)
     const expenses = useExpenses(user?.tenantId)
     const meta = useGlobalMeta(user?.tenantId)
+    const clientsData = useClients(user?.tenantId)
 
     // Session recovery
     useEffect(() => {
@@ -246,6 +249,9 @@ export function AuthProvider({ children }) {
         addSupplier: (supplierData) => suppliers.addSupplier({ ...supplierData, id: supplierData.id || db.iUUID() }),
         updateSupplier: (supplierId, updates) => suppliers.updateSupplier({ id: supplierId, updates }),
         deleteSupplier: (supplierId) => suppliers.deleteSupplier(supplierId),
+        addNewClient: (clientData) => clientsData.addClient({ ...clientData, id: clientData.id || db.iUUID() }),
+        updateExistingClient: (clientId, updates) => clientsData.updateClient({ id: clientId, updates }),
+        deleteExistingClient: (clientId) => clientsData.deleteClient(clientId),
         addPurchaseOrder, 
         updatePurchaseOrder: (poId, updates) => po.updatePurchaseOrder({ id: poId, updates }), 
         deletePurchaseOrder: (poId) => po.deletePurchaseOrder(poId), 

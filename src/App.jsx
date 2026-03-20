@@ -1,3 +1,4 @@
+import React, { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import RouteGuard from './guards/RouteGuard'
@@ -15,6 +16,7 @@ import FirstLoginPassword from './pages/public/FirstLoginPassword'
 
 // SuperAdmin pages
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
+import SuperAdminDocumentation from './pages/superadmin/Documentation'
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard'
@@ -37,6 +39,8 @@ import PurchaseOrders from './pages/admin/PurchaseOrders'
 import Expenses from './pages/admin/Expenses'
 import Cashflow from './pages/admin/Cashflow'
 import Marketing from './pages/admin/Marketing'
+import Clients from './pages/admin/Clients'
+const Marketing3D = lazy(() => import('./pages/admin/Marketing3D'))
 
 // Freelance pages
 import FreelanceKanban from './pages/freelance/FreelanceKanban'
@@ -82,6 +86,7 @@ function AppRoutes() {
             {/* SuperAdmin routes */}
             <Route path="/superadmin" element={<RouteGuard allowedRoles={['SUPERADMIN']}><SuperAdminLayout /></RouteGuard>}>
                 <Route index element={<SuperAdminDashboard />} />
+                <Route path="documentacion" element={<SuperAdminDocumentation />} />
             </Route>
 
             {/* Admin routes */}
@@ -95,6 +100,7 @@ function AppRoutes() {
                 <Route path="consignaciones" element={<Consignments />} />
                 <Route path="proveedores" element={<Suppliers />} />
                 <Route path="ordenes" element={<PurchaseOrders />} />
+                <Route path="clientes" element={<Clients />} />
                 <Route path="gastos" element={<Expenses />} />
                 <Route path="cashflow" element={<Cashflow />} />
                 <Route path="liquidaciones" element={<Royalties />} />
@@ -106,6 +112,14 @@ function AppRoutes() {
                 <Route path="alertas" element={<Alerts />} />
                 <Route path="reportes" element={<Reports />} />
                 <Route path="marketing" element={<Marketing />} />
+                <Route 
+                    path="marketing-3d" 
+                    element={
+                        <Suspense fallback={<div className="p-10 text-center text-slate-500 font-bold uppercase tracking-widest animate-pulse">Iniciando Motor 3D...</div>}>
+                            <Marketing3D />
+                        </Suspense>
+                    } 
+                />
             </Route>
 
             {/* Freelance routes */}

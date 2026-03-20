@@ -712,11 +712,19 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
                             <label className="text-xs text-dark-600 mb-1 block">Cliente / Librería</label>
                             <input
                                 type="text"
+                                list="clientsList"
                                 value={form.clientName}
                                 onChange={e => setForm(p => ({ ...p, clientName: e.target.value }))}
                                 className="input-field text-sm w-full"
-                                placeholder="Nombre o razón social"
+                                placeholder="Escribe o selecciona de la lista..."
                             />
+                            <datalist id="clientsList">
+                                {data?.clients?.map(client => (
+                                    <option key={client.id} value={client.name}>
+                                        {client.type ? `[${client.type}] ` : ''}{client.name}
+                                    </option>
+                                ))}
+                            </datalist>
                         </div>
                         <div>
                             <label className="text-xs text-dark-600 mb-1 block">Ref. Documento</label>

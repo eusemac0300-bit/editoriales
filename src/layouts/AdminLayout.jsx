@@ -6,7 +6,7 @@ import {
     BookOpen, LayoutDashboard, Package, Kanban, Calculator,
     DollarSign, FileText, Users, Bell, ClipboardList,
     FolderOpen, LogOut, Menu, X, ChevronDown, AlertTriangle, Printer, ShoppingCart, Truck, Contact, FileSpreadsheet, Receipt, Wallet,
-    Sun, Moon, Languages, Settings, Percent, Globe, Coins, Sparkles, Database, Trash2
+    Sun, Moon, Languages, Settings, Percent, Globe, Coins, Sparkles, Database, Trash2, Zap, Building
 } from 'lucide-react'
 
 const navItems = [
@@ -18,6 +18,7 @@ const navItems = [
     { to: '/admin/ventas', icon: ShoppingCart, label: 'sales' },
     { to: '/admin/consignaciones', icon: Truck, label: 'consignments' },
     { to: '/admin/proveedores', icon: Contact, label: 'suppliers' },
+    { to: '/admin/clientes', icon: Building, label: 'clients' },
     { to: '/admin/ordenes', icon: FileSpreadsheet, label: 'orders' },
     { to: '/admin/gastos', icon: Receipt, label: 'expenses' },
     { to: '/admin/cashflow', icon: Wallet, label: 'cashflow' },
@@ -27,6 +28,7 @@ const navItems = [
     { to: '/admin/usuarios', icon: Users, label: 'users' },
     { to: '/admin/documentos', icon: FolderOpen, label: 'documents' },
     { to: '/admin/marketing', icon: Sparkles, label: 'marketing' },
+    { to: '/admin/marketing-3d', icon: Zap, label: 'marketing_3d' },
     { to: '/admin/auditoria', icon: ClipboardList, label: 'audit' },
     { to: '/admin/alertas', icon: Bell, label: 'alerts' },
 ]
@@ -57,7 +59,7 @@ export default function AdminLayout() {
         'consignments': 'Consignaciones', 'suppliers': 'Proveedores', 'orders': 'Órdenes de Compra',
         'expenses': 'Gastos', 'cashflow': 'Flujo de Caja', 'royalties': 'Liquidaciones',
         'titles': 'Títulos', 'authors': 'Autores', 'users': 'Usuarios',
-        'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing'
+        'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes'
     }
 
     const handleLogout = () => {

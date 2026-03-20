@@ -98,10 +98,14 @@ export default function PurchaseOrders() {
             </div>
 
             {/* Stats & Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div className="stat-card">
-                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-semibold">Órdenes de Compra Activas</p>
+                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-semibold">Órdenes Activas</p>
                     <p className="text-2xl font-bold text-slate-900 dark:text-white">{pos.filter(p => p.status !== 'RECIBIDA' && p.status !== 'CANCELADA').length}</p>
+                </div>
+                <div className="stat-card">
+                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-semibold">Total Inversión</p>
+                    <p className="text-xl font-bold text-primary truncate">{formatCLP(filtered.reduce((acc, curr) => acc + (curr.total_cost || 0), 0))}</p>
                 </div>
                 <div className="md:col-span-3 glass-card p-4 flex flex-col md:flex-row gap-4 items-center">
                     <div className="relative flex-1 w-full">

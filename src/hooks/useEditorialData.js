@@ -254,6 +254,37 @@ export function usePurchaseOrders(tenantId) {
     }
 }
 
+export function useClients(tenantId) {
+    const queryClient = useQueryClient()
+
+    const addMutation = useMutation({
+        mutationFn: (clientData) => db.addClientToDb(tenantId, clientData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        },
+    })
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, updates }) => db.updateClientInDb(id, updates),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        },
+    })
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => db.deleteClientFromDb(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        },
+    })
+
+    return {
+        addClient: addMutation.mutateAsync,
+        updateClient: updateMutation.mutateAsync,
+        deleteClient: deleteMutation.mutateAsync
+    }
+}
+
 export function useExpenses(tenantId) {
     const queryClient = useQueryClient()
     const addMutation = useMutation({
