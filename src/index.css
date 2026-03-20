@@ -145,6 +145,19 @@ body {
     @apply sidebar-link text-white bg-primary/20 border-l-4 border-primary;
   }
 
+  .sidebar-sublink {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200;
+    color: var(--sidebar-text);
+  }
+
+  .sidebar-sublink:hover {
+    @apply text-white;
+  }
+
+  .sidebar-sublink-active {
+    @apply sidebar-sublink text-primary font-bold;
+  }
+
   .stat-card {
     @apply glass-card p-5;
   }

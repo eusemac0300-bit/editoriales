@@ -11,18 +11,24 @@ import {
 
 const navItems = [
     { to: '/admin', icon: LayoutDashboard, label: 'dashboard', end: true },
+    { 
+        label: 'sales_group', 
+        icon: ShoppingCart,
+        subItems: [
+            { to: '/admin/ventas', label: 'sales' },
+            { to: '/admin/cotizaciones', label: 'quotes' },
+            { to: '/admin/eventos', label: 'events' },
+            { to: '/admin/consignaciones', label: 'consignments' },
+        ]
+    },
     { to: '/admin/inventario', icon: Package, label: 'inventory' },
     { to: '/admin/kanban', icon: Kanban, label: 'production' },
     { to: '/admin/escandallo', icon: Calculator, label: 'escandallo' },
-    { to: '/admin/cotizaciones', icon: Printer, label: 'quotes' },
-    { to: '/admin/ventas', icon: ShoppingCart, label: 'sales' },
-    { to: '/admin/consignaciones', icon: Truck, label: 'consignments' },
     { to: '/admin/proveedores', icon: Contact, label: 'suppliers' },
     { to: '/admin/clientes', icon: Building, label: 'clients' },
     { to: '/admin/ordenes', icon: FileSpreadsheet, label: 'orders' },
     { to: '/admin/gastos', icon: Receipt, label: 'expenses' },
     { to: '/admin/cashflow', icon: Wallet, label: 'cashflow' },
-    { to: '/admin/eventos', icon: Tent, label: 'events' },
     { to: '/admin/liquidaciones', icon: DollarSign, label: 'royalties' },
     { to: '/admin/libros', icon: FileText, label: 'titles' },
     { to: '/admin/autores', icon: Users, label: 'authors' },
@@ -45,6 +51,11 @@ export default function AdminLayout() {
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [isResetting, setIsResetting] = useState(false)
     const [isActionLoading, setIsActionLoading] = useState(false)
+    const [openMenus, setOpenMenus] = useState(['sales_group']) // Default open
+
+    const toggleMenu = (label) => {
+        setOpenMenus(p => p.includes(label) ? p.filter(m => m !== label) : [...p, label])
+    }
 
     const hasDemoData = data?.books?.some(b => b.id.startsWith('demo_'))
     const hasBooks = data?.books?.length > 0
@@ -60,7 +71,8 @@ export default function AdminLayout() {
         'consignments': 'Consignaciones', 'suppliers': 'Proveedores', 'orders': 'Órdenes de Compra',
         'expenses': 'Gastos', 'cashflow': 'Flujo de Caja', 'royalties': 'Liquidaciones',
         'titles': 'Títulos', 'authors': 'Autores', 'users': 'Usuarios',
-        'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes', 'events': 'Ferias y Eventos'
+        'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes', 'events': 'Ferias y Eventos',
+        'sales_group': 'Ventas'
     }
 
     const handleLogout = () => {
@@ -102,24 +114,66 @@ export default function AdminLayout() {
 
                     <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                         {navItems
-                            .filter(item => allowedModules[moduleTranslationMap[item.label]] !== false)
-                            .map(item => (
-                                <NavLink
-                                    key={item.to}
-                                    to={item.to}
-                                    end={item.end}
-                                    onClick={() => setSidebarOpen(false)}
-                                    className={({ isActive }) => isActive ? 'sidebar-link-active' : 'sidebar-link'}
-                                >
-                                    <item.icon className="w-4 h-4" />
-                                    <span>{t(item.label)}</span>
-                                    {item.label === 'alerts' && unreadAlerts > 0 && (
-                                        <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                                            {unreadAlerts}
-                                        </span>
-                                    )}
-                                </NavLink>
-                            ))}
+                            .filter(item => {
+                                if (item.subItems) return true // Groups always show if any subItem is allowed
+                                return allowedModules[moduleTranslationMap[item.label]] !== false
+                            })
+                            .map(item => {
+                                if (item.subItems) {
+                                    const allowedSubItems = item.subItems.filter(sub => allowedModules[moduleTranslationMap[sub.label]] !== false)
+                                    if (allowedSubItems.length === 0) return null
+
+                                    const isOpen = openMenus.includes(item.label)
+                                    
+                                    return (
+                                        <div key={item.label} className="space-y-1">
+                                            <button 
+                                                onClick={() => toggleMenu(item.label)}
+                                                className={`w-full sidebar-link justify-between group ${isOpen ? 'bg-slate-800/50 text-white' : ''}`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <item.icon className="w-4 h-4" />
+                                                    <span>{t(item.label)}</span>
+                                                </div>
+                                                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+                                            
+                                            {isOpen && (
+                                                <div className="pl-9 pr-2 space-y-1 animate-in slide-in-from-top-2 duration-300">
+                                                    {allowedSubItems.map(sub => (
+                                                        <NavLink
+                                                            key={sub.to}
+                                                            to={sub.to}
+                                                            onClick={() => setSidebarOpen(false)}
+                                                            className={({ isActive }) => isActive ? 'sidebar-sublink-active' : 'sidebar-sublink'}
+                                                        >
+                                                            <span>{t(sub.label)}</span>
+                                                        </NavLink>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                }
+
+                                return (
+                                    <NavLink
+                                        key={item.to}
+                                        to={item.to}
+                                        end={item.end}
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={({ isActive }) => isActive ? 'sidebar-link-active' : 'sidebar-link'}
+                                    >
+                                        <item.icon className="w-4 h-4" />
+                                        <span>{t(item.label)}</span>
+                                        {item.label === 'alerts' && unreadAlerts > 0 && (
+                                            <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                                {unreadAlerts}
+                                            </span>
+                                        )}
+                                    </NavLink>
+                                )
+                            })}
                     </nav>
                 </div>
             </aside>
