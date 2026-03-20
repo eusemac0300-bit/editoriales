@@ -20,6 +20,7 @@ import SuperAdminDocumentation from './pages/superadmin/Documentation'
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard'
+import Maquetacion from './pages/admin/Maquetacion'
 import Kanban from './pages/admin/Kanban'
 import Inventory from './pages/admin/Inventory'
 import Escandallo from './pages/admin/Escandallo'
@@ -95,6 +96,7 @@ function AppRoutes() {
                 <Route index element={<AdminDashboard />} />
                 <Route path="inventario" element={<Inventory />} />
                 <Route path="kanban" element={<Kanban />} />
+                <Route path="maquetacion" element={<Maquetacion />} />
                 <Route path="escandallo" element={<Escandallo />} />
                 <Route path="cotizaciones" element={<Quotes />} />
                 <Route path="ventas" element={<Sales />} />

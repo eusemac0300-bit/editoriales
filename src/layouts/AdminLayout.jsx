@@ -23,6 +23,7 @@ const navItems = [
     },
     { to: '/admin/inventario', icon: Package, label: 'inventory' },
     { to: '/admin/kanban', icon: Kanban, label: 'production' },
+    { to: '/admin/maquetacion', icon: BookOpen, label: 'maquetacion' },
     { to: '/admin/escandallo', icon: Calculator, label: 'escandallo' },
     { to: '/admin/proveedores', icon: Contact, label: 'suppliers' },
     { to: '/admin/clientes', icon: Building, label: 'clients' },
@@ -72,7 +73,7 @@ export default function AdminLayout() {
         'expenses': 'Gastos', 'cashflow': 'Flujo de Caja', 'royalties': 'Liquidaciones',
         'titles': 'Títulos', 'authors': 'Autores', 'users': 'Usuarios',
         'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes', 'events': 'Ferias y Eventos',
-        'sales_group': 'Ventas'
+        'sales_group': 'Ventas', 'maquetacion': 'Maquetación Pro'
     }
 
     const handleLogout = () => {
@@ -104,7 +105,7 @@ export default function AdminLayout() {
                         <div>
                             <h1 className="font-bold text-white text-sm">Editorial Pro</h1>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">
-                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.2 (Stock & Sales Sync)</span>
+                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.3 (Stock & Sales Sync)</span>
                             </p>
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white">
