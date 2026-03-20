@@ -332,3 +332,43 @@ export function useGlobalMeta(tenantId) {
         markFreelanceOnboarded: markFreelanceOnboardedMutation.mutateAsync
     }
 }
+
+export function useEvents(tenantId) {
+    const queryClient = useQueryClient()
+
+    const addMutation = useMutation({
+        mutationFn: ({ eventData, items }) => db.addEventToDb(tenantId, eventData, items),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        },
+    })
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, updates }) => db.updateEventInDb(id, updates),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        },
+    })
+
+    const settleMutation = useMutation({
+        mutationFn: ({ id, itemsData }) => db.settleEventInDb(id, itemsData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        },
+    })
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => db.deleteEventFromDb(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        },
+    })
+
+    return {
+        addEvent: addMutation.mutateAsync,
+        updateEvent: updateMutation.mutateAsync,
+        settleEvent: settleMutation.mutateAsync,
+        deleteEvent: deleteMutation.mutateAsync
+    }
+}
+

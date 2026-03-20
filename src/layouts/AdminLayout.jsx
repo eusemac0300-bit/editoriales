@@ -6,7 +6,7 @@ import {
     BookOpen, LayoutDashboard, Package, Kanban, Calculator,
     DollarSign, FileText, Users, Bell, ClipboardList,
     FolderOpen, LogOut, Menu, X, ChevronDown, AlertTriangle, Printer, ShoppingCart, Truck, Contact, FileSpreadsheet, Receipt, Wallet,
-    Sun, Moon, Languages, Settings, Percent, Globe, Coins, Sparkles, Database, Trash2, Zap, Building
+    Sun, Moon, Languages, Settings, Percent, Globe, Coins, Sparkles, Database, Trash2, Zap, Building, Tent
 } from 'lucide-react'
 
 const navItems = [
@@ -22,6 +22,7 @@ const navItems = [
     { to: '/admin/ordenes', icon: FileSpreadsheet, label: 'orders' },
     { to: '/admin/gastos', icon: Receipt, label: 'expenses' },
     { to: '/admin/cashflow', icon: Wallet, label: 'cashflow' },
+    { to: '/admin/eventos', icon: Tent, label: 'events' },
     { to: '/admin/liquidaciones', icon: DollarSign, label: 'royalties' },
     { to: '/admin/libros', icon: FileText, label: 'titles' },
     { to: '/admin/autores', icon: Users, label: 'authors' },
@@ -59,7 +60,7 @@ export default function AdminLayout() {
         'consignments': 'Consignaciones', 'suppliers': 'Proveedores', 'orders': 'Órdenes de Compra',
         'expenses': 'Gastos', 'cashflow': 'Flujo de Caja', 'royalties': 'Liquidaciones',
         'titles': 'Títulos', 'authors': 'Autores', 'users': 'Usuarios',
-        'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes'
+        'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes', 'events': 'Ferias y Eventos'
     }
 
     const handleLogout = () => {
@@ -91,7 +92,7 @@ export default function AdminLayout() {
                         <div>
                             <h1 className="font-bold text-white text-sm">Editorial Pro</h1>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">
-                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.0.0 PRO High-Performance</span>
+                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.0 (Modulo Feria)</span>
                             </p>
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white">

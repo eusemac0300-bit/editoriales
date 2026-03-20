@@ -24,7 +24,9 @@ export async function loadAllData(tenantId) {
             suppliersRes,
             poRes,
             expensesRes,
-            clientsRes
+            clientsRes,
+            eventsRes,
+            eventItemsRes
         ] = await Promise.all([
             // TEXT columns (Legacy/Core)
             supabase.from('users').select('*').eq('tenant_id', tenantId),
@@ -45,7 +47,9 @@ export async function loadAllData(tenantId) {
             supabase.from('suppliers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }),
             supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false }),
             supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId).order('date', { ascending: false }),
-            supabase.from('clients').select('*').eq('tenant_id', tenantId).order('name', { ascending: true })
+            supabase.from('clients').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }),
+            supabase.from('events').select('*').eq('tenant_id', tenantId).order('start_date', { ascending: false }),
+            supabase.from('event_items').select('*, books(title)').eq('tenant_id', tenantId)
         ])
 
         const users = usersRes.data;
@@ -65,6 +69,8 @@ export async function loadAllData(tenantId) {
         const purchaseOrders = poRes.data;
         const expenses = expensesRes.data;
         const clients = clientsRes.data;
+        const events = eventsRes.data;
+        const eventItems = eventItemsRes.data;
 
         const isMissingTable = (err) => err?.code === 'PGRST116' || err?.message?.includes('does not exist') || err?.status === 404;
 
@@ -81,7 +87,8 @@ export async function loadAllData(tenantId) {
             usersErr, booksErr, invPhysRes.error, invDigRes.error, 
             invoicesRes.error, royaltiesRes.error, auditRes.error, commentsRes.error, 
             alertsRes.error, docsRes.error, quotesErr, salesRes.error, 
-            consignmentsRes.error, suppliersErr, poErr, expErr, clientsErr
+            consignmentsRes.error, suppliersErr, poErr, expErr, clientsErr,
+            eventsRes.error, eventItemsRes.error
         ].filter(Boolean);
 
         if (allErrors.length > 0) {
@@ -340,7 +347,25 @@ export async function loadAllData(tenantId) {
             quotes: quotesErr ? null : transformedQuotes,
             suppliers: suppliersErr ? null : (suppliers || []),
             purchaseOrders: poErr ? null : transformedPurchaseOrders,
-            clients: clientsErr ? null : (clients || [])
+            clients: clientsErr ? null : (clients || []),
+            events: (events || []).map(e => ({
+                id: e.id,
+                name: e.name,
+                startDate: e.start_date,
+                endDate: e.end_date,
+                status: e.status,
+                notes: e.notes,
+                location: e.location,
+                items: (eventItems || []).filter(item => item.event_id === e.id).map(item => ({
+                    id: item.id,
+                    bookId: item.book_id,
+                    bookTitle: item.books?.title || 'Libro Desconocido',
+                    initialQty: item.initial_qty || 0,
+                    soldQty: item.sold_qty || 0,
+                    returnedQty: item.returned_qty || 0,
+                    lostQty: item.lost_qty || 0
+                }))
+            }))
         }
     } catch (err) {
         console.error('Failed to load data from Supabase:', err)
@@ -1572,4 +1597,87 @@ export async function clearDemoData(tenantId) {
         return false
     }
 }
+
+// ============ EVENTS / FERIAS ============
+export async function addEventToDb(tenantId, eventData, items) {
+    const { data: event, error: eventErr } = await supabase
+        .from('events')
+        .insert([{
+            name: eventData.name,
+            start_date: eventData.startDate,
+            end_date: eventData.endDate,
+            location: eventData.location,
+            notes: eventData.notes,
+            status: 'open',
+            tenant_id: tenantId
+        }])
+        .select()
+    
+    if (eventErr) throw eventErr
+
+    if (items && items.length > 0) {
+        const { error: itemsErr } = await supabase
+            .from('event_items')
+            .insert(items.map(item => ({
+                event_id: event[0].id,
+                book_id: item.bookId,
+                initial_qty: item.initialQty,
+                tenant_id: tenantId
+            })))
+        if (itemsErr) throw itemsErr
+    }
+
+    return event[0]
+}
+
+export async function updateEventInDb(eventId, updates) {
+    const { data, error } = await supabase
+        .from('events')
+        .update({
+            name: updates.name,
+            start_date: updates.startDate,
+            end_date: updates.endDate,
+            location: updates.location,
+            notes: updates.notes,
+            status: updates.status
+        })
+        .eq('id', eventId)
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function settleEventInDb(eventId, itemsData) {
+    // 1. Update event_items with final counts
+    for (const item of itemsData) {
+        const { error: itemErr } = await supabase
+            .from('event_items')
+            .update({
+                sold_qty: item.soldQty,
+                returned_qty: item.returnedQty,
+                lost_qty: item.lostQty
+            })
+            .eq('id', item.id)
+        if (itemErr) throw itemErr
+    }
+
+    // 2. Mark event as closed
+    const { error: eventErr } = await supabase
+        .from('events')
+        .update({ status: 'closed' })
+        .eq('id', eventId)
+    
+    if (eventErr) throw eventErr
+    return true
+}
+
+export async function deleteEventFromDb(eventId) {
+    const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId)
+    if (error) throw error
+    return true
+}
+
 

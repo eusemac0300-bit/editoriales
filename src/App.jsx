@@ -40,6 +40,7 @@ import Expenses from './pages/admin/Expenses'
 import Cashflow from './pages/admin/Cashflow'
 import Marketing from './pages/admin/Marketing'
 import Clients from './pages/admin/Clients'
+import Events from './pages/admin/Events'
 const Marketing3D = lazy(() => import('./pages/admin/Marketing3D'))
 
 // Freelance pages
@@ -101,6 +102,7 @@ function AppRoutes() {
                 <Route path="proveedores" element={<Suppliers />} />
                 <Route path="ordenes" element={<PurchaseOrders />} />
                 <Route path="clientes" element={<Clients />} />
+                <Route path="eventos" element={<Events />} />
                 <Route path="gastos" element={<Expenses />} />
                 <Route path="cashflow" element={<Cashflow />} />
                 <Route path="liquidaciones" element={<Royalties />} />

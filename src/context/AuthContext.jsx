@@ -15,7 +15,8 @@ import {
     usePurchaseOrders, 
     useExpenses,
     useGlobalMeta,
-    useClients
+    useClients,
+    useEvents
 } from '../hooks/useEditorialData'
 
 const AuthContext = createContext(null)
@@ -64,6 +65,7 @@ export function AuthProvider({ children }) {
     const expenses = useExpenses(user?.tenantId)
     const meta = useGlobalMeta(user?.tenantId)
     const clientsData = useClients(user?.tenantId)
+    const eventsData = useEvents(user?.tenantId)
 
     // Session recovery
     useEffect(() => {
@@ -253,6 +255,10 @@ export function AuthProvider({ children }) {
         updateExistingClient: (clientId, updates) => clientsData.updateClient({ id: clientId, updates }),
         deleteExistingClient: (clientId) => clientsData.deleteClient(clientId),
         addPurchaseOrder, 
+        addNewEvent: (eventData, items) => eventsData.addEvent({ eventData, items }),
+        updateEvent: (id, updates) => eventsData.updateEvent({ id, updates }),
+        settleEvent: (id, itemsData) => eventsData.settleEvent({ id, itemsData }),
+        deleteEvent: (id) => eventsData.deleteEvent(id),
         updatePurchaseOrder: (poId, updates) => po.updatePurchaseOrder({ id: poId, updates }), 
         deletePurchaseOrder: (poId) => po.deletePurchaseOrder(poId), 
         receivePurchaseOrder: (poId, qt, bId) => po.receivePurchaseOrder({ poId, quantity: qt, bookId: bId }),
@@ -276,7 +282,7 @@ export function AuthProvider({ children }) {
         addNewBook, updateBookDetails, deleteExistingBook, updateInventory, refetchData,
         addNewUser, updateExistingUser, deleteExistingUser,
         addNewQuote, updateQuoteDetails, deleteExistingQuote,
-        addNewSale, sales, suppliers, documents, po, expenses,
+        addNewSale, sales, suppliers, documents, po, expenses, eventsData,
         theme, language, currency, taxRate, t, formatCurrency, isGlobalLoading
     ])
 
