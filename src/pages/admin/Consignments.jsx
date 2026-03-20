@@ -351,7 +351,7 @@ export default function Consignments() {
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-dark-400">
                                             {group.items.map(it => {
-                                                const itSales = sales.filter(s => s.bookId === it.bookId && s.notes?.includes(`consignación ${it.id}`))
+                                                const itSales = sales.filter(s => s.bookId === it.bookId && (s.notes?.includes(`consignación ${it.id}`) || s.notes?.includes(`(Consigne ID: ${it.id})`)))
                                                 const mermaQty = itSales.filter(s => s.channel.includes('Merma')).reduce((sum, s) => sum + s.quantity, 0)
                                                 const realSold = it.soldQuantity - mermaQty
                                                 const currentBalance = it.sentQuantity - it.soldQuantity - it.returnedQuantity
