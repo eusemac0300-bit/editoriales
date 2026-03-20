@@ -1,25 +1,25 @@
 export const MODULES = [
     'Dashboard', 'Inventario', 'Producción', 'Escandallo', 'Cotizaciones',
-    'Ventas', 'Consignaciones', 'Liquidaciones', 'Proveedores', 'Órdenes', 'Gastos', 'Flujo de Caja',
+    'Ventas', 'Consignaciones', 'Ferias y Eventos', 'Liquidaciones', 'Proveedores', 'Órdenes', 'Gastos', 'Flujo de Caja',
     'Títulos', 'Autores', 'Usuarios', 'Documentos', 'Auditoría', 'Alertas', 'Marketing'
 ]
 
 export const DEFAULT_PERMISSIONS = {
     SUPERADMIN: {
         'Dashboard': true, 'Inventario': true, 'Producción': true, 'Escandallo': true, 'Cotizaciones': true,
-        'Ventas': true, 'Consignaciones': true, 'Liquidaciones': true, 'Proveedores': true,
+        'Ventas': true, 'Consignaciones': true, 'Ferias y Eventos': true, 'Liquidaciones': true, 'Proveedores': true,
         'Órdenes': true, 'Gastos': true, 'Flujo de Caja': true, 'Títulos': true, 'Autores': true,
         'Usuarios': true, 'Documentos': true, 'Auditoría': true, 'Alertas': true, 'Marketing': true
     },
     ADMIN: {
         'Dashboard': true, 'Inventario': true, 'Producción': true, 'Escandallo': true, 'Cotizaciones': true,
-        'Ventas': true, 'Consignaciones': true, 'Liquidaciones': true, 'Proveedores': true,
+        'Ventas': true, 'Consignaciones': true, 'Ferias y Eventos': true, 'Liquidaciones': true, 'Proveedores': true,
         'Órdenes': true, 'Gastos': true, 'Flujo de Caja': true, 'Títulos': true, 'Autores': true,
         'Usuarios': true, 'Documentos': true, 'Auditoría': true, 'Alertas': true, 'Marketing': true
     },
     VENDEDOR: {
         'Dashboard': true, 'Inventario': true, 'Producción': false, 'Escandallo': false, 'Cotizaciones': true,
-        'Ventas': true, 'Consignaciones': true, 'Liquidaciones': false, 'Títulos': true, 'Autores': false,
+        'Ventas': true, 'Consignaciones': true, 'Ferias y Eventos': true, 'Liquidaciones': false, 'Títulos': true, 'Autores': false,
         'Usuarios': false, 'Documentos': false, 'Auditoría': false, 'Alertas': true
     },
     EDITOR: {
