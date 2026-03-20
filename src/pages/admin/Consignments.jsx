@@ -364,7 +364,7 @@ export default function Consignments() {
                                                             <td className="py-4 px-4 overflow-hidden">
                                                                 <div className="flex items-center gap-3">
                                                                     <button 
-                                                                        onClick={() => setExpandedItem(isExpanded ? null : it.id)}
+                                                                        onClick={() => it?.id && setExpandedItem(expandedItem === it.id ? null : it.id)}
                                                                         className="p-1 rounded bg-slate-100 dark:bg-dark-300 text-slate-400 hover:bg-primary/20 hover:text-primary transition-all"
                                                                     >
                                                                         {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
