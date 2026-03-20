@@ -59,7 +59,7 @@ export default function Maquetacion() {
                     if (currentPageLines.length === linesPerPage - 1 && isFirst && lines.length > 1) {
                         // Movemos esta línea a la siguiente página para evitar huérfana
                         currentPages.push(currentPageLines)
-                        currentPageLines = [line]
+                        currentPageLines = [{ content: line, type: 'orphan-fix' }]
                         orphansCount++
                     } 
                     // Lógica de Viudas (Widows):
@@ -69,8 +69,10 @@ export default function Maquetacion() {
                         const lastPage = currentPages[currentPages.length - 1]
                         if (lastPage) {
                             const stolenLine = lastPage.pop()
-                            currentPageLines.push(stolenLine)
-                            currentPageLines.push(line)
+                            // Si robamos una línea que ya era un objeto, mantenemos su contenido, si no, lo envolvemos
+                            const stolenContent = typeof stolenLine === 'string' ? stolenLine : stolenLine.content
+                            currentPageLines.push({ content: stolenContent, type: 'widow-fix' })
+                            currentPageLines.push({ content: line, type: 'widow-fix' })
                             victimsCount++
                         } else {
                             currentPageLines.push(line)
@@ -103,8 +105,9 @@ export default function Maquetacion() {
             if (i > 0) doc.addPage()
             doc.setFontSize(fontSize)
             let y = margins.top
-            pageLines.forEach(line => {
-                doc.text(line, margins.left, y, { maxWidth: 140 - margins.left - margins.right })
+            pageLines.forEach(lineObj => {
+                const content = typeof lineObj === 'object' ? lineObj.content : lineObj
+                doc.text(content, margins.left, y, { maxWidth: 140 - margins.left - margins.right })
                 y += fontSize * lineHeight * 0.35 // pts to mm approx
             })
             // Page Number
@@ -125,7 +128,7 @@ export default function Maquetacion() {
                     <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-3">
                         Maquetación <span className="text-primary italic">Pro AI</span>
                     </h1>
-                    <p className="text-slate-500 dark:text-dark-700 font-medium">Motor de composición tipográfica y equilibrio de cajas.</p>
+                    <p className="text-slate-500 dark:text-dark-700 font-medium">Motor de composición tipográfica, justificación y control de blancos.</p>
                 </div>
                 <div className="flex gap-2">
                     <button 
@@ -270,18 +273,29 @@ export default function Maquetacion() {
                                             className="bg-white dark:bg-slate-50 shadow-2xl rounded-sm aspect-[14/21] p-10 flex flex-col relative border border-slate-200"
                                         >
                                             <div className="flex-1 space-y-2 overflow-hidden">
-                                                {pageLines.map((line, lIdx) => (
-                                                    <p 
-                                                        key={lIdx} 
-                                                        className="text-slate-900 leading-[1.5] text-left" 
-                                                        style={{ 
-                                                            fontSize: `${fontSize}px`,
-                                                            lineHeight: lineHeight
-                                                        }}
-                                                    >
-                                                        {line}
-                                                    </p>
-                                                ))}
+                                                {pageLines.map((lineObj, lIdx) => {
+                                                    const isObject = typeof lineObj === 'object'
+                                                    const content = isObject ? lineObj.content : lineObj
+                                                    const type = isObject ? lineObj.type : 'normal'
+                                                    
+                                                    return (
+                                                        <p 
+                                                            key={lIdx} 
+                                                            className={`text-slate-900 leading-[1.5] text-justify transition-all duration-500 ${
+                                                                type === 'widow-fix' ? 'bg-amber-100/50 dark:bg-amber-900/10 border-l-2 border-amber-400 pl-1' : 
+                                                                type === 'orphan-fix' ? 'bg-blue-100/50 dark:bg-blue-900/10 border-l-2 border-blue-400 pl-1' : ''
+                                                            }`}
+                                                            title={type !== 'normal' ? 'Línea ajustada para evitar viuda/huérfana' : ''}
+                                                            style={{ 
+                                                                fontSize: `${fontSize}px`,
+                                                                lineHeight: lineHeight,
+                                                                hyphens: 'auto'
+                                                            }}
+                                                        >
+                                                            {content}
+                                                        </p>
+                                                    )
+                                                })}
                                             </div>
                                             <div className="mt-auto pt-6 text-center border-t border-slate-100 italic font-serif text-slate-400 text-xs">
                                                 {pageIdx + 1}
