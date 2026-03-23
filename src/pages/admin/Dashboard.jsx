@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, Activity, Database, Trash2, Plus } from 'lucide-react'
+import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, Activity, Database, Trash2, Plus, CheckCircle2, Sparkles, FileText, Truck } from 'lucide-react'
 
 export default function AdminDashboard() {
     const { data, formatCLP, t } = useAuth()
@@ -64,6 +64,51 @@ export default function AdminDashboard() {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{t('dashboard')}</h1>
                     <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{t('welcome')}, {useAuth().user?.name}</p>
+                </div>
+            </div>
+
+            {/* Ciclo Editorial Control Hub - Added 'Empujón' */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                <div className="lg:col-span-5 glass-card p-6 border-t-4 border-t-primary shadow-xl bg-gradient-to-br from-white to-slate-50 dark:from-dark-100 dark:to-dark-200">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-primary animate-pulse" /> Progreso del Ciclo Editorial
+                            </h2>
+                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Checklist de Salud Operativa</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-dark-700 uppercase tracking-widest">Sincronización Total</span>
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        {[
+                            { label: 'Títulos y Depósito', done: totalBooks > 0, icon: BookOpen, desc: 'Catálogo base creado' },
+                            { label: 'Contratos OK', done: (data.docs || []).some(d => d.category === 'Contrato'), icon: FileText, desc: 'Gestión documental activa' },
+                            { label: 'Producción', done: published > 0, icon: Package, desc: 'Libros en mercado' },
+                            { label: 'Distribución', done: (finances?.consignments || []).length > 0, icon: Truck, desc: 'Consignaciones activas' },
+                            { label: 'Regalías', done: (finances?.royalties || []).length > 0, icon: DollarSign, desc: 'Cálculos automatizados' }
+                        ].map((step, idx) => (
+                            <div key={idx} className={`p-4 rounded-3xl border transition-all duration-500 ${step.done ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-100/50 dark:bg-dark-300/30 border-slate-200 dark:border-dark-400 opacity-60'}`}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${step.done ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-200 dark:bg-dark-400 text-slate-400'}`}>
+                                        <step.icon className="w-4 h-4" />
+                                    </div>
+                                    {step.done ? (
+                                        <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                                            <CheckCircle2 className="w-3 h-3 text-white" />
+                                        </div>
+                                    ) : (
+                                        <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-dark-500" />
+                                    )}
+                                </div>
+                                <h3 className={`text-xs font-black uppercase tracking-tight ${step.done ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500'}`}>{step.label}</h3>
+                                <p className="text-[10px] text-slate-400 mt-1 font-bold">{step.desc}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
