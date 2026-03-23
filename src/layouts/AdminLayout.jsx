@@ -52,6 +52,12 @@ export default function AdminLayout() {
     const [isResetting, setIsResetting] = useState(false)
     const [isActionLoading, setIsActionLoading] = useState(false)
     const [openMenus, setOpenMenus] = useState(['sales_group']) // Default open
+    const [changelogOpen, setChangelogOpen] = useState(false)
+    
+    const updates = [
+        { version: 'v3.1.5', date: '2026-03-23', title: 'Inteligencia de Stock y Ventas', details: ['Visualización de stock en tiempo real en títulos.', 'Identificación de Bestsellers y alertas de quiebre.', 'Flujo profesional de actualizaciones (Master User).', 'Nueva arquitectura de ramas para estabilidad SaaS.'] },
+        { version: 'v3.1.4', date: '2026-03-22', title: 'Sincronización de Ventas', details: ['Separación de ventas Firmes vs Flotantes.', 'Reporting acumulado por rango de fechas.', 'Gestión de metas de venta mensuales.'] }
+    ]
 
     const toggleMenu = (label) => {
         setOpenMenus(p => p.includes(label) ? p.filter(m => m !== label) : [...p, label])
@@ -189,6 +195,18 @@ export default function AdminLayout() {
                     <div className="flex-1" />
 
                     <div className="flex items-center gap-3">
+                        {/* What's New Button */}
+                        <button 
+                            onClick={() => setChangelogOpen(true)}
+                            className="relative flex items-center gap-2 p-2 px-3 rounded-xl bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-all text-primary group"
+                            title="Novedades"
+                        >
+                            <Sparkles className="w-4 h-4 animate-pulse group-hover:scale-120 group-hover:rotate-12 transition-transform" />
+                            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Novedades</span>
+                        </button>
+
+                        <div className="h-4 w-px bg-slate-200 dark:bg-dark-300 mx-1" />
+
                         {unreadAlerts > 0 && (
                             <button onClick={() => navigate('/admin/alertas')} className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-200 transition-all group">
                                 <Bell className="w-5 h-5 text-slate-600 dark:text-dark-700 group-hover:text-primary dark:group-hover:text-primary-300" />
@@ -371,6 +389,65 @@ export default function AdminLayout() {
                     <Outlet />
                 </div>
             </main>
+
+            {/* Changelog Modal */}
+            {changelogOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white dark:bg-dark-100 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-dark-300 slide-up">
+                        <div className="relative p-6 bg-gradient-to-br from-primary to-primary-700 text-white">
+                            <button 
+                                onClick={() => setChangelogOpen(false)}
+                                className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-white/20 rounded-2xl">
+                                    <Sparkles className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold">Novedades</h2>
+                                    <p className="text-xs text-white/70">Mejoras continuas para tu editorial</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="p-6 max-h-[60vh] overflow-y-auto space-y-8 bg-slate-50 dark:bg-dark-50">
+                            {updates.map((update, idx) => (
+                                <div key={update.version} className="relative pl-6 border-l-2 border-primary/20 last:border-l-transparent">
+                                    <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-white dark:border-dark-100 shadow-sm" />
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-primary px-2 py-0.5 bg-primary/10 rounded-full">
+                                            {update.version}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-slate-400 dark:text-dark-500 italic">
+                                            {update.date}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">{update.title}</h3>
+                                    <ul className="space-y-2">
+                                        {update.details.map((detail, dIdx) => (
+                                            <li key={dIdx} className="text-xs text-slate-600 dark:text-dark-700 flex items-start gap-2">
+                                                <div className="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0" />
+                                                {detail}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="p-4 bg-white dark:bg-dark-100 border-t border-slate-100 dark:border-dark-300 flex justify-end">
+                            <button 
+                                onClick={() => setChangelogOpen(false)}
+                                className="btn-primary w-full sm:w-auto px-10 h-10 text-xs shadow-lg shadow-primary/20"
+                            >
+                                Entendido, ¡gracias!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
