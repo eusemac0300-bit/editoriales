@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import {
     Truck, Search, Plus, XCircle, Printer, Building2, BookOpen, DollarSign, ArrowRightLeft, Clock,
-    ChevronDown, ChevronRight, AlertTriangle
+    ChevronDown, ChevronRight, AlertTriangle, Activity
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -32,6 +32,29 @@ export default function Consignments() {
         }
         return list
     }, [consignments, searchTerm])
+
+    // Summary Metrics
+    const metrics = useMemo(() => {
+        const active = consignments.filter(c => c.status === 'activa')
+        const totalPending = active.reduce((acc, c) => acc + (c.sentQuantity - c.soldQuantity - c.returnedQuantity), 0)
+        const totalSent = active.reduce((acc, c) => acc + c.sentQuantity, 0)
+        
+        // Calculate capital at risk (using book prices)
+        const capital = active.reduce((acc, c) => {
+            const book = data.books.find(b => b.id === c.bookId)
+            const pending = c.sentQuantity - c.soldQuantity - c.returnedQuantity
+            return acc + (pending * (book?.pvp || 0))
+        }, 0)
+
+        // Count aging consignments (> 60 days)
+        const agingCount = active.filter(c => {
+            const sentDate = new Date(c.sentDate)
+            const diffDays = (new Date() - sentDate) / (1000 * 60 * 60 * 24)
+            return diffDays > 60
+        }).length
+
+        return { totalPending, totalSent, capital, agingCount }
+    }, [consignments, data.books])
 
     const consignmentsGroups = useMemo(() => {
         const groups = {}
@@ -279,6 +302,49 @@ export default function Consignments() {
                 <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2 text-sm px-4 py-2.5">
                     <Plus className="w-4 h-4" /> Despachar Libros
                 </button>
+            </div>
+
+            {/* KPI Dashboard - Premium Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="glass-card p-4 border-l-4 border-primary">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Truck className="w-4 h-4 text-primary" />
+                        <p className="text-[11px] font-black uppercase text-slate-500 tracking-widest">Stock en Tránsito</p>
+                    </div>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{metrics.totalPending.toLocaleString()} <span className="text-xs text-slate-400 font-normal">u.</span></p>
+                    <p className="text-[10px] text-slate-400 mt-1">Ejemplares pendientes de reporte</p>
+                </div>
+
+                <div className="glass-card p-4 border-l-4 border-emerald-500">
+                    <div className="flex items-center gap-2 mb-2">
+                        <DollarSign className="w-4 h-4 text-emerald-500" />
+                        <p className="text-[11px] font-black uppercase text-slate-500 tracking-widest">Capital Expuesto</p>
+                    </div>
+                    <p className="text-2xl font-black text-emerald-500 font-mono">{formatCLP(metrics.capital)}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Valorización total a PVP</p>
+                </div>
+
+                <div className="glass-card p-4 border-l-4 border-blue-500">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Activity className="w-4 h-4 text-blue-500" />
+                        <p className="text-[11px] font-black uppercase text-slate-500 tracking-widest">Promedio Carga</p>
+                    </div>
+                    <p className="text-2xl font-black text-blue-500 font-mono">
+                        {metrics.totalSent > 0 ? ((metrics.totalPending / metrics.totalSent) * 100).toFixed(0) : 0}%
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-1">Pendiente vs Total despachado</p>
+                </div>
+
+                <div className="glass-card p-4 border-l-4 border-amber-500">
+                    <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle className={`w-4 h-4 ${metrics.agingCount > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-300'}`} />
+                        <p className="text-[11px] font-black uppercase text-slate-500 tracking-widest">Despachos Críticos</p>
+                    </div>
+                    <p className={`text-2xl font-black font-mono ${metrics.agingCount > 0 ? 'text-amber-500' : 'text-slate-300'}`}>
+                        {metrics.agingCount}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-1">Más de 60 días sin actividad</p>
+                </div>
             </div>
 
             <div className="relative max-w-md">

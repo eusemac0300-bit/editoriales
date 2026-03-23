@@ -132,7 +132,9 @@ export async function loadAllData(tenantId) {
             coverFinish: b.cover_finish || '',
             tiraje: b.tiraje || 0,
             escandalloCosts: b.escandallo_costs || { edicion: 0, correccion: 0, maquetacion: 0, diseno: 0, impresion: 0, marketing: 0, distribucion: 0, otros: 0 },
-            deliveryDate: b.delivery_date || ''
+            deliveryDate: b.delivery_date || '',
+            finalPdfInterior: b.final_pdf_interior || '',
+            finalPdfCover: b.final_pdf_cover || ''
         }))
 
         // Transform users
