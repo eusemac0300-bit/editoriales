@@ -55,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.5', date: '2026-03-23', title: 'Flujo Ciclo Editorial (Manual v1)', details: ['Fórmula de Regalías sobre PVP Neto (10%).', 'Gestión de Contratos con estados y vencimientos.', 'Cuentas por Cobrar con alertas de atraso.', 'Descuento automático para Distribuidoras (60%).'] },
         { version: 'v3.1.5.4', date: '2026-03-23', title: 'Navegación y Estabilidad', details: ['Navegación directa al libro desde consignas.', 'Corrección de error en lista expandida.', 'Optimización de renders en tablas.'] },
         { version: 'v3.1.5.3', date: '2026-03-23', title: 'Ajustes en Ventas', details: ['Restauración de iconos en reporte de ventas.', 'Alineación profesional de columnas monetarias.'] },
         { version: 'v3.1.5.2', date: '2026-03-23', title: 'Lanzamiento Maestro Oficial', details: ['Control total para master@editorial.cl.', 'Dashboard de Consignaciones refinado.', 'Estabilidad en conexión Vercel-GitHub.'] },
