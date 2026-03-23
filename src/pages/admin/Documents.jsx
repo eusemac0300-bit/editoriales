@@ -13,6 +13,10 @@ export default function Documents() {
     const [editingDoc, setEditingDoc] = useState(null)
     const [editDocName, setEditDocName] = useState('')
     const [docAmount, setDocAmount] = useState('')
+    const [docStatus, setDocStatus] = useState('Vigente')
+    const [docStartDate, setDocStartDate] = useState('')
+    const [docEndDate, setDocEndDate] = useState('')
+    const [filterCategory, setFilterCategory] = useState('Todos')
     const fileInputRef = useRef(null)
 
     // Merge uploaded documents with invoices that act as documents
@@ -26,6 +30,9 @@ export default function Documents() {
         date: doc.createdAt ? doc.createdAt.split('T')[0] : '',
         format: doc.fileUrl?.split('.').pop()?.toUpperCase() || 'FILE',
         fileUrl: doc.fileUrl,
+        status: doc.status || 'Vigente',
+        startDate: doc.startDate || '',
+        endDate: doc.endDate || '',
         isInvoice: false
     }))
 
@@ -39,10 +46,13 @@ export default function Documents() {
         date: inv.date,
         format: 'PDF',
         fileUrl: inv.fileUrl,
+        status: 'Pagado',
         isInvoice: true
     }))
 
-    const documents = [...generalDocs, ...invoiceDocs].sort((a, b) => new Date(b.date) - new Date(a.date))
+    const filteredDocs = [...generalDocs, ...invoiceDocs]
+        .filter(d => filterCategory === 'Todos' || d.type === filterCategory)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
 
     const handleUploadClick = () => {
         fileInputRef.current?.click()
@@ -74,6 +84,9 @@ export default function Documents() {
         setSelectedBook(doc.bookId || '')
         setEditDocName(doc.name)
         setDocAmount(doc.amount ? doc.amount.toString() : '')
+        setDocStatus(doc.status || 'Vigente')
+        setDocStartDate(doc.startDate || '')
+        setDocEndDate(doc.endDate || '')
         setFile(null)
         setShowUploadModal(true)
     }
@@ -96,7 +109,10 @@ export default function Documents() {
                     name: editDocName || editingDoc.name,
                     type: docType,
                     amount: docAmount ? parseInt(docAmount.replace(/\D/g, '')) || null : null,
-                    bookId: selectedBook || null
+                    bookId: selectedBook || null,
+                    status: docStatus,
+                    startDate: docStartDate,
+                    endDate: docEndDate
                 }
 
                 await editDocument(editingDoc.id, updates)
@@ -135,13 +151,16 @@ export default function Documents() {
                     fileUrl: url,
                     size: file.size,
                     amount: docAmount ? parseInt(docAmount.replace(/\D/g, '')) || null : null,
+                    status: docStatus,
+                    startDate: docStartDate,
+                    endDate: docEndDate,
                     uploadedBy: user.id,
                     createdAt: new Date().toISOString()
                 }
 
                 await addDocument(newDoc)
                 addAuditLog(`Subió documento: ${file.name}`, 'general')
-                alert('Documento subido con éxito.')
+                alert('Documento guardado con éxito.')
             }
 
             // Cleanup after success
@@ -151,6 +170,9 @@ export default function Documents() {
             setSelectedBook('')
             setEditDocName('')
             setDocAmount('')
+            setDocStatus('Vigente')
+            setDocStartDate('')
+            setDocEndDate('')
 
         } catch (err) {
             console.error(err)
@@ -203,12 +225,28 @@ export default function Documents() {
                 </div>
             </div>
 
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 pt-4">
+                {['Todos', 'Contrato', 'Manuscrito', 'Boleta Honorarios', 'Factura Proveedor', 'Portada', 'Varios'].map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setFilterCategory(cat)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                            filterCategory === cat 
+                                ? 'bg-primary text-white shadow-lg shadow-primary/20' 
+                                : 'bg-white dark:bg-dark-100 text-slate-500 hover:bg-slate-50 dark:hover:bg-dark-200 border border-slate-200 dark:border-dark-300'
+                        }`}
+                    >
+                        {cat}
+                    </button>
+                ))}
+            </div>
+
             {/* Upload Modal */}
             {showUploadModal && (
                 <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-white dark:bg-dark-100 border border-slate-200 dark:border-dark-300 rounded-xl w-full max-w-md overflow-hidden slide-up relative">
                         <button
-                            onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName(''); setDocAmount('') }}
+                            onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName(''); setDocAmount(''); setDocStartDate(''); setDocEndDate(''); setDocStatus('Vigente') }}
                             className="absolute top-4 right-4 text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:text-white"
                         >
                             <X className="w-5 h-5" />
@@ -241,21 +279,48 @@ export default function Documents() {
                                     >
                                         <option value="Manuscrito">Manuscrito Original</option>
                                         <option value="Contrato">Contrato</option>
+                                        <option value="Boleta Honorarios">Boleta de Honorarios</option>
                                         <option value="Portada">Diseño / Portada</option>
-                                        <option value="Comprobante">Comprobante / Factura</option>
+                                        <option value="Comprobante">Comprobante de Pago</option>
+                                        <option value="Factura Proveedor">Factura Proveedor</option>
                                         <option value="Varios">Varios</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="text-xs text-slate-500 dark:text-dark-500 block mb-1">Monto ($) (Opcional)</label>
-                                    <input
-                                        type="text"
-                                        value={docAmount ? formatCLP(docAmount) : ''}
-                                        onChange={(e) => setDocAmount(e.target.value.replace(/\D/g, ''))}
-                                        className="input-field w-full text-sm"
-                                        placeholder="$ 0"
-                                    />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-xs text-slate-500 block mb-1">Estado</label>
+                                        <select value={docStatus} onChange={e => setDocStatus(e.target.value)} className="input-field w-full text-sm">
+                                            <option value="Borrador">Borrador</option>
+                                            <option value="Enviado">Enviado</option>
+                                            <option value="Vigente">Vigente / Firmado</option>
+                                            <option value="Vencido">Vencido</option>
+                                            <option value="Pendiente Pago">Pendiente Pago</option>
+                                            <option value="Pagado">Pagado</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-500 block mb-1">Monto ($)</label>
+                                        <input
+                                            type="text"
+                                            value={docAmount ? formatCLP(docAmount) : ''}
+                                            onChange={(e) => setDocAmount(e.target.value.replace(/\D/g, ''))}
+                                            className="input-field w-full text-sm"
+                                            placeholder="$ 0"
+                                        />
+                                    </div>
                                 </div>
+                                {(docType === 'Contrato' || docType === 'Boleta Honorarios') && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-xs text-slate-500 block mb-1">Fecha Inicio / Emisión</label>
+                                            <input type="date" value={docStartDate} onChange={e => setDocStartDate(e.target.value)} className="input-field w-full text-sm" />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-500 block mb-1">Fecha Vencimiento</label>
+                                            <input type="date" value={docEndDate} onChange={e => setDocEndDate(e.target.value)} className="input-field w-full text-sm" />
+                                        </div>
+                                    </div>
+                                )}
                                 <div>
                                     <label className="text-xs text-slate-500 dark:text-dark-500 block mb-1">Vincular a un Título (Opcional)</label>
                                     <select
@@ -273,7 +338,7 @@ export default function Documents() {
                         </div>
                         <div className="p-4 border-t border-slate-200 dark:border-dark-300 bg-slate-50 dark:bg-dark-50 flex justify-end gap-3">
                             <button
-                                onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName(''); setDocAmount('') }}
+                                onClick={() => { setShowUploadModal(false); setFile(null); setEditingDoc(null); setEditDocName(''); setDocAmount(''); setDocStartDate(''); setDocEndDate(''); setDocStatus('Vigente') }}
                                 className="btn-secondary text-sm"
                             >
                                 Cancelar
@@ -296,16 +361,16 @@ export default function Documents() {
                     <thead>
                         <tr className="border-b border-slate-200 dark:border-dark-300">
                             <th className="table-header text-left py-3 px-4">Documento</th>
-                            <th className="table-header text-left py-3 px-4">Títlo Relacionado</th>
+                            <th className="table-header text-left py-3 px-4">Título</th>
                             <th className="table-header text-left py-3 px-4">Categoría</th>
+                            <th className="table-header text-left py-3 px-4">Estado</th>
                             <th className="table-header text-right py-3 px-4">Monto ($)</th>
-                            <th className="table-header text-center py-3 px-4">Formato / Info</th>
-                            <th className="table-header text-right py-3 px-4">Fecha</th>
+                            <th className="table-header text-center py-3 px-4">Fecha</th>
                             <th className="table-header text-center py-3 px-4">Descargas & Opciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {documents.map(doc => (
+                        {filteredDocs.map(doc => (
                             <tr key={doc.id} className="table-row">
                                 <td className="py-3 px-4">
                                     <div className="flex items-center gap-2 max-w-[250px]">
@@ -315,17 +380,25 @@ export default function Documents() {
                                 </td>
                                 <td className="py-3 px-4 text-sm text-slate-600 dark:text-dark-700 truncate max-w-[150px]">{doc.book}</td>
                                 <td className="py-3 px-4">
-                                    <span className={doc.type.includes('Factura') ? 'badge-red' : (doc.type === 'Contrato' ? 'badge-yellow' : 'badge-blue')}>
+                                    <span className={doc.type.includes('Factura') ? 'badge-red' : (doc.type === 'Contrato' ? 'badge-blue' : (doc.type === 'Boleta Honorarios' ? 'badge-purple' : 'badge-slate'))}>
                                         {doc.type}
                                     </span>
                                 </td>
-                                <td className="py-3 px-4 text-sm text-right text-slate-700 dark:text-dark-800">
+                                <td className="py-3 px-4 text-center">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                        doc.status === 'Vigente' || doc.status === 'Pagado' ? 'bg-emerald-500/10 text-emerald-500' : 
+                                        (doc.status === 'Vencido' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500')
+                                    }`}>
+                                        {doc.status}
+                                    </span>
+                                    {doc.endDate && doc.status !== 'Pagado' && (
+                                        <p className="text-[9px] text-slate-400 mt-0.5">Vence: {doc.endDate}</p>
+                                    )}
+                                </td>
+                                <td className="py-3 px-4 text-sm text-right text-slate-700 dark:text-dark-800 font-mono">
                                     {doc.amount ? formatCLP(doc.amount) : "—"}
                                 </td>
-                                <td className="py-3 px-4 text-sm text-center">
-                                    <span className="text-slate-400 dark:text-dark-400 font-medium text-xs px-2 py-1 bg-slate-50 dark:bg-dark-200 rounded border border-slate-200 dark:border-dark-300">{doc.format}</span>
-                                </td>
-                                <td className="py-3 px-4 text-sm text-right text-slate-500 dark:text-dark-600">{doc.date}</td>
+                                <td className="py-3 px-4 text-sm text-center text-slate-500 dark:text-dark-600">{doc.date}</td>
                                 <td className="py-3 px-4 text-center">
                                     <div className="flex items-center justify-center gap-2">
                                         {!doc.isInvoice && (
@@ -372,7 +445,7 @@ export default function Documents() {
                                 </td>
                             </tr>
                         ))}
-                        {documents.length === 0 && (
+                        {filteredDocs.length === 0 && (
                             <tr>
                                 <td colSpan="7" className="py-8 text-center text-slate-500 dark:text-dark-500 text-sm">No hay documentos ni facturas registrados.</td>
                             </tr>
