@@ -28,23 +28,47 @@ export default function Sales() {
     const [showAdd, setShowAdd] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterChannel, setFilterChannel] = useState('')
-    const [filterMonth, setFilterMonth] = useState('')
-    const [filterAuthor, setFilterAuthor] = useState('')  // ✅ #9 Filtro por autor
+    const [filterAuthor, setFilterAuthor] = useState('')
 
-    // ── Stats ──────────────────────────────────────────────────────────────────
+    // ── Date Range for Cumulative View ──────────────────────────────────────────
+    const currentYear = new Date().getFullYear()
+    const [startDate, setStartDate] = useState(`${currentYear}-01-01`)
+    const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10))
+    const [monthlyGoal, setMonthlyGoal] = useState(1000000) // Default goal: 1M (can be made editable)
+
+    // ── Stats Categorization ────────────────────────────────────────────────────
+    const FIRME_CHANNELS = ['Directa', 'Librería', 'Web']
+    const FLOTANTE_CHANNELS = ['Evento / Feria', 'Consignación']
+
     const activeSales = useMemo(() => sales.filter(s => s.status !== 'Anulada'), [sales])
 
-    const totalRevenue = useMemo(() => activeSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0), [activeSales])
-    const totalUnits = useMemo(() => activeSales.reduce((sum, s) => sum + (s.quantity || 0), 0), [activeSales])
-    const avgTicket = activeSales.length ? Math.round(totalRevenue / activeSales.length) : 0
+    // Filter by date range for cumulative stats
+    const rangeSales = useMemo(() => {
+        return activeSales.filter(s => s.saleDate >= startDate && s.saleDate <= endDate)
+    }, [activeSales, startDate, endDate])
+
+    // Monthly stats (current selected month from range or just current month)
+    const currentMonthStr = new Date().toISOString().slice(0, 7)
+    const monthSales = useMemo(() => {
+        return activeSales.filter(s => s.saleDate?.startsWith(currentMonthStr))
+    }, [activeSales, currentMonthStr])
+
+    const monthRevenue = monthSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0)
+    const goalProgress = (monthRevenue / monthlyGoal) * 100
+
+    const cumulativeRevenue = rangeSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0)
+    const cumulativeUnits = rangeSales.reduce((sum, s) => sum + (s.quantity || 0), 0)
+
+    const revenueFirme = rangeSales.filter(s => FIRME_CHANNELS.includes(s.channel)).reduce((sum, s) => sum + (s.totalAmount || 0), 0)
+    const revenueFlotante = rangeSales.filter(s => FLOTANTE_CHANNELS.includes(s.channel)).reduce((sum, s) => sum + (s.totalAmount || 0), 0)
 
     const revenueByChannel = useMemo(() => {
         const map = {}
-        for (const s of activeSales) {
+        for (const s of rangeSales) {
             map[s.channel] = (map[s.channel] || 0) + (s.totalAmount || 0)
         }
         return Object.entries(map).sort((a, b) => b[1] - a[1])
-    }, [activeSales])
+    }, [rangeSales])
 
     // ── Filter ─────────────────────────────────────────────────────────────────
     const filtered = useMemo(() => {
@@ -58,14 +82,16 @@ export default function Sales() {
             )
         }
         if (filterChannel) list = list.filter(s => s.channel === filterChannel)
-        if (filterMonth) list = list.filter(s => s.saleDate?.startsWith(filterMonth))
-        // ✅ #9: Author filter
+        
+        // Filter by date range in the main list
+        list = list.filter(s => s.saleDate >= startDate && s.saleDate <= endDate)
+
         if (filterAuthor) {
             const authorBooks = books.filter(b => b.authorId === filterAuthor || b.authorName === authors.find(a => a.id === filterAuthor)?.name).map(b => b.id)
             list = list.filter(s => authorBooks.includes(s.bookId))
         }
         return list.sort((a, b) => new Date(b.saleDate) - new Date(a.saleDate))
-    }, [sales, searchTerm, filterChannel, filterMonth, filterAuthor, books, authors])
+    }, [sales, searchTerm, filterChannel, startDate, endDate, filterAuthor, books, authors])
 
     // ✅ #8: Anular venta → reponer stock automáticamente
     const handleDelete = async (sale) => {
@@ -244,39 +270,93 @@ export default function Sales() {
                 </div>
             </div>
 
+            {/* Reporting Filters & Goal */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-2 glass-card p-4 flex flex-wrap items-end gap-4 overflow-visible">
+                    <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Desde (Acumulado)</label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={e => setStartDate(e.target.value)}
+                            className="input-field text-sm py-1.5"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Hasta</label>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={e => setEndDate(e.target.value)}
+                            className="input-field text-sm py-1.5"
+                        />
+                    </div>
+                    <div className="flex-1 min-w-[150px]">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Meta Mensual ({new Date().toLocaleDateString('es-CL', { month: 'long' })})</label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                            <input
+                                type="text"
+                                value={monthlyGoal.toLocaleString('es-CL')}
+                                onChange={e => setMonthlyGoal(Number(e.target.value.replace(/\D/g, '')))}
+                                className="input-field text-sm py-1.5 pl-7 w-full font-bold text-primary"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="glass-card p-4 flex flex-col justify-center">
+                    <div className="flex justify-between items-end mb-2">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">Cumplimiento Meta</p>
+                        <span className={`text-sm font-black ${goalProgress >= 100 ? 'text-emerald-500' : 'text-primary'}`}>
+                            {goalProgress.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div className="h-3 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden relative">
+                        <div
+                            className={`h-full transition-all duration-1000 rounded-full ${goalProgress >= 100 ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-primary'}`}
+                            style={{ width: `${Math.min(goalProgress, 100)}%` }}
+                        />
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-2 text-center">
+                        {formatCLP(monthRevenue)} de {formatCLP(monthlyGoal)} este mes
+                    </p>
+                </div>
+            </div>
+
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="glass-card p-4">
+                <div className="glass-card p-4 border-l-4 border-emerald-500">
                     <div className="flex items-center gap-2 mb-2">
-                        <DollarSign className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Ingresos Totales</p>
+                        <TrendingUp className="w-4 h-4 text-emerald-500" />
+                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Venta en Firme</p>
                     </div>
-                    <p className="text-xl font-bold text-emerald-500 dark:text-emerald-400 font-mono">{formatCLP(totalRevenue)}</p>
-                    <p className="text-[10px] text-slate-400 dark:text-dark-600 mt-1">{activeSales.length} ventas activas</p>
+                    <p className="text-xl font-bold text-emerald-500 font-mono">{formatCLP(revenueFirme)}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Directa, Librería, Web</p>
+                </div>
+                <div className="glass-card p-4 border-l-4 border-amber-500">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Activity className="w-4 h-4 text-amber-500" />
+                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Venta Flotante</p>
+                    </div>
+                    <p className="text-xl font-bold text-amber-500 font-mono">{formatCLP(revenueFlotante)}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Consig., Eventos, Ferias</p>
                 </div>
                 <div className="glass-card p-4">
                     <div className="flex items-center gap-2 mb-2">
-                        <Package className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Unidades Vendidas</p>
+                        <DollarSign className="w-4 h-4 text-primary" />
+                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Acumulado Rango</p>
                     </div>
-                    <p className="text-xl font-bold text-blue-500 dark:text-blue-400 font-mono">{totalUnits.toLocaleString()}</p>
-                    <p className="text-[10px] text-slate-400 dark:text-dark-600 mt-1">ejemplares totales</p>
+                    <p className="text-xl font-bold text-slate-900 dark:text-white font-mono">{formatCLP(cumulativeRevenue)}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">{rangeSales.length} transacciones</p>
                 </div>
                 <div className="glass-card p-4">
                     <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />
-                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Ticket Promedio</p>
+                        <Package className="w-4 h-4 text-blue-500" />
+                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Unidades Totales</p>
                     </div>
-                    <p className="text-xl font-bold text-yellow-500 dark:text-yellow-400 font-mono">{formatCLP(avgTicket)}</p>
-                    <p className="text-[10px] text-slate-400 dark:text-dark-600 mt-1">por transacción</p>
-                </div>
-                <div className="glass-card p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <BarChart3 className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Canal Top</p>
-                    </div>
-                    <p className="text-base font-bold text-purple-600 dark:text-purple-300 truncate">{revenueByChannel[0]?.[0] || '—'}</p>
-                    <p className="text-[10px] text-slate-400 dark:text-dark-600 mt-1">{revenueByChannel[0] ? formatCLP(revenueByChannel[0][1]) : '—'}</p>
+                    <p className="text-xl font-bold text-blue-500 font-mono">{cumulativeUnits.toLocaleString()}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">En el rango seleccionado</p>
                 </div>
             </div>
 
@@ -284,20 +364,26 @@ export default function Sales() {
             {revenueByChannel.length > 0 && (
                 <div className="glass-card p-4">
                     <h3 className="text-xs font-semibold text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                        <BarChart3 className="w-3.5 h-3.5" /> Ingresos por Canal
+                        <BarChart3 className="w-3.5 h-3.5" /> Ingresos por Canal (Rango Seleccionado)
                     </h3>
                     <div className="space-y-2">
                         {revenueByChannel.map(([channel, amount]) => {
-                            const pct = totalRevenue > 0 ? Math.round((amount / totalRevenue) * 100) : 0
+                            const pct = cumulativeRevenue > 0 ? Math.round((amount / cumulativeRevenue) * 100) : 0
+                            const isFirme = FIRME_CHANNELS.includes(channel)
                             return (
                                 <div key={channel}>
                                     <div className="flex justify-between text-xs mb-1">
-                                        <span className="text-slate-500 dark:text-dark-400">{channel}</span>
+                                        <span className="text-slate-500 dark:text-dark-400 flex items-center gap-2">
+                                            {channel}
+                                            <span className={`text-[8px] px-1 rounded ${isFirme ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                {isFirme ? 'FIRME' : 'FLOTANTE'}
+                                            </span>
+                                        </span>
                                         <span className="text-slate-900 dark:text-white font-mono">{formatCLP(amount)} <span className="text-slate-400 dark:text-dark-600">({pct}%)</span></span>
                                     </div>
                                     <div className="h-1.5 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-primary to-primary-400 rounded-full transition-all duration-700"
+                                            className={`h-full transition-all duration-700 rounded-full ${isFirme ? 'bg-emerald-500' : 'bg-amber-500'}`}
                                             style={{ width: `${pct}%` }}
                                         />
                                     </div>
@@ -338,21 +424,12 @@ export default function Sales() {
                         {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
                 )}
-                <div className="max-w-[150px]">
-                    <input
-                        type="month"
-                        value={filterMonth}
-                        onChange={e => setFilterMonth(e.target.value)}
-                        className="input-field text-sm w-full dark:bg-dark-300"
-                        style={{ colorScheme: 'dark' }}
-                    />
-                </div>
-                {(searchTerm || filterChannel || filterMonth || filterAuthor) && (
+                {(searchTerm || filterChannel || filterAuthor) && (
                     <button
-                        onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterMonth(''); setFilterAuthor('') }}
+                        onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterAuthor('') }}
                         className="text-xs text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 px-2 transition-colors"
                     >
-                        <X className="w-3 h-3" /> Limpiar
+                        <X className="w-3 h-3" /> Limpiar Filtros Extra
                     </button>
                 )}
             </div>

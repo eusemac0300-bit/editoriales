@@ -17,28 +17,35 @@ export default function Reports() {
     const pos = data.purchaseOrders || []
 
     const metrics = useMemo(() => {
-        const filteredSales = sales.filter(s => s.saleDate?.startsWith(month))
+        const FIRME_CHANNELS = ['Directa', 'Librería', 'Web']
+        const FLOTANTE_CHANNELS = ['Evento / Feria', 'Consignación']
+
+        const filteredSales = sales.filter(s => s.saleDate?.startsWith(month) && s.status !== 'Anulada')
         const filteredExpenses = expenses.filter(e => e.date?.startsWith(month))
         const filteredRoyalties = royalties.filter(r => r.approvedDate?.startsWith(month))
         const filteredPos = pos.filter(p => p.date_ordered?.startsWith(month))
 
         const totalIncome = filteredSales.reduce((acc, s) => acc + (s.neto || 0), 0)
+        const incomeFirme = filteredSales.filter(s => FIRME_CHANNELS.includes(s.channel)).reduce((acc, s) => acc + (s.neto || 0), 0)
+        const incomeFlotante = filteredSales.filter(s => FLOTANTE_CHANNELS.includes(s.channel)).reduce((acc, s) => acc + (s.neto || 0), 0)
 
         const productionCosts = filteredPos.reduce((acc, p) => acc + (p.total_cost || 0), 0)
         const operationalExpenses = filteredExpenses.reduce((acc, e) => acc + (e.amount || 0), 0)
         const royaltiesCosts = filteredRoyalties.reduce((acc, r) => acc + (r.totalAmount || 0), 0)
 
         const totalOutgoings = productionCosts + operationalExpenses + royaltiesCosts
-        const netProfit = totalIncome - totalOutgoings
+        const netProfit = incomeFirme - totalOutgoings // Profit based on firm sales only for conservative reporting
 
         return {
             income: totalIncome,
+            incomeFirme,
+            incomeFlotante,
             production: productionCosts,
             opEx: operationalExpenses,
             royalties: royaltiesCosts,
             totalOutgoings,
             netProfit,
-            margin: totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0
+            margin: incomeFirme > 0 ? (netProfit / incomeFirme) * 100 : 0
         }
     }, [sales, expenses, royalties, pos, month])
 
@@ -69,12 +76,19 @@ export default function Reports() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="stat-card border-emerald-500/20">
                     <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Ingresos Netos</p>
+                        <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Ingresos Netos Totales</p>
                         <TrendingUp className="w-4 h-4 text-emerald-400" />
                     </div>
                     <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono">{formatCLP(metrics.income)}</p>
-                    <div className="mt-2 flex items-center gap-1 text-[10px] text-emerald-500 font-semibold">
-                        <ArrowUpRight className="w-3 h-3" /> <span>Ventas del mes</span>
+                    <div className="mt-3 space-y-1.5 border-t border-slate-100 dark:border-dark-300 pt-2">
+                        <div className="flex justify-between text-[10px]">
+                            <span className="text-slate-500 dark:text-dark-600 uppercase">Venta en Firme:</span>
+                            <span className="text-emerald-500 font-bold">{formatCLP(metrics.incomeFirme)}</span>
+                        </div>
+                        <div className="flex justify-between text-[10px]">
+                            <span className="text-slate-500 dark:text-dark-600 uppercase">Venta Flotante:</span>
+                            <span className="text-amber-500 font-bold">{formatCLP(metrics.incomeFlotante)}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -89,7 +103,7 @@ export default function Reports() {
 
                 <div className={`stat-card ${metrics.netProfit >= 0 ? 'border-primary/20' : 'border-orange-500/20'}`}>
                     <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] text-primary uppercase font-bold tracking-wider text-primary-400">Resultado Neto</p>
+                        <p className="text-[10px] text-primary uppercase font-bold tracking-wider text-primary-400">P&L (Sobre Venta Firme)</p>
                         <DollarSign className="w-4 h-4 text-primary" />
                     </div>
                     <p className={`text-2xl font-bold font-mono ${metrics.netProfit >= 0 ? 'text-slate-900 dark:text-white' : 'text-orange-400'}`}>

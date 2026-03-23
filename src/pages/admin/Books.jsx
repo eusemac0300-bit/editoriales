@@ -126,76 +126,130 @@ export default function Books() {
             )}
 
             <div className="space-y-4">
-                {filteredBooks.map(book => (
-                    <div key={book.id} className="glass-card p-5 relative group">
-                        <div className="absolute top-4 right-4 flex items-center gap-2 transition-opacity">
-                            <button
-                                onClick={() => setShowCodes(book)}
-                                className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-500/70 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors shadow-sm"
-                                title="Ver Códigos QR e ISBN"
-                            >
-                                <QrCode className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => setShowEscandallo(book)}
-                                className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-primary/20 rounded-lg text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors shadow-sm"
-                                title="Ver Costos y Escandallo"
-                            >
-                                <Calculator className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => { setEditingBook(book); setShowAdd(false) }}
-                                className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-slate-200 dark:hover:bg-dark-300 rounded-lg text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
-                                title="Editar título"
-                            >
-                                <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(book)}
-                                className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-red-500/20 rounded-lg text-red-500/70 hover:text-red-400 transition-colors shadow-sm"
-                                title="Eliminar título"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </div>
-                        <div className="flex flex-col sm:flex-row items-start justify-between gap-3 pr-20">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">{book.title}</h3>
-                                    <span className={statusColors[book.status]}>{book.status}</span>
+                {filteredBooks.map(book => {
+                    // ── Metrics Calculation ──────────────────────────────────────
+                    const inv = data.inventory?.physical?.find(i => i.bookId === book.id)
+                    const stock = inv?.stock || 0
+                    const minStock = inv?.minStock || 0
+                    const isLowStock = stock <= minStock && stock > 0
+                    const isOutOfStock = stock === 0
+                    
+                    // Sales for Best Seller identification
+                    const bookSalesCount = (data.finances?.sales || [])
+                        .filter(s => s.bookId === book.id && s.status !== 'Anulada')
+                        .reduce((sum, s) => sum + (s.quantity || 0), 0)
+                    
+                    // Identify if this is the top seller
+                    const allSalesByBook = (data.books || []).map(b => ({
+                        id: b.id,
+                        total: (data.finances?.sales || [])
+                            .filter(s => s.bookId === b.id && s.status !== 'Anulada')
+                            .reduce((sum, s) => sum + (s.quantity || 0), 0)
+                    }))
+                    const maxSales = Math.max(...allSalesByBook.map(b => b.total), 0)
+                    const isBestSeller = maxSales > 0 && bookSalesCount === maxSales
+
+                    return (
+                        <div 
+                            key={book.id} 
+                            className={`glass-card p-5 relative group transition-all duration-300 border-l-4 ${
+                                isOutOfStock ? 'border-l-rose-500 bg-rose-500/5' : 
+                                isLowStock ? 'border-l-amber-500 bg-amber-500/5' : 
+                                isBestSeller ? 'border-l-yellow-400 bg-yellow-400/5 shadow-[0_0_15px_rgba(250,204,21,0.1)]' :
+                                'border-l-transparent'
+                            }`}
+                        >
+                            <div className="absolute top-4 right-4 flex items-center gap-2 transition-opacity">
+                                <button
+                                    onClick={() => setShowCodes(book)}
+                                    className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-500/70 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors shadow-sm"
+                                    title="Ver Códigos QR e ISBN"
+                                >
+                                    <QrCode className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setShowEscandallo(book)}
+                                    className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-primary/20 rounded-lg text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors shadow-sm"
+                                    title="Ver Costos y Escandallo"
+                                >
+                                    <Calculator className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => { setEditingBook(book); setShowAdd(false) }}
+                                    className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-slate-200 dark:hover:bg-dark-300 rounded-lg text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
+                                    title="Editar título"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(book)}
+                                    className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-red-500/20 rounded-lg text-red-500/70 hover:text-red-400 transition-colors shadow-sm"
+                                    title="Eliminar título"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <div className="flex flex-col sm:flex-row items-start justify-between gap-3 pr-24">
+                                <div className="flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h3 className={`text-lg font-bold ${isOutOfStock ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
+                                            {book.title} 
+                                            <span className={`ml-2 px-2 py-0.5 rounded text-sm font-mono ${
+                                                isOutOfStock ? 'bg-rose-500 text-white animate-pulse' : 
+                                                isLowStock ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600' :
+                                                'bg-slate-100 dark:bg-dark-200 text-slate-500'
+                                            }`}>
+                                                [S: {stock}]
+                                            </span>
+                                        </h3>
+                                        {isBestSeller && (
+                                            <span className="flex items-center gap-1 bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm border border-yellow-500">
+                                                ★ Best Seller
+                                            </span>
+                                        )}
+                                        {isOutOfStock && (
+                                            <span className="flex items-center gap-1 bg-rose-600 text-white px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter">
+                                                Quiebre de Stock
+                                            </span>
+                                        )}
+                                        <span className={statusColors[book.status]}>{book.status}</span>
+                                    </div>
+                                    <p className="text-sm text-slate-500 dark:text-dark-600 mt-1 flex items-center gap-1">
+                                        <User className="w-3 h-3" /> {book.authorName}
+                                        {bookSalesCount > 0 && <span className="ml-3 text-[10px] opacity-70">• {bookSalesCount} unidades vendidas</span>}
+                                    </p>
+                                    <p className="text-xs text-slate-400 dark:text-dark-500 mt-2 italic line-clamp-2">{book.synopsis}</p>
                                 </div>
-                                <p className="text-sm text-slate-500 dark:text-dark-600 mt-1 flex items-center gap-1"><User className="w-3 h-3" /> {book.authorName}</p>
-                                <p className="text-xs text-slate-400 dark:text-dark-500 mt-1">{book.synopsis}</p>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-4">
+                                <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest">ISBN</p>
+                                    <p className="text-xs text-slate-900 dark:text-white font-mono">{book.isbn || '—'}</p>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest">Género</p>
+                                    <p className="text-xs text-slate-900 dark:text-white">{book.genre || '—'}</p>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest flex items-center gap-1"><DollarSign className="w-3 h-3" />PVP</p>
+                                    <p className="text-xs text-slate-900 dark:text-white font-bold">{book.pvp ? formatCLP(book.pvp) : '—'}</p>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest flex items-center gap-1"><Percent className="w-3 h-3" />Regalía</p>
+                                    <p className="text-xs text-slate-900 dark:text-white">{book.royaltyPercent}%</p>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest flex items-center gap-1"><Calendar className="w-3 h-3" />Vence</p>
+                                    <p className="text-xs text-slate-900 dark:text-white">{book.contractExpiry || '—'}</p>
+                                </div>
+                                <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest flex items-center gap-1"><Calendar className="w-3 h-3" />Entrega</p>
+                                    <p className="text-xs text-slate-900 dark:text-white">{book.deliveryDate || '—'}</p>
+                                </div>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-4">
-                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">ISBN</p>
-                                <p className="text-xs text-slate-900 dark:text-white font-mono">{book.isbn || '—'}</p>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Género</p>
-                                <p className="text-xs text-slate-900 dark:text-white">{book.genre || '—'}</p>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase flex items-center gap-1"><DollarSign className="w-3 h-3" />PVP</p>
-                                <p className="text-xs text-slate-900 dark:text-white font-medium">{book.pvp ? formatCLP(book.pvp) : '—'}</p>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase flex items-center gap-1"><Percent className="w-3 h-3" />Regalía</p>
-                                <p className="text-xs text-slate-900 dark:text-white">{book.royaltyPercent}%</p>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase flex items-center gap-1"><Calendar className="w-3 h-3" />Vence</p>
-                                <p className="text-xs text-slate-900 dark:text-white">{book.contractExpiry || '—'}</p>
-                            </div>
-                            <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
-                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase flex items-center gap-1"><Calendar className="w-3 h-3" />Entrega Est.</p>
-                                <p className="text-xs text-slate-900 dark:text-white">{book.deliveryDate || '—'}</p>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                    )
+                })}
                 {filteredBooks.length === 0 && (
                     <div className="p-8 text-center text-slate-500 dark:text-dark-600 glass-card">
                         No se encontraron títulos que coincidan con la búsqueda.

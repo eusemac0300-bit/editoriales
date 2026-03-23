@@ -17,21 +17,38 @@ export default function AdminDashboard() {
     const salesThisMonth = activeSales.filter(s => s.saleDate?.startsWith(currentMonth))
     const incomeThisMonth = salesThisMonth.reduce((sum, s) => sum + (s.totalAmount || 0), 0)
 
+    // Best Seller Identification (Top of all time)
+    const salesByBook = activeSales.reduce((acc, s) => {
+        acc[s.bookId] = (acc[s.bookId] || 0) + (s.quantity || 0)
+        return acc
+    }, {})
+    const sortedSales = Object.entries(salesByBook).sort((a, b) => b[1] - a[1])
+    const bestSellerId = sortedSales[0]?.[0]
+    const bestSellerBook = books.find(b => b.id === bestSellerId)
+    const bestSellerCount = sortedSales[0]?.[1] || 0
+
+    // Critical Stock Identification
+    const physicalInv = inventory?.physical || []
+    const criticalStockItem = [...physicalInv]
+        .filter(i => i.stock >= 0)
+        .sort((a, b) => a.stock - b.stock)[0]
+    const criticalBook = books.find(b => b.id === criticalStockItem?.bookId)
+
     // Royalties
     const pendingRoyalties = (finances?.royalties || []).filter(r => r.status === 'pendiente' || r.status === 'pending')
     const royaltiesAmount = pendingRoyalties.reduce((sum, r) => sum + (r.netRoyalty || 0), 0)
 
-    const totalStock = (inventory?.physical || []).reduce((s, p) => s + (p.stock || 0), 0)
-    const lowStockCount = (inventory?.physical || []).filter(p => (p.minStock > 0 && p.stock <= p.minStock)).length
+    const totalStock = physicalInv.reduce((s, p) => s + (p.stock || 0), 0)
+    const lowStockCount = physicalInv.filter(p => (p.minStock > 0 && p.stock <= p.minStock)).length
     const criticalAlerts = (alerts || []).filter(a => !a.read).length
 
     const stats = [
-        { label: t('published_books'), value: published, icon: BookOpen, color: 'from-primary to-primary-700', change: `${totalBooks} ${t('titles').toLowerCase()}`, link: '/admin/libros' },
-        { label: t('in_production'), value: inProduction, icon: TrendingUp, color: 'from-amber-500 to-amber-700', change: t('production_pipeline'), link: '/admin/kanban' },
+        { label: 'TOP VENTAS (Histórico)', value: bestSellerBook ? bestSellerBook.title : '—', icon: TrendingUp, color: 'from-yellow-400 to-yellow-600', change: `${bestSellerCount} unidades vendidas`, link: '/admin/libros', bestseller: true },
+        { label: 'URGENTE: REIMPRESIÓN', value: criticalBook ? criticalBook.title : '—', icon: AlertTriangle, color: 'from-rose-500 to-rose-700', change: criticalBook ? `Quedan solo ${criticalStockItem.stock} uds.` : 'Sin quiebres', link: '/admin/inventario' },
         { label: t('sales_month'), value: formatCLP(incomeThisMonth), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${salesThisMonth.length} ${t('sales').toLowerCase()}`, up: incomeThisMonth > 0, link: '/admin/ventas' },
-        { label: t('pending_royalties'), value: formatCLP(royaltiesAmount), icon: Users, color: 'from-purple-500 to-purple-700', change: `${pendingRoyalties.length} ${t('pending').toLowerCase()}`, link: '/admin/liquidaciones' },
-        { label: t('physical_stock'), value: `${totalStock} uds.`, icon: Package, color: 'from-blue-500 to-blue-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} ${t('alerts').toLowerCase()}` : t('active'), link: '/admin/inventario' },
-        { label: t('active_alerts'), value: criticalAlerts, icon: AlertTriangle, color: 'from-orange-500 to-orange-700', change: criticalAlerts > 0 ? t('pending') : t('no_data'), link: '/admin/alertas' },
+        { label: t('published_books'), value: published, icon: BookOpen, color: 'from-primary to-primary-700', change: `${totalBooks} ${t('titles').toLowerCase()}`, link: '/admin/libros' },
+        { label: t('physical_stock'), value: `${totalStock} uds.`, icon: Package, color: 'from-blue-500 to-blue-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} alertas de stock` : 'Todo ok', link: '/admin/inventario' },
+        { label: 'REGALÍAS PENDIENTES', value: formatCLP(royaltiesAmount), icon: Users, color: 'from-purple-500 to-purple-700', change: `${pendingRoyalties.length} autores por liquidar`, link: '/admin/liquidaciones' },
     ]
 
     const kanbanStages = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
@@ -144,20 +161,33 @@ export default function AdminDashboard() {
                                     <thead>
                                         <tr className="border-b border-slate-200 dark:border-dark-300">
                                             <th className="table-header text-left py-3 px-2">{t('titles')}</th>
-                                            <th className="table-header text-left py-3 px-2">{t('authors')}</th>
+                                            <th className="table-header text-left py-3 px-2">Stock</th>
                                             <th className="table-header text-left py-3 px-2">{t('status')}</th>
                                             <th className="table-header text-right py-3 px-2">PVP</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {books.slice(0, 5).map(book => (
-                                            <tr key={book.id} className="table-row">
-                                                <td className="py-3 px-2 text-sm font-semibold text-slate-900 dark:text-white">{book.title}</td>
-                                                <td className="py-3 px-2 text-sm text-slate-600 dark:text-dark-700">{book.authorName}</td>
-                                                <td className="py-3 px-2"><span className={statusColors[book.status] || 'badge-blue'}>{book.status}</span></td>
-                                                <td className="py-3 px-2 text-sm text-right text-slate-700 dark:text-dark-800 font-medium">{book.pvp ? formatCLP(book.pvp) : '—'}</td>
-                                            </tr>
-                                        ))}
+                                        {books.slice(0, 5).map(book => {
+                                            const stock = inventory?.physical?.find(i => i.bookId === book.id)?.stock ?? 0
+                                            const isBest = book.id === bestSellerId
+                                            return (
+                                                <tr key={book.id} className="table-row">
+                                                    <td className="py-3 px-2 text-sm font-semibold text-slate-900 dark:text-white-200">
+                                                        <div className="flex items-center gap-2">
+                                                            {book.title}
+                                                            {isBest && <TrendingUp className="w-3 h-3 text-yellow-500" title="Best Seller" />}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-2 text-sm">
+                                                        <span className={`font-mono font-bold ${stock === 0 ? 'text-rose-500 animate-pulse' : stock <= 5 ? 'text-amber-500' : 'text-slate-600 dark:text-dark-700'}`}>
+                                                            {stock} uds.
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 px-2"><span className={statusColors[book.status] || 'badge-blue'}>{book.status}</span></td>
+                                                    <td className="py-3 px-2 text-sm text-right text-slate-700 dark:text-dark-800 font-medium">{book.pvp ? formatCLP(book.pvp) : '—'}</td>
+                                                </tr>
+                                            )
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
