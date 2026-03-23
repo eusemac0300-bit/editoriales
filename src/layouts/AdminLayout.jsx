@@ -55,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.2', date: '2026-03-23', title: 'Lanzamiento Maestro Oficial', details: ['Control total para master@editorial.cl.', 'Dashboard de Consignaciones refinado.', 'Estabilidad en conexión Vercel-GitHub.'] },
         { version: 'v3.1.5.1', date: '2026-03-23', title: 'Dashboard de Consignaciones y Corrección de PDFs', details: ['Nuevo panel de KPIs en Consignaciones (Capital en la calle, stock en tránsito).', 'Corrección de mapeo de datos: PDFs de Interior y Tapa ahora visibles en la ficha técnica.', 'Alertas visuales de despachos sin movimiento (más de 60 días).'] },
         { version: 'v3.1.5', date: '2026-03-23', title: 'Inteligencia de Stock y Ventas', details: ['Visualización de stock en tiempo real en títulos.', 'Identificación de Bestsellers y alertas de quiebre.', 'Flujo profesional de actualizaciones (Master User).', 'Nueva arquitectura de ramas para estabilidad SaaS.'] },
         { version: 'v3.1.4', date: '2026-03-22', title: 'Sincronización de Ventas', details: ['Separación de ventas Firmes vs Flotantes.', 'Reporting acumulado por rango de fechas.', 'Gestión de metas de venta mensuales.'] }
