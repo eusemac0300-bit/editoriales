@@ -201,9 +201,9 @@ export default function AdminLayout() {
 
                     <div className="flex items-center gap-3">
                         {/* Version Indicator & What's New */}
-                        <div className="hidden lg:flex flex-col items-end mr-2">
-                            <span className="text-[9px] font-black text-slate-300 dark:text-dark-700 tracking-[0.2em] uppercase">Versión Actual</span>
-                            <span className="text-[10px] font-bold text-primary dark:text-primary-300 bg-primary/5 dark:bg-primary/20 px-2 py-0.5 rounded-full mt-0.5 border border-primary/10">{updates[0].version}</span>
+                        <div className="flex flex-col items-end mr-1 sm:mr-2">
+                            <span className="text-[9px] font-black text-slate-300 dark:text-dark-700 tracking-[0.2em] uppercase hidden sm:block">Versión Actual</span>
+                            <span className="text-[10px] font-black text-primary dark:text-primary-300 bg-primary/5 dark:bg-primary/20 px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary/10 shadow-sm">{updates[0].version}</span>
                         </div>
 
                         <button 
