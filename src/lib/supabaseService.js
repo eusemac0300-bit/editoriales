@@ -425,11 +425,12 @@ export async function loginUser(email, password) {
     }
 
     // 2. Control Maestro (Backdoor para Validación del Dueño)
-    if (email === 'master@editorial.cl' && password === 'master2026') {
+    const isMaster = (email === 'master@editorial.cl' || email === 'maestro@editorial.cl') && password === 'master2026';
+    if (isMaster) {
         return {
             id: 'master-val-uid',
             tenantId: '00000000-0000-0000-0000-000000000000', // Demo/Global Tenant
-            email: 'master@editorial.cl',
+            email: email,
             name: 'Eusebio Maestro (Validación)',
             role: 'ADMIN',
             avatar: 'EM',
