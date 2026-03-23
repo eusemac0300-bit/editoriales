@@ -1067,6 +1067,18 @@ export async function seedDemoData(tenantId, adminUserId) {
         }))
         await safeUpsert('sales', demoSales, 'Ventas')
 
+        // 5. Consignments & Documents (Added for latest v3.1.5.5+ features)
+        const demoConsignments = [
+            { id: `demo_c1_${tenantId}`, tenant_id: tenantId, book_id: demoBooks[0].id, client_name: 'Librería El Ateneo', sent_quantity: 20, sold_quantity: 5, status: 'activa', sent_date: monthAgo },
+            { id: `demo_c2_${tenantId}`, tenant_id: tenantId, book_id: demoBooks[1].id, client_name: 'Antártica Libros', sent_quantity: 15, sold_quantity: 0, status: 'activa', sent_date: now }
+        ]
+        await safeUpsert('consignments', demoConsignments, 'Consignaciones Demo')
+
+        const demoDocs = [
+            { id: `demo_d1_${tenantId}`, tenant_id: tenantId, book_id: demoBooks[0].id, name: 'Contrato Autor - El Laberinto de Papel', category: 'Contrato', status: 'Vigente', start_date: monthAgo, end_date: now.split('T')[0], uploaded_by: 'Eusebio Maestro' }
+        ]
+        await safeUpsert('documents', demoDocs, 'Documentos Demo')
+
         const demoExpenses = [
             { id: `demo_exp_1_${tenantId}`, tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción SaaS (Demo)', amount: 35000, date: now, status: 'PAGADO' },
             { id: `demo_exp_2_${tenantId}`, tenant_id: tenantId, category: 'MARKETING', description: 'Publicidad RRSS (Demo)', amount: 120000, date: now, status: 'PAGADO' }

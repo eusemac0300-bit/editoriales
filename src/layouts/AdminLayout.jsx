@@ -55,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.6', date: '2026-03-23', title: 'Sincronización Trial & Demo v2', details: ['Sincronización de datos demo con nuevas funcionalidades.', 'Forzado de despliegue Vercel.', 'Corrección de indicadores de versión en Login/Landing.'] },
         { version: 'v3.1.5.5', date: '2026-03-23', title: 'Flujo Ciclo Editorial (Manual v1)', details: ['Fórmula de Regalías sobre PVP Neto (10%).', 'Gestión de Contratos con estados y vencimientos.', 'Cuentas por Cobrar con alertas de atraso.', 'Descuento automático para Distribuidoras (60%).'] },
         { version: 'v3.1.5.4', date: '2026-03-23', title: 'Navegación y Estabilidad', details: ['Navegación directa al libro desde consignas.', 'Corrección de error en lista expandida.', 'Optimización de renders en tablas.'] },
         { version: 'v3.1.5.3', date: '2026-03-23', title: 'Ajustes en Ventas', details: ['Restauración de iconos en reporte de ventas.', 'Alineación profesional de columnas monetarias.'] },
@@ -202,8 +203,8 @@ export default function AdminLayout() {
                     <div className="flex items-center gap-3">
                         {/* Version Indicator & What's New */}
                         <div className="flex flex-col items-end mr-1 sm:mr-2">
-                            <span className="text-[9px] font-black text-slate-300 dark:text-dark-700 tracking-[0.2em] uppercase hidden sm:block">Versión Actual</span>
-                            <span className="text-[10px] font-black text-primary dark:text-primary-300 bg-primary/5 dark:bg-primary/20 px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary/10 shadow-sm">{updates[0].version}</span>
+                            <span className="text-[9px] font-black text-rose-500 dark:text-rose-400 tracking-[0.2em] uppercase hidden sm:block">Fuerza Update</span>
+                            <span className="text-[10px] font-black text-white bg-rose-500 px-2 py-0.5 rounded-full sm:mt-0.5 border border-rose-400 shadow-lg shadow-rose-500/30 animate-pulse">{updates[0].version}</span>
                         </div>
 
                         <button 
