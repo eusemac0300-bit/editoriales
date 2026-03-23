@@ -85,6 +85,7 @@ export const translations = {
         address: 'Dirección',
         load_demo: 'Cargar Ejemplos',
         clear_demo: 'Borrar Ejemplos',
+        units: 'Unidades',
     },
     en: {
         dashboard: 'Dashboard',
@@ -172,6 +173,7 @@ export const translations = {
         address: 'Address',
         load_demo: 'Load Examples',
         clear_demo: 'Delete Examples',
+        units: 'Units',
     },
     pt: {
         dashboard: 'Painel',
@@ -259,5 +261,6 @@ export const translations = {
         address: 'Endereço',
         load_demo: 'Carregar Exemplos',
         clear_demo: 'Apagar Exemplos',
+        units: 'Unidades',
     },
 }

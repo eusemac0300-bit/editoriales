@@ -17,6 +17,12 @@ const STATUS_COLORS = {
     Anulada: 'badge-red'
 }
 
+const PAYMENT_STATUS_COLORS = {
+    Pendiente: 'bg-amber-500/20 text-amber-500',
+    Pagado: 'bg-emerald-500/20 text-emerald-500',
+    Atrasado: 'bg-rose-500/20 text-rose-500 animate-pulse'
+}
+
 export default function Sales() {
     const { data, formatCurrency, addNewSale, updateSaleDetails, addAuditLog, reloadData, taxRate, t } = useAuth()
     const formatCLP = formatCurrency
@@ -455,6 +461,8 @@ export default function Sales() {
                                     <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Neto</th>
                                     <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">IVA</th>
                                     <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Total</th>
+                                    <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Pago</th>
+                                    <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Vence</th>
                                     <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Estado</th>
                                     <th className="px-4 py-3"></th>
                                 </tr>
@@ -480,6 +488,17 @@ export default function Sales() {
                                         <td className="px-4 py-3 text-slate-500 dark:text-dark-400 font-mono text-right text-xs">{(sale.iva > 0) ? formatCLP(sale.iva) : '-'}</td>
                                         <td className="px-4 py-3 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-right">{formatCLP(sale.totalAmount)}</td>
                                         <td className="px-4 py-3">
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                                sale.paymentStatus === 'Pagado' ? PAYMENT_STATUS_COLORS.Pagado : 
+                                                (new Date(sale.dueDate) < new Date() && sale.paymentStatus !== 'Pagado' ? PAYMENT_STATUS_COLORS.Atrasado : PAYMENT_STATUS_COLORS.Pendiente)
+                                            }`}>
+                                                {sale.paymentStatus === 'Pagado' ? 'PAGADO' : (new Date(sale.dueDate) < new Date() ? 'ATRASADO' : 'PENDIENTE')}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-[10px] font-mono whitespace-nowrap">
+                                            {sale.dueDate ? new Date(sale.dueDate + 'T12:00:00').toLocaleDateString('es-CL') : '—'}
+                                        </td>
+                                        <td className="px-4 py-3">
                                             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[sale.status] || 'badge-blue'}`}>
                                                 {sale.status}
                                             </span>
@@ -487,6 +506,21 @@ export default function Sales() {
                                         <td className="px-4 py-3 flex justify-end gap-1">
                                             {sale.status !== 'Anulada' && (
                                                 <>
+                                                    {sale.paymentStatus !== 'Pagado' && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                if(window.confirm('¿Marcar esta venta como pagada?')) {
+                                                                    await updateSaleDetails(sale.id, { paymentStatus: 'Pagado' })
+                                                                    await addAuditLog(`Marcó como pagada la venta: "${sale.bookTitle}" (${sale.id})`, 'ventas')
+                                                                    await reloadData()
+                                                                }
+                                                            }}
+                                                            className="p-1.5 bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-500 hover:text-emerald-400 transition-colors"
+                                                            title="Marcar como Pagado"
+                                                        >
+                                                            <CheckCircle className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => handleDownloadPDF(sale)}
                                                         className="p-1.5 bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-500 hover:text-emerald-400 transition-colors"
@@ -624,7 +658,9 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
         clientName: '',
         documentRef: '',
         notes: '',
-        status: 'Completada'
+        status: 'Completada',
+        paymentStatus: 'Pendiente',
+        dueDate: today
     })
     const [saving, setSaving] = useState(false)
 
@@ -680,7 +716,10 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
                             value={form.bookId}
                             onChange={e => {
                                 const b = books.find(bk => bk.id === e.target.value)
-                                setForm(p => ({ ...p, bookId: e.target.value, unitPrice: b?.pvp ? String(b.pvp) : p.unitPrice }))
+                                const client = data?.clients?.find(c => c.name === form.clientName)
+                                const discount = client?.default_discount || 0
+                                const finalPrice = b?.pvp ? Math.round(b.pvp * (1 - discount/100)) : p.unitPrice
+                                setForm(p => ({ ...p, bookId: e.target.value, unitPrice: String(finalPrice) }))
                             }}
                             className="input-field text-sm w-full"
                             required
@@ -753,18 +792,35 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" /> Fecha de Venta *
-                        </label>
-                        <div className="max-w-[200px]">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5" /> Fecha de Venta *
+                            </label>
                             <input
                                 type="date"
                                 value={form.saleDate}
-                                onChange={e => setForm(p => ({ ...p, saleDate: e.target.value }))}
+                                onChange={e => {
+                                    const newDate = e.target.value
+                                    const d = new Date(newDate)
+                                    d.setDate(d.getDate() + 30) // Default 30 days
+                                    setForm(p => ({ ...p, saleDate: newDate, dueDate: d.toISOString().slice(0, 10) }))
+                                }}
                                 className="input-field text-sm w-full dark:bg-dark-300"
                                 style={{ colorScheme: 'dark' }}
                                 required
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5 text-amber-500" /> Vencimiento de Pago
+                            </label>
+                            <input
+                                type="date"
+                                value={form.dueDate}
+                                onChange={e => setForm(p => ({ ...p, dueDate: e.target.value }))}
+                                className="input-field text-sm w-full dark:bg-dark-300"
+                                style={{ colorScheme: 'dark' }}
                             />
                         </div>
                     </div>

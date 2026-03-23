@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import {
     Users, Plus, Search, Edit3, Trash2,
     Building2, Mail, Phone, MapPin, 
-    CreditCard, ExternalLink, Filter, X, Save
+    CreditCard, ExternalLink, Filter, X, Save, Percent
 } from 'lucide-react'
 
 const CLIENT_TYPES = [
@@ -30,7 +30,8 @@ export default function Clients() {
         address: '',
         tax_id: '',
         credit_limit: 0,
-        notes: ''
+        notes: '',
+        default_discount: 0
     })
 
     const clients = data?.clients || []
@@ -56,7 +57,8 @@ export default function Clients() {
                 address: client.address || '',
                 tax_id: client.tax_id || '',
                 credit_limit: client.credit_limit || 0,
-                notes: client.notes || ''
+                notes: client.notes || '',
+                default_discount: client.default_discount || 0
             })
         } else {
             setEditingClient(null)
@@ -69,7 +71,8 @@ export default function Clients() {
                 address: '',
                 tax_id: '',
                 credit_limit: 0,
-                notes: ''
+                notes: '',
+                default_discount: 0
             })
         }
         setIsModalOpen(true)
@@ -286,11 +289,31 @@ export default function Clients() {
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Cliente</label>
                                     <select 
                                         value={formData.type}
-                                        onChange={(e) => setFormData({...formData, type: e.target.value})}
+                                        onChange={(e) => {
+                                            const newType = e.target.value;
+                                            setFormData({
+                                                ...formData, 
+                                                type: newType,
+                                                default_discount: newType === 'distribuidor' ? 60 : (newType === 'libreria' ? 40 : formData.default_discount)
+                                            })
+                                        }}
                                         className="w-full p-4 rounded-2xl border border-slate-200 dark:border-dark-300 bg-slate-50 dark:bg-dark-200 text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-primary/10"
                                     >
                                         {CLIENT_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                                     </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">% Descuento Predeterminado</label>
+                                    <div className="relative">
+                                        <Percent className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input 
+                                            type="number" 
+                                            value={formData.default_discount}
+                                            onChange={(e) => setFormData({...formData, default_discount: parseFloat(e.target.value)})}
+                                            className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 dark:border-dark-300 bg-slate-50 dark:bg-dark-200 text-sm font-bold text-slate-900 dark:text-white"
+                                            placeholder="Ej: 60"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">RUT / Tax ID</label>

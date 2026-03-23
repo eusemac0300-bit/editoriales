@@ -48,12 +48,14 @@ export default function Royalties() {
     // ── Liquidaciones calculadas (en tiempo real, sin guardar) ───────────────
     const calculations = useMemo(() => books.map(book => {
         const salesData = salesByBook[book.id] || { units: 0, amount: 0 }
-        const gross = Math.round(salesData.amount * (book.royaltyPercent / 100))
+        // Según Ciclo Editorial: % del PVP NETO (PVP / 1.19) por unidades vendidas
+        const pvpNeto = (book.pvp || 0) / 1.19
+        const gross = Math.round(pvpNeto * (book.royaltyPercent / 100) * salesData.units)
         const advance = book.advance || 0
         const net = gross - advance
         // ¿Ya existe una liquidación guardada en este período?
         const existing = royalties.find(r => r.bookId === book.id && r.period === selectedPeriod)
-        return { book, salesData, gross, advance, net, existing }
+        return { book, salesData, gross, advance, net, existing, pvpNeto }
     }), [books, salesByBook, royalties, selectedPeriod])
 
     // Filtrar por autor
@@ -162,7 +164,7 @@ export default function Royalties() {
                         <DollarSign className="w-6 h-6 text-primary" /> Liquidaciones de Regalías
                     </h1>
                     <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">
-                        Calculado desde ventas reales · Fórmula: (Ventas × % Regalía) − Anticipo
+                        Calculado desde ventas reales · Fórmula: ({t('units')} × PVP Neto × % Regalía) − Anticipo
                     </p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -239,7 +241,7 @@ export default function Royalties() {
                         <p className="text-sm text-slate-500 dark:text-dark-500 mt-1">Configura el % de regalía en cada título desde la sección Títulos.</p>
                     </div>
                 ) : (
-                    filtered.map(({ book, salesData, gross, advance, net, existing }) => (
+                    filtered.map(({ book, salesData, gross, advance, net, existing, pvpNeto }) => (
                         <div key={book.id} className="glass-card p-5">
                             <div className="flex flex-col sm:flex-row items-start justify-between gap-3 mb-4">
                                 <div>
@@ -292,8 +294,8 @@ export default function Royalties() {
                                     <p className="text-base font-bold text-blue-600 dark:text-blue-400">{salesData.units}</p>
                                 </div>
                                 <div className="bg-slate-50 dark:bg-dark-200/60 rounded-lg p-3 text-center">
-                                    <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase mb-1">Ventas Netas</p>
-                                    <p className="text-base font-bold text-slate-900 dark:text-white font-mono">{formatCLP(salesData.amount)}</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase mb-1">PVP Neto (Base)</p>
+                                    <p className="text-base font-bold text-slate-900 dark:text-white font-mono">{formatCLP(pvpNeto)}</p>
                                 </div>
                                 <div className="bg-slate-50 dark:bg-dark-200/60 rounded-lg p-3 text-center">
                                     <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase mb-1">Regalía Bruta</p>
@@ -312,7 +314,7 @@ export default function Royalties() {
                             {/* Formula bar */}
                             <div className="mt-3 px-3 py-2 bg-slate-100 dark:bg-dark-200/40 rounded-lg">
                                 <p className="text-[10px] text-slate-500 dark:text-dark-500 font-mono text-center">
-                                    ({formatCLP(salesData.amount)} × {book.royaltyPercent}%) − {formatCLP(advance)} = {' '}
+                                    ({salesData.units} u. × {formatCLP(pvpNeto)} × {book.royaltyPercent}%) − {formatCLP(advance)} = {' '}
                                     <span className={net >= 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'}>{formatCLP(net)}</span>
                                 </p>
                             </div>
