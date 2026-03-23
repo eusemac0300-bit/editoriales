@@ -55,6 +55,8 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.4', date: '2026-03-23', title: 'Navegación y Estabilidad', details: ['Navegación directa al libro desde consignas.', 'Corrección de error en lista expandida.', 'Optimización de renders en tablas.'] },
+        { version: 'v3.1.5.3', date: '2026-03-23', title: 'Ajustes en Ventas', details: ['Restauración de iconos en reporte de ventas.', 'Alineación profesional de columnas monetarias.'] },
         { version: 'v3.1.5.2', date: '2026-03-23', title: 'Lanzamiento Maestro Oficial', details: ['Control total para master@editorial.cl.', 'Dashboard de Consignaciones refinado.', 'Estabilidad en conexión Vercel-GitHub.'] },
         { version: 'v3.1.5.1', date: '2026-03-23', title: 'Dashboard de Consignaciones y Corrección de PDFs', details: ['Nuevo panel de KPIs en Consignaciones (Capital en la calle, stock en tránsito).', 'Corrección de mapeo de datos: PDFs de Interior y Tapa ahora visibles en la ficha técnica.', 'Alertas visuales de despachos sin movimiento (más de 60 días).'] },
         { version: 'v3.1.5', date: '2026-03-23', title: 'Inteligencia de Stock y Ventas', details: ['Visualización de stock en tiempo real en títulos.', 'Identificación de Bestsellers y alertas de quiebre.', 'Flujo profesional de actualizaciones (Master User).', 'Nueva arquitectura de ramas para estabilidad SaaS.'] },
@@ -112,7 +114,7 @@ export default function AdminLayout() {
                         <div>
                             <h1 className="font-bold text-white text-sm">Editorial Pro</h1>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">
-                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.5.1 (FORCE SYNC)</span>
+                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.5.4 (MASTER SYNC)</span>
                             </p>
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white">
