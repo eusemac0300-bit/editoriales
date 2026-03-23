@@ -433,9 +433,9 @@ export default function Consignments() {
                                                                 <div className="flex items-center gap-3">
                                                                     <button 
                                                                         onClick={() => it?.id && setExpandedItem(expandedItem === it.id ? null : it.id)}
-                                                                        className="p-1 rounded bg-slate-100 dark:bg-dark-300 text-slate-400 hover:bg-primary/20 hover:text-primary transition-all"
+                                                                        className={`p-1 rounded transition-all ${isExpanded ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-dark-300 text-slate-400 hover:bg-primary/20 hover:text-primary'}`}
                                                                     >
-                                                                        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                                                        {isExpanded ? <ChevronDown className="w-3" /> : <ChevronRight className="w-3" />}
                                                                     </button>
                                                                     <button 
                                                                         onClick={() => navigate(`/admin/libros?search=${encodeURIComponent(it.bookTitle)}`)}
@@ -542,7 +542,7 @@ export default function Consignments() {
                                                                             </div>
                                                                         )}
 
-                                                                        {itemSales.length === 0 && it.returnedQuantity === 0 && (
+                                                                        {itSales.length === 0 && it.returnedQuantity === 0 && (
                                                                             <p className="text-[10px] text-slate-400 italic py-2">No hay movimientos parciales registrados aún.</p>
                                                                         )}
                                                                     </div>
