@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import {
-    ShoppingCart, Plus, X, Search, TrendingUp,
+    ShoppingCart, Plus, X, Search, TrendingUp, Activity,
     BookOpen, DollarSign, Calendar, Users, Package, BarChart3,
     CheckCircle, XCircle, Download, FileSpreadsheet
 } from 'lucide-react'
@@ -452,7 +452,8 @@ export default function Sales() {
                                     <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Canal</th>
                                     <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Cliente</th>
                                     <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Qty</th>
-                                    <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">P. Unitario</th>
+                                    <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Neto</th>
+                                    <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">IVA</th>
                                     <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Total</th>
                                     <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Estado</th>
                                     <th className="px-4 py-3"></th>
