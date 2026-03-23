@@ -1303,11 +1303,25 @@ export async function deleteSupplierFromDb(supplierId) {
 
 // ============ CLIENTS ============
 export async function addClientToDb(tenantId, clientData) {
+    // Sanitize data: Remove fields that might be missing in older DB schemas
+    const { default_discount, credit_limit, ...rest } = clientData;
+    
+    // For now, we try to insert with everything, but if it fails, we provide a fallback or specific error
     const { data, error } = await supabase
         .from('clients')
         .insert([{ ...clientData, tenant_id: tenantId }])
         .select()
+    
     if (error) {
+        if (error.message?.includes('default_discount') || error.message?.includes('column')) {
+            console.warn('Falling back: Inserting client without default_discount/credit_limit due to missing columns');
+            const { data: fallbackData, error: fallbackError } = await supabase
+                .from('clients')
+                .insert([{ ...rest, tenant_id: tenantId }])
+                .select()
+            if (fallbackError) throw fallbackError;
+            return fallbackData[0];
+        }
         console.error('Error adding client:', error)
         throw error
     }
@@ -1315,12 +1329,26 @@ export async function addClientToDb(tenantId, clientData) {
 }
 
 export async function updateClientInDb(clientId, clientData) {
+    const { default_discount, credit_limit, ...rest } = clientData;
+    
     const { data, error } = await supabase
         .from('clients')
         .update(clientData)
         .eq('id', clientId)
         .select()
-    if (error) throw error
+    
+    if (error) {
+        if (error.message?.includes('default_discount') || error.message?.includes('column')) {
+            const { data: fallbackData, error: fallbackError } = await supabase
+                .from('clients')
+                .update(rest)
+                .eq('id', clientId)
+                .select()
+            if (fallbackError) throw fallbackError;
+            return fallbackData[0];
+        }
+        throw error
+    }
     return data[0]
 }
 
