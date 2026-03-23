@@ -1,5 +1,6 @@
 export const translations = {
     es: {
+        sales_group: 'Grupo de Venta',
         dashboard: 'Dashboard',
         inventory: 'Inventario',
         production: 'Producción',
@@ -88,6 +89,7 @@ export const translations = {
         units: 'Unidades',
     },
     en: {
+        sales_group: 'Sales Group',
         dashboard: 'Dashboard',
         inventory: 'Inventory',
         production: 'Production',
@@ -176,6 +178,7 @@ export const translations = {
         units: 'Units',
     },
     pt: {
+        sales_group: 'Grupo de Vendas',
         dashboard: 'Painel',
         inventory: 'Inventário',
         production: 'Produção',
