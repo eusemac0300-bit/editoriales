@@ -200,7 +200,12 @@ export default function AdminLayout() {
                     <div className="flex-1" />
 
                     <div className="flex items-center gap-3">
-                        {/* What's New Button */}
+                        {/* Version Indicator & What's New */}
+                        <div className="hidden lg:flex flex-col items-end mr-2">
+                            <span className="text-[9px] font-black text-slate-300 dark:text-dark-700 tracking-[0.2em] uppercase">Versión Actual</span>
+                            <span className="text-[10px] font-bold text-primary dark:text-primary-300 bg-primary/5 dark:bg-primary/20 px-2 py-0.5 rounded-full mt-0.5 border border-primary/10">{updates[0].version}</span>
+                        </div>
+
                         <button 
                             onClick={() => setChangelogOpen(true)}
                             className="relative flex items-center gap-2 p-2 px-3 rounded-xl bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-all text-primary group"
