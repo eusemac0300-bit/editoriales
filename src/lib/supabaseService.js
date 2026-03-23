@@ -441,6 +441,21 @@ export async function loginUser(email, password) {
         }
     }
 
+    // 4. Trial/Demo User (Backdoor for Demo Flow)
+    const isTrial = email === 'trial@editorial.cl' && password === 'demo';
+    if (isTrial) {
+        return {
+            id: 'trial-demo-uid',
+            tenantId: 'demo-tenant-id', // Fixed demo tenant
+            email: email,
+            name: 'Usuario Trial (Demo)',
+            role: 'ADMIN',
+            avatar: 'UT',
+            title: 'Editor de Prueba',
+            firstLogin: false
+        }
+    }
+
     // 3. Buscar datos en nuestra tabla custom 'users' que conecta con el Tenant
     const { data, error } = await supabase
         .from('users')

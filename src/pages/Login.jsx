@@ -35,6 +35,7 @@ export default function Login() {
     }
 
     const demoUsers = [
+        { email: 'trial@editorial.cl', pass: 'demo', role: 'Trial', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20' },
         { email: 'admin@editorial.cl', pass: 'admin123', role: 'Admin', color: 'bg-primary/15 text-primary-300 border-primary/20' },
         { email: 'freelance@editorial.cl', pass: 'free123', role: 'Freelance', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' },
         { email: 'autor@editorial.cl', pass: 'autor123', role: 'Autor', color: 'bg-purple-500/15 text-purple-400 border-purple-500/20' },
