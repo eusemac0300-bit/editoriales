@@ -239,12 +239,16 @@ export default function Books() {
                                     <p className="text-xs text-slate-900 dark:text-white">{book.royaltyPercent}%</p>
                                 </div>
                                 <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
-                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest flex items-center gap-1"><Calendar className="w-3 h-3" />Vence</p>
-                                    <p className="text-xs text-slate-900 dark:text-white">{book.contractExpiry || '—'}</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest flex items-center gap-1">Depósito Legal</p>
+                                    <p className={`text-xs font-bold ${book.hasLegalDeposit === 'Sí' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
+                                        {book.hasLegalDeposit === 'Sí' ? (book.legalDepositNumber || 'SÍ') : 'PENDIENTE'}
+                                    </p>
                                 </div>
                                 <div className="bg-slate-50 dark:bg-dark-50 rounded-lg p-2.5">
-                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest flex items-center gap-1"><Calendar className="w-3 h-3" />Entrega</p>
-                                    <p className="text-xs text-slate-900 dark:text-white">{book.deliveryDate || '—'}</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase tracking-widest flex items-center gap-1">Contrato</p>
+                                    <p className={`text-xs font-bold ${book.contractStatus === 'Firmado' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500'}`}>
+                                        {book.contractStatus || 'PENDIENTE'}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -384,6 +388,9 @@ function BookForm({ data, initialData, onSave, onClose }) {
         hasLegalDeposit: initialData?.hasLegalDeposit || 'No',
         legalDepositNumber: initialData?.legalDepositNumber || '',
         flapWidth: initialData?.flapWidth || '',
+        contractStatus: initialData?.contractStatus || 'Borrador',
+        contractDate: initialData?.contractDate || '',
+        contractFile: initialData?.contractFile || '',
         // Nuevos campos de producción
         deliveryDate: initialData?.deliveryDate || '',
         finalPdfInterior: initialData?.finalPdfInterior || '',
@@ -417,6 +424,9 @@ function BookForm({ data, initialData, onSave, onClose }) {
                 hasLegalDeposit: initialData.hasLegalDeposit || 'No',
                 legalDepositNumber: initialData.legalDepositNumber || '',
                 flapWidth: initialData.flapWidth || '',
+                contractStatus: initialData.contractStatus || 'Borrador',
+                contractDate: initialData.contractDate || '',
+                contractFile: initialData.contractFile || '',
                 deliveryDate: initialData.deliveryDate || '',
                 finalPdfInterior: initialData.finalPdfInterior || '',
                 finalPdfCover: initialData.finalPdfCover || ''
@@ -657,22 +667,34 @@ function BookForm({ data, initialData, onSave, onClose }) {
                 </div>
 
                 <div className="sm:col-span-2 mt-2 pt-4 border-t border-slate-200 dark:border-dark-300">
-                    <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3">Identificadores Adicionales (Opcional)</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-primary" /> Gestión Legal y Contratos
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">SKU</label>
-                            <input value={form.sku} onChange={e => setForm(p => ({ ...p, sku: e.target.value }))} className="input-field text-sm" placeholder="Ej: ED100-XXX" />
+                            <label className="text-xs text-dark-600 mb-1 block text-[10px] uppercase font-bold text-slate-400">Estado del Contrato</label>
+                            <select value={form.contractStatus} onChange={e => setForm(p => ({ ...p, contractStatus: e.target.value }))} className="input-field text-sm">
+                                <option value="Borrador">Borrador</option>
+                                <option value="Enviado">Enviado a Autor</option>
+                                <option value="Firmado">Firmado / Vigente</option>
+                                <option value="Vencido">Vencido</option>
+                                <option value="Rescindido">Rescindido</option>
+                            </select>
                         </div>
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Depósito Legal</label>
+                            <label className="text-xs text-dark-600 mb-1 block text-[10px] uppercase font-bold text-slate-400">Fecha de Contratación</label>
+                            <input type="date" value={form.contractDate} onChange={e => setForm(p => ({ ...p, contractDate: e.target.value }))} className="input-field text-sm" />
+                        </div>
+                        <div>
+                            <label className="text-xs text-dark-600 mb-1 block text-[10px] uppercase font-bold text-slate-400">Depósito Legal</label>
                             <select value={form.hasLegalDeposit} onChange={e => setForm(p => ({ ...p, hasLegalDeposit: e.target.value }))} className="input-field text-sm">
-                                <option value="No">No</option>
-                                <option value="Sí">Sí</option>
+                                <option value="No">No (Pendiente)</option>
+                                <option value="Sí">Sí (Realizado)</option>
                             </select>
                         </div>
                         {form.hasLegalDeposit === 'Sí' && (
                             <div>
-                                <label className="text-xs text-dark-600 mb-1 block">Nº Depósito Legal</label>
+                                <label className="text-xs text-dark-600 mb-1 block text-[10px] uppercase font-bold text-slate-400">Nº Depósito Legal</label>
                                 <input value={form.legalDepositNumber} onChange={e => setForm(p => ({ ...p, legalDepositNumber: e.target.value }))} className="input-field text-sm" placeholder="Ej: 12345/2026" />
                             </div>
                         )}
