@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import {
@@ -10,6 +11,7 @@ import autoTable from 'jspdf-autotable'
 
 export default function Consignments() {
     const { user, data, formatCLP, addAuditLog, reloadData } = useAuth()
+    const navigate = useNavigate()
     const [showAdd, setShowAdd] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedAction, setSelectedAction] = useState(null) // { type: 'liquidate' | 'return' | 'shrinkage', item }
@@ -435,9 +437,13 @@ export default function Consignments() {
                                                                     >
                                                                         {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                                                                     </button>
-                                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-dark-200 flex items-center justify-center text-slate-400 group-hover/row:bg-primary/10 group-hover/row:text-primary transition-all">
+                                                                    <button 
+                                                                        onClick={() => navigate(`/admin/libros?search=${encodeURIComponent(it.bookTitle)}`)}
+                                                                        className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-dark-200 flex items-center justify-center text-slate-400 hover:bg-primary/20 hover:text-primary transition-all cursor-pointer"
+                                                                        title="Ir al Título"
+                                                                    >
                                                                         <BookOpen className="w-4 h-4" />
-                                                                    </div>
+                                                                    </button>
                                                                     <div className="min-w-0">
                                                                         <p className="text-xs font-black text-slate-900 dark:text-white truncate uppercase tracking-tight">{it.bookTitle}</p>
                                                                     </div>
@@ -511,7 +517,7 @@ export default function Consignments() {
                                                                         </div>
 
                                                                         {/* Partial Sales & Mermas */}
-                                                                        {itemSales.map(sale => {
+                                                                        {itSales.map(sale => {
                                                                             const isShrink = sale.channel.includes('Merma')
                                                                             return (
                                                                                 <div key={sale.id} className={`flex items-center gap-4 text-xs font-bold py-2 border-l-2 ${isShrink ? 'border-red-500/30' : 'border-emerald-500/30'} pl-4 ml-2`}>
