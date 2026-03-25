@@ -428,15 +428,17 @@ export async function loginUser(email, password) {
 
     // 2. Control Maestro (Backdoor para Validación del Dueño)
     const isMaster = (email === 'master@editorial.cl' || email === 'maestro@editorial.cl') && password === 'master2026';
-    if (isMaster) {
+    const isSuper = email === 'eusemac@editorial.cl' && password === 'Marca2022#1';
+
+    if (isMaster || isSuper) {
         return {
-            id: 'master-val-uid',
-            tenantId: '00000000-0000-0000-0000-000000000000', // Demo/Global Tenant
+            id: isSuper ? 'super-val-uid' : 'master-val-uid',
+            tenantId: isSuper ? 't_master' : '00000000-0000-0000-0000-000000000000', 
             email: email,
-            name: 'Eusebio Maestro (Validación)',
-            role: 'ADMIN',
+            name: isSuper ? 'Eusebio Manriquez (Owner)' : 'Eusebio Maestro (Validación)',
+            role: isSuper ? 'SUPERADMIN' : 'ADMIN',
             avatar: 'EM',
-            title: 'Administrador Maestro',
+            title: isSuper ? 'Súper Administrador' : 'Administrador Maestro',
             firstLogin: false
         }
     }
