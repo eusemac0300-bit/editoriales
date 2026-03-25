@@ -1667,7 +1667,7 @@ export async function getLatestAppVersion() {
         return data
     } catch (err) {
         console.warn('App version check warning (table might not exist yet):', err.message)
-        return { version: 'v3.1.5.6' }
+        return { version: 'v3.1.5.7' }
     }
 }
 
