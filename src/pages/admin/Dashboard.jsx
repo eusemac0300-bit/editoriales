@@ -1,10 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { publishAppVersion } from '../../lib/supabaseService'
+import { useState } from 'react'
 import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, Activity, Database, Trash2, Plus, CheckCircle2, Sparkles, FileText, Truck } from 'lucide-react'
 
 export default function AdminDashboard() {
-    const { data, formatCLP, t } = useAuth()
+    const { data, formatCLP, t, user } = useAuth()
     const navigate = useNavigate()
+    const [isPublishing, setIsPublishing] = useState(false)
     const { books, inventory, finances, alerts } = data
 
     const totalBooks = (books || []).length
@@ -67,21 +70,39 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Master Control Hub (Exclusive for master@editorial.cl) */}
-                {useAuth().user?.email?.includes('master') && (
-                    <div className="flex items-center gap-3 p-1 bg-primary/10 rounded-2xl border border-primary/20 backdrop-blur-sm animate-in zoom-in-95 duration-500">
-                        <div className="px-4 py-2">
-                            <p className="text-[10px] font-black text-primary uppercase tracking-widest">Estado Maestro</p>
-                            <p className="text-xs font-bold text-slate-900 dark:text-white">v3.1.5.7 (PRUEBAS)</p>
+                {user?.email?.toLowerCase().includes('master') && (
+                    <div className="flex items-center gap-3 p-1 bg-primary/20 rounded-2xl border-2 border-primary shadow-xl shadow-primary/20 backdrop-blur-xl animate-in zoom-in-95 duration-500 scale-105 mr-4 mr-2">
+                        <div className="px-4 py-2 border-r border-primary/20">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Centro de Control Maestro</p>
+                            <p className="text-xs font-black text-slate-800 dark:text-white-100 flex items-center gap-2 mt-0.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
+                                v3.1.5.7 LISTA PARA LIBERAR
+                            </p>
                         </div>
                         <button
+                            disabled={isPublishing}
                             onClick={async () => {
-                                if (window.confirm('¿Publicar la v3.1.5.7 para todos los clientes ahora?')) {
-                                    alert('Versión Publicada Exitosamente. Notificando a Editoriales...')
+                                if (window.confirm('¿Publicar la v3.1.5.7 para todas las editoriales ahora? Esto notificará a todos tus clientes.')) {
+                                    setIsPublishing(true)
+                                    try {
+                                        await publishAppVersion('v3.1.5.7', ['Mejoras Onboarding', 'Datos Demo UX', 'Sync Maestro'])
+                                        alert('¡ÉXITO! Versión v3.1.5.7 liberada globalmente. Se ha notificado a todas las editoriales.')
+                                    } catch (err) {
+                                        console.error('Master Publish Error:', err);
+                                        alert('Error al publicar. Intenta de nuevo.')
+                                    } finally {
+                                        setIsPublishing(false)
+                                    }
                                 }
                             }}
-                            className="bg-primary hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/25 transition-all active:scale-95 flex items-center gap-2"
+                            className={`bg-primary hover:bg-primary-600 text-white px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/30 transition-all active:scale-90 flex items-center gap-3 ${isPublishing ? 'opacity-50' : 'animate-pulse-slow'}`}
                         >
-                            <Sparkles className="w-4 h-4" /> Publicar v3.1.5.7
+                            {isPublishing ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <Sparkles className="w-4 h-4" />
+                            )}
+                            {isPublishing ? 'PUBLICANDO...' : 'PUBLICAR CAMBIOS A RED'}
                         </button>
                     </div>
                 )}
