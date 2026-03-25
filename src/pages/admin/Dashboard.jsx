@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, Activity, Database, Trash2, Plus, CheckCircle2, Sparkles, FileText, Truck } from 'lucide-react'
 
 export default function AdminDashboard() {
-    const { data, formatCLP, t, user } = useAuth()
+    const { data, formatCLP, t, user, loadDemo, clearDemo } = useAuth()
     const navigate = useNavigate()
     const [isPublishing, setIsPublishing] = useState(false)
     const { books, inventory, finances, alerts } = data
@@ -169,7 +169,7 @@ export default function AdminDashboard() {
                     <button
                         onClick={async () => {
                             if (window.confirm('¿Borrar todos los libros de ejemplo? Esto no afectará a tus libros reales.')) {
-                                await useAuth().clearDemo()
+                                await clearDemo()
                             }
                         }}
                         className="btn-primary bg-rose-500 hover:bg-rose-600 border-rose-600 shadow-lg shadow-rose-500/20 text-xs py-2 px-4 whitespace-nowrap flex items-center gap-2"
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
                         </button>
                         <button 
                             onClick={async () => {
-                                await useAuth().loadDemo()
+                                await loadDemo()
                             }}
                             className="px-8 h-12 border border-slate-200 dark:border-dark-300 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-all font-bold text-slate-700 dark:text-dark-900 flex items-center justify-center gap-2 shadow-sm"
                         >
