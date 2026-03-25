@@ -1649,7 +1649,7 @@ export async function superAdminApproveOnboarding(request) {
         await seedDemoData(tenantId, userId);
 
         // 4. Set Initial Version
-        await supabase.from('tenants').update({ version_installed: 'v3.1.5.8' }).eq('id', tenantId);
+        await supabase.from('tenants').update({ version_installed: 'v3.1.5.9' }).eq('id', tenantId);
 
         // 5. Update Request
         return { success: true, tenantId, userId, editorial_name: request.editorial_name }
@@ -1676,7 +1676,7 @@ export async function getLatestAppVersion() {
         return data
     } catch (err) {
         console.warn('App version check warning (table might not exist yet):', err.message)
-        return { version: 'v3.1.5.8' }
+        return { version: 'v3.1.5.9' }
     }
 }
 
