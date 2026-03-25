@@ -11,7 +11,7 @@ export default function AdminDashboard() {
     const { books, inventory, finances, alerts } = data
 
     const totalBooks = (books || []).length
-    const hasDemoData = (books || []).some(b => b.id?.startsWith('ffffffff-'))
+    const hasDemoData = (books || []).some(b => b.id?.startsWith('ffffffff-') || b.id?.startsWith('demo_'))
     const published = (books || []).filter(b => b.status === 'Publicado' || b.status === 'Published').length
     const inProduction = (books || []).filter(b => !['Publicado', 'Original', 'Published'].includes(b.status)).length
 
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Demo Data Banner (Visible when demo books exist) */}
-            {(books || []).some(b => b.id?.startsWith('ffffffff-')) && (
+            {(books || []).some(b => b.id?.startsWith('ffffffff-') || b.id?.startsWith('demo_')) && (
                 <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
                     <div className="flex items-center gap-4 text-center sm:text-left">
                         <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center shrink-0">
