@@ -56,8 +56,8 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.14', date: '2026-03-25', title: 'The Clean Lightweight Build', details: ['Fuerza de construcción v14.', 'Optimización de paquetes JS.', 'Sincronización Total Triple Branch Final.'] },
         { version: 'v3.1.5.13', date: '2026-03-25', title: 'The Clean Build Sync', details: ['Fuerza de construcción v13.', 'Reparación de dependencias críticas.', 'Sincronización Total Triple Branch.'] },
-        { version: 'v3.1.5.12', date: '2026-03-25', title: 'The Great Awakening', details: ['Fuerza de sincronización v12 (Dual Branch Push).', 'Limpieza profunda de caché de Vercel.', 'Refuerzo de carga de Datos Demo v4.'] },
         { version: 'v3.1.5.8', date: '2026-03-25', title: 'Universal Sync & Master Hub', details: ['Motor de Demos Universal con IDs UUID.', 'Centro de Control Maestro con visibilidad robusta.', 'Sincronización de Base de Datos para lanzamientos globales.'] },
         { version: 'v3.1.5.7', date: '2026-03-25', title: 'Onboarding & Demo Experience', details: ['Botones claros para Cargar vs Borrar Datos de Ejemplo.', 'Nueva opción "Vaciar Suite" para reset de fábrica.', 'Mejora en visibilidad de opciones iniciales para clientes nuevos.'] },
         { version: 'v3.1.5.6', date: '2026-03-23', title: 'Sincronización Trial & Demo v2', details: ['Sincronización de datos demo con nuevas funcionalidades.', 'Forzado de despliegue Vercel.', 'Corrección de indicadores de versión en Login/Landing.'] },
@@ -209,7 +209,7 @@ export default function AdminLayout() {
                         {/* Version Indicator & What's New */}
                         <div className="flex flex-col items-end mr-1 sm:mr-2">
                              <span className="text-[9px] font-black text-primary-500 dark:text-primary-400 tracking-[0.2em] uppercase hidden sm:block italic">Maestro Sincronizado</span>
-                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.13</span>
+                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.14</span>
                         </div>
 
                         <button 
@@ -243,7 +243,7 @@ export default function AdminLayout() {
                                 </div>
                                 <div className="hidden sm:block text-left">
                                     <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{user?.name}</p>
-                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.5.12 (AutoBook Pro)</p>
+                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.5.14 (AutoBook Pro)</p>
                                 </div>
                                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${settingsOpen ? 'rotate-180' : ''}`} />
                             </button>
