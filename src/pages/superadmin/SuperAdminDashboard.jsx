@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { loadSuperAdminData, superAdminDeleteUser, addUser as addSuperAdminUser, superAdminDeleteWorkspace, getGlobalEmail, setGlobalEmail, superAdminCreateTenant, loadOnboardingRequests, updateOnboardingStatus, superAdminApproveOnboarding } from '../../lib/supabaseService'
+import { loadSuperAdminData, superAdminDeleteUser, addUser as addSuperAdminUser, superAdminDeleteWorkspace, getGlobalEmail, setGlobalEmail, superAdminCreateTenant, loadOnboardingRequests, updateOnboardingStatus, superAdminApproveOnboarding, deleteAllOnboardingRequests } from '../../lib/supabaseService'
 import { Building2, Users, CreditCard, Activity, Search, ShieldAlert, CheckCircle2, XCircle, UserPlus, Database, Lock, User, AlertTriangle, MapPin, Copy } from 'lucide-react'
 
 export default function SuperAdminDashboard() {
@@ -135,6 +135,19 @@ export default function SuperAdminDashboard() {
         setActionLoading(false)
     }
 
+    const handleDeleteAllOnboarding = async () => {
+        if (!window.confirm('⚠️ ¿Estás SEGURO de que deseas BORRAR TODAS las solicitudes de onboarding? Esta acción no se puede deshacer.')) return
+        setActionLoading(true)
+        const success = await deleteAllOnboardingRequests()
+        if (success) {
+            alert('Todas las solicitudes han sido eliminadas.')
+            await fetchData()
+        } else {
+            alert('Error al eliminar las solicitudes.')
+        }
+        setActionLoading(false)
+    }
+
     const handleCreateUser = async (e) => {
         e.preventDefault()
         setActionLoading(true)
@@ -256,7 +269,10 @@ export default function SuperAdminDashboard() {
             <div className="glass-card rounded-2xl overflow-hidden border border-dark-300 relative">
                 <div className="p-5 border-b border-dark-300 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <h2 className="text-lg font-bold text-white">
-                        {activeTab === 'editoriales' ? 'Directorio de Editoriales' : activeTab === 'settings' ? 'Global Settings' : 'Gestión Global de Usuarios'}
+                        {activeTab === 'editoriales' ? 'Directorio de Editoriales' : 
+                         activeTab === 'usuarios' ? 'Gestión Global de Usuarios' :
+                         activeTab === 'solicitudes' ? 'Solicitudes de Onboarding' :
+                         'Configuración Global'}
                     </h2>
 
                     {activeTab !== 'settings' && (
@@ -281,6 +297,15 @@ export default function SuperAdminDashboard() {
                             {activeTab === 'usuarios' && (
                                 <button onClick={() => setShowCreateModal(true)} className="btn-primary h-10 px-4 flex items-center justify-center gap-2 shrink-0 bg-emerald-500 hover:bg-emerald-400">
                                     <UserPlus className="w-4 h-4" /> Registrar Usuario
+                                </button>
+                            )}
+
+                            {activeTab === 'solicitudes' && (
+                                <button 
+                                    onClick={handleDeleteAllOnboarding} 
+                                    className="btn-primary h-10 px-4 flex items-center justify-center gap-2 shrink-0 bg-rose-600 hover:bg-rose-500 border-rose-700"
+                                >
+                                    <ShieldAlert className="w-4 h-4" /> Borrar Todas
                                 </button>
                             )}
                         </div>
@@ -368,7 +393,7 @@ export default function SuperAdminDashboard() {
                                 )}
                             </tbody>
                         </table>
-                    ) : (
+                    ) : activeTab === 'usuarios' ? (
                         <table className="w-full text-left border-collapse min-w-[800px]">
                             <thead>
                                 <tr className="bg-dark-200/50 text-dark-800 text-[11px] uppercase tracking-wider">
@@ -435,7 +460,7 @@ export default function SuperAdminDashboard() {
                                 )}
                             </tbody>
                         </table>
-                    )}
+                    ) : null}
 
                     {activeTab === 'solicitudes' && (
                         <table className="w-full text-left border-collapse min-w-[1000px]">

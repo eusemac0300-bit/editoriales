@@ -1599,6 +1599,18 @@ export async function updateOnboardingStatus(requestId, status, notes = '') {
     return data[0]
 }
 
+export async function deleteAllOnboardingRequests() {
+    const { error } = await supabase
+        .from('onboarding_requests')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+    if (error) {
+        console.error('Error deleting all requests:', error)
+        return false
+    }
+    return true
+}
+
 export async function superAdminApproveOnboarding(request) {
     try {
         // 1. Create Tenant
