@@ -204,7 +204,12 @@ export default function AdminDashboard() {
                         </button>
                         <button 
                             onClick={async () => {
-                                await loadDemo()
+                                try {
+                                    await loadDemo()
+                                    alert('¡ÉXITO! Datos de ejemplo cargados correctamente.')
+                                } catch (err) {
+                                    alert(`ERROR DE CARGA: ${err.message || err.toString()}`)
+                                }
                             }}
                             className="px-8 h-12 border border-slate-200 dark:border-dark-300 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-all font-bold text-slate-700 dark:text-dark-900 flex items-center justify-center gap-2 shadow-sm"
                         >

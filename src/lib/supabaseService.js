@@ -1012,17 +1012,12 @@ export async function seedDemoData(tenantId, adminUserId) {
     }
 
     async function safeUpsert(table, data, label) {
-        try {
-            const { error } = await supabase.from(table).upsert(data)
-            if (error) {
-                console.warn(`[Seeding] Fallo suave en ${label} (${table}):`, error.message)
-                return false
-            }
-            return true
-        } catch (err) {
-            console.error(`[Seeding] Error fatal en ${label}:`, err)
-            return false
+        const { error } = await supabase.from(table).upsert(data)
+        if (error) {
+            console.error(`[Seeding] Error en ${label} (${table}):`, error.message)
+            throw new Error(`Error en ${label}: ${error.message}`)
         }
+        return true
     }
 
     try {
