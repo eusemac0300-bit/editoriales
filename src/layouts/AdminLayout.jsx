@@ -16,13 +16,13 @@ const navItems = [
         icon: ShoppingCart,
         subItems: [
             { to: '/admin/ventas', label: 'sales' },
-            { to: '/admin/cotizaciones', label: 'quotes' },
             { to: '/admin/eventos', label: 'events' },
             { to: '/admin/consignaciones', label: 'consignments' },
         ]
     },
     { to: '/admin/inventario', icon: Package, label: 'inventory' },
     { to: '/admin/kanban', icon: Kanban, label: 'production' },
+    { to: '/admin/cotizaciones', icon: Calculator, label: 'quotes' },
     { to: '/admin/escandallo', icon: Calculator, label: 'escandallo' },
     { to: '/admin/proveedores', icon: Contact, label: 'suppliers' },
     { to: '/admin/clientes', icon: Building, label: 'clients' },
