@@ -1639,13 +1639,60 @@ export async function superAdminApproveOnboarding(request) {
         // 3. Seed Demo Data so users can practice!
         await seedDemoData(tenantId, userId);
 
-        // 4. Update Request
+        // 4. Set Initial Version
+        await supabase.from('tenants').update({ version_installed: 'v3.1.5.7' }).eq('id', tenantId);
+
+        // 5. Update Request
         return { success: true, tenantId, userId, editorial_name: request.editorial_name }
     } catch (err) {
         console.error('Approval error:', err)
         return { success: false, error: err.message }
     }
 }
+
+// ============ GLOBAL APP VERSIONS (MASTER HUB) ============
+export async function getLatestAppVersion() {
+    try {
+        const { data, error } = await supabase
+            .from('app_versions')
+            .select('*')
+            .order('release_date', { ascending: false })
+            .limit(1)
+            .single()
+        
+        if (error) {
+            if (error.code === 'PGRST116') return { version: 'v3.1.5.0' } // Default if empty
+            throw error
+        }
+        return data
+    } catch (err) {
+        console.warn('App version check warning (table might not exist yet):', err.message)
+        return { version: 'v3.1.5.6' }
+    }
+}
+
+export async function publishAppVersion(version, notes = []) {
+    const { data, error } = await supabase
+        .from('app_versions')
+        .insert({
+            version,
+            notes,
+            release_date: new Date().toISOString()
+        })
+        .select()
+    if (error) throw error
+    return data[0]
+}
+
+export async function updateTenantVersion(tenantId, version) {
+    const { error } = await supabase
+        .from('tenants')
+        .update({ version_installed: version })
+        .eq('id', tenantId)
+    if (error) throw error
+    return true
+}
+
 export async function clearDemoData(tenantId) {
     if (!tenantId) return false
     try {
