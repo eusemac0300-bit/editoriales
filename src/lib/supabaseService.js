@@ -431,6 +431,25 @@ export async function loginUser(email, password) {
     const isSuper = email === 'eusemac@editorial.cl' && password === 'Marca2022#1';
 
     if (isMaster || isSuper) {
+        // Look up the real user record to get the REAL tenant_id
+        const { data: realUser } = await supabase.from('users').select('*').eq('email', email).single()
+        
+        if (realUser) {
+            console.log('[Login] Master/Super found in DB with tenant:', realUser.tenant_id)
+            return {
+                id: realUser.id,
+                tenantId: realUser.tenant_id,
+                email: realUser.email,
+                name: realUser.name || (isSuper ? 'Eusebio Manriquez (Owner)' : 'Eusebio Maestro'),
+                role: isSuper ? 'SUPERADMIN' : realUser.role || 'ADMIN',
+                avatar: realUser.avatar || 'EM',
+                title: isSuper ? 'Súper Administrador' : 'Administrador Maestro',
+                firstLogin: false
+            }
+        }
+        
+        // Fallback only if user doesn't exist in DB yet
+        console.warn('[Login] Master/Super NOT found in DB, using fallback')
         return {
             id: isSuper ? 'super-val-uid' : 'master-val-uid',
             tenantId: isSuper ? 't_master' : '00000000-0000-0000-0000-000000000000', 
@@ -446,9 +465,22 @@ export async function loginUser(email, password) {
     // 4. Trial/Demo User (Backdoor for Demo Flow)
     const isTrial = email === 'trial@editorial.cl' && password === 'demo';
     if (isTrial) {
+        const { data: trialUser } = await supabase.from('users').select('*').eq('email', email).single()
+        if (trialUser) {
+            return {
+                id: trialUser.id,
+                tenantId: trialUser.tenant_id,
+                email: trialUser.email,
+                name: trialUser.name || 'Usuario Trial',
+                role: trialUser.role || 'ADMIN',
+                avatar: trialUser.avatar || 'UT',
+                title: 'Editor de Prueba',
+                firstLogin: false
+            }
+        }
         return {
             id: 'trial-demo-uid',
-            tenantId: 'demo-tenant-id', // Fixed demo tenant
+            tenantId: 'demo-tenant-id',
             email: email,
             name: 'Usuario Trial (Demo)',
             role: 'ADMIN',
