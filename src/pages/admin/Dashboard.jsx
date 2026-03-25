@@ -15,6 +15,9 @@ export default function AdminDashboard() {
     const published = (books || []).filter(b => b.status === 'Publicado' || b.status === 'Published').length
     const inProduction = (books || []).filter(b => !['Publicado', 'Original', 'Published'].includes(b.status)).length
 
+    // v3.1.5.17 DIAGNOSTIC - remove after confirming
+    console.log('[Dashboard v3.1.5.17]', { tenant: user?.tenantId, email: user?.email, totalBooks, hasDemoData, firstBookId: books?.[0]?.id })
+
     // Ventas
     const currentMonth = new Date().toISOString().slice(0, 7)
     const activeSales = (finances?.sales || []).filter(s => s.status !== 'Anulada')
