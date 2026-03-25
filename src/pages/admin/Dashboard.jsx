@@ -77,17 +77,17 @@ export default function AdminDashboard() {
                             <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Centro de Control Maestro</p>
                             <p className="text-xs font-black text-slate-800 dark:text-white-100 flex items-center gap-2 mt-0.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
-                                v3.1.5.13 LISTA PARA LIBERAR
+                                v3.1.5.15 LISTA PARA LIBERAR
                             </p>
                         </div>
                         <button
                             disabled={isPublishing}
                             onClick={async () => {
-                                if (window.confirm('¿Publicar la v3.1.5.13 para todas las editoriales ahora? Esto notificará a todos tus clientes.')) {
+                                if (window.confirm('¿Publicar la v3.1.5.15 para todas las editoriales ahora? Esto notificará a todos tus clientes.')) {
                                     setIsPublishing(true)
                                     try {
-                                        await publishAppVersion('v3.1.5.13', ['The Clean Build Sync', 'Sincro v13', 'Universal Hub'])
-                                        alert('¡ÉXITO! Versión v3.1.5.13 liberada globalmente. Se ha notificado a todas las editoriales.')
+                                        await publishAppVersion('v3.1.5.15', ['Real Sync & Atomic Refresh', 'Refresco Automático', 'Ffffffff- Prefix'])
+                                        alert('¡ÉXITO! Versión v3.1.5.15 liberada globalmente. Se ha notificado a todas las editoriales.')
                                     } catch (err) {
                                         console.error('Master Publish Error:', err);
                                         alert('Error al publicar. Intenta de nuevo.')
@@ -206,9 +206,10 @@ export default function AdminDashboard() {
                             onClick={async () => {
                                 try {
                                     await loadDemo()
-                                    alert('¡ÉXITO! Datos de ejemplo cargados correctamente.')
+                                    alert('¡ÉXITO! v3.1.5.15 — Datos de ejemplo cargados. La página se recargará para mostrarlos.')
+                                    window.location.reload()
                                 } catch (err) {
-                                    alert(`ERROR DE CARGA: ${err.message || err.toString()}`)
+                                    alert(`ERROR DE CARGA v15: ${err.message || err.toString()}`)
                                 }
                             }}
                             className="px-8 h-12 border border-slate-200 dark:border-dark-300 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-all font-bold text-slate-700 dark:text-dark-900 flex items-center justify-center gap-2 shadow-sm"
