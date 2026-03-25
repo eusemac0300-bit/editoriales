@@ -56,8 +56,8 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.13', date: '2026-03-25', title: 'The Clean Build Sync', details: ['Fuerza de construcción v13.', 'Reparación de dependencias críticas.', 'Sincronización Total Triple Branch.'] },
         { version: 'v3.1.5.12', date: '2026-03-25', title: 'The Great Awakening', details: ['Fuerza de sincronización v12 (Dual Branch Push).', 'Limpieza profunda de caché de Vercel.', 'Refuerzo de carga de Datos Demo v4.'] },
-        { version: 'v3.1.5.12', date: '2026-03-25', title: 'Universal Cache Breaker', details: ['Fuerza de sincronización v11.', 'Limpieza de caché de despliegue Vercel.', 'Detección de datos demo optimizada.'] },
         { version: 'v3.1.5.8', date: '2026-03-25', title: 'Universal Sync & Master Hub', details: ['Motor de Demos Universal con IDs UUID.', 'Centro de Control Maestro con visibilidad robusta.', 'Sincronización de Base de Datos para lanzamientos globales.'] },
         { version: 'v3.1.5.7', date: '2026-03-25', title: 'Onboarding & Demo Experience', details: ['Botones claros para Cargar vs Borrar Datos de Ejemplo.', 'Nueva opción "Vaciar Suite" para reset de fábrica.', 'Mejora en visibilidad de opciones iniciales para clientes nuevos.'] },
         { version: 'v3.1.5.6', date: '2026-03-23', title: 'Sincronización Trial & Demo v2', details: ['Sincronización de datos demo con nuevas funcionalidades.', 'Forzado de despliegue Vercel.', 'Corrección de indicadores de versión en Login/Landing.'] },
@@ -209,7 +209,7 @@ export default function AdminLayout() {
                         {/* Version Indicator & What's New */}
                         <div className="flex flex-col items-end mr-1 sm:mr-2">
                              <span className="text-[9px] font-black text-primary-500 dark:text-primary-400 tracking-[0.2em] uppercase hidden sm:block italic">Maestro Sincronizado</span>
-                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.12</span>
+                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.13</span>
                         </div>
 
                         <button 
