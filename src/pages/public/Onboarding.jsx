@@ -5,6 +5,7 @@ import {
     AlertCircle, ArrowRight, ShieldCheck, Globe, MapPin, Camera, RefreshCw, Sparkles
 } from 'lucide-react'
 import { submitOnboardingRequest } from '../../lib/supabaseService'
+import { sendAdminNotification } from '../../lib/notificationService'
 import { supabase } from '../../lib/supabase'
 
 export default function Onboarding() {
@@ -70,6 +71,19 @@ export default function Onboarding() {
 
         try {
             await submitOnboardingRequest(formData)
+            
+            // Notificamos a Euse (automático)
+            try {
+                const message = `Se ha recibido una nueva solicitud de demo:\nEditorial: ${formData.editorial_name}\nNombre: ${formData.admin_name}\nEmail: ${formData.admin_email}\nPaís: ${formData.country}\n\nRevisar en el Panel de SuperAdmin: https://editoriales.vercel.app/superadmin`;
+                await sendAdminNotification({
+                    subject: `Nueva Demo Solicitada: ${formData.editorial_name}`,
+                    message: message,
+                    type: 'Onboarding'
+                });
+            } catch (notifyError) {
+                console.warn('Silent notification error:', notifyError);
+            }
+
             setSuccess(true)
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' })

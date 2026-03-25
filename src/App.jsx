@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import RouteGuard from './guards/RouteGuard'
 import Login from './pages/Login'
+import ForgotPassword from './pages/ForgotPassword'
 import AdminLayout from './layouts/AdminLayout'
 import FreelanceLayout from './layouts/FreelanceLayout'
 import AuthorLayout from './layouts/AuthorLayout'
@@ -60,6 +61,7 @@ function AppRoutes() {
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/validar-editorial" element={<Onboarding />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

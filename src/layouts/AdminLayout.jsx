@@ -1,4 +1,5 @@
 import { useState } from 'react'
+// VERSIÓN FORZADA EN LOCAL: v3.1.5.7 (SINCRO MAESTRO)
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { loadPermissions } from '../lib/permissions'
@@ -55,6 +56,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.7', date: '2026-03-25', title: 'Onboarding & Demo Experience', details: ['Botones claros para Cargar vs Borrar Datos de Ejemplo.', 'Nueva opción "Vaciar Suite" para reset de fábrica.', 'Mejora en visibilidad de opciones iniciales para clientes nuevos.'] },
         { version: 'v3.1.5.6', date: '2026-03-23', title: 'Sincronización Trial & Demo v2', details: ['Sincronización de datos demo con nuevas funcionalidades.', 'Forzado de despliegue Vercel.', 'Corrección de indicadores de versión en Login/Landing.'] },
         { version: 'v3.1.5.5', date: '2026-03-23', title: 'Flujo Ciclo Editorial (Manual v1)', details: ['Fórmula de Regalías sobre PVP Neto (10%).', 'Gestión de Contratos con estados y vencimientos.', 'Cuentas por Cobrar con alertas de atraso.', 'Descuento automático para Distribuidoras (60%).'] },
         { version: 'v3.1.5.4', date: '2026-03-23', title: 'Navegación y Estabilidad', details: ['Navegación directa al libro desde consignas.', 'Corrección de error en lista expandida.', 'Optimización de renders en tablas.'] },
@@ -116,7 +118,7 @@ export default function AdminLayout() {
                         <div>
                             <h1 className="font-bold text-white text-sm">Editorial Pro</h1>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">
-                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.5.4 (MASTER SYNC)</span>
+                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.5.7 (MASTER SYNC)</span>
                             </p>
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white">
@@ -203,8 +205,8 @@ export default function AdminLayout() {
                     <div className="flex items-center gap-3">
                         {/* Version Indicator & What's New */}
                         <div className="flex flex-col items-end mr-1 sm:mr-2">
-                            <span className="text-[9px] font-black text-rose-500 dark:text-rose-400 tracking-[0.2em] uppercase hidden sm:block">Fuerza Update</span>
-                            <span className="text-[10px] font-black text-white bg-rose-500 px-2 py-0.5 rounded-full sm:mt-0.5 border border-rose-400 shadow-lg shadow-rose-500/30 animate-pulse">{updates[0].version}</span>
+                             <span className="text-[9px] font-black text-primary-500 dark:text-primary-400 tracking-[0.2em] uppercase hidden sm:block italic">Maestro Sincronizado</span>
+                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.7</span>
                         </div>
 
                         <button 

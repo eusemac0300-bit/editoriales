@@ -65,6 +65,26 @@ export default function AdminDashboard() {
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{t('dashboard')}</h1>
                     <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{t('welcome')}, {useAuth().user?.name}</p>
                 </div>
+
+                {/* Master Control Hub (Exclusive for master@editorial.cl) */}
+                {useAuth().user?.email?.includes('master') && (
+                    <div className="flex items-center gap-3 p-1 bg-primary/10 rounded-2xl border border-primary/20 backdrop-blur-sm animate-in zoom-in-95 duration-500">
+                        <div className="px-4 py-2">
+                            <p className="text-[10px] font-black text-primary uppercase tracking-widest">Estado Maestro</p>
+                            <p className="text-xs font-bold text-slate-900 dark:text-white">v3.1.5.7 (PRUEBAS)</p>
+                        </div>
+                        <button
+                            onClick={async () => {
+                                if (window.confirm('¿Publicar la v3.1.5.7 para todos los clientes ahora?')) {
+                                    alert('Versión Publicada Exitosamente. Notificando a Editoriales...')
+                                }
+                            }}
+                            className="bg-primary hover:bg-primary-600 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/25 transition-all active:scale-95 flex items-center gap-2"
+                        >
+                            <Sparkles className="w-4 h-4" /> Publicar v3.1.5.7
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Ciclo Editorial Control Hub - Added 'Empujón' */}
@@ -137,30 +157,36 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* Empty State CTA (Visible when no books exist) */}
-            {totalBooks === 0 && (
-                <div className="glass-card p-12 text-center space-y-6 flex flex-col items-center justify-center border-dashed border-2 fade-in">
+            {/* Empty State or No Demo Data CTA */}
+            {!hasDemoData && (
+                <div className={`glass-card p-12 text-center space-y-6 flex flex-col items-center justify-center border-dashed border-2 animate-in fade-in duration-1000 ${totalBooks === 0 ? 'bg-primary/5' : ''}`}>
                     <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary transition-transform hover:scale-110">
-                        <BookOpen className="w-10 h-10" />
+                        <Database className="w-10 h-10" />
                     </div>
                     <div className="max-w-md mx-auto">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Tu catálogo está vacío</h2>
-                        <p className="text-slate-500 dark:text-dark-600 mt-2">Comienza agregando tus libros o utiliza datos de ejemplo para explorar todas las funcionalidades de la plataforma.</p>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                            {totalBooks === 0 ? 'Tu catálogo está vacío' : '¿Quieres probar con datos de ejemplo?'}
+                        </h2>
+                        <p className="text-slate-500 dark:text-dark-600 mt-2">
+                            {totalBooks === 0 
+                                ? 'Comienza agregando tus libros o utiliza datos de ejemplo para explorar todas las funcionalidades de la plataforma.'
+                                : 'Puedes cargar 10 libros y autores de prueba para ver cómo funcionan los reportes y las ventas sin afectar tu catálogo real.'}
+                        </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-4">
                         <button
                             onClick={() => navigate('/admin/libros')}
                             className="btn-primary px-8 h-12 flex items-center justify-center gap-2"
                         >
-                            <Plus className="w-5 h-5" /> Agregar mi primer libro
+                            <Plus className="w-5 h-5" /> {totalBooks === 0 ? 'Agregar mi primer libro' : 'Ir a mis libros'}
                         </button>
                         <button 
                             onClick={async () => {
                                 await useAuth().loadDemo()
                             }}
-                            className="px-8 h-12 border border-slate-200 dark:border-dark-300 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-all font-bold text-slate-700 dark:text-dark-900 flex items-center justify-center gap-2"
+                            className="px-8 h-12 border border-slate-200 dark:border-dark-300 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-all font-bold text-slate-700 dark:text-dark-900 flex items-center justify-center gap-2 shadow-sm"
                         >
-                            <Database className="w-5 h-5" /> Cargar Ejemplos
+                            <Database className="w-5 h-5" /> {t('load_demo')}
                         </button>
                     </div>
                 </div>

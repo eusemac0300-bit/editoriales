@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { BookOpen, Mail, Lock, ArrowRight } from 'lucide-react'
 
@@ -59,7 +59,7 @@ export default function Login() {
                                 <h1 className="text-4xl font-black text-white tracking-tighter">
                                     Editorial <span className="text-primary">Pro</span>
                                 </h1>
-                                <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.5.6 (AutoBook Pro)</p>
+                                <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.5.7 (AutoBook Pro)</p>
                         </div>
                     </div>
                 </div>
@@ -120,9 +120,9 @@ export default function Login() {
                     </form>
 
                     <div className="mt-4 text-center">
-                        <a href="#" className="text-sm text-primary hover:text-primary-300 transition-colors">
+                        <Link to="/forgot-password" title="Recuperar acceso" className="text-sm text-primary hover:text-primary-300 transition-colors">
                             ¿Olvidaste tu contraseña?
-                        </a>
+                        </Link>
                     </div>
                 </div>
 
