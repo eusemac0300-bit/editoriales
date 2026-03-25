@@ -56,8 +56,8 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
-        { version: 'v3.1.5.11', date: '2026-03-25', title: 'Universal Cache Breaker', details: ['Fuerza de sincronización v11.', 'Limpieza de caché de despliegue Vercel.', 'Detección de datos demo optimizada.'] },
-        { version: 'v3.1.5.10', date: '2026-03-25', title: 'The UUID Fix & Demo Sync', details: ['Identificación robusta de datos demo con prefijo UUID.', 'Sincronización de banners para lanzamientos globales.', 'Optimización de carga masiva de libros de prueba.'] },
+        { version: 'v3.1.5.12', date: '2026-03-25', title: 'The Great Awakening', details: ['Fuerza de sincronización v12 (Dual Branch Push).', 'Limpieza profunda de caché de Vercel.', 'Refuerzo de carga de Datos Demo v4.'] },
+        { version: 'v3.1.5.12', date: '2026-03-25', title: 'Universal Cache Breaker', details: ['Fuerza de sincronización v11.', 'Limpieza de caché de despliegue Vercel.', 'Detección de datos demo optimizada.'] },
         { version: 'v3.1.5.8', date: '2026-03-25', title: 'Universal Sync & Master Hub', details: ['Motor de Demos Universal con IDs UUID.', 'Centro de Control Maestro con visibilidad robusta.', 'Sincronización de Base de Datos para lanzamientos globales.'] },
         { version: 'v3.1.5.7', date: '2026-03-25', title: 'Onboarding & Demo Experience', details: ['Botones claros para Cargar vs Borrar Datos de Ejemplo.', 'Nueva opción "Vaciar Suite" para reset de fábrica.', 'Mejora en visibilidad de opciones iniciales para clientes nuevos.'] },
         { version: 'v3.1.5.6', date: '2026-03-23', title: 'Sincronización Trial & Demo v2', details: ['Sincronización de datos demo con nuevas funcionalidades.', 'Forzado de despliegue Vercel.', 'Corrección de indicadores de versión en Login/Landing.'] },
@@ -121,7 +121,7 @@ export default function AdminLayout() {
                         <div>
                             <h1 className="font-bold text-white text-sm">Editorial Pro</h1>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">
-                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.5.7 (MASTER SYNC)</span>
+                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.5.12 (MASTER SYNC)</span>
                             </p>
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white">
@@ -209,7 +209,7 @@ export default function AdminLayout() {
                         {/* Version Indicator & What's New */}
                         <div className="flex flex-col items-end mr-1 sm:mr-2">
                              <span className="text-[9px] font-black text-primary-500 dark:text-primary-400 tracking-[0.2em] uppercase hidden sm:block italic">Maestro Sincronizado</span>
-                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.11</span>
+                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.12</span>
                         </div>
 
                         <button 
@@ -243,7 +243,7 @@ export default function AdminLayout() {
                                 </div>
                                 <div className="hidden sm:block text-left">
                                     <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{user?.name}</p>
-                                    <p className="text-[10px] text-slate-500 dark:text-dark-600 font-medium">{userRole}</p>
+                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.5.12 (AutoBook Pro)</p>
                                 </div>
                                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${settingsOpen ? 'rotate-180' : ''}`} />
                             </button>
