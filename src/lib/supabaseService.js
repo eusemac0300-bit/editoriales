@@ -998,16 +998,24 @@ export async function seedDemoData(tenantId, adminUserId) {
     const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
     const safeTenantId = isUUID(tenantId) ? tenantId : "00000000-0000-0000-0000-000000000000"; // Fallback para UUID
 
+    // Helper para generar UUIDs deterministas o aleatorios
+    const generateId = (prefix, i) => {
+        // Formato: 00000000-0000-4000-8000-00000000000[i]
+        // O simplemente usar el tenantId como base
+        return tenantId.substring(0, 31) + (1000 + i).toString().substring(0, 5);
+    };
+
+    // Si el tenantId no es UUID, no podemos seguir (seguridad)
+    if (!isUUID(tenantId)) {
+        console.error('[Seeding] El tenantId no es un UUID válido:', tenantId);
+        return false;
+    }
+
     async function safeUpsert(table, data, label) {
         try {
-            const { error } = await supabase.from(table).upsert(data, { onConflict: 'id' })
+            const { error } = await supabase.from(table).upsert(data)
             if (error) {
                 console.warn(`[Seeding] Fallo suave en ${label} (${table}):`, error.message)
-                // Caso especial: tenant_id UUID en tabla 'expenses'
-                if (table === 'expenses' && error.message.includes('uuid')) {
-                    const fixedData = data.map(item => ({ ...item, tenant_id: safeTenantId }))
-                    await supabase.from(table).upsert(fixedData)
-                }
                 return false
             }
             return true
@@ -1022,17 +1030,17 @@ export async function seedDemoData(tenantId, adminUserId) {
 
         // 1. Core Master & Authors
         const demoAuthors = [
-            { id: `master_${tenantId}`, tenant_id: tenantId, email: `master@editorial.cl`, password: 'master2026', name: 'Eusebio Maestro', role: 'ADMIN', avatar: 'EM', first_login: false },
-            { id: `demo_u1_${tenantId}`, tenant_id: tenantId, email: `autor1_${tenantId}@ejemplo.com`, password: 'demo', name: 'Isabel Allende (Demo)', role: 'AUTOR', avatar: 'IA', first_login: true },
-            { id: `demo_u2_${tenantId}`, tenant_id: tenantId, email: `autor2_${tenantId}@ejemplo.com`, password: 'demo', name: 'Jorge Luis Borges (Demo)', role: 'AUTOR', avatar: 'JB', first_login: true },
-            { id: `demo_u3_${tenantId}`, tenant_id: tenantId, email: `autor3_${tenantId}@ejemplo.com`, password: 'demo', name: 'Gabriela Mistral (Demo)', role: 'AUTOR', avatar: 'GM', first_login: true }
+            { id: tenantId, tenant_id: tenantId, email: `master@editorial.cl`, password: 'master2026', name: 'Eusebio Maestro', role: 'ADMIN', avatar: 'EM', first_login: false },
+            { id: '11111111-1111-1111-1111-' + tenantId.substring(24), tenant_id: tenantId, email: `autor1@demo.cl`, password: 'demo', name: 'Isabel Allende (Demo)', role: 'AUTOR', avatar: 'IA', first_login: true },
+            { id: '22222222-2222-2222-2222-' + tenantId.substring(24), tenant_id: tenantId, email: `autor2@demo.cl`, password: 'demo', name: 'Jorge Luis Borges (Demo)', role: 'AUTOR', avatar: 'JB', first_login: true },
+            { id: '33333333-3333-3333-3333-' + tenantId.substring(24), tenant_id: tenantId, email: `autor3@demo.cl`, password: 'demo', name: 'Gabriela Mistral (Demo)', role: 'AUTOR', avatar: 'GM', first_login: true }
         ]
         await safeUpsert('users', demoAuthors, 'Autores')
 
         // 2. Suppliers
         const demoSuppliers = [
-            { id: `demo_sup1_${tenantId}`, tenant_id: tenantId, name: 'Imprenta Nacional', type: 'IMPRENTA', email: 'imprenta@demo.cl' },
-            { id: `demo_sup2_${tenantId}`, tenant_id: tenantId, name: 'Distribuidora Lector', type: 'DISTRIBUIDORA', email: 'ventas@lector.cl' }
+            { id: '55555555-5555-5555-5555-' + tenantId.substring(24), tenant_id: tenantId, name: 'Imprenta Nacional', type: 'IMPRENTA', email: 'imprenta@demo.cl' },
+            { id: '66666666-6666-6666-6666-' + tenantId.substring(24), tenant_id: tenantId, name: 'Distribuidora Lector', type: 'DISTRIBUIDORA', email: 'ventas@lector.cl' }
         ]
         await safeUpsert('suppliers', demoSuppliers, 'Proveedores')
 
@@ -1042,25 +1050,30 @@ export async function seedDemoData(tenantId, adminUserId) {
             "El Último Manuscrito", "Brisas del Sur", "Fragmentos de Silencio",
             "La Ciudad de Cristal", "Relatos Perdidos", "Ecos de Montaña", "Poesía Reunida"
         ]
-        const demoBooks = titles.map((title, i) => ({
-            id: `demo_b${i}_${tenantId}`,
-            tenant_id: tenantId,
-            title: title,
-            author_id: demoAuthors[i % 3].id,
-            author_name: demoAuthors[i % 3].name,
-            status: i < 6 ? 'Publicado' : 'Edición',
-            pvp: 15000 + (i * 1000),
-            isbn: `978-956-00-${100 + i}`,
-            sku: `DEMO-${i}`,
-            genre: i % 2 === 0 ? 'Novela' : 'Ensayo',
-            royalty_percent: 10,
-            advance: i === 0 ? 50000 : 0,
-            created_at: monthAgo
-        }))
+        
+        const demoBooks = titles.map((title, i) => {
+            const bookId = (10000000 + i).toString().padStart(8, '0') + '-bbbb-cccc-dddd-' + tenantId.substring(24);
+            return {
+                id: bookId,
+                tenant_id: tenantId,
+                title: title,
+                author_id: demoAuthors[i % 3].id,
+                author_name: demoAuthors[i % 3].name,
+                status: i < 6 ? 'Publicado' : 'Edición',
+                pvp: 15000 + (i * 1000),
+                isbn: `978-956-00-${100 + i}`,
+                sku: `DEMO-${i}`,
+                genre: i % 2 === 0 ? 'Novela' : 'Ensayo',
+                royalty_percent: 10,
+                advance: i === 0 ? 50000 : 0,
+                created_at: monthAgo
+            };
+        });
         await safeUpsert('books', demoBooks, 'Libros')
 
-        // 4. Inventory, Sales & Expenses
+        // 4. Inventory
         const demoInventory = demoBooks.map((b, i) => ({
+            id: (20000000 + i).toString().padStart(8, '0') + '-eeee-ffff-aaaa-' + tenantId.substring(24),
             tenant_id: tenantId,
             book_id: b.id,
             stock: Math.floor(100 + (Math.random() * 50)),
@@ -1068,8 +1081,9 @@ export async function seedDemoData(tenantId, adminUserId) {
         }))
         await safeUpsert('inventory_physical', demoInventory, 'Stock')
 
-        const demoSales = demoBooks.filter(b => b.status === 'Publicado').map(b => ({
-            id: `demo_s_${b.id}`,
+        // 5. Sales
+        const demoSales = demoBooks.filter(b => b.status === 'Publicado').map((b, i) => ({
+            id: (30000000 + i).toString().padStart(8, '0') + '-1111-2222-3333-' + tenantId.substring(24),
             tenant_id: tenantId,
             book_id: b.id,
             book_title: b.title,
@@ -1078,27 +1092,27 @@ export async function seedDemoData(tenantId, adminUserId) {
             unit_price: b.pvp,
             total_amount: b.pvp * 5,
             neto: Math.round(b.pvp * 5 / 1.19),
-            iva: Math.round(b.pvp * 5 * 0.19),
+            tax: Math.round(b.pvp * 5 * 0.19 / 1.19),
             status: 'Completada',
             sale_date: now
         }))
         await safeUpsert('sales', demoSales, 'Ventas')
 
-        // 5. Consignments & Documents (Added for latest v3.1.5.5+ features)
+        // 6. Consignments & Documents
         const demoConsignments = [
-            { id: `demo_c1_${tenantId}`, tenant_id: tenantId, book_id: demoBooks[0].id, client_name: 'Librería El Ateneo', sent_quantity: 20, sold_quantity: 5, status: 'activa', sent_date: monthAgo },
-            { id: `demo_c2_${tenantId}`, tenant_id: tenantId, book_id: demoBooks[1].id, client_name: 'Antártica Libros', sent_quantity: 15, sold_quantity: 0, status: 'activa', sent_date: now }
+            { id: iUUID(), tenant_id: tenantId, book_id: demoBooks[0].id, client_name: 'Librería El Ateneo', sent_quantity: 20, sold_quantity: 5, status: 'activa', sent_date: monthAgo },
+            { id: iUUID(), tenant_id: tenantId, book_id: demoBooks[1].id, client_name: 'Antártica Libros', sent_quantity: 15, sold_quantity: 0, status: 'activa', sent_date: now }
         ]
         await safeUpsert('consignments', demoConsignments, 'Consignaciones Demo')
 
         const demoDocs = [
-            { id: `demo_d1_${tenantId}`, tenant_id: tenantId, book_id: demoBooks[0].id, name: 'Contrato Autor - El Laberinto de Papel', category: 'Contrato', status: 'Vigente', start_date: monthAgo, end_date: now.split('T')[0], uploaded_by: 'Eusebio Maestro' }
+            { id: iUUID(), tenant_id: tenantId, book_id: demoBooks[0].id, name: 'Contrato Autor - El Laberinto de Papel', category: 'Contrato', status: 'Vigente', start_date: monthAgo, end_date: now.split('T')[0], uploaded_by: 'Eusebio Maestro' }
         ]
         await safeUpsert('documents', demoDocs, 'Documentos Demo')
 
         const demoExpenses = [
-            { id: `demo_exp_1_${tenantId}`, tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción SaaS (Demo)', amount: 35000, date: now, status: 'PAGADO' },
-            { id: `demo_exp_2_${tenantId}`, tenant_id: tenantId, category: 'MARKETING', description: 'Publicidad RRSS (Demo)', amount: 120000, date: now, status: 'PAGADO' }
+            { id: iUUID(), tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción SaaS (Demo)', amount: 35000, date: now, status: 'PAGADO' },
+            { id: iUUID(), tenant_id: tenantId, category: 'MARKETING', description: 'Publicidad RRSS (Demo)', amount: 120000, date: now, status: 'PAGADO' }
         ]
         await safeUpsert('expenses', demoExpenses, 'Gastos')
 
