@@ -1047,7 +1047,7 @@ export async function seedDemoData(tenantId, adminUserId) {
         ]
         
         const demoBooks = titles.map((title, i) => {
-            const bookId = (10000000 + i).toString().padStart(8, '0') + '-bbbb-cccc-dddd-' + tenantId.substring(24);
+            const bookId = 'ffffffff-' + (1000 + i).toString() + '-4000-8000-' + tenantId.substring(24);
             return {
                 id: bookId,
                 tenant_id: tenantId,
@@ -1068,7 +1068,7 @@ export async function seedDemoData(tenantId, adminUserId) {
 
         // 4. Inventory
         const demoInventory = demoBooks.map((b, i) => ({
-            id: (20000000 + i).toString().padStart(8, '0') + '-eeee-ffff-aaaa-' + tenantId.substring(24),
+            id: 'ffffffff-' + (2000 + i).toString() + '-4000-8000-' + tenantId.substring(24),
             tenant_id: tenantId,
             book_id: b.id,
             stock: Math.floor(100 + (Math.random() * 50)),
@@ -1078,7 +1078,7 @@ export async function seedDemoData(tenantId, adminUserId) {
 
         // 5. Sales
         const demoSales = demoBooks.filter(b => b.status === 'Publicado').map((b, i) => ({
-            id: (30000000 + i).toString().padStart(8, '0') + '-1111-2222-3333-' + tenantId.substring(24),
+            id: 'ffffffff-' + (3000 + i).toString() + '-4000-8000-' + tenantId.substring(24),
             tenant_id: tenantId,
             book_id: b.id,
             book_title: b.title,

@@ -11,7 +11,7 @@ export default function AdminDashboard() {
     const { books, inventory, finances, alerts } = data
 
     const totalBooks = (books || []).length
-    const hasDemoData = (books || []).some(b => b.id?.startsWith('demo_'))
+    const hasDemoData = (books || []).some(b => b.id?.startsWith('ffffffff-'))
     const published = (books || []).filter(b => b.status === 'Publicado' || b.status === 'Published').length
     const inProduction = (books || []).filter(b => !['Publicado', 'Original', 'Published'].includes(b.status)).length
 
@@ -77,17 +77,17 @@ export default function AdminDashboard() {
                             <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Centro de Control Maestro</p>
                             <p className="text-xs font-black text-slate-800 dark:text-white-100 flex items-center gap-2 mt-0.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
-                                v3.1.5.9 LISTA PARA LIBERAR
+                                v3.1.5.10 LISTA PARA LIBERAR
                             </p>
                         </div>
                         <button
                             disabled={isPublishing}
                             onClick={async () => {
-                                if (window.confirm('¿Publicar la v3.1.5.9 para todas las editoriales ahora? Esto notificará a todos tus clientes.')) {
+                                if (window.confirm('¿Publicar la v3.1.5.10 para todas las editoriales ahora? Esto notificará a todos tus clientes.')) {
                                     setIsPublishing(true)
                                     try {
-                                        await publishAppVersion('v3.1.5.9', ['Debug & Real Reporting', 'Diagnóstico de Errores', 'Sincro Maestro v3'])
-                                        alert('¡ÉXITO! Versión v3.1.5.9 liberada globalmente. Se ha notificado a todas las editoriales.')
+                                        await publishAppVersion('v3.1.5.10', ['The UUID Fix & Demo Sync', 'Identificación ffffffff-', 'Sincro Maestro v4'])
+                                        alert('¡ÉXITO! Versión v3.1.5.10 liberada globalmente. Se ha notificado a todas las editoriales.')
                                     } catch (err) {
                                         console.error('Master Publish Error:', err);
                                         alert('Error al publicar. Intenta de nuevo.')
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Demo Data Banner (Visible when demo books exist) */}
-            {(books || []).some(b => b.id.startsWith('demo_')) && (
+            {(books || []).some(b => b.id?.startsWith('ffffffff-')) && (
                 <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
                     <div className="flex items-center gap-4 text-center sm:text-left">
                         <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center shrink-0">
