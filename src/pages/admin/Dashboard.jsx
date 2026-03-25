@@ -77,17 +77,17 @@ export default function AdminDashboard() {
                             <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Centro de Control Maestro</p>
                             <p className="text-xs font-black text-slate-800 dark:text-white-100 flex items-center gap-2 mt-0.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
-                                v3.1.5.7 LISTA PARA LIBERAR
+                                v3.1.5.8 LISTA PARA LIBERAR
                             </p>
                         </div>
                         <button
                             disabled={isPublishing}
                             onClick={async () => {
-                                if (window.confirm('¿Publicar la v3.1.5.7 para todas las editoriales ahora? Esto notificará a todos tus clientes.')) {
+                                if (window.confirm('¿Publicar la v3.1.5.8 para todas las editoriales ahora? Esto notificará a todos tus clientes.')) {
                                     setIsPublishing(true)
                                     try {
-                                        await publishAppVersion('v3.1.5.7', ['Mejoras Onboarding', 'Datos Demo UX', 'Sync Maestro'])
-                                        alert('¡ÉXITO! Versión v3.1.5.7 liberada globalmente. Se ha notificado a todas las editoriales.')
+                                        await publishAppVersion('v3.1.5.8', ['Universal Sync & Master Hub', 'Motor de Demos UUID', 'Centro de Control Maestro'])
+                                        alert('¡ÉXITO! Versión v3.1.5.8 liberada globalmente. Se ha notificado a todas las editoriales.')
                                     } catch (err) {
                                         console.error('Master Publish Error:', err);
                                         alert('Error al publicar. Intenta de nuevo.')
