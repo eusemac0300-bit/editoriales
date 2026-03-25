@@ -69,8 +69,8 @@ export default function AdminDashboard() {
                     <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{t('welcome')}, {useAuth().user?.name}</p>
                 </div>
 
-                {/* Master Control Hub (Exclusive for master@editorial.cl) */}
-                {user?.email?.toLowerCase().includes('master') && (
+                {/* Master Control Hub (Exclusive for master@editorial.cl, maestro, eusemac) */}
+                {(user?.email?.toLowerCase().includes('master') || user?.email?.toLowerCase().includes('maestro') || user?.email?.toLowerCase().includes('eusemac')) && (
                     <div className="flex items-center gap-3 p-1 bg-primary/20 rounded-2xl border-2 border-primary shadow-xl shadow-primary/20 backdrop-blur-xl animate-in zoom-in-95 duration-500 scale-105 mr-4 mr-2">
                         <div className="px-4 py-2 border-r border-primary/20">
                             <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Centro de Control Maestro</p>
