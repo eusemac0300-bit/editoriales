@@ -17,7 +17,7 @@ const PERIODS = [
 ]
 
 export default function Royalties() {
-    const { data, formatCLP, addAuditLog, reloadData } = useAuth()
+    const { data, formatCLP, addAuditLog, reloadData, t } = useAuth()
 
     const [selectedAuthor, setSelectedAuthor] = useState('all')
     const [selectedPeriod, setSelectedPeriod] = useState('2026-03')
