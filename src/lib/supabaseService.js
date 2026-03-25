@@ -994,91 +994,68 @@ export async function seedDemoData(tenantId, adminUserId) {
     const now = new Date().toISOString()
     const monthAgo = new Date(Date.now() - 2592000000).toISOString()
 
-    // Helper para UUID si la tabla lo exige
     const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-    const safeTenantId = isUUID(tenantId) ? tenantId : "00000000-0000-0000-0000-000000000000"; // Fallback para UUID
 
-    // Helper para generar UUIDs deterministas o aleatorios
-    const generateId = (prefix, i) => {
-        // Formato: 00000000-0000-4000-8000-00000000000[i]
-        // O simplemente usar el tenantId como base
-        return tenantId.substring(0, 31) + (1000 + i).toString().substring(0, 5);
-    };
-
-    // Si el tenantId no es UUID, no podemos seguir (seguridad)
     if (!isUUID(tenantId)) {
         console.error('[Seeding] El tenantId no es un UUID válido:', tenantId);
-        return false;
+        throw new Error('tenantId no es UUID válido: ' + tenantId);
     }
 
-    async function safeUpsert(table, data, label) {
-        const { error } = await supabase.from(table).upsert(data)
+    // Helper: insert with full error reporting
+    async function safeInsert(table, data, label) {
+        console.log(`[Seeding] ⏳ Insertando ${label} (${data.length} registros) en ${table}...`)
+        const { data: result, error } = await supabase.from(table).upsert(data, { onConflict: 'id' }).select()
         if (error) {
-            console.error(`[Seeding] Error en ${label} (${table}):`, error.message)
+            console.error(`[Seeding] ❌ Error en ${label} (${table}):`, error.message, error.details, error.hint)
             throw new Error(`Error en ${label}: ${error.message}`)
         }
-        return true
+        console.log(`[Seeding] ✅ ${label}: ${(result || []).length} registros insertados`)
+        return result
     }
 
     try {
-        console.log(`[Seeding] 🚀 Iniciando carga robusta para ${tenantId}`)
+        console.log(`[Seeding] 🚀 v3.1.5.16 - Iniciando carga para tenant: ${tenantId}`)
 
-        // 1. Core Master & Authors
-        const demoAuthors = [
-            { id: tenantId, tenant_id: tenantId, email: `master@editorial.cl`, password: 'master2026', name: 'Eusebio Maestro', role: 'ADMIN', avatar: 'EM', first_login: false },
-            { id: '11111111-1111-1111-1111-' + tenantId.substring(24), tenant_id: tenantId, email: `autor1@demo.cl`, password: 'demo', name: 'Isabel Allende (Demo)', role: 'AUTOR', avatar: 'IA', first_login: true },
-            { id: '22222222-2222-2222-2222-' + tenantId.substring(24), tenant_id: tenantId, email: `autor2@demo.cl`, password: 'demo', name: 'Jorge Luis Borges (Demo)', role: 'AUTOR', avatar: 'JB', first_login: true },
-            { id: '33333333-3333-3333-3333-' + tenantId.substring(24), tenant_id: tenantId, email: `autor3@demo.cl`, password: 'demo', name: 'Gabriela Mistral (Demo)', role: 'AUTOR', avatar: 'GM', first_login: true }
-        ]
-        await safeUpsert('users', demoAuthors, 'Autores')
+        // Use last 12 chars of tenantId for suffix
+        const suffix = tenantId.replace(/-/g, '').slice(-12)
 
-        // 2. Suppliers
-        const demoSuppliers = [
-            { id: '55555555-5555-5555-5555-' + tenantId.substring(24), tenant_id: tenantId, name: 'Imprenta Nacional', type: 'IMPRENTA', email: 'imprenta@demo.cl' },
-            { id: '66666666-6666-6666-6666-' + tenantId.substring(24), tenant_id: tenantId, name: 'Distribuidora Lector', type: 'DISTRIBUIDORA', email: 'ventas@lector.cl' }
-        ]
-        await safeUpsert('suppliers', demoSuppliers, 'Proveedores')
-
-        // 3. Books (10 records)
+        // 1. Books (10 records) - NO user insertion, just books
         const titles = [
             "El Laberinto de Papel", "Crónicas del Mañana", "Sinfonía en el Desierto",
             "El Último Manuscrito", "Brisas del Sur", "Fragmentos de Silencio",
             "La Ciudad de Cristal", "Relatos Perdidos", "Ecos de Montaña", "Poesía Reunida"
         ]
-        
-        const demoBooks = titles.map((title, i) => {
-            const bookId = 'ffffffff-' + (1000 + i).toString() + '-4000-8000-' + tenantId.substring(24);
-            return {
-                id: bookId,
-                tenant_id: tenantId,
-                title: title,
-                author_id: demoAuthors[i % 3].id,
-                author_name: demoAuthors[i % 3].name,
-                status: i < 6 ? 'Publicado' : 'Edición',
-                pvp: 15000 + (i * 1000),
-                isbn: `978-956-00-${100 + i}`,
-                sku: `DEMO-${i}`,
-                genre: i % 2 === 0 ? 'Novela' : 'Ensayo',
-                royalty_percent: 10,
-                advance: i === 0 ? 50000 : 0,
-                created_at: monthAgo
-            };
-        });
-        await safeUpsert('books', demoBooks, 'Libros')
+        const authors = ['Isabel Allende (Demo)', 'Jorge Luis Borges (Demo)', 'Gabriela Mistral (Demo)']
 
-        // 4. Inventory
+        const demoBooks = titles.map((title, i) => ({
+            id: `ffffffff-ff0${i}-4000-8000-${suffix}`,
+            tenant_id: tenantId,
+            title: title,
+            author_name: authors[i % 3],
+            status: i < 6 ? 'Publicado' : 'Edición',
+            pvp: 15000 + (i * 1000),
+            isbn: `978-956-00-${100 + i}`,
+            sku: `DEMO-${i}`,
+            genre: i % 2 === 0 ? 'Novela' : 'Ensayo',
+            royalty_percent: 10,
+            advance: i === 0 ? 50000 : 0,
+            created_at: monthAgo
+        }))
+        await safeInsert('books', demoBooks, 'Libros')
+
+        // 2. Inventory
         const demoInventory = demoBooks.map((b, i) => ({
-            id: 'ffffffff-' + (2000 + i).toString() + '-4000-8000-' + tenantId.substring(24),
+            id: `ffffffff-ff1${i}-4000-8000-${suffix}`,
             tenant_id: tenantId,
             book_id: b.id,
             stock: Math.floor(100 + (Math.random() * 50)),
             min_stock: 20
         }))
-        await safeUpsert('inventory_physical', demoInventory, 'Stock')
+        await safeInsert('inventory_physical', demoInventory, 'Stock')
 
-        // 5. Sales
+        // 3. Sales (only for published books)
         const demoSales = demoBooks.filter(b => b.status === 'Publicado').map((b, i) => ({
-            id: 'ffffffff-' + (3000 + i).toString() + '-4000-8000-' + tenantId.substring(24),
+            id: `ffffffff-ff2${i}-4000-8000-${suffix}`,
             tenant_id: tenantId,
             book_id: b.id,
             book_title: b.title,
@@ -1091,9 +1068,9 @@ export async function seedDemoData(tenantId, adminUserId) {
             status: 'Completada',
             sale_date: now
         }))
-        await safeUpsert('sales', demoSales, 'Ventas')
+        await safeInsert('sales', demoSales, 'Ventas')
 
-        // 6. Consignments & Documents
+        // 4. Consignments
         const demoConsignments = [
             { id: iUUID(), tenant_id: tenantId, book_id: demoBooks[0].id, client_name: 'Librería El Ateneo', sent_quantity: 20, sold_quantity: 5, status: 'activa', sent_date: monthAgo },
             { id: iUUID(), tenant_id: tenantId, book_id: demoBooks[1].id, client_name: 'Antártica Libros', sent_quantity: 15, sold_quantity: 0, status: 'activa', sent_date: now }
@@ -1113,7 +1090,8 @@ export async function seedDemoData(tenantId, adminUserId) {
 
         console.log(`[Seeding] ✅ Carga terminada para ${tenantId}`)
     } catch (err) {
-        console.error('[Seeding] Error crítico:', err)
+        console.error('[Seeding] ❌ Error crítico:', err)
+        throw err  // RE-THROW para que el Dashboard muestre el error real
     }
 }
 
