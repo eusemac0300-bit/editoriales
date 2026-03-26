@@ -1025,6 +1025,7 @@ export async function seedDemoData(tenantId, adminUserId) {
     if (!tenantId) return
     const now = new Date().toISOString()
     const monthAgo = new Date(Date.now() - 2592000000).toISOString()
+    const twoMonthsAgo = new Date(Date.now() - 5184000000).toISOString()
 
     const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
@@ -1035,6 +1036,7 @@ export async function seedDemoData(tenantId, adminUserId) {
 
     // Helper: insert with full error reporting
     async function safeInsert(table, data, label) {
+        if (!data || data.length === 0) return [];
         console.log(`[Seeding] ⏳ Insertando ${label} (${data.length} registros) en ${table}...`)
         const { data: result, error } = await supabase.from(table).upsert(data, { onConflict: 'id' }).select()
         if (error) {
@@ -1046,84 +1048,188 @@ export async function seedDemoData(tenantId, adminUserId) {
     }
 
     try {
-        console.log(`[Seeding] 🚀 v3.1.5.16 - Iniciando carga para tenant: ${tenantId}`)
+        console.log(`[Seeding] 🚀 v3.1.5.18 - Iniciando carga de DEMO MODE 2.0 para tenant: ${tenantId}`)
 
         // Use last 12 chars of tenantId for suffix
         const suffix = tenantId.replace(/-/g, '').slice(-12)
+        
+        // Helper to generate IDs
+        const mkId = (prefixStr) => `ffffffff-${prefixStr}-4000-8000-${suffix}`
 
-        // 1. Books (10 records) - NO user insertion, just books
+        // ============================================
+        // 1. AUTHORS (tabla 'users' con rol AUTOR)
+        // ============================================
+        const demoAuthors = [
+            { id: mkId('a001'), tenant_id: tenantId, email: `autor1_${suffix}@demo.cl`, password: 'demo', name: 'Isabel Allende (Demo)', role: 'AUTOR', avatar: 'IA', bio: 'Escritora chilena, premio nacional de literatura.', first_login: true },
+            { id: mkId('a002'), tenant_id: tenantId, email: `autor2_${suffix}@demo.cl`, password: 'demo', name: 'Jorge Luis Borges (Demo)', role: 'AUTOR', avatar: 'JB', bio: 'Escritor argentino erudito.', first_login: true },
+            { id: mkId('a003'), tenant_id: tenantId, email: `autor3_${suffix}@demo.cl`, password: 'demo', name: 'Gabriela Mistral (Demo)', role: 'AUTOR', avatar: 'GM', bio: 'Poetisa, diplomática y pedagoga chilena.', first_login: true }
+        ]
+        await safeInsert('users', demoAuthors, 'Autores')
+
+        // ============================================
+        // 2. SUPPLIERS & CLIENTS
+        // ============================================
+        const demoSuppliers = [
+            { id: mkId('s001'), tenant_id: tenantId, name: 'Imprenta Andina S.A.', type: 'IMPRENTA', email: 'ventas@andina.cl', phone: '+56911112222' },
+            { id: mkId('s002'), tenant_id: tenantId, name: 'Editorial Planeta (Servicios)', type: 'SERVICIOS', email: 'servicios@planeta.cl', phone: '+56933334444' }
+        ]
+        await safeInsert('suppliers', demoSuppliers, 'Proveedores')
+
+        const demoClients = [
+            { id: mkId('c001'), tenant_id: tenantId, name: 'Librería Antártica', type: 'LIBRERIA', email: 'compras@antartica.cl', phone: '+56222223333', discount_percent: 40 },
+            { id: mkId('c002'), tenant_id: tenantId, name: 'Librería Feria Chilena', type: 'LIBRERIA', email: 'compras@feriachilena.cl', phone: '+56244445555', discount_percent: 40 },
+            { id: mkId('c003'), tenant_id: tenantId, name: 'Distribuidora ZigZag', type: 'DISTRIBUIDORA', email: 'operaciones@zigzag.cl', phone: '+56266667777', discount_percent: 60 }
+        ]
+        await safeInsert('clients', demoClients, 'Clientes')
+
+        // ============================================
+        // 3. BOOKS
+        // ============================================
         const titles = [
             "El Laberinto de Papel", "Crónicas del Mañana", "Sinfonía en el Desierto",
             "El Último Manuscrito", "Brisas del Sur", "Fragmentos de Silencio",
             "La Ciudad de Cristal", "Relatos Perdidos", "Ecos de Montaña", "Poesía Reunida"
         ]
-        const authors = ['Isabel Allende (Demo)', 'Jorge Luis Borges (Demo)', 'Gabriela Mistral (Demo)']
 
-        const demoBooks = titles.map((title, i) => ({
-            id: `ffffffff-ff0${i}-4000-8000-${suffix}`,
-            tenant_id: tenantId,
-            title: title,
-            author_name: authors[i % 3],
-            status: i < 6 ? 'Publicado' : 'Edición',
-            pvp: 15000 + (i * 1000),
-            isbn: `978-956-00-${100 + i}`,
-            sku: `DEMO-${i}`,
-            genre: i % 2 === 0 ? 'Novela' : 'Ensayo',
-            royalty_percent: 10,
-            advance: i === 0 ? 50000 : 0,
-            created_at: monthAgo
-        }))
+        const demoBooks = titles.map((title, i) => {
+            const author = demoAuthors[i % 3]
+            const isFiccion = i % 2 === 0
+            return {
+                id: mkId(`b00${i}`),
+                tenant_id: tenantId,
+                title: title,
+                author_id: author.id,
+                author_name: author.name,
+                status: i < 7 ? 'Publicado' : (i < 9 ? 'Edición' : 'Original'),
+                pvp: 12000 + (i * 2000),
+                isbn: `978-956-00-${100 + i}`,
+                sku: `DEMO-BK-${i}`,
+                genre: isFiccion ? 'Novela' : 'Ensayo',
+                pages: 150 + (i * 20),
+                royalty_percent: 10,
+                advance: i === 0 ? 500000 : (i === 1 ? 200000 : 0),
+                created_at: i < 5 ? twoMonthsAgo : monthAgo,
+                format: 'Físico'
+            }
+        })
         await safeInsert('books', demoBooks, 'Libros')
 
-        // 2. Inventory
+        // ============================================
+        // 4. INVENTORY
+        // ============================================
         const demoInventory = demoBooks.map((b, i) => ({
-            id: `ffffffff-ff1${i}-4000-8000-${suffix}`,
+            id: mkId(`i00${i}`),
             tenant_id: tenantId,
             book_id: b.id,
-            stock: Math.floor(100 + (Math.random() * 50)),
-            min_stock: 20
+            stock: b.status === 'Publicado' ? Math.floor(100 + (Math.random() * 400)) : 0,
+            min_stock: 50,
+            location: 'Bodega Central - Rack A'
         }))
-        await safeInsert('inventory_physical', demoInventory, 'Stock')
+        await safeInsert('inventory_physical', demoInventory, 'Inventario')
 
-        // 3. Sales (only for published books)
-        const demoSales = demoBooks.filter(b => b.status === 'Publicado').map((b, i) => ({
-            id: `ffffffff-ff2${i}-4000-8000-${suffix}`,
-            tenant_id: tenantId,
-            book_id: b.id,
-            book_title: b.title,
-            channel: 'Librerías',
-            quantity: 5,
-            unit_price: b.pvp,
-            total_amount: b.pvp * 5,
-            neto: Math.round(b.pvp * 5 / 1.19),
-            tax: Math.round(b.pvp * 5 * 0.19 / 1.19),
-            status: 'Completada',
-            sale_date: now
-        }))
+        // ============================================
+        // 5. SALES (Ventas completadas y pendientes)
+        // ============================================
+        const demoSales = []
+        const pubBooks = demoBooks.filter(b => b.status === 'Publicado')
+        
+        let saleCounter = 0;
+        // B2B Sales (Consignaciones/Mayoristas)
+        pubBooks.slice(0, 3).forEach((b) => {
+            const client = demoClients[saleCounter % 3]
+            const qty = 50 + (saleCounter * 10)
+            const unitPrice = b.pvp * (1 - (client.discount_percent / 100))
+            const total = qty * unitPrice
+            
+            demoSales.push({
+                id: mkId(`v00${saleCounter}`),
+                tenant_id: tenantId,
+                client_id: client.id,
+                client_name: client.name,
+                book_id: b.id,
+                book_title: b.title,
+                channel: 'Mayorista',
+                quantity: qty,
+                unit_price: unitPrice,
+                discount_percent: client.discount_percent,
+                total_amount: total,
+                neto: total, // Simplified for demo
+                tax: total * 0.19,
+                status: saleCounter === 0 ? 'Pendiente' : 'Completada',
+                sale_date: saleCounter === 0 ? now : monthAgo
+            })
+            saleCounter++
+        })
+
+        // B2C Sales (Web/Directas)
+        pubBooks.slice(0, 5).forEach((b) => {
+            const qty = 1 + (saleCounter % 3)
+            const total = qty * b.pvp
+            
+            demoSales.push({
+                id: mkId(`v00${saleCounter}`),
+                tenant_id: tenantId,
+                client_name: 'Venta Web Automática',
+                book_id: b.id,
+                book_title: b.title,
+                channel: 'Web',
+                quantity: qty,
+                unit_price: b.pvp,
+                discount_percent: 0,
+                total_amount: total,
+                neto: total,
+                tax: total * 0.19,
+                status: 'Completada',
+                sale_date: new Date(Date.now() - (saleCounter * 86400000)).toISOString() // Random days ago
+            })
+            saleCounter++
+        })
         await safeInsert('sales', demoSales, 'Ventas')
 
-        // 4. Consignments
-        const demoConsignments = [
-            { id: iUUID(), tenant_id: tenantId, book_id: demoBooks[0].id, client_name: 'Librería El Ateneo', sent_quantity: 20, sold_quantity: 5, status: 'activa', sent_date: monthAgo },
-            { id: iUUID(), tenant_id: tenantId, book_id: demoBooks[1].id, client_name: 'Antártica Libros', sent_quantity: 15, sold_quantity: 0, status: 'activa', sent_date: now }
-        ]
-        await safeUpsert('consignments', demoConsignments, 'Consignaciones Demo')
+        // ============================================
+        // 6. CONSIGNMENTS
+        // ============================================
+        const demoConsignments = []
+        let consCounter = 0;
+        pubBooks.slice(0, 4).forEach((b) => {
+            const client = demoClients[consCounter % 2] // Only bookstores
+            demoConsignments.push({
+                id: mkId(`g00${consCounter}`),
+                tenant_id: tenantId,
+                client_id: client.id,
+                client_name: client.name,
+                book_id: b.id,
+                sent_quantity: 30 + (consCounter * 10),
+                sold_quantity: 5 + consCounter,
+                returned_quantity: consCounter === 1 ? 2 : 0,
+                status: 'activa',
+                sent_date: twoMonthsAgo,
+                notes: 'Consignación inicial de prueba'
+            })
+            consCounter++
+        })
+        await safeInsert('consignments', demoConsignments, 'Consignaciones')
 
-        const demoDocs = [
-            { id: iUUID(), tenant_id: tenantId, book_id: demoBooks[0].id, name: 'Contrato Autor - El Laberinto de Papel', category: 'Contrato', status: 'Vigente', start_date: monthAgo, end_date: now.split('T')[0], uploaded_by: 'Eusebio Maestro' }
-        ]
-        await safeUpsert('documents', demoDocs, 'Documentos Demo')
-
+        // ============================================
+        // 7. EXPENSES & ROYALTIES
+        // ============================================
         const demoExpenses = [
-            { id: iUUID(), tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción SaaS (Demo)', amount: 35000, date: now, status: 'PAGADO' },
-            { id: iUUID(), tenant_id: tenantId, category: 'MARKETING', description: 'Publicidad RRSS (Demo)', amount: 120000, date: now, status: 'PAGADO' }
+            { id: mkId('e001'), tenant_id: tenantId, category: 'IMPRENTA', description: `Impresión 1ra Edición - ${demoBooks[0].title}`, amount: 850000, date: twoMonthsAgo, status: 'PAGADO', supplier_id: demoSuppliers[0].id },
+            { id: mkId('e002'), tenant_id: tenantId, category: 'MARKETING', description: 'Campaña Meta Ads Lanzamientos', amount: 150000, date: monthAgo, status: 'PAGADO' },
+            { id: mkId('e003'), tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción AutoBook Pro', amount: 35000, date: now, status: 'PENDIENTE' }
         ]
-        await safeUpsert('expenses', demoExpenses, 'Gastos')
+        await safeInsert('expenses', demoExpenses, 'Gastos')
 
-        console.log(`[Seeding] ✅ Carga terminada para ${tenantId}`)
+        const demoRoyalties = [
+            { id: mkId('r001'), tenant_id: tenantId, book_id: demoBooks[0].id, author_id: demoAuthors[0].id, period: '2026-Q1', total_sales: 1500000, royalty_amount: 150000, status: 'Pagado' },
+            { id: mkId('r002'), tenant_id: tenantId, book_id: demoBooks[1].id, author_id: demoAuthors[1].id, period: '2026-Q1', total_sales: 450000, royalty_amount: 45000, status: 'Pendiente' }
+        ]
+        await safeInsert('royalties', demoRoyalties, 'Regalías')
+
+        console.log(`[Seeding] ✅ DEMO MODE 2.0 Carga terminada para ${tenantId}`)
     } catch (err) {
         console.error('[Seeding] ❌ Error crítico:', err)
-        throw err  // RE-THROW para que el Dashboard muestre el error real
+        throw err  
     }
 }
 
@@ -1719,11 +1825,11 @@ export async function clearDemoData(tenantId) {
 
         const filter = { tenant_id: tenantId }
 
-        // Borrar por ID prefijado 'demo_'
+        // Borrar por ID prefijado 'ffffffff-'
         const mainTables = [
             'expenses', 'sales', 'inventory_physical', 'books', 'suppliers', 
             'users', 'audit_log', 'comments', 'alerts', 'quotes', 
-            'purchase_orders', 'consignments', 'royalties', 'invoices', 'documents'
+            'purchase_orders', 'consignments', 'royalties', 'invoices', 'documents', 'clients'
         ]
 
         for (const table of mainTables) {
@@ -1731,12 +1837,12 @@ export async function clearDemoData(tenantId) {
                 .from(table)
                 .delete()
                 .match(filter)
-                .ilike('id', 'demo_%')
+                .like('id', 'ffffffff-%')
 
             if (error) {
-                // Si falla por ID (quizás no existe o es UUID), intentamos por book_id si aplica
-                if (['inventory_physical', 'sales', 'royalties', 'consignments', 'comments', 'quotes', 'purchase_orders'].includes(table)) {
-                    await supabase.from(table).delete().match(filter).ilike('book_id', 'demo_%')
+                // Si falla por ID (quizás no existe o tipo incompatible), intentamos borrar por book_id
+                if (['inventory_physical', 'sales', 'royalties', 'consignments', 'comments', 'quotes', 'purchase_orders', 'documents'].includes(table)) {
+                    await supabase.from(table).delete().match(filter).like('book_id', 'ffffffff-%')
                 }
             }
         }

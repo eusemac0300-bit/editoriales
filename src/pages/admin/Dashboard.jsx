@@ -157,69 +157,74 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Demo Data Banner (Visible when demo books exist) */}
-            {(books || []).some(b => b.id?.startsWith('ffffffff-') || b.id?.startsWith('demo_')) && (
-                <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
-                    <div className="flex items-center gap-4 text-center sm:text-left">
-                        <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center shrink-0">
-                            <Database className="w-6 h-6 text-primary" />
+            {/* Demo Mode 2.0 Fanfare Banner */}
+            {hasDemoData && (
+                <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-primary to-blue-600 rounded-3xl p-8 sm:p-12 text-white shadow-2xl shadow-primary/30 border border-white/10 animate-in fade-in zoom-in-95 duration-1000 mb-8 mt-4">
+                    {/* Background decorations */}
+                    <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
+                    <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-64 h-64 bg-black opacity-20 rounded-full blur-3xl"></div>
+                    
+                    <div className="relative z-10 flex flex-col items-center text-center space-y-6 max-w-3xl mx-auto">
+                        <div className="inline-flex items-center justify-center p-3 bg-white/20 rounded-2xl backdrop-blur-md mb-2 ring-1 ring-white/30 shadow-lg">
+                            <Sparkles className="w-8 h-8 text-yellow-300 animate-pulse" />
                         </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Estás usando datos de ejemplo</h3>
-                            <p className="text-xs text-slate-500 dark:text-dark-600">Explora las funcionalidades con estos libros y registros ficticios. Puedes eliminarlos en cualquier momento.</p>
+                        
+                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight drop-shadow-md">
+                            ¡Bienvenido a tu Entorno de Pruebas! 🚀
+                        </h2>
+                        
+                        <p className="text-lg sm:text-xl text-blue-100 font-medium leading-relaxed max-w-2xl text-shadow-sm">
+                            Hemos pre-cargado esta suite con <strong className="text-white">datos ficticios interactivos</strong> (libros, ventas, regalías e inventario) para que puedas explorar todo el potencial de AutoBook Pro sin miedo a romper nada.
+                        </p>
+                        
+                        <div className="pt-6 w-full max-w-md">
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm('⚠️ ADVERTENCIA IRREVERSIBLE ⚠️\n\n¿Estás absolutamente seguro de que deseas VACIAR LA SUITE?\n\nEsto eliminará permanentemente TODOS los datos de prueba y te dejará con un lienzo en blanco para tu editorial real.')) {
+                                        try {
+                                            await clearDemo()
+                                            alert('✨ ¡Suite vaciada con éxito! Bienvenido a tu lienzo en blanco.')
+                                            window.location.reload()
+                                        } catch (err) {
+                                            alert('Error al vaciar: ' + err.message)
+                                        }
+                                    }
+                                }}
+                                className="w-full relative group overflow-hidden bg-rose-500 hover:bg-rose-400 text-white text-lg font-black uppercase tracking-widest py-4 px-8 rounded-2xl transition-all duration-300 shadow-[0_0_40px_rgba(244,63,94,0.4)] hover:shadow-[0_0_60px_rgba(244,63,94,0.6)] hover:-translate-y-1"
+                            >
+                                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                                <span className="relative flex items-center justify-center gap-3">
+                                    <Trash2 className="w-6 h-6" /> COMENZAR DESDE CERO
+                                </span>
+                            </button>
+                            <p className="text-xs text-blue-200 mt-4 opacity-80 uppercase tracking-wider font-bold">
+                                (Esta acción borrará todo y este botón desaparecerá para siempre)
+                            </p>
                         </div>
                     </div>
-                    <button
-                        onClick={async () => {
-                            if (window.confirm('¿Borrar todos los libros de ejemplo? Esto no afectará a tus libros reales.')) {
-                                await clearDemo()
-                            }
-                        }}
-                        className="btn-primary bg-rose-500 hover:bg-rose-600 border-rose-600 shadow-lg shadow-rose-500/20 text-xs py-2 px-4 whitespace-nowrap flex items-center gap-2"
-                    >
-                        <Trash2 className="w-4 h-4" /> Eliminar Ejemplos
-                    </button>
                 </div>
             )}
 
-            {/* Empty State or No Demo Data CTA */}
-            {!hasDemoData && (
-                <div className={`glass-card p-12 text-center space-y-6 flex flex-col items-center justify-center border-dashed border-2 animate-in fade-in duration-1000 ${totalBooks === 0 ? 'bg-primary/5' : ''}`}>
-                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary transition-transform hover:scale-110">
-                        <Database className="w-10 h-10" />
+            {/* Empty State (Only when absolutely NO data exists) */}
+            {!hasDemoData && totalBooks === 0 && (
+                <div className="glass-card p-12 text-center space-y-6 flex flex-col items-center justify-center border-dashed border-2 border-slate-200 dark:border-dark-300 animate-in fade-in duration-1000 bg-slate-50/50 dark:bg-dark-50/10">
+                    <div className="w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center text-primary transition-transform hover:scale-110 hover:rotate-3 shadow-inner">
+                        <BookOpen className="w-12 h-12" />
                     </div>
                     <div className="max-w-md mx-auto">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                            {totalBooks === 0 ? 'Tu catálogo está vacío' : '¿Quieres probar con datos de ejemplo?'}
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-3">
+                            Tu editorial está lista para nacer
                         </h2>
-                        <p className="text-slate-500 dark:text-dark-600 mt-2">
-                            {totalBooks === 0 
-                                ? 'Comienza agregando tus libros o utiliza datos de ejemplo para explorar todas las funcionalidades de la plataforma.'
-                                : 'Puedes cargar 10 libros y autores de prueba para ver cómo funcionan los reportes y las ventas sin afectar tu catálogo real.'}
+                        <p className="text-slate-500 dark:text-dark-600 text-base leading-relaxed">
+                            El lienzo está en blanco. Comienza agregando tu primer título al catálogo para dar vida a tu nueva suite de gestión.
                         </p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <button
-                            onClick={() => navigate('/admin/libros')}
-                            className="btn-primary px-8 h-12 flex items-center justify-center gap-2"
-                        >
-                            <Plus className="w-5 h-5" /> {totalBooks === 0 ? 'Agregar mi primer libro' : 'Ir a mis libros'}
-                        </button>
-                        <button 
-                            onClick={async () => {
-                                try {
-                                    await loadDemo()
-                                    alert('¡ÉXITO! v3.1.5.15 — Datos de ejemplo cargados. La página se recargará para mostrarlos.')
-                                    window.location.reload()
-                                } catch (err) {
-                                    alert(`ERROR DE CARGA v15: ${err.message || err.toString()}`)
-                                }
-                            }}
-                            className="px-8 h-12 border border-slate-200 dark:border-dark-300 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-all font-bold text-slate-700 dark:text-dark-900 flex items-center justify-center gap-2 shadow-sm"
-                        >
-                            <Database className="w-5 h-5" /> {t('load_demo')}
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => navigate('/admin/libros')}
+                        className="btn-primary px-10 py-4 text-base flex items-center justify-center gap-3 shadow-lg shadow-primary/20 hover:shadow-primary/30"
+                    >
+                        <Plus className="w-6 h-6" /> Agregar mi primer libro
+                    </button>
                 </div>
             )}
 

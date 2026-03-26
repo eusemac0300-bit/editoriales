@@ -206,10 +206,9 @@ export default function AdminLayout() {
                     <div className="flex-1" />
 
                     <div className="flex items-center gap-3">
-                        {/* Version Indicator & What's New */}
                         <div className="flex flex-col items-end mr-1 sm:mr-2">
                              <span className="text-[9px] font-black text-primary-500 dark:text-primary-400 tracking-[0.2em] uppercase hidden sm:block italic">Maestro Sincronizado</span>
-                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.17</span>
+                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.18</span>
                         </div>
 
                         <button 
@@ -333,51 +332,6 @@ export default function AdminLayout() {
                                             </div>
                                         </div>
 
-                                        <div className="p-2 bg-slate-100 dark:bg-dark-50/10 space-y-2 rounded-2xl mx-2 mb-2">
-                                            <p className="text-[10px] font-bold text-slate-400 dark:text-dark-500 uppercase tracking-widest px-2 mb-1">Datos Demo</p>
-                                            
-                                            {/* Load Examples - Visible if NO DEMO DATA exists (even if there are real books) */}
-                                            {!hasDemoData && !isActionLoading && (
-                                                <button
-                                                    onClick={async () => {
-                                                        setIsActionLoading(true)
-                                                        await loadDemo()
-                                                        alert('¡ÉXITO! v3.1.5.15 Sincronizada. Los datos de ejemplo se han cargado correctamente. La página se reiniciará para mostrarlos.')
-                                                        window.location.reload()
-                                                        setIsActionLoading(false)
-                                                        setSettingsOpen(false)
-                                                    }}
-                                                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-primary bg-primary/5 hover:bg-primary/10 transition-all text-sm font-bold uppercase tracking-tight border border-primary/20 shadow-sm"
-                                                >
-                                                    <Database className="w-5 h-5" />
-                                                    {t('load_demo')}
-                                                </button>
-                                            )}
-
-                                            {/* Delete Examples (Clear Demo) - Visible if there are demo books */}
-                                            {hasDemoData && !isActionLoading && (
-                                                 <button
-                                                     onClick={async () => {
-                                                         if (window.confirm('¿Borrar todos los libros de ejemplo? Esto no afectará a tus libros reales.')) {
-                                                             setIsActionLoading(true)
-                                                             await clearDemo()
-                                                             setIsActionLoading(false)
-                                                             setSettingsOpen(false)
-                                                         }
-                                                     }}
-                                                     className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-rose-500 bg-rose-500/5 hover:bg-rose-500/10 transition-all text-sm font-bold uppercase tracking-tight border border-rose-500/20 shadow-sm"
-                                                 >
-                                                     <Trash2 className="w-5 h-5" />
-                                                     {t('clear_demo')}
-                                                 </button>
-                                             )}
-
-                                            {isActionLoading && (
-                                                <div className="w-full py-3 text-center text-[10px] font-bold text-slate-400 animate-pulse uppercase tracking-widest bg-slate-100/50 dark:bg-dark-300/30 rounded-xl">
-                                                    Procesando...
-                                                </div>
-                                            )}
-                                        </div>
 
                                         <div className="p-2 space-y-1">
                                             <button
