@@ -8,7 +8,7 @@ export default function RouteGuard({ children, allowedRoles }) {
         return <Navigate to="/login" replace />
     }
 
-    if (allowedRoles && !allowedRoles.includes(user.role) && user.role !== 'ADMIN') {
+    if (allowedRoles && !allowedRoles.includes(user.role) && !['ADMIN', 'SUPERADMIN'].includes(user.role)) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-dark">
                 <div className="glass-card p-8 max-w-md text-center fade-in">

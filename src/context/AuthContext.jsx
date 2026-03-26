@@ -229,7 +229,7 @@ export function AuthProvider({ children }) {
     })), [user?.tenantId, po])
 
     const resetWorkspace = async () => {
-        if (!user || user.role !== 'ADMIN') return false
+        if (!user || !['ADMIN', 'SUPERADMIN'].includes(user.role)) return false
         const success = await db.resetTenantData(user.tenantId, user.id)
         if (success) await refetchData()
         return success
