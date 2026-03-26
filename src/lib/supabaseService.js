@@ -1216,7 +1216,7 @@ export async function seedDemoData(tenantId, adminUserId) {
         const demoExpenses = [
             { id: mkId('e001'), tenant_id: tenantId, category: 'IMPRENTA', description: `Impresión 1ra Edición - ${demoBooks[0].title}`, amount: 850000, date: twoMonthsAgo, status: 'PAGADO', supplier_id: demoSuppliers[0].id },
             { id: mkId('e002'), tenant_id: tenantId, category: 'MARKETING', description: 'Campaña Meta Ads Lanzamientos', amount: 150000, date: monthAgo, status: 'PAGADO' },
-            { id: mkId('e003'), tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción AutoBook Pro', amount: 35000, date: now, status: 'PENDIENTE' }
+            { id: mkId('e003'), tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción Editorial Pro', amount: 35000, date: now, status: 'PENDIENTE' }
         ]
         await safeInsert('expenses', demoExpenses, 'Gastos')
 

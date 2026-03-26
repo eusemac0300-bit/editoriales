@@ -242,7 +242,7 @@ export default function AdminLayout() {
                                 </div>
                                 <div className="hidden sm:block text-left">
                                     <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{user?.name}</p>
-                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.5.14 (AutoBook Pro)</p>
+                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.5.18 (Editorial Pro)</p>
                                 </div>
                                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${settingsOpen ? 'rotate-180' : ''}`} />
                             </button>

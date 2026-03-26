@@ -174,7 +174,7 @@ export default function AdminDashboard() {
                         </h2>
                         
                         <p className="text-lg sm:text-xl text-blue-100 font-medium leading-relaxed max-w-2xl text-shadow-sm">
-                            Hemos pre-cargado esta suite con <strong className="text-white">datos ficticios interactivos</strong> (libros, ventas, regalías e inventario) para que puedas explorar todo el potencial de AutoBook Pro sin miedo a romper nada.
+                            Hemos pre-cargado esta suite con <strong className="text-white">datos ficticios interactivos</strong> (libros, ventas, regalías e inventario) para que puedas explorar todo el potencial de Editorial Pro sin miedo a romper nada.
                         </p>
                         
                         <div className="pt-6 w-full max-w-md">

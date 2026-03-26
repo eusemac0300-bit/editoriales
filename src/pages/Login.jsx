@@ -62,7 +62,7 @@ export default function Login() {
                         </div>
                     </div>
                 </div>
-                <p className="text-center text-xs text-slate-600 mb-6">© {new Date().getFullYear()} EditorialPro. Todos los derechos reservados. <span className="text-slate-500 font-medium">v3.1.5.13 (AutoBook Pro)</span></p>
+                <p className="text-center text-xs text-slate-600 mb-6">© {new Date().getFullYear()} EditorialPro. Todos los derechos reservados. <span className="text-slate-500 font-medium">v3.1.5.18 (Editorial Pro)</span></p>
                 {/* Login card */}
                 <div className="glass-card bg-slate-900/60 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10">
                     <h2 className="text-xl font-black text-white mb-8 tracking-tight">Iniciar Sesión</h2>
