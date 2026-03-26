@@ -57,7 +57,7 @@ export default function Login() {
                         </div>
                         <div>
                                 <h1 className="text-4xl font-black text-white tracking-tighter">
-                                    EditorialPro <span className="text-primary italic">v3.1.5.13</span>
+                                    EditorialPro <span className="text-primary italic">v3.1.5.18</span>
                                 </h1>
                         </div>
                     </div>

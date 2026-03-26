@@ -15,8 +15,8 @@ export default function AdminDashboard() {
     const published = (books || []).filter(b => b.status === 'Publicado' || b.status === 'Published').length
     const inProduction = (books || []).filter(b => !['Publicado', 'Original', 'Published'].includes(b.status)).length
 
-    // v3.1.5.17 DIAGNOSTIC - remove after confirming
-    console.log('[Dashboard v3.1.5.17]', { tenant: user?.tenantId, email: user?.email, totalBooks, hasDemoData, firstBookId: books?.[0]?.id })
+    // v3.1.5.18 DIAGNOSTIC - remove after confirming
+    console.log('[Dashboard v3.1.5.18]', { tenant: user?.tenantId, email: user?.email, totalBooks, hasDemoData, firstBookId: books?.[0]?.id })
 
     // Ventas
     const currentMonth = new Date().toISOString().slice(0, 7)
@@ -219,12 +219,31 @@ export default function AdminDashboard() {
                             El lienzo está en blanco. Comienza agregando tu primer título al catálogo para dar vida a tu nueva suite de gestión.
                         </p>
                     </div>
-                    <button
-                        onClick={() => navigate('/admin/libros')}
-                        className="btn-primary px-10 py-4 text-base flex items-center justify-center gap-3 shadow-lg shadow-primary/20 hover:shadow-primary/30"
-                    >
-                        <Plus className="w-6 h-6" /> Agregar mi primer libro
-                    </button>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={() => navigate('/admin/libros')}
+                            className="btn-primary px-10 py-4 text-base flex items-center justify-center gap-3 shadow-lg shadow-primary/20 hover:shadow-primary/30"
+                        >
+                            <Plus className="w-6 h-6" /> Agregar mi primer libro
+                        </button>
+                        <button
+                            onClick={async () => {
+                                setIsPublishing(true)
+                                try {
+                                    await loadDemo()
+                                    alert('✨ ¡Datos demo cargados con éxito!')
+                                    window.location.reload()
+                                } catch (err) {
+                                    alert('Error: ' + err.message)
+                                } finally {
+                                    setIsPublishing(false)
+                                }
+                            }}
+                            className="btn-secondary px-10 py-4 text-base flex items-center justify-center gap-3 border-dashed border-2 bg-white/50 dark:bg-dark-200/50"
+                        >
+                            <Sparkles className="w-6 h-6 text-primary" /> Cargar Datos Demo
+                        </button>
+                    </div>
                 </div>
             )}
 

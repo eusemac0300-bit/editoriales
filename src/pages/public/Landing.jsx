@@ -40,7 +40,7 @@ export default function Landing() {
                         <Zap className="w-4 h-4" /> El software definitivo para editoriales
                     </div>
                     <h1 className="text-5xl lg:text-7xl font-bold tracking-tight leading-tight mb-8 slide-up">
-                        EditorialPro <span className="text-primary italic">v3.1.5.13</span> <br className="hidden md:block" />
+                        EditorialPro <span className="text-primary italic">v3.1.5.18</span> <br className="hidden md:block" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-teal-500 to-emerald-500">
                             Adiós a las planillas interminables
                         </span>

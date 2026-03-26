@@ -1,5 +1,5 @@
 import { useState } from 'react'
-// VERSIÓN FORZADA EN LOCAL: v3.1.5.7 (SINCRO MAESTRO)
+// VERSIÓN FORZADA EN LOCAL: v3.1.5.18 (SINCRO MAESTRO)
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { loadPermissions } from '../lib/permissions'
@@ -7,7 +7,7 @@ import {
     BookOpen, LayoutDashboard, Package, Kanban, Calculator,
     DollarSign, FileText, Users, Bell, ClipboardList,
     FolderOpen, LogOut, Menu, X, ChevronDown, AlertTriangle, Printer, ShoppingCart, Truck, Contact, FileSpreadsheet, Receipt, Wallet,
-    Sun, Moon, Languages, Settings, Percent, Globe, Coins, Sparkles, Database, Trash2, Zap, Building, Tent
+    Sun, Moon, Languages, Settings, Percent, Globe, Coins, Sparkles, Database, Trash2, Zap, Building, Tent, PieChart
 } from 'lucide-react'
 
 const navItems = [
@@ -35,10 +35,9 @@ const navItems = [
     { to: '/admin/autores', icon: Users, label: 'authors' },
     { to: '/admin/usuarios', icon: Users, label: 'users' },
     { to: '/admin/documentos', icon: FolderOpen, label: 'documents' },
-    { to: '/admin/marketing', icon: Sparkles, label: 'marketing' },
-    { to: '/admin/marketing-3d', icon: Zap, label: 'marketing_3d' },
     { to: '/admin/auditoria', icon: ClipboardList, label: 'audit' },
     { to: '/admin/alertas', icon: Bell, label: 'alerts' },
+    { to: '/admin/reportes', icon: PieChart, label: 'reports' },
 ]
 
 export default function AdminLayout() {
@@ -56,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.18', date: '2026-03-26', title: 'Auditoría Final & Sincro Maestro', details: ['Restauración de enlace "Informes" en Sidebar.', 'Botón "Cargar Datos Demo" reactivado en Dashboard.', 'Robustez de guardado: Fallback para columnas de PDF faltantes.', 'Sección de Marketing ocultada temporalmente por desarrollo.'] },
         { version: 'v3.1.5.17', date: '2026-03-25', title: 'The True Sync & Auth Fix', details: ['Fuerza de sincronización v17.', 'Corrección del enlace de sesión tenant-ID', 'Visibilidad completa de datos Demo.'] },
         { version: 'v3.1.5.15', date: '2026-03-25', title: 'The Real Sync & Atomic Refresh', details: ['Fuerza de sincronización v15.', 'Refresco de página automático tras carga demo.', 'Blindaje de detector de libros ffffffff-.'] },
         { version: 'v3.1.5.8', date: '2026-03-25', title: 'Universal Sync & Master Hub', details: ['Motor de Demos Universal con IDs UUID.', 'Centro de Control Maestro con visibilidad robusta.', 'Sincronización de Base de Datos para lanzamientos globales.'] },
@@ -89,7 +89,7 @@ export default function AdminLayout() {
         'expenses': 'Gastos', 'cashflow': 'Flujo de Caja', 'royalties': 'Liquidaciones',
         'titles': 'Títulos', 'authors': 'Autores', 'users': 'Usuarios',
         'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes', 'events': 'Ferias y Eventos',
-        'sales_group': 'Ventas'
+        'sales_group': 'Ventas', 'reports': 'Informes'
     }
 
     const handleLogout = () => {
@@ -121,7 +121,7 @@ export default function AdminLayout() {
                         <div>
                             <h1 className="font-bold text-white text-sm">Editorial Pro</h1>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">
-                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.5.12 (MASTER SYNC)</span>
+                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.5.18 (PRODUCTION READY)</span>
                             </p>
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white">

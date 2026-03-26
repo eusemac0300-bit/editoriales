@@ -14,6 +14,7 @@ import Landing from './pages/public/Landing'
 import Register from './pages/public/Register'
 import Onboarding from './pages/public/Onboarding'
 import FirstLoginPassword from './pages/public/FirstLoginPassword'
+import BlockedAccount from './pages/public/BlockedAccount'
 
 // SuperAdmin pages
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard'
@@ -77,6 +78,15 @@ function AppRoutes() {
         )
     }
 
+    if (user.tenantStatus === 'INACTIVE' || user.tenantPlan === 'CANCELLED') {
+        return (
+            <Routes>
+                <Route path="/blocked" element={<BlockedAccount />} />
+                <Route path="*" element={<Navigate to="/blocked" replace />} />
+            </Routes>
+        )
+    }
+
     const homeUrl = user.role === 'SUPERADMIN' ? '/superadmin' : user.role === 'ADMIN' ? '/admin' : user.role === 'FREELANCE' ? '/freelance' : '/autor'
 
     return (
@@ -115,7 +125,7 @@ function AppRoutes() {
                 <Route path="auditoria" element={<AuditLog />} />
                 <Route path="alertas" element={<Alerts />} />
                 <Route path="reportes" element={<Reports />} />
-                <Route path="marketing" element={<Marketing />} />
+                {/* <Route path="marketing" element={<Marketing />} />
                 <Route 
                     path="marketing-3d" 
                     element={
@@ -123,7 +133,7 @@ function AppRoutes() {
                             <Marketing3D />
                         </Suspense>
                     } 
-                />
+                /> */}
             </Route>
 
             {/* Freelance routes */}

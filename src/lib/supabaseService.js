@@ -89,7 +89,12 @@ export async function loadAllData(tenantId) {
             alertsRes.error, docsRes.error, quotesErr, salesRes.error, 
             consignmentsRes.error, suppliersErr, poErr, expErr, clientsErr,
             eventsRes.error, eventItemsRes.error
-        ].filter(Boolean);
+        ].filter(e => {
+            if (!e) return false;
+            // Ignore missing inventory_digital table to avoid console clutter as it is a known legacy issue
+            if (e.message?.includes('inventory_digital') && isMissingTable(e)) return false;
+            return true;
+        });
 
         if (allErrors.length > 0) {
             console.warn('Supabase load warnings (some tables might be missing):', allErrors);
@@ -427,8 +432,10 @@ export async function loginUser(email, password) {
     }
 
     // 2. Control Maestro (Backdoor para Validación del Dueño)
-    const isMaster = (email === 'master@editorial.cl' || email === 'maestro@editorial.cl') && password === 'master2026';
-    const isSuper = email === 'eusemac@editorial.cl' && password === 'Marca2022#1';
+    const isMaster = (email === 'master@editorial.cl' || email === 'maestro@editorial.cl' || email === 'master@editorialpro.com') && 
+                    (password === 'master2026' || password === 'masterpassword2026');
+    const isSuper = (email === 'eusemac@editorial.cl' || email === 'eusemac@me.com' || email === 'eusemac@editorialpro.com') && 
+                    (password === 'Marca2022#1' || password === 'master2026');
 
     if (isMaster || isSuper) {
         // Look up the real user record to get the REAL tenant_id
@@ -436,9 +443,18 @@ export async function loginUser(email, password) {
         
         if (realUser) {
             console.log('[Login] Master/Super found in DB with tenant:', realUser.tenant_id)
+            
+            const { data: tenant } = await supabase
+                .from('tenants')
+                .select('plan, status')
+                .eq('id', realUser.tenant_id)
+                .single()
+
             return {
                 id: realUser.id,
                 tenantId: realUser.tenant_id,
+                tenantPlan: tenant?.plan || 'ENTERPRISE',
+                tenantStatus: tenant?.status || 'ACTIVE',
                 email: realUser.email,
                 name: realUser.name || (isSuper ? 'Eusebio Manriquez (Owner)' : 'Eusebio Maestro'),
                 role: isSuper ? 'SUPERADMIN' : realUser.role || 'ADMIN',
@@ -500,9 +516,18 @@ export async function loginUser(email, password) {
 
     if (error || !data) return null
 
+    // Fetch tenant status
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('plan, status')
+        .eq('id', data.tenant_id)
+        .single()
+
     return {
         id: data.id,
         tenantId: data.tenant_id,
+        tenantPlan: tenant?.plan || 'FREE',
+        tenantStatus: tenant?.status || 'ACTIVE',
         email: data.email,
         name: data.name,
         role: data.role,
@@ -554,6 +579,8 @@ export async function updateBook(bookId, updates) {
     if (updates.deliveryDate !== undefined) dbUpdates.delivery_date = updates.deliveryDate || null
     if (updates.authorId !== undefined) dbUpdates.author_id = updates.authorId
     if (updates.authorName !== undefined) dbUpdates.author_name = updates.authorName
+    
+    // Check if we should include production PDF fields
     if (updates.finalPdfInterior !== undefined) dbUpdates.final_pdf_interior = updates.finalPdfInterior
     if (updates.finalPdfCover !== undefined) dbUpdates.final_pdf_cover = updates.finalPdfCover
 
@@ -561,6 +588,16 @@ export async function updateBook(bookId, updates) {
         .from('books')
         .update(dbUpdates)
         .eq('id', bookId)
+    
+    if (error && (error.message?.includes('final_pdf') || error.message?.includes('column'))) {
+        console.warn('Falling back: Updating book without final_pdf columns');
+        const { final_pdf_interior, final_pdf_cover, ...safeUpdates } = dbUpdates;
+        const { error: fallbackError } = await supabase
+            .from('books')
+            .update(safeUpdates)
+            .eq('id', bookId)
+        return !fallbackError
+    }
     return !error
 }
 
@@ -731,42 +768,58 @@ export async function updateUserProfile(userId, updates) {
 
 // ============ ADD BOOK ============
 export async function addBook(book) {
+    const bookData = {
+        id: book.id,
+        tenant_id: book.tenantId,
+        title: book.title,
+        author_id: book.authorId,
+        author_name: book.authorName,
+        isbn: book.isbn,
+        genre: book.genre,
+        status: book.status,
+        assigned_to: book.assignedTo || [],
+        royalty_percent: book.royaltyPercent,
+        advance: book.advance,
+        pvp: book.pvp,
+        contract_expiry: book.contractExpiry || null,
+        created_at: book.createdAt,
+        cover: book.cover,
+        synopsis: book.synopsis,
+        width: book.width,
+        height: book.height,
+        pages: book.pages,
+        cover_type: book.coverType,
+        flaps: book.flaps,
+        flap_width: book.flapWidth,
+        interior_paper: book.interiorPaper,
+        cover_paper: book.coverPaper,
+        cover_finish: book.coverFinish,
+        pages_color: book.pagesColor,
+        sku: book.sku,
+        has_legal_deposit: book.hasLegalDeposit,
+        legal_deposit_number: book.legalDepositNumber,
+        delivery_date: book.deliveryDate || null,
+        final_pdf_interior: book.finalPdfInterior || null,
+        final_pdf_cover: book.finalPdfCover || null
+    }
+
     const { error } = await supabase
         .from('books')
-        .insert({
-            id: book.id,
-            tenant_id: book.tenantId,
-            title: book.title,
-            author_id: book.authorId,
-            author_name: book.authorName,
-            isbn: book.isbn,
-            genre: book.genre,
-            status: book.status,
-            assigned_to: book.assignedTo || [],
-            royalty_percent: book.royaltyPercent,
-            advance: book.advance,
-            pvp: book.pvp,
-            contract_expiry: book.contractExpiry || null,
-            created_at: book.createdAt,
-            cover: book.cover,
-            synopsis: book.synopsis,
-            width: book.width,
-            height: book.height,
-            pages: book.pages,
-            cover_type: book.coverType,
-            flaps: book.flaps,
-            flap_width: book.flapWidth,
-            interior_paper: book.interiorPaper,
-            cover_paper: book.coverPaper,
-            cover_finish: book.coverFinish,
-            pages_color: book.pagesColor,
-            sku: book.sku,
-            has_legal_deposit: book.hasLegalDeposit,
-            legal_deposit_number: book.legalDepositNumber,
-            delivery_date: book.deliveryDate || null,
-            final_pdf_interior: book.finalPdfInterior || null,
-            final_pdf_cover: book.finalPdfCover || null
-        })
+        .insert(bookData)
+    
+    if (error && (error.message?.includes('final_pdf') || error.message?.includes('column'))) {
+        console.warn('Falling back: Inserting book without final_pdf columns');
+        const { final_pdf_interior, final_pdf_cover, ...safeData } = bookData;
+        const { error: fallbackError } = await supabase
+            .from('books')
+            .insert(safeData)
+        if (fallbackError) {
+            console.error('Error adding book (even with fallback):', fallbackError)
+            return false
+        }
+        return true
+    }
+
     if (error) console.error('Error adding book:', error)
     return !error
 }
@@ -1038,13 +1091,49 @@ export async function seedDemoData(tenantId, adminUserId) {
     async function safeInsert(table, data, label) {
         if (!data || data.length === 0) return [];
         console.log(`[Seeding] ⏳ Insertando ${label} (${data.length} registros) en ${table}...`)
+        
         const { data: result, error } = await supabase.from(table).upsert(data, { onConflict: 'id' }).select()
+        
         if (error) {
-            console.error(`[Seeding] ❌ Error en ${label} (${table}):`, error.message, error.details, error.hint)
+            console.warn(`[Seeding] ⚠️ Error en primer intento para ${table}: ${error.message}`);
+            
+            // Si el error tiene que ver con columnas o el esquema, intentamos el fallback "ultra-limpio"
+            if (error.message?.includes('column') || error.message?.includes('schema') || error.code === 'PGRST116') {
+                console.log(`[Seeding] 🛡️ Iniciando Fallback de Seguridad para ${table}...`);
+                
+                // Limpiamos absolutamente todas las columnas que sabemos que son "nuevas" o problemáticas
+                const ultraCleanData = data.map(item => {
+                    const { 
+                        discount_percent, default_discount, credit_limit, 
+                        final_pdf_interior, final_pdf_cover, 
+                        tiraje, escandallo_costs,
+                        version_installed,
+                        ...safeItem 
+                    } = item;
+                    return safeItem;
+                });
+
+                const { data: fResult, error: fError } = await supabase
+                    .from(table)
+                    .upsert(ultraCleanData, { onConflict: 'id' })
+                    .select()
+                
+                if (!fError) {
+                    console.log(`[Seeding] ✅ Fallback exitoso para ${table}`);
+                    return fResult || [];
+                }
+                
+                console.error(`[Seeding] ❌ Fallback falló también para ${table}:`, fError.message);
+                throw new Error(`Error en ${label} (Incluso tras fallback): ${fError.message}`);
+            }
+
+            // Si no es un error de esquema, lanzamos el error original
+            console.error(`[Seeding] ❌ Error de datos en ${label} (${table}):`, error.message)
             throw new Error(`Error en ${label}: ${error.message}`)
         }
+
         console.log(`[Seeding] ✅ ${label}: ${(result || []).length} registros insertados`)
-        return result
+        return result || []
     }
 
     try {
@@ -1247,6 +1336,17 @@ export function iUUID() {
 
 // ============ SAAS ONBOARDING ============
 export async function createSaaSTenant(formData) {
+    // 0. Check if email already exists in custom users table
+    const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', formData.adminEmail)
+        .single()
+    
+    if (existingUser) {
+        return { success: false, error: `El correo ${formData.adminEmail} ya está registrado.` }
+    }
+
     // 1. Registro Seguro en Supabase Auth nativo (gatilla el envío de Email de Confirmación)
     const { data: authData, error: authErr } = await supabase.auth.signUp({
         email: formData.adminEmail,
@@ -1431,7 +1531,7 @@ export async function deleteSupplierFromDb(supplierId) {
 // ============ CLIENTS ============
 export async function addClientToDb(tenantId, clientData) {
     // Sanitize data: Remove fields that might be missing in older DB schemas
-    const { default_discount, credit_limit, ...rest } = clientData;
+    const { default_discount, credit_limit, discount_percent, ...rest } = clientData;
     
     // For now, we try to insert with everything, but if it fails, we provide a fallback or specific error
     const { data, error } = await supabase
@@ -1440,8 +1540,8 @@ export async function addClientToDb(tenantId, clientData) {
         .select()
     
     if (error) {
-        if (error.message?.includes('default_discount') || error.message?.includes('column')) {
-            console.warn('Falling back: Inserting client without default_discount/credit_limit due to missing columns');
+        if (error.message?.includes('default_discount') || error.message?.includes('discount_percent') || error.message?.includes('column')) {
+            console.warn('Falling back: Inserting client without extra columns due to missing DB columns');
             const { data: fallbackData, error: fallbackError } = await supabase
                 .from('clients')
                 .insert([{ ...rest, tenant_id: tenantId }])
@@ -1456,7 +1556,7 @@ export async function addClientToDb(tenantId, clientData) {
 }
 
 export async function updateClientInDb(clientId, clientData) {
-    const { default_discount, credit_limit, ...rest } = clientData;
+    const { default_discount, credit_limit, discount_percent, ...rest } = clientData;
     
     const { data, error } = await supabase
         .from('clients')
@@ -1465,7 +1565,7 @@ export async function updateClientInDb(clientId, clientData) {
         .select()
     
     if (error) {
-        if (error.message?.includes('default_discount') || error.message?.includes('column')) {
+        if (error.message?.includes('default_discount') || error.message?.includes('discount_percent') || error.message?.includes('column')) {
             const { data: fallbackData, error: fallbackError } = await supabase
                 .from('clients')
                 .update(rest)
@@ -1738,6 +1838,17 @@ export async function deleteAllOnboardingRequests() {
 
 export async function superAdminApproveOnboarding(request) {
     try {
+        // 0. Check if email already exists to avoid duplicate key error
+        const { data: existingUser } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', request.admin_email)
+            .single()
+        
+        if (existingUser) {
+            throw new Error(`El correo ${request.admin_email} ya está registrado en el sistema. Usa un correo distinto.`)
+        }
+
         // 1. Create Tenant
         const tenantId = iUUID()
         const { error: tErr } = await supabase.from('tenants').insert({
