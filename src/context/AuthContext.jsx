@@ -252,7 +252,7 @@ export function AuthProvider({ children }) {
     const contextValue = useMemo(() => ({
         user, data, login, logout, hasPermission,
         isSuperAdmin: () => user?.role === 'SUPERADMIN',
-        isAdmin: () => user?.role === 'ADMIN',
+        isAdmin: () => ['ADMIN', 'SUPERADMIN'].includes(user?.role),
         isFreelance: () => user?.role === 'FREELANCE',
         isAutor: () => user?.role === 'AUTOR',
         resetWorkspace, 
