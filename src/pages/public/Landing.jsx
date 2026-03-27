@@ -67,7 +67,7 @@ export default function Landing() {
                         <div>
                             <h2 className="text-3xl lg:text-4xl font-bold mb-6 text-slate-900 dark:text-white">¿Sabías que tu editorial pierde más del <span className="text-red-500">40% del tiempo</span> en tareas manuales?</h2>
                             <p className="text-slate-600 dark:text-slate-300 mb-8 text-lg">
-                                La principal causa de pérdida de rentabilidad en las editoriales independientes es la fragmentación. Documentos perdidos, escandallos mal calculados y regalías que toman semanas en procesarse.
+                                La principal causa de pérdida de rentabilidad en las editoriales independientes es la fragmentación. Documentos perdidos, escandallos (costos) mal calculados y regalías que toman semanas en procesarse.
                             </p>
 
                             <div className="space-y-6">
@@ -77,7 +77,7 @@ export default function Landing() {
                                     </div>
                                     <div>
                                         <h4 className="text-xl font-bold mb-1 text-slate-800 dark:text-white">Fugas de Dinero Ocultas</h4>
-                                        <p className="text-slate-600 dark:text-slate-400 text-sm">Escandallos hechos "al ojo" que no contemplan todos los costos reales (pre-prensa, envíos, comisiones).</p>
+                                        <p className="text-slate-600 dark:text-slate-400 text-sm">Escandallos (costos) hechos "al ojo" que no contemplan todos los costos reales (pre-prensa, envíos, comisiones).</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-4 items-start">

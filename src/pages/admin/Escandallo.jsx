@@ -121,7 +121,7 @@ export default function Escandallo() {
             if (book) {
                 addAuditLog(`Actualizó escandallo para título: ${book.title}`, 'general')
             }
-            alert('Escandallo guardado correctamente en la base de datos.')
+            alert('Escandallo (Costos) guardado correctamente en la base de datos.')
             resetCalculator()
         } catch (err) {
             console.error('Save failed', err)
@@ -179,7 +179,7 @@ export default function Escandallo() {
                             ) : (
                                 <Save className="w-4 h-4" />
                             )}
-                            Guardar en Título
+                            Guardar Escandallo (Costos) en Título
                         </button>
                     )}
                 </div>

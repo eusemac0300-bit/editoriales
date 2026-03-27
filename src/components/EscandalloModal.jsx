@@ -92,7 +92,7 @@ export default function EscandalloModal({ book, onClose }) {
                 <div className="p-6 border-b border-slate-100 dark:border-dark-300 flex justify-between items-center bg-slate-50/50 dark:bg-dark-200/50">
                     <div>
                         <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <Calculator className="w-5 h-5 text-primary" /> Escandallo de Costos: {book.title}
+                            <Calculator className="w-5 h-5 text-primary" /> Escandallo (Costos): {book.title}
                         </h2>
                         <p className="text-xs text-slate-500 dark:text-dark-600">Calcula y guarda los costos asociados a este título</p>
                     </div>
@@ -279,7 +279,7 @@ export default function EscandalloModal({ book, onClose }) {
                         ) : (
                             <Save className="w-4 h-4" />
                         )}
-                        Guardar Escandallo en Título
+                        Guardar Escandallo (Costos) en Título
                     </button>
                 </div>
             </div>

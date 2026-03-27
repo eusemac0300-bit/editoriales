@@ -319,7 +319,7 @@ export default function Register() {
                         <BookOpen className="w-10 h-10 text-white" />
                     </Link>
                     <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Potencia tu <span className="text-primary">Editorial</span></h1>
-                    <p className="text-slate-400 font-medium tracking-tight">Control total sobre escandallos y regalías</p>
+                    <p className="text-slate-400 font-medium tracking-tight">Control total sobre escandallos (costos) y regalías</p>
                 </div>
 
                 <div className="glass-card bg-slate-900/60 backdrop-blur-xl p-8 md:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10">

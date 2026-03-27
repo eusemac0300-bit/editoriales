@@ -170,7 +170,7 @@ export default function Books() {
                                 <button
                                     onClick={() => setShowEscandallo(book)}
                                     className="p-2 bg-slate-100 dark:bg-dark-200 hover:bg-primary/20 rounded-lg text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors shadow-sm"
-                                    title="Ver Costos y Escandallo"
+                                    title="Ver Escandallo (Costos)"
                                 >
                                     <Calculator className="w-4 h-4" />
                                 </button>
