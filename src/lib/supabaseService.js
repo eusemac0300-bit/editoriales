@@ -1080,12 +1080,12 @@ export async function seedDemoData(tenantId, adminUserId) {
     const monthAgo = new Date(Date.now() - 2592000000).toISOString()
     const twoMonthsAgo = new Date(Date.now() - 5184000000).toISOString()
 
-    const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-
-    if (!isUUID(tenantId)) {
-        console.error('[Seeding] El tenantId no es un UUID válido:', tenantId);
-        throw new Error('tenantId no es UUID válido: ' + tenantId);
+    if (!tenantId) {
+        console.error('[Seeding] Error: No se proporcionó tenantId para sembrar datos.');
+        return;
     }
+
+    console.log(`[Seeding] Iniciando carga para tenant: ${tenantId}`);
 
     // Helper: insert with full error reporting
     async function safeInsert(table, data, label) {

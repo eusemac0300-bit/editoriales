@@ -334,13 +334,15 @@ export default function AdminLayout() {
 
 
                                         <div className="p-2 space-y-1">
-                                            <button
-                                                onClick={handleReset}
-                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-all text-xs font-bold uppercase tracking-tight"
-                                            >
-                                                <AlertTriangle className="w-4 h-4" />
-                                                {isResetting ? t('loading') : t('reset_workspace')}
-                                            </button>
+                                            {user?.role !== 'SUPERADMIN' && (
+                                                <button
+                                                    onClick={handleReset}
+                                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-all text-xs font-bold uppercase tracking-tight"
+                                                >
+                                                    <AlertTriangle className="w-4 h-4" />
+                                                    {isResetting ? t('loading') : t('reset_workspace')}
+                                                </button>
+                                            )}
 
                                             <button
                                                 onClick={handleLogout}
