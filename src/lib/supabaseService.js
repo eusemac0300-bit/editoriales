@@ -1102,14 +1102,16 @@ export async function seedDemoData(tenantId, adminUserId) {
                 console.log(`[Seeding] 🛡️ Iniciando Fallback de Seguridad para ${table}...`);
                 
                 // Limpiamos absolutamente todas las columnas que sabemos que son "nuevas" o problemáticas
+                const blacklist = [
+                    'discount_percent', 'default_discount', 'credit_limit', 
+                    'format', 'cover', 'tiraje', 'escandallo_costs', 
+                    'final_pdf_interior', 'final_pdf_cover', 
+                    'version_installed', 'escandalloCosts', 'escandallo_costs'
+                ];
+
                 const ultraCleanData = data.map(item => {
-                    const { 
-                        discount_percent, default_discount, credit_limit, 
-                        final_pdf_interior, final_pdf_cover, 
-                        tiraje, escandallo_costs,
-                        version_installed,
-                        ...safeItem 
-                    } = item;
+                    const safeItem = { ...item };
+                    blacklist.forEach(col => delete safeItem[col]);
                     return safeItem;
                 });
 
