@@ -86,7 +86,7 @@ export function useUsers(tenantId) {
     const queryClient = useQueryClient()
 
     const addMutation = useMutation({
-        mutationFn: (userData) => db.addUser(userData),
+        mutationFn: (userData) => db.addUser(userData, tenantId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
         },

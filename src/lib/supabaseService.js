@@ -898,8 +898,14 @@ export async function saveFullData(data) {
 }
 
 // ============ USER MANAGEMENT ============
-export async function addUser(user) {
-    const tid = user.tenantId || user.tenant_id || 'UNKNOWN'
+export async function addUser(user, tenantIdFromHook) {
+    const MASTER_TENANT_ID = '00000000-0000-0000-0000-000000000000'
+    let tid = tenantIdFromHook || user.tenantId || user.tenant_id
+    
+    // Convert 'MASTER' or empty strings to the actual Master UUID or handle it
+    if (!tid || tid === 'MASTER' || tid === 'master') {
+        tid = MASTER_TENANT_ID
+    }
     
     const { data, error } = await supabase
         .from('users')
@@ -1507,8 +1513,9 @@ export async function deleteSaleFromDb(saleId) {
 }
 // ============ SUPPLIERS ============
 export async function addSupplierToDb(tenantId, supplierData) {
-    // Robust check for tenantId
-    const tid = tenantId || supplierData.tenant_id || supplierData.tenantId
+    const MASTER_TENANT_ID = '00000000-0000-0000-0000-000000000000'
+    let tid = tenantId || supplierData.tenant_id || supplierData.tenantId
+    if (!tid || tid === 'MASTER' || tid === 'master') tid = MASTER_TENANT_ID
     
     const { data, error } = await supabase
         .from('suppliers')
@@ -1543,7 +1550,9 @@ export async function deleteSupplierFromDb(supplierId) {
 
 // ============ CLIENTS ============
 export async function addClientToDb(tenantId, clientData) {
-    const tid = tenantId || clientData.tenant_id || clientData.tenantId;
+    const MASTER_TENANT_ID = '00000000-0000-0000-0000-000000000000'
+    let tid = tenantId || clientData.tenant_id || clientData.tenantId;
+    if (!tid || tid === 'MASTER' || tid === 'master') tid = MASTER_TENANT_ID
     const { default_discount, credit_limit, discount_percent, ...rest } = clientData;
 
     try {
