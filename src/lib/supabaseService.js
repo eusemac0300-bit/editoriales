@@ -6,6 +6,9 @@ export async function loadAllData(tenantId) {
     
     // We allow any tenantId that is present. The database uses TEXT for tenant_id columns.
     // The previous UUID-only check was preventing demo and legacy accounts from loading certain data.
+    // Helper to switch between .eq and .is based on tenantId value (null requires .is)
+    const match = (builder) => (tenantId === null) ? builder.is('tenant_id', null) : builder.eq('tenant_id', tenantId)
+
     try {
         const [
             usersRes,
@@ -28,28 +31,27 @@ export async function loadAllData(tenantId) {
             eventsRes,
             eventItemsRes
         ] = await Promise.all([
-            // TEXT columns (Legacy/Core)
-            supabase.from('users').select('*').eq('tenant_id', tenantId),
-            supabase.from('books').select('*').eq('tenant_id', tenantId),
-            supabase.from('inventory_physical').select('*').eq('tenant_id', tenantId),
-            supabase.from('inventory_digital').select('*').eq('tenant_id', tenantId),
-            supabase.from('invoices').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
-            supabase.from('royalties').select('*').eq('tenant_id', tenantId),
-            supabase.from('audit_log').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
-            supabase.from('comments').select('*').eq('tenant_id', tenantId).order('date', { ascending: true }),
-            supabase.from('alerts').select('*').eq('tenant_id', tenantId).order('date', { ascending: false }),
-            supabase.from('documents').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
-            supabase.from('sales').select('*, books(title)').eq('tenant_id', tenantId).order('sale_date', { ascending: false }),
-            supabase.from('consignments').select('*, books(title)').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+            // Use match() for all tables to ensure null handling
+            match(supabase.from('users').select('*')),
+            match(supabase.from('books').select('*')),
+            match(supabase.from('inventory_physical').select('*')),
+            match(supabase.from('inventory_digital').select('*')),
+            match(supabase.from('invoices').select('*')).order('date', { ascending: false }),
+            match(supabase.from('royalties').select('*')),
+            match(supabase.from('audit_log').select('*')).order('date', { ascending: false }),
+            match(supabase.from('comments').select('*')).order('date', { ascending: true }),
+            match(supabase.from('alerts').select('*')).order('date', { ascending: false }),
+            match(supabase.from('documents').select('*')).order('created_at', { ascending: false }),
+            match(supabase.from('sales').select('*, books(title)')).order('sale_date', { ascending: false }),
+            match(supabase.from('consignments').select('*, books(title)')).order('created_at', { ascending: false }),
             
-            // UUID enforced tables - skip if tenantId is not a UUID to avoid 400 errors
-            supabase.from('quotes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
-            supabase.from('suppliers').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }),
-            supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId).order('date_ordered', { ascending: false }),
-            supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId).order('date', { ascending: false }),
-            supabase.from('clients').select('*').eq('tenant_id', tenantId).order('name', { ascending: true }),
-            supabase.from('events').select('*').eq('tenant_id', tenantId).order('start_date', { ascending: false }),
-            supabase.from('event_items').select('*, books(title)').eq('tenant_id', tenantId)
+            match(supabase.from('quotes').select('*')).order('created_at', { ascending: false }),
+            match(supabase.from('suppliers').select('*')).order('name', { ascending: true }),
+            match(supabase.from('purchase_orders').select('*, books(title), suppliers(name)')).order('date_ordered', { ascending: false }),
+            match(supabase.from('expenses').select('*, suppliers(name)')).order('date', { ascending: false }),
+            match(supabase.from('clients').select('*')).order('name', { ascending: true }),
+            match(supabase.from('events').select('*')).order('start_date', { ascending: false }),
+            match(supabase.from('event_items').select('*, books(title)'))
         ])
 
         const users = usersRes.data;
