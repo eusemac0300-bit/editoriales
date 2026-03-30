@@ -468,7 +468,7 @@ export async function loginUser(email, password) {
         console.warn('[Login] Master/Super NOT found in DB, using fallback')
         return {
             id: isSuper ? 'super-val-uid' : 'master-val-uid',
-            tenantId: isSuper ? 't_master' : '00000000-0000-0000-0000-000000000000', 
+            tenantId: null, 
             email: email,
             name: isSuper ? 'Eusebio Manriquez (Owner)' : 'Eusebio Maestro (Validación)',
             role: isSuper ? 'SUPERADMIN' : 'ADMIN',
@@ -1845,7 +1845,7 @@ export async function deleteAllOnboardingRequests() {
     const { error } = await supabase
         .from('onboarding_requests')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000')
+        .neq('id', 'MASTER')
     if (error) {
         console.error('Error deleting all requests:', error)
         return false
