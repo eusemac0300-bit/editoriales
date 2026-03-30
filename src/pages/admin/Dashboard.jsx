@@ -47,11 +47,12 @@ export default function AdminDashboard() {
     const royaltiesAmount = pendingRoyalties.reduce((sum, r) => sum + (r.netRoyalty || 0), 0)
 
     // Consignments (Floating Value)
-    const activeConsignments = (finances?.consignments || []).filter(c => c.status === 'open' || c.status === 'En Curso')
+    const activeConsignments = (finances?.consignments || []).filter(c => c.status === 'activa')
     const consignmentValue = activeConsignments.reduce((sum, c) => {
         const book = books.find(b => b.id === c.bookId)
         const price = book?.pvp || 0
-        return sum + (price * (c.remainingQty || c.initialQty || 0))
+        const pending = (c.sentQuantity || 0) - (c.soldQuantity || 0) - (c.returnedQuantity || 0)
+        return sum + (price * pending)
     }, 0)
 
     const totalStock = physicalInv.reduce((s, p) => s + (p.stock || 0), 0)
