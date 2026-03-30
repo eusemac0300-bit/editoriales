@@ -445,8 +445,8 @@ function POForm({ po, books, suppliers, quotes = [], onSave, onCancel }) {
                             setForm({ 
                                 ...form, 
                                 quote_id: qId,
-                                total_cost: q ? q.total : form.total_cost,
-                                expected_quantity: q ? (q.quantity || form.expected_quantity) : form.expected_quantity
+                                total_cost: q ? (q.approvedAmount || q.quotedAmount) : form.total_cost,
+                                expected_quantity: q ? (q.requestedAmount || form.expected_quantity) : form.expected_quantity
                             })
                         }}
                         className="input-field w-full text-sm"
@@ -454,7 +454,7 @@ function POForm({ po, books, suppliers, quotes = [], onSave, onCancel }) {
                         <option value="">Ninguna cotización seleccionada</option>
                         {quotes.filter(q => q.status === 'Aprobada').map(q => (
                             <option key={q.id} value={q.id}>
-                                {q.provider} - {q.bookTitle} ({new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(q.total)})
+                                {q.provider} - {q.bookTitle} ({new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(q.approvedAmount || q.quotedAmount)})
                             </option>
                         ))}
                     </select>

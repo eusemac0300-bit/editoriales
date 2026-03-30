@@ -107,14 +107,33 @@ export default function Books() {
                                         await updateBookDetails(editingBook.id, bookData)
                                         addAuditLog(`Actualizó título: '${bookData.title}'`, 'general')
                                     } else {
-                                        const newBook = await addNewBook(bookData)
+                                        // For NEW books, we need the fixed ID from the creation
+                                        const newBookId = bookData.id || `b${Date.now()}`
+                                        const bookToSave = { ...bookData, id: newBookId }
+                                        
+                                        await addNewBook(bookToSave)
                                         addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
                                         
-                                        // If we have PDFs in a new book, also register them as separate documents
-                                        // to ensure they are visible in the Documents tab and as fallback
-                                        if (bookData.finalPdfInterior) {
-                                            const { addDocument, user } = useAuth.getState?.() || {} // Simplified for local context
-                                            // Documents will be auto-refetched
+                                        // Register documents for the new book if any PDFs were uploaded during creation
+                                        if (bookData.finalPdfInterior || bookData.finalPdfCover) {
+                                            if (bookData.finalPdfInterior) {
+                                                await addDocument({
+                                                    bookId: newBookId,
+                                                    name: `PDF Interior Final: ${bookData.title}`,
+                                                    type: 'FINAL_INTERIOR',
+                                                    fileUrl: bookData.finalPdfInterior,
+                                                    uploadedBy: user.name
+                                                })
+                                            }
+                                            if (bookData.finalPdfCover) {
+                                                await addDocument({
+                                                    bookId: newBookId,
+                                                    name: `PDF Tapa Final: ${bookData.title}`,
+                                                    type: 'FINAL_COVER',
+                                                    fileUrl: bookData.finalPdfCover,
+                                                    uploadedBy: user.name
+                                                })
+                                            }
                                         }
                                     }
                                     setShowAdd(false)
