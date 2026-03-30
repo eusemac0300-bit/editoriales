@@ -107,18 +107,17 @@ export default function Books() {
                                         await updateBookDetails(editingBook.id, bookData)
                                         addAuditLog(`Actualizó título: '${bookData.title}'`, 'general')
                                     } else {
-                                        // For NEW books, we need the fixed ID from the creation
-                                        const newBookId = bookData.id || `b${Date.now()}`
-                                        const bookToSave = { ...bookData, id: newBookId }
+                                        // 1. Create the book and get the REAL ID from DB
+                                        const newBook = await addNewBook(bookData)
+                                        const realBookId = newBook.id
                                         
-                                        await addNewBook(bookToSave)
                                         addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
                                         
-                                        // Register documents for the new book if any PDFs were uploaded during creation
+                                        // 2. Register documents using the REAL ID
                                         if (bookData.finalPdfInterior || bookData.finalPdfCover) {
                                             if (bookData.finalPdfInterior) {
                                                 await addDocument({
-                                                    bookId: newBookId,
+                                                    bookId: realBookId,
                                                     name: `PDF Interior Final: ${bookData.title}`,
                                                     type: 'FINAL_INTERIOR',
                                                     fileUrl: bookData.finalPdfInterior,
@@ -127,7 +126,7 @@ export default function Books() {
                                             }
                                             if (bookData.finalPdfCover) {
                                                 await addDocument({
-                                                    bookId: newBookId,
+                                                    bookId: realBookId,
                                                     name: `PDF Tapa Final: ${bookData.title}`,
                                                     type: 'FINAL_COVER',
                                                     fileUrl: bookData.finalPdfCover,

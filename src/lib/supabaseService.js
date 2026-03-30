@@ -600,7 +600,29 @@ export async function updateBook(bookId, updates) {
             .from('books')
             .update(safeUpdates)
             .eq('id', bookId)
-        return !fallbackError
+        
+        if (fallbackError) throw fallbackError
+
+        // Ensure PDFs are registered as documents if they were part of the update
+        if (dbUpdates.final_pdf_interior) {
+            await addDocumentEntry({
+                bookId: bookId,
+                name: `PDF Interior Final Auto-Ref`,
+                type: 'FINAL_INTERIOR',
+                fileUrl: dbUpdates.final_pdf_interior,
+                tenantId: updates.tenantId
+            })
+        }
+        if (dbUpdates.final_pdf_cover) {
+            await addDocumentEntry({
+                bookId: bookId,
+                name: `PDF Tapa Final Auto-Ref`,
+                type: 'FINAL_COVER',
+                fileUrl: dbUpdates.final_pdf_cover,
+                tenantId: updates.tenantId
+            })
+        }
+        return true
     }
     return !error
 }
