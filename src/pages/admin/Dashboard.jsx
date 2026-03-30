@@ -72,7 +72,7 @@ export default function AdminDashboard() {
         { label: t('sales_month'), value: formatCLP(incomeThisMonth), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${salesThisMonth.length} ${t('sales').toLowerCase()}`, up: incomeThisMonth > 0, link: '/admin/ventas' },
         { label: t('published_books'), value: published, icon: BookOpen, color: 'from-primary to-primary-700', change: `${totalBooks} ${t('titles').toLowerCase()}`, link: '/admin/libros' },
         { label: t('physical_stock'), value: `${totalStock} uds.`, icon: Package, color: 'from-blue-500 to-blue-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} alertas de stock` : 'Todo ok', link: '/admin/inventario' },
-        { label: 'REGALÍAS ESTIMADAS (MES)', value: formatCLP(potentialRoyalties), icon: Users, color: 'from-purple-500 to-purple-700', change: `Suma proyectada por ventas`, link: '/admin/royalties' },
+        { label: 'REGALÍAS ESTIMADAS (MES)', value: formatCLP(potentialRoyalties), icon: Users, color: 'from-purple-500 to-purple-700', change: `Suma proyectada por ventas`, link: '/admin/liquidaciones' },
     ]
 
     const kanbanStages = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
