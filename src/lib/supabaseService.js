@@ -423,8 +423,8 @@ export async function loginUser(email, password) {
     // 0. ACCESO DE EMERGENCIA PRIORITARIO (Bypass Supabase Auth)
     const isMaster = (email === 'master@editorial.cl' || email === 'maestro@editorial.cl' || email === 'master@editorialpro.com' || email === 'contacto@dpiprint.cl') && 
                     (password === 'master2026' || password === 'DPIprint2026' || password === 'masterpassword2026');
-    const isSuper = (email === 'eusemac@editorial.cl' || email === 'eusemac@me.com' || email === 'eusemac@editorialpro.com' || email === 'contacto@dpiprint.cl') && 
-                    (password === 'Marca2022#1' || password === 'DPIprint2026' || password === 'master2026');
+    const isSuper = (email === 'eusemac@editorial.cl' || email === 'eusemac@me.com' || email === 'eusemac@editorialpro.com') && 
+                    (password === 'Marca2022#1' || password === 'master2026');
 
     if (isMaster || isSuper) {
         // Buscamos si existe en DB para traer su nombre y tenant real
@@ -445,7 +445,7 @@ export async function loginUser(email, password) {
                 tenantPlan: tenant?.plan || 'ENTERPRISE',
                 tenantStatus: tenant?.status || 'ACTIVE',
                 email: realUser.email,
-                name: realUser.name || (isSuper ? 'Eusebio Manriquez (Owner)' : 'Administrador DPI Print'),
+                name: realUser.name || (isSuper ? 'Eusebio Manriquez (Owner)' : 'Administrador Maestro'),
                 role: isSuper ? 'SUPERADMIN' : realUser.role || 'ADMIN',
                 avatar: realUser.avatar || 'EM',
                 title: isSuper ? 'Súper Administrador' : 'Administrador Maestro',
@@ -455,11 +455,13 @@ export async function loginUser(email, password) {
         
         // Fallback only if user doesn't exist in DB yet
         console.warn('[Login] Master/Super NOT found in DB, using fallback')
+        const finalName = isSuper ? 'Eusebio Manriquez (Owner)' : (email === 'contacto@dpiprint.cl' ? 'Administrador DPI Print' : 'Eusebio Maestro (Admin)');
+        
         return {
             id: isSuper ? 'super-val-uid' : 'master-val-uid',
             tenantId: null, 
             email: email,
-            name: isSuper ? 'Eusebio Manriquez (Owner)' : 'Administrador DPI Print',
+            name: finalName,
             role: isSuper ? 'SUPERADMIN' : 'ADMIN',
             avatar: 'EM',
             title: isSuper ? 'Súper Administrador' : 'Administrador Maestro',
