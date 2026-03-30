@@ -604,22 +604,25 @@ export async function updateBook(bookId, updates) {
         if (fallbackError) throw fallbackError
 
         // Ensure PDFs are registered as documents if they were part of the update
-        if (dbUpdates.final_pdf_interior) {
+        // Use tenant ID from updates
+        const actualTenantId = updates.tenant_id || updates.tenantId;
+
+        if (dbUpdates.final_pdf_interior && actualTenantId) {
             await addDocumentEntry({
                 bookId: bookId,
-                name: `PDF Interior Final Auto-Ref`,
+                name: `Copia Interior: ${updates.title || 'Libro'}`,
                 type: 'FINAL_INTERIOR',
                 fileUrl: dbUpdates.final_pdf_interior,
-                tenantId: updates.tenantId
+                tenantId: actualTenantId
             })
         }
-        if (dbUpdates.final_pdf_cover) {
+        if (dbUpdates.final_pdf_cover && actualTenantId) {
             await addDocumentEntry({
                 bookId: bookId,
-                name: `PDF Tapa Final Auto-Ref`,
+                name: `Copia Tapa: ${updates.title || 'Libro'}`,
                 type: 'FINAL_COVER',
                 fileUrl: dbUpdates.final_pdf_cover,
-                tenantId: updates.tenantId
+                tenantId: actualTenantId
             })
         }
         return true

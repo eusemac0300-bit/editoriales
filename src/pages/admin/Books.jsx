@@ -430,38 +430,16 @@ function BookForm({ data, initialData, onSave, onClose }) {
     useEffect(() => {
         if (initialData) {
             // Check if we have documents that are production PDFs
-            const interiorDoc = (data.documents || []).find(d => d.bookId === initialData.id && d.type === 'FINAL_INTERIOR')
-            const coverDoc = (data.documents || []).find(d => d.bookId === initialData.id && d.type === 'FINAL_COVER')
+            // We search by ID or title match as a secondary fallback
+            const docs = data.documents || []
+            const interiorDoc = docs.find(d => d.bookId === initialData.id && d.type === 'FINAL_INTERIOR') || 
+                              docs.find(d => d.type === 'FINAL_INTERIOR' && d.name.includes(initialData.title) && d.bookId === initialData.id)
+            
+            const coverDoc = docs.find(d => d.bookId === initialData.id && d.type === 'FINAL_COVER') ||
+                           docs.find(d => d.type === 'FINAL_COVER' && d.name.includes(initialData.title) && d.bookId === initialData.id)
 
             setForm({
-                title: initialData.title || '',
-                authorId: initialData.authorId || '',
-                authorName: initialData.authorName || '',
-                genre: initialData.genre || '',
-                status: initialData.status || 'Original',
-                isbn: initialData.isbn || '',
-                synopsis: initialData.synopsis || '',
-                pvp: initialData.pvp || 0,
-                royaltyPercent: initialData.royaltyPercent || 0,
-                advance: initialData.advance || 0,
-                width: initialData.width || '',
-                height: initialData.height || '',
-                pages: initialData.pages || '',
-                coverType: initialData.coverType || '',
-                flaps: initialData.flaps || '',
-                interiorPaper: initialData.interiorPaper || '',
-                coverPaper: initialData.coverPaper || '',
-                coverFinish: initialData.coverFinish || '',
-                cover: initialData.cover || '',
-                pagesColor: initialData.pagesColor || '',
-                sku: initialData.sku || '',
-                hasLegalDeposit: initialData.hasLegalDeposit || 'No',
-                legalDepositNumber: initialData.legalDepositNumber || '',
-                flapWidth: initialData.flapWidth || '',
-                contractStatus: initialData.contractStatus || 'Borrador',
-                contractDate: initialData.contractDate || '',
-                contractFile: initialData.contractFile || '',
-                deliveryDate: initialData.deliveryDate || '',
+                ...initialData,
                 finalPdfInterior: initialData.finalPdfInterior || interiorDoc?.fileUrl || '',
                 finalPdfCover: initialData.finalPdfCover || coverDoc?.fileUrl || ''
             })
