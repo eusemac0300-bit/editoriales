@@ -899,10 +899,10 @@ export async function saveFullData(data) {
 
 // ============ USER MANAGEMENT ============
 export async function addUser(user) {
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('users')
         .insert({
-            id: user.id,
+            id: user.id || iUUID(),
             tenant_id: user.tenantId,
             email: user.email,
             password: user.password,
@@ -914,8 +914,13 @@ export async function addUser(user) {
             social_links: user.socialLinks || {},
             first_login: user.firstLogin !== undefined ? user.firstLogin : true
         })
-    if (error) console.error('Error adding user:', error)
-    return !error
+        .select()
+
+    if (error) {
+        console.error('Error adding user:', error)
+        throw error
+    }
+    return data[0]
 }
 
 export async function updateUser(userId, updates) {
@@ -1500,12 +1505,16 @@ export async function deleteSaleFromDb(saleId) {
 }
 // ============ SUPPLIERS ============
 export async function addSupplierToDb(tenantId, supplierData) {
+    // Robust check for tenantId
+    const tid = tenantId || supplierData.tenant_id || supplierData.tenantId
+    
     const { data, error } = await supabase
         .from('suppliers')
-        .insert([{ ...supplierData, tenant_id: tenantId }])
+        .insert([{ ...supplierData, tenant_id: tid }])
         .select()
+    
     if (error) {
-        console.error('Error adding supplier:', error)
+        console.error('Error adding supplier (tenant_id used:', tid, '):', error)
         throw error
     }
     return data[0]
@@ -1532,29 +1541,32 @@ export async function deleteSupplierFromDb(supplierId) {
 
 // ============ CLIENTS ============
 export async function addClientToDb(tenantId, clientData) {
-    // Sanitize data: Remove fields that might be missing in older DB schemas
+    const tid = tenantId || clientData.tenant_id || clientData.tenantId;
     const { default_discount, credit_limit, discount_percent, ...rest } = clientData;
-    
-    // For now, we try to insert with everything, but if it fails, we provide a fallback or specific error
-    const { data, error } = await supabase
-        .from('clients')
-        .insert([{ ...clientData, tenant_id: tenantId }])
-        .select()
-    
-    if (error) {
-        if (error.message?.includes('default_discount') || error.message?.includes('discount_percent') || error.message?.includes('column')) {
-            console.warn('Falling back: Inserting client without extra columns due to missing DB columns');
-            const { data: fallbackData, error: fallbackError } = await supabase
-                .from('clients')
-                .insert([{ ...rest, tenant_id: tenantId }])
-                .select()
-            if (fallbackError) throw fallbackError;
-            return fallbackData[0];
+
+    try {
+        const { data, error } = await supabase
+            .from('clients')
+            .insert([{ ...clientData, tenant_id: tid }])
+            .select();
+
+        if (error) {
+            // Fallback for schema mismatch
+            if (error.message?.includes('column') || error.message?.includes('not found')) {
+                const { data: fbData, error: fbErr } = await supabase
+                    .from('clients')
+                    .insert([{ ...rest, tenant_id: tid }])
+                    .select();
+                if (fbErr) throw fbErr;
+                return fbData[0];
+            }
+            throw error;
         }
-        console.error('Error adding client:', error)
-        throw error
+        return data[0];
+    } catch (err) {
+        console.error('Error adding client:', err);
+        throw err;
     }
-    return data[0]
 }
 
 export async function updateClientInDb(clientId, clientData) {
