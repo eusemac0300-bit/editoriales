@@ -73,7 +73,13 @@ export function AuthProvider({ children }) {
         if (savedUserRecord) {
             try {
                 const parsed = JSON.parse(savedUserRecord)
-                if (parsed?.tenantId) {
+                // Clean up old dummy tenant IDs that cause FK violations
+                if (parsed?.tenantId === '00000000-0000-0000-0000-000000000000') {
+                    parsed.tenantId = null
+                    localStorage.setItem('editorial_user', JSON.stringify(parsed))
+                }
+                
+                if (parsed && parsed.id) {
                     setUser(parsed)
                 } else {
                     localStorage.removeItem('editorial_user')
@@ -89,7 +95,7 @@ export function AuthProvider({ children }) {
     const login = useCallback(async (email, password) => {
         try {
             const found = await db.loginUser(email, password)
-            if (found && found.tenantId) {
+            if (found && found.id) {
                 setUser(found)
                 localStorage.setItem('editorial_user', JSON.stringify(found))
                 return { success: true, user: found }
