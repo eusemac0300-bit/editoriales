@@ -2,7 +2,7 @@ import { supabase } from './supabase'
 
 // ============ LOAD ALL DATA ============
 export async function loadAllData(tenantId) {
-    if (!tenantId) return null
+    if (tenantId === undefined) return null
     
     // We allow any tenantId that is present. The database uses TEXT for tenant_id columns.
     // The previous UUID-only check was preventing demo and legacy accounts from loading certain data.

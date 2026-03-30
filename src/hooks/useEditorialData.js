@@ -5,7 +5,7 @@ export function useEditorialData(tenantId) {
     return useQuery({
         queryKey: ['editorialData', tenantId],
         queryFn: () => db.loadAllData(tenantId),
-        enabled: !!tenantId,
+        enabled: tenantId !== undefined,
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnWindowFocus: true,
     })
