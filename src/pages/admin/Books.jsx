@@ -103,12 +103,13 @@ export default function Books() {
                             initialData={editingBook}
                             onSave={async (bookData) => {
                                 try {
+                                    const dataWithTenant = { ...bookData, tenantId: user.tenantId }
                                     if (editingBook) {
-                                        await updateBookDetails(editingBook.id, bookData)
+                                        await updateBookDetails(editingBook.id, dataWithTenant)
                                         addAuditLog(`Actualizó título: '${bookData.title}'`, 'general')
                                     } else {
                                         // 1. Create the book and get the REAL ID from DB
-                                        const newBook = await addNewBook(bookData)
+                                        const newBook = await addNewBook(dataWithTenant)
                                         const realBookId = newBook.id
                                         
                                         addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
