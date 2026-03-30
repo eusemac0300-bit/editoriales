@@ -442,11 +442,26 @@ function POForm({ po, books, suppliers, quotes = [], onSave, onCancel }) {
                         onChange={e => {
                             const qId = e.target.value
                             const q = quotes.find(quote => quote.id === qId)
+                            
+                            let matchedPrice = 0
+                            if (q) {
+                                // Default to first option if no specific approval amount is set
+                                matchedPrice = q.quotedAmount
+                                
+                                // But if we have an approved amount, find which option it corresponds to
+                                if (q.approvedAmount) {
+                                    if (q.approvedAmount === q.requestedAmount) matchedPrice = q.quotedAmount
+                                    else if (q.approvedAmount === q.requestedAmount2) matchedPrice = q.quotedAmount2
+                                    else if (q.approvedAmount === q.requestedAmount3) matchedPrice = q.quotedAmount3
+                                    else if (q.approvedAmount === q.requestedAmount4) matchedPrice = q.quotedAmount4
+                                }
+                            }
+
                             setForm({ 
                                 ...form, 
                                 quote_id: qId,
-                                total_cost: q ? (q.approvedAmount || q.quotedAmount) : form.total_cost,
-                                expected_quantity: q ? (q.requestedAmount || form.expected_quantity) : form.expected_quantity
+                                total_cost: q ? (matchedPrice || q.quotedAmount || 0) : form.total_cost,
+                                expected_quantity: q ? (q.approvedAmount || q.requestedAmount || form.expected_quantity) : form.expected_quantity
                             })
                         }}
                         className="input-field w-full text-sm"
