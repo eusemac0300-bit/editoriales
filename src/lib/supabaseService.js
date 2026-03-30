@@ -925,8 +925,9 @@ export async function addUser(user, tenantIdFromHook) {
         .select()
 
     if (error) {
-        console.error('Error adding user:', error)
-        throw error
+        const errorMsg = `Error al insertar usuario en DB (usando tenant_id: ${tid}): ${error.message}`
+        console.error(errorMsg, { user, tid })
+        throw new Error(errorMsg)
     }
     return data[0]
 }
@@ -1523,8 +1524,9 @@ export async function addSupplierToDb(tenantId, supplierData) {
         .select()
     
     if (error) {
-        console.error('Error adding supplier (tenant_id used:', tid, '):', error)
-        throw error
+        const errorMsg = `Error al insertar proveedor (tenant_id: ${tid}): ${error.message}`
+        console.error(errorMsg, { supplierData, tid })
+        throw new Error(errorMsg)
     }
     return data[0]
 }
