@@ -2142,6 +2142,11 @@ export async function settleEventInDb(eventId, itemsData) {
 
         // 4. Officializing Sales (register as sales)
         if (item.soldQty > 0) {
+            // Fetch current PVP for the book to ensure dashboard totals are correct
+            const { data: book } = await supabase.from('books').select('pvp').eq('id', item.bookId).single()
+            const unitPrice = book?.pvp || 0
+            const totalAmount = unitPrice * item.soldQty
+
             await supabase.from('sales').insert({
                 tenant_id: event.tenant_id,
                 book_id: item.bookId,
@@ -2149,8 +2154,10 @@ export async function settleEventInDb(eventId, itemsData) {
                 channel: 'Feria / Evento',
                 type: 'fisico',
                 quantity: item.soldQty,
+                unit_price: unitPrice,
+                total_amount: totalAmount,
                 sale_date: new Date().toISOString(),
-                status: 'finalizada',
+                status: 'Completada',
                 notes: `Venta originada en evento: ${event.name}`
             })
         }

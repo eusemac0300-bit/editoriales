@@ -46,11 +46,20 @@ export default function AdminDashboard() {
     const pendingRoyalties = (finances?.royalties || []).filter(r => r.status === 'pendiente' || r.status === 'pending')
     const royaltiesAmount = pendingRoyalties.reduce((sum, r) => sum + (r.netRoyalty || 0), 0)
 
+    // Consignments (Floating Value)
+    const activeConsignments = (finances?.consignments || []).filter(c => c.status === 'open' || c.status === 'En Curso')
+    const consignmentValue = activeConsignments.reduce((sum, c) => {
+        const book = books.find(b => b.id === c.bookId)
+        const price = book?.pvp || 0
+        return sum + (price * (c.remainingQty || c.initialQty || 0))
+    }, 0)
+
     const totalStock = physicalInv.reduce((s, p) => s + (p.stock || 0), 0)
     const lowStockCount = physicalInv.filter(p => (p.minStock > 0 && p.stock <= p.minStock)).length
     const criticalAlerts = (alerts || []).filter(a => !a.read).length
 
     const stats = [
+        { label: 'VALOR EN LA CALLE', value: formatCLP(consignmentValue), icon: Truck, color: 'from-amber-400 to-amber-600', change: `${activeConsignments.length} consignaciones activas`, link: '/admin/consignaciones' },
         { label: 'TOP VENTAS (Histórico)', value: bestSellerBook ? bestSellerBook.title : '—', icon: TrendingUp, color: 'from-yellow-400 to-yellow-600', change: `${bestSellerCount} unidades vendidas`, link: '/admin/libros', bestseller: true },
         { label: 'URGENTE: REIMPRESIÓN', value: criticalBook ? criticalBook.title : '—', icon: AlertTriangle, color: 'from-rose-500 to-rose-700', change: criticalBook ? `Quedan solo ${criticalStockItem.stock} uds.` : 'Sin quiebres', link: '/admin/inventario' },
         { label: t('sales_month'), value: formatCLP(incomeThisMonth), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${salesThisMonth.length} ${t('sales').toLowerCase()}`, up: incomeThisMonth > 0, link: '/admin/ventas' },
