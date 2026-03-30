@@ -214,8 +214,8 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
         setSaving(true)
         try {
             await onSave(form)
-        } catch {
-            setError('Error al guardar. Inténtalo de nuevo.')
+        } catch (err) {
+            setError('Error al guardar: ' + (err.message || 'Inténtalo de nuevo.'))
         }
         setSaving(false)
     }

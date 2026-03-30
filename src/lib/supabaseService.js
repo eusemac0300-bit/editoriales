@@ -899,11 +899,13 @@ export async function saveFullData(data) {
 
 // ============ USER MANAGEMENT ============
 export async function addUser(user) {
+    const tid = user.tenantId || user.tenant_id || 'UNKNOWN'
+    
     const { data, error } = await supabase
         .from('users')
         .insert({
             id: user.id || iUUID(),
-            tenant_id: user.tenantId,
+            tenant_id: tid,
             email: user.email,
             password: user.password,
             name: user.name,

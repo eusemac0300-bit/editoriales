@@ -1,1 +1,1 @@
-export const APP_VERSION = "v3.1.5.25-robust-stable";
+export const APP_VERSION = "v3.1.5.26-diagnose-stable";
