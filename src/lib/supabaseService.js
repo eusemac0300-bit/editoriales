@@ -1092,17 +1092,20 @@ export async function seedDemoData(tenantId, adminUserId) {
         if (!data || data.length === 0) return [];
         console.log(`[Seeding] ⏳ Insertando ${label} (${data.length} registros) en ${table}...`)
         
-        const { data: result, error } = await supabase.from(table).upsert(data, { onConflict: 'id' }).select()
+        const hasId = data[0] && (data[0].id !== undefined);
+        const query = hasId ? supabase.from(table).upsert(data, { onConflict: 'id' }) : supabase.from(table).insert(data);
+        const { data: result, error } = await query.select()
         
         if (error) {
             console.warn(`[Seeding] ⚠️ Error en primer intento para ${table}: ${error.message}`);
             
             // Si el error tiene que ver con columnas o el esquema, intentamos el fallback "ultra-limpio"
-            if (error.message?.includes('column') || error.message?.includes('schema') || error.code === 'PGRST116') {
+            if (error.message?.includes('column') || error.message?.includes('schema') || error.code === 'PGRST116' || error.message?.includes('cache')) {
                 console.log(`[Seeding] 🛡️ Iniciando Fallback de Seguridad para ${table}...`);
                 
                 // Limpiamos absolutamente todas las columnas que sabemos que son "nuevas" o problemáticas
                 const blacklist = [
+                    'location', 'client_id', 'book_title', 'discount_percent', 'tax',
                     'discount_percent', 'default_discount', 'credit_limit', 
                     'format', 'cover', 'tiraje', 'escandallo_costs', 
                     'final_pdf_interior', 'final_pdf_cover', 
@@ -1115,10 +1118,10 @@ export async function seedDemoData(tenantId, adminUserId) {
                     return safeItem;
                 });
 
-                const { data: fResult, error: fError } = await supabase
-                    .from(table)
-                    .upsert(ultraCleanData, { onConflict: 'id' })
-                    .select()
+                const { data: fResult, error: fError } = await (hasId 
+                    ? supabase.from(table).upsert(ultraCleanData, { onConflict: 'id' })
+                    : supabase.from(table).insert(ultraCleanData)
+                ).select()
                 
                 if (!fError) {
                     console.log(`[Seeding] ✅ Fallback exitoso para ${table}`);
@@ -1209,12 +1212,10 @@ export async function seedDemoData(tenantId, adminUserId) {
         // 4. INVENTORY
         // ============================================
         const demoInventory = demoBooks.map((b, i) => ({
-            id: mkId(`i00${i}`),
             tenant_id: tenantId,
             book_id: b.id,
             stock: b.status === 'Publicado' ? Math.floor(100 + (Math.random() * 400)) : 0,
-            min_stock: 50,
-            location: 'Bodega Central - Rack A'
+            min_stock: 50
         }))
         await safeInsert('inventory_physical', demoInventory, 'Inventario')
 
