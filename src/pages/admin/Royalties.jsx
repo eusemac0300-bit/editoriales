@@ -17,7 +17,7 @@ const PERIODS = [
 ]
 
 export default function Royalties() {
-    const { data, formatCLP, addAuditLog, reloadData, t } = useAuth()
+    const { data, formatCLP, addAuditLog, reloadData, t, user } = useAuth()
 
     const [selectedAuthor, setSelectedAuthor] = useState('all')
     const [selectedPeriod, setSelectedPeriod] = useState('2026-03')
@@ -80,9 +80,13 @@ export default function Royalties() {
         try {
             const author = data.users.find(u => u.id === book.authorId || u.name === book.authorName)
             const id = `roy-${book.id}-${selectedPeriod}-${Date.now()}`
+            
+            // Get the actual tenant_id of the author to ensure database integrity
+            const tenantId = author?.tenantId || user?.tenantId || data.users[0]?.tenantId || 't1'
+
             const entry = {
                 id,
-                tenant_id: data.users[0]?.tenantId || 't1',
+                tenant_id: tenantId,
                 book_id: book.id,
                 author_id: author?.id || '',
                 author_name: author?.name || book.authorName || '',

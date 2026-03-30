@@ -42,10 +42,6 @@ export default function AdminDashboard() {
         .sort((a, b) => a.stock - b.stock)[0]
     const criticalBook = books.find(b => b.id === criticalStockItem?.bookId)
 
-    // Royalties
-    const pendingRoyalties = (finances?.royalties || []).filter(r => r.status === 'pendiente' || r.status === 'pending')
-    const royaltiesAmount = pendingRoyalties.reduce((sum, r) => sum + (r.netRoyalty || 0), 0)
-
     // Consignments (Floating Value)
     const activeConsignments = (finances?.consignments || []).filter(c => c.status === 'activa')
     const consignmentValue = activeConsignments.reduce((sum, c) => {
@@ -53,6 +49,16 @@ export default function AdminDashboard() {
         const price = book?.pvp || 0
         const pending = (c.sentQuantity || 0) - (c.soldQuantity || 0) - (c.returnedQuantity || 0)
         return sum + (price * pending)
+    }, 0)
+
+    // Royalties Projection (Calculated in real-time from sales)
+    const currentMonthSales = activeSales.filter(s => s.saleDate?.startsWith(currentMonth))
+    const potentialRoyalties = books.filter(b => b.status === 'Publicado' && (b.royaltyPercent || 0) > 0).reduce((acc, book) => {
+        const units = currentMonthSales.filter(s => s.bookId === book.id).reduce((s, sale) => s + (sale.quantity || 0), 0)
+        if (units <= 0) return acc
+        const pvpNeto = (book.pvp || 0) / 1.19
+        const royaltyValue = pvpNeto * (book.royaltyPercent / 100) * units
+        return acc + royaltyValue
     }, 0)
 
     const totalStock = physicalInv.reduce((s, p) => s + (p.stock || 0), 0)
@@ -66,7 +72,7 @@ export default function AdminDashboard() {
         { label: t('sales_month'), value: formatCLP(incomeThisMonth), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${salesThisMonth.length} ${t('sales').toLowerCase()}`, up: incomeThisMonth > 0, link: '/admin/ventas' },
         { label: t('published_books'), value: published, icon: BookOpen, color: 'from-primary to-primary-700', change: `${totalBooks} ${t('titles').toLowerCase()}`, link: '/admin/libros' },
         { label: t('physical_stock'), value: `${totalStock} uds.`, icon: Package, color: 'from-blue-500 to-blue-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} alertas de stock` : 'Todo ok', link: '/admin/inventario' },
-        { label: 'REGALÍAS PENDIENTES', value: formatCLP(royaltiesAmount), icon: Users, color: 'from-purple-500 to-purple-700', change: `${pendingRoyalties.length} autores por liquidar`, link: '/admin/liquidaciones' },
+        { label: 'REGALÍAS ESTIMADAS (MES)', value: formatCLP(potentialRoyalties), icon: Users, color: 'from-purple-500 to-purple-700', change: `Suma proyectada por ventas`, link: '/admin/royalties' },
     ]
 
     const kanbanStages = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
