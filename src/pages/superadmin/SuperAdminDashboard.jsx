@@ -110,13 +110,26 @@ export default function SuperAdminDashboard() {
     const handleApproveOnboarding = async (request) => {
         if (!window.confirm(`¿Aprobar editorial "${request.editorial_name}"?\nSe creará el Workspace y el usuario admin.`)) return
         setActionLoading(true)
-        const res = await superAdminApproveOnboarding(request)
+        
+        let res = await superAdminApproveOnboarding(request)
+        
+        // Check for specific email exists error to show warning
+        if (!res.success && res.error === 'EMAIL_ALREADY_EXISTS') {
+            if (window.confirm(`⚠️ ADVERTENCIA: El correo "${request.admin_email}" ya existe en el sistema.\n\n¿Deseas VINCULAR a este usuario a la nueva editorial "${request.editorial_name}" y continuar con el alta?`)) {
+                // Retry with force flag
+                res = await superAdminApproveOnboarding(request, true)
+            } else {
+                setActionLoading(false)
+                return
+            }
+        }
+
         if (res.success) {
             setApprovedRequest({ ...request, tenant_id: res.tenantId })
             setShowWelcomeModal(true)
             await fetchData()
         } else {
-            alert('Error al aprobar: ' + res.error)
+            alert('Error al aprobar: ' + (res.message || res.error))
         }
         setActionLoading(false)
     }

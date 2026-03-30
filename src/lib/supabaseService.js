@@ -1838,17 +1838,21 @@ export async function deleteAllOnboardingRequests() {
     return true
 }
 
-export async function superAdminApproveOnboarding(request) {
+export async function superAdminApproveOnboarding(request, force = false) {
     try {
-        // 0. Check if email already exists to avoid duplicate key error
+        // 0. Check if email already exists
         const { data: existingUser } = await supabase
             .from('users')
-            .select('id')
+            .select('id, tenant_id')
             .eq('email', request.admin_email)
-            .single()
+            .maybeSingle()
         
-        if (existingUser) {
-            throw new Error(`El correo ${request.admin_email} ya está registrado en el sistema. Usa un correo distinto.`)
+        if (existingUser && !force) {
+            return { 
+                success: false, 
+                error: 'EMAIL_ALREADY_EXISTS', 
+                message: `El correo ${request.admin_email} ya está registrado en el sistema.` 
+            }
         }
 
         // 1. Create Tenant
@@ -1860,19 +1864,34 @@ export async function superAdminApproveOnboarding(request) {
         })
         if (tErr) throw tErr
 
-        // 2. Create Admin User
-        const userId = iUUID()
-        const { error: uErr } = await supabase.from('users').insert({
-            id: userId,
-            tenant_id: tenantId,
-            email: request.admin_email,
-            password: 'bienvenido123', // Temporal password
-            name: request.admin_name,
-            role: 'ADMIN',
-            avatar: request.admin_name.split(' ').map(w => w[0]).join('').toUpperCase(),
-            first_login: true
-        })
-        if (uErr) throw uErr
+        // 2. Create or Update Admin User
+        let userId;
+        if (existingUser && force) {
+            // Re-use existing user id, move to new tenant
+            userId = existingUser.id
+            const { error: uErr } = await supabase.from('users').update({
+                tenant_id: tenantId,
+                name: request.admin_name,
+                role: 'ADMIN',
+                first_login: true,
+                password: 'bienvenido123'
+            }).eq('id', userId)
+            if (uErr) throw uErr
+        } else {
+            // Normal creation
+            userId = iUUID()
+            const { error: uErr } = await supabase.from('users').insert({
+                id: userId,
+                tenant_id: tenantId,
+                email: request.admin_email,
+                password: 'bienvenido123', // Temporal password
+                name: request.admin_name,
+                role: 'ADMIN',
+                avatar: request.admin_name.split(' ').map(w => w[0]).join('').toUpperCase(),
+                first_login: true
+            })
+            if (uErr) throw uErr
+        }
 
         // 3. Seed Demo Data so users can practice!
         await seedDemoData(tenantId, userId);
@@ -1880,7 +1899,10 @@ export async function superAdminApproveOnboarding(request) {
         // 4. Set Initial Version
         await supabase.from('tenants').update({ version_installed: 'v3.1.5.9' }).eq('id', tenantId);
 
-        // 5. Update Request
+        // 5. Update Request Status to approved
+        await updateOnboardingStatus(request.id, 'approved', `Aprobado por SuperAdmin (Force: ${force ? 'SI' : 'NO'})`)
+
+        // 6. Final success object
         return { success: true, tenantId, userId, editorial_name: request.editorial_name }
     } catch (err) {
         console.error('Approval error:', err)
