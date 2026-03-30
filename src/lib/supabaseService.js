@@ -1106,6 +1106,7 @@ export async function seedDemoData(tenantId, adminUserId) {
                 // Limpiamos absolutamente todas las columnas que sabemos que son "nuevas" o problemáticas
                 const blacklist = [
                     'location', 'client_id', 'book_title', 'discount_percent', 'tax',
+                    'royalty_amount', 'category', 'description', 'supplier_id',
                     'discount_percent', 'default_discount', 'credit_limit', 
                     'format', 'cover', 'tiraje', 'escandallo_costs', 
                     'final_pdf_interior', 'final_pdf_cover', 
@@ -1306,15 +1307,15 @@ export async function seedDemoData(tenantId, adminUserId) {
         // 7. EXPENSES & ROYALTIES
         // ============================================
         const demoExpenses = [
-            { id: mkId('e001'), tenant_id: tenantId, category: 'IMPRENTA', description: `Impresión 1ra Edición - ${demoBooks[0].title}`, amount: 850000, date: twoMonthsAgo, status: 'PAGADO', supplier_id: demoSuppliers[0].id },
-            { id: mkId('e002'), tenant_id: tenantId, category: 'MARKETING', description: 'Campaña Meta Ads Lanzamientos', amount: 150000, date: monthAgo, status: 'PAGADO' },
-            { id: mkId('e003'), tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción Editorial Pro', amount: 35000, date: now, status: 'PENDIENTE' }
+            { id: mkId('e001'), tenant_id: tenantId, type: 'egreso', concept: `Impresión 1ra Edición - ${demoBooks[0].title}`, amount: 850000, date: twoMonthsAgo, status: 'PAGADO', provider: demoSuppliers[0].name },
+            { id: mkId('e002'), tenant_id: tenantId, type: 'egreso', concept: 'Campaña Meta Ads Lanzamientos', amount: 150000, date: monthAgo, status: 'PAGADO' },
+            { id: mkId('e003'), tenant_id: tenantId, type: 'egreso', concept: 'Suscripción Editorial Pro', amount: 35000, date: now, status: 'PENDIENTE' }
         ]
         await safeInsert('expenses', demoExpenses, 'Gastos')
 
         const demoRoyalties = [
-            { id: mkId('r001'), tenant_id: tenantId, book_id: demoBooks[0].id, author_id: demoAuthors[0].id, period: '2026-Q1', total_sales: 1500000, royalty_amount: 150000, status: 'Pagado' },
-            { id: mkId('r002'), tenant_id: tenantId, book_id: demoBooks[1].id, author_id: demoAuthors[1].id, period: '2026-Q1', total_sales: 450000, royalty_amount: 45000, status: 'Pendiente' }
+            { id: mkId('r001'), tenant_id: tenantId, book_id: demoBooks[0].id, author_id: demoAuthors[0].id, period: '2026-Q1', total_sales: 100, sales_amount: 1500000, gross_royalty: 150000, status: 'Pagado' },
+            { id: mkId('r002'), tenant_id: tenantId, book_id: demoBooks[1].id, author_id: demoAuthors[1].id, period: '2026-Q1', total_sales: 50, sales_amount: 450000, gross_royalty: 45000, status: 'Pendiente' }
         ]
         await safeInsert('royalties', demoRoyalties, 'Regalías')
 
