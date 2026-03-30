@@ -452,9 +452,9 @@ function POForm({ po, books, suppliers, quotes = [], onSave, onCancel }) {
                         className="input-field w-full text-sm"
                     >
                         <option value="">Ninguna cotización seleccionada</option>
-                        {quotes.filter(q => q.status === 'Aprobada').map(q => (
+                        {quotes.filter(q => q.status === 'Aprobada' || q.status === 'Presupuestada').map(q => (
                             <option key={q.id} value={q.id}>
-                                {q.provider} - {q.bookTitle} ({new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(q.approvedAmount || q.quotedAmount)})
+                                {q.provider} - {q.bookTitle} ({new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(q.approvedAmount || q.quotedAmount)}) [{q.status}]
                             </option>
                         ))}
                     </select>

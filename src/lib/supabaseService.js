@@ -1615,6 +1615,23 @@ export async function addPurchaseOrderToDb(tenantId, poData) {
         .from('purchase_orders')
         .insert([{ ...poData, tenant_id: tenantId }])
         .select()
+    
+    if (error && (error.message?.includes('quote_id') || error.message?.includes('column'))) {
+        console.warn('Fallback: Adding PO without quote_id column');
+        const { quote_id, ...safeData } = poData;
+        // Append quote info to notes as fallback
+        const quoteRef = poData.quote_id ? ` [Ref Cotización: ${poData.quote_id}]` : '';
+        const dataWithRef = { ...safeData, notes: (safeData.notes || '') + quoteRef, tenant_id: tenantId };
+        
+        const { data: fallbackData, error: fallbackError } = await supabase
+            .from('purchase_orders')
+            .insert([dataWithRef])
+            .select()
+        
+        if (fallbackError) throw fallbackError
+        return fallbackData[0]
+    }
+
     if (error) {
         console.error('Error adding PO:', error)
         throw error
@@ -1628,6 +1645,20 @@ export async function updatePurchaseOrderInDb(poId, poData) {
         .update(poData)
         .eq('id', poId)
         .select()
+    
+    if (error && (error.message?.includes('quote_id') || error.message?.includes('column'))) {
+        console.warn('Fallback: Updating PO without quote_id column');
+        const { quote_id, ...safeData } = poData;
+        const { data: fallbackData, error: fallbackError } = await supabase
+            .from('purchase_orders')
+            .update(safeData)
+            .eq('id', poId)
+            .select()
+        
+        if (fallbackError) throw fallbackError
+        return fallbackData[0]
+    }
+
     if (error) throw error
     return data[0]
 }
