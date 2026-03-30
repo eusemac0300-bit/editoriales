@@ -588,23 +588,26 @@ export async function updateBook(bookId, updates) {
     if (updates.finalPdfInterior !== undefined) dbUpdates.final_pdf_interior = updates.finalPdfInterior
     if (updates.finalPdfCover !== undefined) dbUpdates.final_pdf_cover = updates.finalPdfCover
 
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('books')
         .update(dbUpdates)
         .eq('id', bookId)
+        .select()
+        .single()
     
     if (error && (error.message?.includes('final_pdf') || error.message?.includes('column'))) {
         console.warn('Falling back: Updating book without final_pdf columns');
         const { final_pdf_interior, final_pdf_cover, ...safeUpdates } = dbUpdates;
-        const { error: fallbackError } = await supabase
+        const { data: fallbackData, error: fallbackError } = await supabase
             .from('books')
             .update(safeUpdates)
             .eq('id', bookId)
+            .select()
+            .single()
         
         if (fallbackError) throw fallbackError
 
         // Ensure PDFs are registered as documents if they were part of the update
-        // Use tenant ID from updates
         const actualTenantId = updates.tenant_id || updates.tenantId;
 
         if (dbUpdates.final_pdf_interior && actualTenantId) {
@@ -625,9 +628,10 @@ export async function updateBook(bookId, updates) {
                 tenantId: actualTenantId
             })
         }
-        return true
+        return fallbackData
     }
-    return !error
+    if (error) throw error
+    return data
 }
 
 export async function deleteBook(bookId) {
@@ -832,25 +836,32 @@ export async function addBook(book) {
         final_pdf_cover: book.finalPdfCover || null
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('books')
         .insert(bookData)
+        .select()
+        .single()
     
     if (error && (error.message?.includes('final_pdf') || error.message?.includes('column'))) {
         console.warn('Falling back: Inserting book without final_pdf columns');
         const { final_pdf_interior, final_pdf_cover, ...safeData } = bookData;
-        const { error: fallbackError } = await supabase
+        const { data: fallbackData, error: fallbackError } = await supabase
             .from('books')
             .insert(safeData)
+            .select()
+            .single()
         if (fallbackError) {
             console.error('Error adding book (even with fallback):', fallbackError)
-            return false
+            return null
         }
-        return true
+        return fallbackData
     }
 
-    if (error) console.error('Error adding book:', error)
-    return !error
+    if (error) {
+        console.error('Error adding book:', error)
+        return null
+    }
+    return data
 }
 
 // ============ INVENTORY UPSERT ============
