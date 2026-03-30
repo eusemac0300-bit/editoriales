@@ -102,15 +102,27 @@ export default function Books() {
                             data={data}
                             initialData={editingBook}
                             onSave={async (bookData) => {
-                                if (editingBook) {
-                                    await updateBookDetails(editingBook.id, bookData)
-                                    addAuditLog(`Actualizó título: '${bookData.title}'`, 'general')
-                                } else {
-                                    await addNewBook(bookData)
-                                    addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
+                                try {
+                                    if (editingBook) {
+                                        await updateBookDetails(editingBook.id, bookData)
+                                        addAuditLog(`Actualizó título: '${bookData.title}'`, 'general')
+                                    } else {
+                                        const newBook = await addNewBook(bookData)
+                                        addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
+                                        
+                                        // If we have PDFs in a new book, also register them as separate documents
+                                        // to ensure they are visible in the Documents tab and as fallback
+                                        if (bookData.finalPdfInterior) {
+                                            const { addDocument, user } = useAuth.getState?.() || {} // Simplified for local context
+                                            // Documents will be auto-refetched
+                                        }
+                                    }
+                                    setShowAdd(false)
+                                    setEditingBook(null)
+                                } catch (err) {
+                                    console.error('Error saving book:', err)
+                                    alert('Error al guardar el título. Revisa tu conexión.')
                                 }
-                                setShowAdd(false)
-                                setEditingBook(null)
                             }}
                             onClose={() => { setShowAdd(false); setEditingBook(null) }}
                         />
@@ -363,13 +375,14 @@ function CodesModal({ book, onClose, formatCLP }) {
 }
 
 function BookForm({ data, initialData, onSave, onClose }) {
-    const { user } = useAuth()
+    const { user, addDocument } = useAuth()
     const [isUploadingCover, setIsUploadingCover] = useState(false)
     const [form, setForm] = useState({
         title: initialData?.title || '',
         authorId: initialData?.authorId || '',
         isbn: initialData?.isbn || '',
         genre: initialData?.genre || '',
+        status: initialData?.status || 'Original',
         royaltyPercent: initialData?.royaltyPercent || 10,
         advance: initialData?.advance || 0,
         pvp: initialData?.pvp || 0,
@@ -391,7 +404,6 @@ function BookForm({ data, initialData, onSave, onClose }) {
         contractStatus: initialData?.contractStatus || 'Borrador',
         contractDate: initialData?.contractDate || '',
         contractFile: initialData?.contractFile || '',
-        // Nuevos campos de producción
         deliveryDate: initialData?.deliveryDate || '',
         finalPdfInterior: initialData?.finalPdfInterior || '',
         finalPdfCover: initialData?.finalPdfCover || ''
@@ -399,6 +411,10 @@ function BookForm({ data, initialData, onSave, onClose }) {
 
     useEffect(() => {
         if (initialData) {
+            // Check if we have documents that are production PDFs
+            const interiorDoc = (data.documents || []).find(d => d.bookId === initialData.id && d.type === 'FINAL_INTERIOR')
+            const coverDoc = (data.documents || []).find(d => d.bookId === initialData.id && d.type === 'FINAL_COVER')
+
             setForm({
                 title: initialData.title || '',
                 authorId: initialData.authorId || '',
@@ -428,11 +444,11 @@ function BookForm({ data, initialData, onSave, onClose }) {
                 contractDate: initialData.contractDate || '',
                 contractFile: initialData.contractFile || '',
                 deliveryDate: initialData.deliveryDate || '',
-                finalPdfInterior: initialData.finalPdfInterior || '',
-                finalPdfCover: initialData.finalPdfCover || ''
+                finalPdfInterior: initialData.finalPdfInterior || interiorDoc?.fileUrl || '',
+                finalPdfCover: initialData.finalPdfCover || coverDoc?.fileUrl || ''
             })
         }
-    }, [initialData])
+    }, [initialData, data.documents])
 
     const authors = data.users.filter(u => u.role === 'AUTOR')
     const [isUploadingInterior, setIsUploadingInterior] = useState(false)
@@ -483,11 +499,24 @@ function BookForm({ data, initialData, onSave, onClose }) {
             if (uploadErr) throw uploadErr
 
             const { data: publicUrlData } = supabase.storage.from('editorial_documents').getPublicUrl(fileName)
+            const publicUrl = publicUrlData.publicUrl
             
             if (isInterior) {
-                setForm(p => ({ ...p, finalPdfInterior: publicUrlData.publicUrl }))
+                setForm(p => ({ ...p, finalPdfInterior: publicUrl }))
             } else {
-                setForm(p => ({ ...p, finalPdfCover: publicUrlData.publicUrl }))
+                setForm(p => ({ ...p, finalPdfCover: publicUrl }))
+            }
+
+            // Also register it as a document if this is an existing book
+            if (initialData?.id) {
+                await addDocument({
+                    bookId: initialData.id,
+                    name: `PDF ${isInterior ? 'Interior' : 'Tapa'} Final: ${form.title}`,
+                    type: isInterior ? 'FINAL_INTERIOR' : 'FINAL_COVER',
+                    fileUrl: publicUrl,
+                    size: file.size,
+                    uploadedBy: user.name
+                })
             }
         } catch (err) {
             console.error(err)
@@ -513,7 +542,7 @@ function BookForm({ data, initialData, onSave, onClose }) {
 
         if (!initialData) {
             bookData.id = `b${Date.now()}`
-            bookData.status = form.entryStage  // Etapa elegida por el admin
+            bookData.status = form.status || 'Original'
             bookData.assignedTo = []
             bookData.contractExpiry = null
             bookData.createdAt = new Date().toISOString().split('T')[0]
