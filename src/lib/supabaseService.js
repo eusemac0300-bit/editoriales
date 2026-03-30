@@ -1962,23 +1962,29 @@ export async function clearDemoData(tenantId) {
 
         // Borrar por ID prefijado 'ffffffff-'
         const mainTables = [
-            'expenses', 'sales', 'inventory_physical', 'books', 'suppliers', 
-            'users', 'audit_log', 'comments', 'alerts', 'quotes', 
-            'purchase_orders', 'consignments', 'royalties', 'invoices', 'documents', 'clients'
+            'event_items', 'events', 'expenses', 'sales', 'inventory_physical', 
+            'books', 'suppliers', 'clients', 'users', 'audit_log', 'comments', 
+            'alerts', 'quotes', 'purchase_orders', 'consignments', 'royalties', 
+            'invoices', 'documents'
         ]
 
         for (const table of mainTables) {
-            const { error } = await supabase
+            // Intento 1: Por ID con prefijo demo
+            const { error: idError } = await supabase
                 .from(table)
                 .delete()
-                .match(filter)
+                .eq('tenant_id', tenantId)
                 .like('id', 'ffffffff-%')
 
-            if (error) {
-                // Si falla por ID (quizás no existe o tipo incompatible), intentamos borrar por book_id
-                if (['inventory_physical', 'sales', 'royalties', 'consignments', 'comments', 'quotes', 'purchase_orders', 'documents'].includes(table)) {
-                    await supabase.from(table).delete().match(filter).like('book_id', 'ffffffff-%')
-                }
+            // Intento 2: Atrapado por book_id si el ID no es la forma (para tablas dependientes)
+            if (['inventory_physical', 'sales', 'royalties', 'consignments', 'comments', 'quotes', 'purchase_orders', 'documents', 'event_items'].includes(table)) {
+                await supabase.from(table).delete().eq('tenant_id', tenantId).like('book_id', 'ffffffff-%')
+            }
+            
+            // Intento 3: Atrapado por client_name que contenga (Demo) en caso de emergencia cosmética
+            if (['sales', 'consignments', 'quotes', 'clients'].includes(table)) {
+                await supabase.from(table).delete().eq('tenant_id', tenantId).like('name', '%(Demo)%')
+                await supabase.from(table).delete().eq('tenant_id', tenantId).like('client_name', '%(Demo)%')
             }
         }
 
