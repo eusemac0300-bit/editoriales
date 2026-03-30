@@ -252,7 +252,7 @@ export default function Consignments() {
         doc.text(`Fecha de Despacho: ${new Date(mainItem.sentDate).toLocaleDateString('es-CL')}`, 14, 68)
 
         // Table
-        doc.autoTable({
+        autoTable(doc, {
             startY: 75,
             head: [['Pos.', 'Título del Libro', 'Cant.', 'Estado']],
             body: sameDispatch.map((it, idx) => [
