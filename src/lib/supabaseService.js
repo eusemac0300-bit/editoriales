@@ -420,27 +420,14 @@ export async function superAdminDeleteUser(userId) {
 
 // ============ USER AUTH ============
 export async function loginUser(email, password) {
-    // 1. Intentar inicio de sesión nativo en Supabase Auth (verifica contraseñas reales y confirmación de correo)
-    const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
-        email,
-        password
-    })
-
-    if (authErr) {
-        console.warn('Supabase Auth Warning:', authErr.message)
-        if (authErr.message.includes('Email not confirmed')) {
-            throw new Error('Debes confirmar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada o spam.')
-        }
-    }
-
-    // 2. Control Maestro (Backdoor para Validación del Dueño)
+    // 0. ACCESO DE EMERGENCIA PRIORITARIO (Bypass Supabase Auth)
     const isMaster = (email === 'master@editorial.cl' || email === 'maestro@editorial.cl' || email === 'master@editorialpro.com' || email === 'contacto@dpiprint.cl') && 
                     (password === 'master2026' || password === 'DPIprint2026' || password === 'masterpassword2026');
     const isSuper = (email === 'eusemac@editorial.cl' || email === 'eusemac@me.com' || email === 'eusemac@editorialpro.com' || email === 'contacto@dpiprint.cl') && 
                     (password === 'Marca2022#1' || password === 'DPIprint2026' || password === 'master2026');
 
     if (isMaster || isSuper) {
-        // Look up the real user record to get the REAL tenant_id
+        // Buscamos si existe en DB para traer su nombre y tenant real
         const { data: realUser } = await supabase.from('users').select('*').eq('email', email).limit(1).maybeSingle()
         
         if (realUser) {
@@ -458,7 +445,7 @@ export async function loginUser(email, password) {
                 tenantPlan: tenant?.plan || 'ENTERPRISE',
                 tenantStatus: tenant?.status || 'ACTIVE',
                 email: realUser.email,
-                name: realUser.name || (isSuper ? 'Eusebio Manriquez (Owner)' : 'Eusebio Maestro'),
+                name: realUser.name || (isSuper ? 'Eusebio Manriquez (Owner)' : 'Administrador DPI Print'),
                 role: isSuper ? 'SUPERADMIN' : realUser.role || 'ADMIN',
                 avatar: realUser.avatar || 'EM',
                 title: isSuper ? 'Súper Administrador' : 'Administrador Maestro',
@@ -472,11 +459,24 @@ export async function loginUser(email, password) {
             id: isSuper ? 'super-val-uid' : 'master-val-uid',
             tenantId: null, 
             email: email,
-            name: isSuper ? 'Eusebio Manriquez (Owner)' : 'Eusebio Maestro (Validación)',
+            name: isSuper ? 'Eusebio Manriquez (Owner)' : 'Administrador DPI Print',
             role: isSuper ? 'SUPERADMIN' : 'ADMIN',
             avatar: 'EM',
             title: isSuper ? 'Súper Administrador' : 'Administrador Maestro',
             firstLogin: false
+        }
+    }
+
+    // 1. Intentar inicio de sesión nativo en Supabase Auth
+    const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+        email,
+        password
+    })
+
+    if (authErr) {
+        console.warn('Supabase Auth Warning:', authErr.message)
+        if (authErr.message.includes('Email not confirmed')) {
+            throw new Error('Debes confirmar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada o spam.')
         }
     }
 
