@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { publishAppVersion } from '../../lib/supabaseService'
+import { APP_VERSION } from '../../lib/version'
 import { useState } from 'react'
 import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, Activity, Database, Trash2, Plus, CheckCircle2, Sparkles, FileText, Truck } from 'lucide-react'
 
@@ -15,8 +16,8 @@ export default function AdminDashboard() {
     const published = (books || []).filter(b => b.status === 'Publicado' || b.status === 'Published').length
     const inProduction = (books || []).filter(b => !['Publicado', 'Original', 'Published'].includes(b.status)).length
 
-    // v3.1.5.18 DIAGNOSTIC - remove after confirming
-    console.log('[Dashboard v3.1.5.18]', { tenant: user?.tenantId, email: user?.email, totalBooks, hasDemoData, firstBookId: books?.[0]?.id })
+    // DIAGNOSTIC - remove after confirming
+    console.log(`[Dashboard ${APP_VERSION}]`, { tenant: user?.tenantId, email: user?.email, totalBooks, hasDemoData, firstBookId: books?.[0]?.id })
 
     // Ventas
     const currentMonth = new Date().toISOString().slice(0, 7)
@@ -80,17 +81,17 @@ export default function AdminDashboard() {
                             <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Centro de Control Maestro</p>
                             <p className="text-xs font-black text-slate-800 dark:text-white-100 flex items-center gap-2 mt-0.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></span>
-                                v3.1.5.15 LISTA PARA LIBERAR
+                                {APP_VERSION} LISTA PARA LIBERAR
                             </p>
                         </div>
                         <button
                             disabled={isPublishing}
                             onClick={async () => {
-                                if (window.confirm('¿Publicar la v3.1.5.15 para todas las editoriales ahora? Esto notificará a todos tus clientes.')) {
+                                if (window.confirm(`¿Publicar la ${APP_VERSION} para todas las editoriales ahora? Esto notificará a todos tus clientes.`)) {
                                     setIsPublishing(true)
                                     try {
-                                        await publishAppVersion('v3.1.5.15', ['Real Sync & Atomic Refresh', 'Refresco Automático', 'Ffffffff- Prefix'])
-                                        alert('¡ÉXITO! Versión v3.1.5.15 liberada globalmente. Se ha notificado a todas las editoriales.')
+                                        await publishAppVersion(APP_VERSION, ['Manual Data Stability', 'Authors fix', 'Suppliers FK fix'])
+                                        alert(`¡ÉXITO! Versión ${APP_VERSION} liberada globalmente. Se ha notificado a todas las editoriales.`)
                                     } catch (err) {
                                         console.error('Master Publish Error:', err);
                                         alert('Error al publicar. Intenta de nuevo.')

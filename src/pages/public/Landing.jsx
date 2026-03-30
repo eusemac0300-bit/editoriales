@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpen, Zap, Shield, TrendingUp, CheckCircle, ArrowRight, Users, LayoutDashboard, FileText, Clock, DollarSign, AlertTriangle, Calculator, BarChart3, Building2 } from 'lucide-react'
 import { getGlobalEmail } from '../../lib/supabaseService'
+import { APP_VERSION } from '../../lib/version'
 
 export default function Landing() {
     const handleDemoRequest = (e) => {
@@ -40,7 +41,7 @@ export default function Landing() {
                         <Zap className="w-4 h-4" /> El software definitivo para editoriales
                     </div>
                     <h1 className="text-5xl lg:text-7xl font-bold tracking-tight leading-tight mb-8 slide-up">
-                        EditorialPro <span className="text-primary italic">v3.1.5.18</span> <br className="hidden md:block" />
+                        EditorialPro <span className="text-primary italic">{APP_VERSION}</span> <br className="hidden md:block" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-teal-500 to-emerald-500">
                             Adiós a las planillas interminables
                         </span>
@@ -334,7 +335,7 @@ export default function Landing() {
                     <span className="text-xl font-bold text-slate-800 dark:text-white">EditorialPro</span>
                 </div>
                 <p className="mb-2">El motor financiero y operativo para la nueva generación de editoriales.</p>
-                <p>© {new Date().getFullYear()} EditorialPro. Todos los derechos reservados. <span className="text-slate-500 font-medium">v3.1.5.18 (Editorial Pro)</span></p>
+                <p>© {new Date().getFullYear()} EditorialPro. Todos los derechos reservados. <span className="text-slate-500 font-medium">{APP_VERSION} (Editorial Pro)</span></p>
             </footer>
         </div>
     )

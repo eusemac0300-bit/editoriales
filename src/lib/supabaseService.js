@@ -1149,7 +1149,7 @@ export async function seedDemoData(tenantId, adminUserId) {
     }
 
     try {
-        console.log(`[Seeding] 🚀 v3.1.5.18 - Iniciando carga de DEMO MODE 2.0 para tenant: ${tenantId}`)
+        console.log(`[Seeding] 🚀 DEMO MODE 2.0 - Cargando datos para tenant: ${tenantId}`)
 
         // Use last 12 chars of tenantId for suffix
         const suffix = tenantId.replace(/-/g, '').slice(-12)
