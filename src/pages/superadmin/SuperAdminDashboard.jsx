@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { loadSuperAdminData, superAdminDeleteUser, addUser as addSuperAdminUser, superAdminDeleteWorkspace, getGlobalEmail, setGlobalEmail, superAdminCreateTenant, loadOnboardingRequests, updateOnboardingStatus, superAdminApproveOnboarding, deleteAllOnboardingRequests } from '../../lib/supabaseService'
 import { Building2, Users, CreditCard, Activity, Search, ShieldAlert, CheckCircle2, XCircle, UserPlus, Database, Lock, User, AlertTriangle, MapPin, Copy } from 'lucide-react'
+import { APP_VERSION } from '../../lib/version'
 
 export default function SuperAdminDashboard() {
     const [tenants, setTenants] = useState([])
@@ -233,7 +234,7 @@ export default function SuperAdminDashboard() {
             <div>
                 <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
                     <Database className="w-6 h-6 text-primary" />
-                    Panel de Control Master SaaS
+                    Panel de Control Master SaaS <span className="text-[10px] bg-primary/20 text-primary-400 px-2 py-0.5 rounded-full font-mono">{APP_VERSION}</span>
                 </h1>
                 <p className="text-dark-600 text-sm mt-1">Supervisión Master de todas las editoriales suscritas y gestión global de usuarios de DB.</p>
             </div>
