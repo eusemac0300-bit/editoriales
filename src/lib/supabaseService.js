@@ -1107,7 +1107,6 @@ export async function seedDemoData(tenantId, adminUserId) {
                 const blacklist = [
                     'location', 'client_id', 'book_title', 'discount_percent', 'tax',
                     'royalty_amount', 'category', 'description', 'supplier_id',
-                    'discount_percent', 'default_discount', 'credit_limit', 
                     'format', 'cover', 'tiraje', 'escandallo_costs', 
                     'final_pdf_interior', 'final_pdf_cover', 
                     'version_installed', 'escandalloCosts', 'escandallo_costs'
@@ -1237,17 +1236,16 @@ export async function seedDemoData(tenantId, adminUserId) {
             demoSales.push({
                 id: mkId(`v00${saleCounter}`),
                 tenant_id: tenantId,
-                client_id: client.id,
                 client_name: client.name,
                 book_id: b.id,
                 book_title: b.title,
                 channel: 'Mayorista',
+                type: 'B2B',
                 quantity: qty,
                 unit_price: unitPrice,
-                discount_percent: client.discount_percent,
                 total_amount: total,
-                neto: total, // Simplified for demo
-                tax: total * 0.19,
+                neto: total / 1.19, 
+                iva: total - (total / 1.19),
                 status: saleCounter === 0 ? 'Pendiente' : 'Completada',
                 sale_date: saleCounter === 0 ? now : monthAgo
             })
@@ -1266,12 +1264,12 @@ export async function seedDemoData(tenantId, adminUserId) {
                 book_id: b.id,
                 book_title: b.title,
                 channel: 'Web',
+                type: 'B2C',
                 quantity: qty,
                 unit_price: b.pvp,
-                discount_percent: 0,
                 total_amount: total,
-                neto: total,
-                tax: total * 0.19,
+                neto: total / 1.19,
+                iva: total - (total / 1.19),
                 status: 'Completada',
                 sale_date: new Date(Date.now() - (saleCounter * 86400000)).toISOString() // Random days ago
             })
@@ -1289,9 +1287,9 @@ export async function seedDemoData(tenantId, adminUserId) {
             demoConsignments.push({
                 id: mkId(`g00${consCounter}`),
                 tenant_id: tenantId,
-                client_id: client.id,
-                client_name: client.name,
                 book_id: b.id,
+                client_name: client.name,
+                contact_info: client.email,
                 sent_quantity: 30 + (consCounter * 10),
                 sold_quantity: 5 + consCounter,
                 returned_quantity: consCounter === 1 ? 2 : 0,
@@ -1307,15 +1305,15 @@ export async function seedDemoData(tenantId, adminUserId) {
         // 7. EXPENSES & ROYALTIES
         // ============================================
         const demoExpenses = [
-            { id: mkId('e001'), tenant_id: tenantId, type: 'egreso', concept: `Impresión 1ra Edición - ${demoBooks[0].title}`, amount: 850000, date: twoMonthsAgo, status: 'PAGADO', provider: demoSuppliers[0].name },
-            { id: mkId('e002'), tenant_id: tenantId, type: 'egreso', concept: 'Campaña Meta Ads Lanzamientos', amount: 150000, date: monthAgo, status: 'PAGADO' },
-            { id: mkId('e003'), tenant_id: tenantId, type: 'egreso', concept: 'Suscripción Editorial Pro', amount: 35000, date: now, status: 'PENDIENTE' }
+            { id: mkId('e001'), tenant_id: tenantId, category: 'IMPRENTA', description: `Impresión 1ra Edición - ${demoBooks[0].title}`, amount: 850000, date: twoMonthsAgo, status: 'PAGADO' },
+            { id: mkId('e002'), tenant_id: tenantId, category: 'MARKETING', description: 'Campaña Meta Ads Lanzamientos', amount: 150000, date: monthAgo, status: 'PAGADO' },
+            { id: mkId('e003'), tenant_id: tenantId, category: 'SOFTWARE', description: 'Suscripción Editorial Pro', amount: 35000, date: now, status: 'PENDIENTE' }
         ]
         await safeInsert('expenses', demoExpenses, 'Gastos')
 
         const demoRoyalties = [
-            { id: mkId('r001'), tenant_id: tenantId, book_id: demoBooks[0].id, author_id: demoAuthors[0].id, period: '2026-Q1', total_sales: 100, sales_amount: 1500000, gross_royalty: 150000, status: 'Pagado' },
-            { id: mkId('r002'), tenant_id: tenantId, book_id: demoBooks[1].id, author_id: demoAuthors[1].id, period: '2026-Q1', total_sales: 50, sales_amount: 450000, gross_royalty: 45000, status: 'Pendiente' }
+            { id: mkId('r001'), tenant_id: tenantId, book_id: demoBooks[0].id, author_id: demoAuthors[0].id, author_name: demoAuthors[0].name, period: '2026-Q1', total_units_sold: 100, total_sales_amount: 1500000, gross_royalty: 150000, status: 'Pagado' },
+            { id: mkId('r002'), tenant_id: tenantId, book_id: demoBooks[1].id, author_id: demoAuthors[1].id, author_name: demoAuthors[1].name, period: '2026-Q1', total_units_sold: 50, total_sales_amount: 450000, gross_royalty: 45000, status: 'Pendiente' }
         ]
         await safeInsert('royalties', demoRoyalties, 'Regalías')
 
