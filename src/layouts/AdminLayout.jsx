@@ -1,5 +1,5 @@
 import { useState } from 'react'
-// VERSIÓN FORZADA EN LOCAL: v3.1.5.18 (SINCRO MAESTRO)
+import { APP_VERSION } from '../lib/version'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { loadPermissions } from '../lib/permissions'
@@ -55,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.29', date: '2026-03-30', title: 'Robustez Maestro & Corrección Autores', details: ['Sincronización global de versión v29.', 'Registro de autores y proveedores blindado para usuario Maestro.', 'Mapeo automático de tenant_id MASTER a root UUID.', 'Diagnóstico de errores detallado en formularios.'] },
         { version: 'v3.1.5.18', date: '2026-03-26', title: 'Auditoría Final & Sincro Maestro', details: ['Restauración de enlace "Informes" en Sidebar.', 'Botón "Cargar Datos Demo" reactivado en Dashboard.', 'Robustez de guardado: Fallback para columnas de PDF faltantes.', 'Sección de Marketing ocultada temporalmente por desarrollo.'] },
         { version: 'v3.1.5.17', date: '2026-03-25', title: 'The True Sync & Auth Fix', details: ['Fuerza de sincronización v17.', 'Corrección del enlace de sesión tenant-ID', 'Visibilidad completa de datos Demo.'] },
         { version: 'v3.1.5.15', date: '2026-03-25', title: 'The Real Sync & Atomic Refresh', details: ['Fuerza de sincronización v15.', 'Refresco de página automático tras carga demo.', 'Blindaje de detector de libros ffffffff-.'] },
@@ -121,7 +122,7 @@ export default function AdminLayout() {
                         <div>
                             <h1 className="font-bold text-white text-sm">Editorial Pro</h1>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">
-                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">v3.1.5.18 (PRODUCTION READY)</span>
+                                {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">{APP_VERSION} (PRODUCTION READY)</span>
                             </p>
                         </div>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white">
@@ -208,7 +209,7 @@ export default function AdminLayout() {
                     <div className="flex items-center gap-3">
                         <div className="flex flex-col items-end mr-1 sm:mr-2">
                              <span className="text-[9px] font-black text-primary-500 dark:text-primary-400 tracking-[0.2em] uppercase hidden sm:block italic">Maestro Sincronizado</span>
-                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">v3.1.5.18</span>
+                             <span className="text-[10px] font-black text-white bg-primary px-2 py-0.5 rounded-full sm:mt-0.5 border border-primary-400 shadow-lg shadow-primary/30 animate-pulse">{APP_VERSION}</span>
                         </div>
 
                         <button 
@@ -242,7 +243,7 @@ export default function AdminLayout() {
                                 </div>
                                 <div className="hidden sm:block text-left">
                                     <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{user?.name}</p>
-                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">v3.1.5.18 (Editorial Pro)</p>
+                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">{APP_VERSION} (Editorial Pro)</p>
                                 </div>
                                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${settingsOpen ? 'rotate-180' : ''}`} />
                             </button>
