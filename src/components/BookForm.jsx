@@ -66,7 +66,8 @@ export default function BookForm({ data, initialData, onSave, onClose }) {
                 name: newAuthorName.trim(),
                 role: 'AUTOR',
                 email: `${slug}.${Date.now()}@pendiente.editorial`,
-                password: null,
+                password: 'pendiente-1234',
+                title: 'Autor',
                 tenantId: user?.tenantId
             }
             await addNewUser(newAuthor)
