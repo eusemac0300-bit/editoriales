@@ -55,6 +55,8 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.63', date: '2026-03-31', title: 'Nueva Ventana Premium y Alta Visibilidad', details: ['Rediseño completo del formulario de ventas con alto contraste.', 'Controles de inventario blindados y cálculo de impuestos en tiempo real.', 'Corrección de errores de sintaxis en el módulo administrativo.'] },
+        { version: 'v3.1.5.62', date: '2026-03-31', title: 'Refactorización UI Ventas', details: ['Estética Premium y Glassmorphism en paneles.', 'Nueva analítica por canal de ventas.', 'Mejora en KPIs de rendimiento mensual.'] },
         { version: 'v3.1.5.29', date: '2026-03-30', title: 'Robustez Maestro & Corrección Autores', details: ['Sincronización global de versión v29.', 'Registro de autores y proveedores blindado para usuario Maestro.', 'Mapeo automático de tenant_id MASTER a root UUID.', 'Diagnóstico de errores detallado en formularios.'] },
         { version: 'v3.1.5.18', date: '2026-03-26', title: 'Auditoría Final & Sincro Maestro', details: ['Restauración de enlace "Informes" en Sidebar.', 'Botón "Cargar Datos Demo" reactivado en Dashboard.', 'Robustez de guardado: Fallback para columnas de PDF faltantes.', 'Sección de Marketing ocultada temporalmente por desarrollo.'] },
         { version: 'v3.1.5.17', date: '2026-03-25', title: 'The True Sync & Auth Fix', details: ['Fuerza de sincronización v17.', 'Corrección del enlace de sesión tenant-ID', 'Visibilidad completa de datos Demo.'] },
