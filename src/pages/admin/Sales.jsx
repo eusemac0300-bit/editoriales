@@ -6,7 +6,7 @@ import autoTable from 'jspdf-autotable'
 import {
     ShoppingCart, Plus, X, Search, TrendingUp, Activity,
     BookOpen, DollarSign, Calendar, Users, Package, BarChart3,
-    CheckCircle, XCircle, Download, FileSpreadsheet
+    CheckCircle, XCircle, Download, FileSpreadsheet, AlertCircle
 } from 'lucide-react'
 
 const CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria', 'Consignación']
@@ -36,24 +36,23 @@ export default function Sales() {
     const [filterChannel, setFilterChannel] = useState('')
     const [filterAuthor, setFilterAuthor] = useState('')
 
+    // Helper para verificar completitud del autor
+    const isAuthorComplete = (author) => {
+        return !!(author.rut && author.bank_name && author.account_type && author.account_number)
+    }
+
     // ── Date Range for Cumulative View ──────────────────────────────────────────
     const currentYear = new Date().getFullYear()
     const [startDate, setStartDate] = useState(`${currentYear}-01-01`)
     const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10))
-    const [monthlyGoal, setMonthlyGoal] = useState(1000000) // Default goal: 1M (can be made editable)
-
-    // ── Stats Categorization ────────────────────────────────────────────────────
-    const FIRME_CHANNELS = ['Directa', 'Librería', 'Web']
-    const FLOTANTE_CHANNELS = ['Evento / Feria', 'Consignación']
+    const [monthlyGoal, setMonthlyGoal] = useState(1000000) 
 
     const activeSales = useMemo(() => sales.filter(s => s.status !== 'Anulada'), [sales])
 
-    // Filter by date range for cumulative stats
     const rangeSales = useMemo(() => {
         return activeSales.filter(s => s.saleDate >= startDate && s.saleDate <= endDate)
     }, [activeSales, startDate, endDate])
 
-    // Monthly stats (current selected month from range or just current month)
     const currentMonthStr = new Date().toISOString().slice(0, 7)
     const monthSales = useMemo(() => {
         return activeSales.filter(s => s.saleDate?.startsWith(currentMonthStr))
@@ -64,6 +63,9 @@ export default function Sales() {
 
     const cumulativeRevenue = rangeSales.reduce((sum, s) => sum + (s.totalAmount || 0), 0)
     const cumulativeUnits = rangeSales.reduce((sum, s) => sum + (s.quantity || 0), 0)
+
+    const FIRME_CHANNELS = ['Directa', 'Librería', 'Web']
+    const FLOTANTE_CHANNELS = ['Evento / Feria', 'Consignación']
 
     const revenueFirme = rangeSales.filter(s => FIRME_CHANNELS.includes(s.channel)).reduce((sum, s) => sum + (s.totalAmount || 0), 0)
     const revenueFlotante = rangeSales.filter(s => FLOTANTE_CHANNELS.includes(s.channel)).reduce((sum, s) => sum + (s.totalAmount || 0), 0)
@@ -76,7 +78,6 @@ export default function Sales() {
         return Object.entries(map).sort((a, b) => b[1] - a[1])
     }, [rangeSales])
 
-    // ── Filter ─────────────────────────────────────────────────────────────────
     const filtered = useMemo(() => {
         let list = [...sales]
         if (searchTerm) {
@@ -88,23 +89,20 @@ export default function Sales() {
             )
         }
         if (filterChannel) list = list.filter(s => s.channel === filterChannel)
-        
-        // Filter by date range in the main list
         list = list.filter(s => s.saleDate >= startDate && s.saleDate <= endDate)
 
         if (filterAuthor) {
-            const authorBooks = books.filter(b => b.authorId === filterAuthor || b.authorName === authors.find(a => a.id === filterAuthor)?.name).map(b => b.id)
+            const authorData = authors.find(a => a.id === filterAuthor)
+            const authorBooks = books.filter(b => b.authorId === filterAuthor || b.authorName === authorData?.name).map(b => b.id)
             list = list.filter(s => authorBooks.includes(s.bookId))
         }
         return list.sort((a, b) => new Date(b.saleDate) - new Date(a.saleDate))
     }, [sales, searchTerm, filterChannel, startDate, endDate, filterAuthor, books, authors])
 
-    // ✅ #8: Anular venta → reponer stock automáticamente
     const handleDelete = async (sale) => {
         if (!window.confirm(`¿Anular venta de "${sale.bookTitle}"?\nSe repondrán ${sale.quantity} u. al inventario.`)) return
         await updateSaleDetails(sale.id, { status: 'Anulada' })
 
-        // Reponer stock
         if (sale.bookId && sale.quantity > 0) {
             const { data: invRows } = await supabase
                 .from('inventory_physical')
@@ -124,19 +122,16 @@ export default function Sales() {
         await reloadData()
     }
 
-    // ✅ #2: Exportar venta a PDF
     const handleDownloadPDF = (sale) => {
         const doc = new jsPDF()
-
-        const primaryColor = [20, 184, 166] // teal-500
-        const secondaryColor = [31, 41, 55] // dark-800
-        const lightGray = [156, 163, 175] // gray-400
+        const primaryColor = [20, 184, 166] 
+        const secondaryColor = [31, 41, 55] 
+        const lightGray = [156, 163, 175] 
 
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(16)
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
         doc.text('COMPROBANTE DE VENTA', 20, 20)
-
         doc.setDrawColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
         doc.setLineWidth(0.5)
         doc.line(20, 25, 190, 25)
@@ -188,40 +183,16 @@ export default function Sales() {
         doc.setFontSize(12)
         doc.text(`Total Pagado: ${formatCLP(sale.totalAmount)}`, 190, finalY + 12, { align: 'right' })
 
-        if (sale.notes) {
-            doc.setFont('helvetica', 'normal')
-            doc.setFontSize(9)
-            doc.setTextColor(100, 100, 100)
-            doc.text(`Notas: ${sale.notes}`, 20, finalY + 25, { maxWidth: 170 })
-        }
-
-        doc.setFont('helvetica', 'italic')
-        doc.setFontSize(8)
-        doc.setTextColor(lightGray[0], lightGray[1], lightGray[2])
-        doc.text('Documento generado automáticamente por el sistema editorial.', 105, 280, { align: 'center' })
-
         doc.save(`Venta_${sale.id.slice(-8)}.pdf`)
     }
 
-    // ✅ #5: Exportar a Excel (.xls)
     const handleExportExcel = () => {
         if (filtered.length === 0) return alert('No hay datos para exportar')
-
         const headers = ['Fecha', 'Libro', 'Canal', 'Tipo', 'Cliente', 'Documento', 'Cantidad', 'P. Unitario', 'Neto', 'IVA', 'Total', 'Estado']
-
         const rows = filtered.map(s => [
-            s.saleDate || '',
-            s.bookTitle || '',
-            s.channel || '',
-            s.type || '',
-            s.clientName || '',
-            s.documentRef || '',
-            s.quantity || 0,
-            s.unitPrice || 0,
-            s.neto || 0,
-            s.iva || 0,
-            s.totalAmount || 0,
-            s.status || ''
+            s.saleDate || '', s.bookTitle || '', s.channel || '', s.type || '',
+            s.clientName || '', s.documentRef || '', s.quantity || 0,
+            s.unitPrice || 0, s.neto || 0, s.iva || 0, s.totalAmount || 0, s.status || ''
         ])
 
         const tableHtml = `
@@ -239,7 +210,6 @@ export default function Sales() {
             </body>
             </html>
         `
-
         const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' })
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
@@ -252,25 +222,18 @@ export default function Sales() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <ShoppingCart className="w-6 h-6 text-primary" /> Registro de Ventas
                     </h1>
-                    <p className="text-sm text-slate-500 dark:text-dark-500 mt-1">Control de ingresos por canal, títulos y períodos</p>
+                    <p className="text-sm text-slate-500 mt-1">Control de ingresos por canal, títulos y períodos</p>
                 </div>
                 <div className="flex gap-2">
-                    <button
-                        onClick={handleExportExcel}
-                        className="btn-secondary flex items-center gap-2 text-sm px-4 py-2.5"
-                    >
-                        <FileSpreadsheet className="w-4 h-4" /> Exportar Planilla
+                    <button onClick={handleExportExcel} className="btn-secondary flex items-center gap-2 text-sm px-4 py-2.5">
+                        <FileSpreadsheet className="w-4 h-4" /> Exportar
                     </button>
-                    <button
-                        onClick={() => setShowAdd(true)}
-                        className="btn-primary flex items-center gap-2 text-sm px-4 py-2.5 shadow-lg shadow-primary/20"
-                    >
+                    <button onClick={() => setShowAdd(true)} className="btn-primary flex items-center gap-2 text-sm px-4 py-2.5 shadow-lg">
                         <Plus className="w-4 h-4" /> Nueva Venta
                     </button>
                 </div>
@@ -278,27 +241,17 @@ export default function Sales() {
 
             {/* Reporting Filters & Goal */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2 glass-card p-4 flex flex-wrap items-end gap-4 overflow-visible">
+                <div className="lg:col-span-2 glass-card p-4 flex flex-wrap items-end gap-4">
                     <div>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Desde (Acumulado)</label>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={e => setStartDate(e.target.value)}
-                            className="input-field text-sm py-1.5"
-                        />
+                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Desde</label>
+                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="input-field text-sm py-1.5" />
                     </div>
                     <div>
                         <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Hasta</label>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={e => setEndDate(e.target.value)}
-                            className="input-field text-sm py-1.5"
-                        />
+                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="input-field text-sm py-1.5" />
                     </div>
                     <div className="flex-1 min-w-[150px]">
-                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Meta Mensual ({new Date().toLocaleDateString('es-CL', { month: 'long' })})</label>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Meta Mensual</label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
                             <input
@@ -313,272 +266,138 @@ export default function Sales() {
 
                 <div className="glass-card p-4 flex flex-col justify-center">
                     <div className="flex justify-between items-end mb-2">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase">Cumplimiento Meta</p>
-                        <span className={`text-sm font-black ${goalProgress >= 100 ? 'text-emerald-500' : 'text-primary'}`}>
-                            {goalProgress.toFixed(1)}%
-                        </span>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">Progreso Meta</p>
+                        <span className={`text-sm font-black ${goalProgress >= 100 ? 'text-emerald-500' : 'text-primary'}`}>{goalProgress.toFixed(1)}%</span>
                     </div>
-                    <div className="h-3 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden relative">
-                        <div
-                            className={`h-full transition-all duration-1000 rounded-full ${goalProgress >= 100 ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-primary'}`}
-                            style={{ width: `${Math.min(goalProgress, 100)}%` }}
-                        />
+                    <div className="h-3 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all duration-1000 ${goalProgress >= 100 ? 'bg-emerald-500' : 'bg-primary'}`} style={{ width: `${Math.min(goalProgress, 100)}%` }} />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-2 text-center">
-                        {formatCLP(monthRevenue)} de {formatCLP(monthlyGoal)} este mes
-                    </p>
                 </div>
             </div>
 
-            {/* KPI Cards with Gradients & Glassmorphism */}
+            {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="glass-card p-6 border-l-4 border-emerald-500 bg-gradient-to-br from-emerald-500/5 to-transparent relative group overflow-hidden">
-                    <div className="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 -mr-4 -mt-4 transition-transform group-hover:scale-[2] duration-500">
-                        <TrendingUp className="w-20 h-20 text-emerald-500" />
-                    </div>
-                    <div className="relative">
-                        <p className="text-[11px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest mb-3">Venta en Firme</p>
-                        <p className="text-3xl font-black text-emerald-500 font-mono tracking-tighter">{formatCLP(revenueFirme)}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <p className="text-[10px] text-slate-400 font-medium">Directa, Librería, Web</p>
-                        </div>
-                    </div>
+                <div className="glass-card p-6 border-l-4 border-emerald-500 bg-emerald-50/50">
+                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Venta Firme</p>
+                    <p className="text-2xl font-black text-emerald-600 font-mono">{formatCLP(revenueFirme)}</p>
                 </div>
-
-                <div className="glass-card p-6 border-l-4 border-amber-500 bg-gradient-to-br from-amber-500/5 to-transparent relative group overflow-hidden">
-                    <div className="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 -mr-4 -mt-4 transition-transform group-hover:scale-[2] duration-500">
-                        <Activity className="w-20 h-20 text-amber-500" />
-                    </div>
-                    <div className="relative">
-                        <p className="text-[11px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest mb-3">Venta Flotante</p>
-                        <p className="text-3xl font-black text-amber-500 font-mono tracking-tighter">{formatCLP(revenueFlotante)}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                            <p className="text-[10px] text-slate-400 font-medium">Consig., Eventos, Ferias</p>
-                        </div>
-                    </div>
+                <div className="glass-card p-6 border-l-4 border-amber-500 bg-amber-50/50">
+                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Venta Flotante</p>
+                    <p className="text-2xl font-black text-amber-600 font-mono">{formatCLP(revenueFlotante)}</p>
                 </div>
-
-                <div className="glass-card p-6 border-l-4 border-primary bg-gradient-to-br from-primary/5 to-transparent relative group overflow-hidden">
-                    <div className="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 -mr-4 -mt-4 transition-transform group-hover:scale-[2] duration-500">
-                        <DollarSign className="w-20 h-20 text-primary" />
-                    </div>
-                    <div className="relative">
-                        <p className="text-[11px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest mb-3">Acumulado Rango</p>
-                        <p className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">{formatCLP(cumulativeRevenue)}</p>
-                        <p className="text-[10px] text-slate-400 mt-2 font-medium bg-slate-100 dark:bg-dark-300 inline-block px-1.5 py-0.5 rounded italic">
-                            {rangeSales.length} transacciones
-                        </p>
-                    </div>
+                <div className="glass-card p-6 border-l-4 border-primary bg-primary/5">
+                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Total Rango</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{formatCLP(cumulativeRevenue)}</p>
                 </div>
-
-                <div className="glass-card p-6 border-l-4 border-blue-500 bg-gradient-to-br from-blue-500/5 to-transparent relative group overflow-hidden text-right md:text-left">
-                    <div className="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 -mr-4 -mt-4 transition-transform group-hover:scale-[2] duration-500">
-                        <Package className="w-20 h-20 text-blue-500" />
-                    </div>
-                    <div className="relative">
-                        <p className="text-[11px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest mb-3">Unidades Totales</p>
-                        <p className="text-3xl font-black text-blue-500 font-mono tracking-tighter">{cumulativeUnits.toLocaleString()}</p>
-                        <p className="text-[10px] text-slate-400 mt-2 font-medium italic">Libros entregados</p>
-                    </div>
+                <div className="glass-card p-6 border-l-4 border-blue-500 bg-blue-50/50">
+                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Unidades</p>
+                    <p className="text-2xl font-black text-blue-600 font-mono">{cumulativeUnits.toLocaleString()}</p>
                 </div>
             </div>
 
-            {/* Channel breakdown */}
-            {revenueByChannel.length > 0 && (
-                <div className="glass-card p-6 bg-slate-50/50 dark:bg-dark-950/20 border-dashed">
-                    <h3 className="text-[10px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                        <BarChart3 className="w-3.5 h-3.5" /> Analítica por Canal por Canales
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {revenueByChannel.map(([channel, amount]) => {
-                            const pct = cumulativeRevenue > 0 ? Math.round((amount / cumulativeRevenue) * 100) : 0
-                            const isFirme = FIRME_CHANNELS.includes(channel)
-                            return (
-                                <div key={channel} className="space-y-2 group">
-                                    <div className="flex justify-between items-baseline mb-1">
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-bold text-slate-700 dark:text-white uppercase tracking-tight group-hover:text-primary transition-colors">{channel}</span>
-                                            <span className={`text-[8px] font-bold px-1 rounded-sm w-fit mt-0.5 ${isFirme ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                                                {isFirme ? 'FIRME' : 'FLOTANTE'}
-                                            </span>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-sm font-black text-slate-900 dark:text-white font-mono">{formatCLP(amount)}</span>
-                                            <span className="text-[10px] text-slate-400 dark:text-dark-600 block">({pct}%)</span>
-                                        </div>
-                                    </div>
-                                    <div className="h-2 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden shadow-inner">
-                                        <div
-                                            className={`h-full transition-all duration-1000 origin-left rounded-full ${isFirme ? 'bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.3)]'}`}
-                                            style={{ width: `${pct}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-            )}
-
-            {/* Filters Bar - Clean & Modern */}
-            <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-dark-400 p-4 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm">
-                <div className="relative flex-1 min-w-[280px] group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-primary transition-colors" />
+            {/* Filters Bar */}
+            <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-dark-400 p-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
+                <div className="relative flex-1 min-w-[280px]">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                     <input
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         placeholder="Buscar por libro, cliente, RUT o documento..."
-                        className="w-full bg-slate-50/50 dark:bg-dark-900/50 border border-slate-200 dark:border-dark-300 rounded-2xl pl-11 pr-4 py-2.5 text-sm outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all"
+                        className="w-full bg-slate-50 dark:bg-dark-900/50 border border-slate-200 dark:border-dark-300 rounded-xl pl-11 pr-4 py-2.5 text-sm"
                     />
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="flex gap-2">
                     <select
                         value={filterChannel}
                         onChange={e => setFilterChannel(e.target.value)}
-                        className="bg-slate-50/50 dark:bg-dark-900/50 border border-slate-200 dark:border-dark-300 rounded-2xl px-4 py-2.5 text-xs font-bold uppercase text-slate-500 outline-none focus:border-primary transition-all cursor-pointer"
+                        className="bg-slate-50 dark:bg-dark-900 border border-slate-200 dark:border-dark-300 rounded-xl px-4 py-2 text-xs font-bold uppercase text-slate-500"
                     >
-                        <option value="">Canales</option>
+                        <option value="">Todos Canales</option>
                         {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
+                    
+                    {/* Author Filter with Visual Indicators */}
                     {authors.length > 0 && (
                         <select
                             value={filterAuthor}
                             onChange={e => setFilterAuthor(e.target.value)}
-                            className="bg-slate-50/50 dark:bg-dark-900/50 border border-slate-200 dark:border-dark-300 rounded-2xl px-4 py-2.5 text-xs font-bold uppercase text-slate-500 outline-none focus:border-primary transition-all cursor-pointer"
+                            className="bg-slate-50 dark:bg-dark-900 border border-slate-200 dark:border-dark-300 rounded-xl px-4 py-2 text-xs font-bold uppercase text-slate-500"
                         >
-                            <option value="">Todo Autores</option>
-                            {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                            <option value="">Todos Autores</option>
+                            {authors.map(a => (
+                                <option key={a.id} value={a.id} className={isAuthorComplete(a) ? 'text-primary' : 'text-rose-500'}>
+                                    {isAuthorComplete(a) ? '✅' : '⚠️'} {a.name}
+                                </option>
+                            ))}
                         </select>
                     )}
                 </div>
                 {(searchTerm || filterChannel || filterAuthor) && (
-                    <button
-                        onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterAuthor('') }}
-                        className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                        title="Limpiar Filtros"
-                    >
+                    <button onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterAuthor('') }} className="p-2 text-slate-400 hover:text-red-500 transition-all">
                         <X className="w-5 h-5" />
                     </button>
                 )}
             </div>
 
-            {/* Sales table */}
-            {filtered.length === 0 ? (
-                <div className="glass-card p-12 text-center">
-                    <ShoppingCart className="w-12 h-12 text-slate-200 dark:text-dark-500 mx-auto mb-4" />
-                    <h3 className="text-slate-900 dark:text-white font-medium mb-1">Sin ventas registradas</h3>
-                    <p className="text-sm text-slate-500 dark:text-dark-500">Haz clic en "Nueva Venta" para comenzar a registrar ingresos.</p>
-                </div>
-            ) : (
-                <div className="glass-card overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-slate-200 dark:border-dark-300">
-                                    <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Fecha</th>
-                                    <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Libro</th>
-                                    <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Canal</th>
-                                    <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Cliente</th>
-                                    <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Qty</th>
-                                    <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Neto</th>
-                                    <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">IVA</th>
-                                    <th className="text-right text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Total</th>
-                                    <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Pago</th>
-                                    <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Vence</th>
-                                    <th className="text-left text-[10px] uppercase text-slate-500 dark:text-dark-500 px-4 py-3">Estado</th>
-                                    <th className="px-4 py-3"></th>
+            {/* Sales Table */}
+            <div className="glass-card overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead className="bg-slate-50 dark:bg-dark-500 border-b border-slate-200 dark:border-dark-300 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                            <tr>
+                                <th className="text-left px-4 py-4">Fecha</th>
+                                <th className="text-left px-4 py-4">Libro</th>
+                                <th className="text-left px-4 py-4">Canal</th>
+                                <th className="text-left px-4 py-4">Cliente</th>
+                                <th className="text-right px-4 py-4">Cant.</th>
+                                <th className="text-right px-4 py-4">Total</th>
+                                <th className="text-left px-4 py-4">Estado</th>
+                                <th className="px-4 py-4"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-dark-300">
+                            {filtered.length === 0 ? (
+                                <tr>
+                                    <td colSpan="8" className="py-12 text-center text-slate-400 italic">No se encontraron ventas con los filtros actuales</td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-dark-300">
-                                {filtered.map(sale => (
-                                    <tr key={sale.id} className="hover:bg-slate-50 dark:hover:bg-dark-200/50 transition-colors border-b border-slate-100 dark:border-dark-300/50">
-                                        <td className="px-4 py-3 text-slate-500 dark:text-dark-400 text-xs whitespace-nowrap">
+                            ) : (
+                                filtered.map(sale => (
+                                    <tr key={sale.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-200/50 transition-colors">
+                                        <td className="px-4 py-4 text-xs font-mono text-slate-500">
                                             {sale.saleDate ? new Date(sale.saleDate + 'T12:00:00').toLocaleDateString('es-CL') : '—'}
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <p className="text-slate-900 dark:text-white font-medium truncate max-w-40">{sale.bookTitle || '—'}</p>
-                                            {sale.documentRef && <p className="text-[10px] text-slate-400 dark:text-dark-600">{sale.documentRef}</p>}
+                                        <td className="px-4 py-4">
+                                            <p className="font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{sale.bookTitle || '—'}</p>
+                                            <p className="text-[10px] text-slate-400">{sale.documentRef || 'Sin documento'}</p>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            <span className="text-xs text-primary-600 dark:text-primary-300 bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-                                                {sale.channel}
-                                            </span>
+                                        <td className="px-4 py-4">
+                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{sale.channel}</span>
                                         </td>
-                                        <td className="px-4 py-3 text-slate-500 dark:text-dark-400 text-xs">{sale.clientName || '—'}</td>
-                                        <td className="px-4 py-3 text-slate-900 dark:text-white font-mono text-right">{sale.quantity}</td>
-                                        <td className="px-4 py-3 text-slate-500 dark:text-dark-500 font-mono text-right text-xs">{(sale.neto > 0) ? formatCLP(sale.neto) : '-'}</td>
-                                        <td className="px-4 py-3 text-slate-500 dark:text-dark-400 font-mono text-right text-xs">{(sale.iva > 0) ? formatCLP(sale.iva) : '-'}</td>
-                                        <td className="px-4 py-3 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-right">{formatCLP(sale.totalAmount)}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                                sale.paymentStatus === 'Pagado' ? PAYMENT_STATUS_COLORS.Pagado : 
-                                                (new Date(sale.dueDate) < new Date() && sale.paymentStatus !== 'Pagado' ? PAYMENT_STATUS_COLORS.Atrasado : PAYMENT_STATUS_COLORS.Pendiente)
-                                            }`}>
-                                                {sale.paymentStatus === 'Pagado' ? 'PAGADO' : (new Date(sale.dueDate) < new Date() ? 'ATRASADO' : 'PENDIENTE')}
-                                            </span>
+                                        <td className="px-4 py-4 text-xs text-slate-600 dark:text-slate-400">{sale.clientName || '—'}</td>
+                                        <td className="px-4 py-4 text-right font-black font-mono">{sale.quantity}</td>
+                                        <td className="px-4 py-4 text-right font-black font-mono text-emerald-600">{formatCLP(sale.totalAmount)}</td>
+                                        <td className="px-4 py-4">
+                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[sale.status] || 'badge-blue'}`}>{sale.status}</span>
                                         </td>
-                                        <td className="px-4 py-3 text-[10px] font-mono whitespace-nowrap">
-                                            {sale.dueDate ? new Date(sale.dueDate + 'T12:00:00').toLocaleDateString('es-CL') : '—'}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[sale.status] || 'badge-blue'}`}>
-                                                {sale.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 flex justify-end gap-1">
-                                            {sale.status !== 'Anulada' && (
-                                                <>
-                                                    {sale.paymentStatus !== 'Pagado' && (
-                                                        <button
-                                                            onClick={async () => {
-                                                                if(window.confirm('¿Marcar esta venta como pagada?')) {
-                                                                    await updateSaleDetails(sale.id, { paymentStatus: 'Pagado' })
-                                                                    await addAuditLog(`Marcó como pagada la venta: "${sale.bookTitle}" (${sale.id})`, 'ventas')
-                                                                    await reloadData()
-                                                                }
-                                                            }}
-                                                            className="p-1.5 bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-500 hover:text-emerald-400 transition-colors"
-                                                            title="Marcar como Pagado"
-                                                        >
-                                                            <CheckCircle className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        onClick={() => handleDownloadPDF(sale)}
-                                                        className="p-1.5 bg-dark-200 hover:bg-emerald-500/20 rounded text-emerald-500 hover:text-emerald-400 transition-colors"
-                                                        title="Descargar PDF"
-                                                    >
-                                                        <Download className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(sale)}
-                                                        className="p-1.5 bg-dark-200 hover:bg-red-500/20 rounded text-red-500/70 hover:text-red-400 transition-colors"
-                                                        title="Anular Venta"
-                                                    >
-                                                        <XCircle className="w-4 h-4" />
-                                                    </button>
-                                                </>
-                                            )}
+                                        <td className="px-4 py-4 text-right">
+                                            <div className="flex justify-end gap-1">
+                                                {sale.status !== 'Anulada' && (
+                                                    <>
+                                                        <button onClick={() => handleDownloadPDF(sale)} className="p-1.5 hover:bg-emerald-500/10 text-emerald-500 rounded" title="Descargar PDF"><Download className="w-3.5 h-3.5" /></button>
+                                                        <button onClick={() => handleDelete(sale)} className="p-1.5 hover:bg-rose-500/10 text-rose-500 rounded" title="Anular"><XCircle className="w-3.5 h-3.5" /></button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="px-4 py-3 border-t border-slate-200 dark:border-dark-300 flex justify-between items-center">
-                        <p className="text-xs text-slate-500 dark:text-dark-500">{filtered.length} registros</p>
-                        <p className="text-xs text-slate-900 dark:text-white font-mono">
-                            Total filtro: <span className="text-emerald-500 dark:text-emerald-400 font-bold">
-                                {formatCLP(filtered.filter(s => s.status !== 'Anulada').reduce((s, r) => s + (r.totalAmount || 0), 0))}
-                            </span>
-                        </p>
-                    </div>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            )}
+            </div>
 
-            {/* Add Sale Modal */}
+            {/* Sale Form Modal */}
             {showAdd && (
                 <SaleForm
                     books={books}
@@ -590,28 +409,24 @@ export default function Sales() {
                     onSave={async (items, commonData) => {
                         try {
                             const commonId = `invoice-${Date.now()}`
-                            
                             for (const item of items) {
                                 const saleId = `sale-${Date.now()}-${item.bookId}`
                                 const book = books.find(b => b.id === item.bookId)
                                 
-                                const finalSale = {
+                                await addNewSale({
                                     ...commonData,
                                     ...item,
                                     id: saleId,
                                     groupRef: commonId,
                                     bookTitle: book?.title || '',
                                     createdAt: new Date().toISOString()
-                                }
+                                })
 
-                                // 1. Save the sale
-                                await addNewSale(finalSale)
-
-                                // 2. Deduct stock
+                                // Update Stock
                                 if (item.bookId && item.quantity > 0) {
                                     const { data: invRows } = await supabase
                                         .from('inventory_physical')
-                                        .select('id, stock, exits, min_stock')
+                                        .select('id, stock, exits')
                                         .eq('book_id', item.bookId)
                                         .order('id', { ascending: true })
                                         .limit(1)
@@ -619,40 +434,12 @@ export default function Sales() {
                                     if (invRows && invRows.length > 0) {
                                         const invRow = invRows[0]
                                         const newStock = Math.max(0, (invRow.stock || 0) - item.quantity)
-                                        const exits = [
-                                            ...(invRow.exits || []),
-                                            {
-                                                date: new Date().toISOString().slice(0, 10),
-                                                qty: item.quantity,
-                                                ref: `Venta ${commonData.channel} – ${commonId}`
-                                            }
-                                        ]
-                                        await supabase
-                                            .from('inventory_physical')
-                                            .update({ stock: newStock, exits })
-                                            .eq('id', invRow.id)
-                                        
-                                        // Low stock alert
-                                        const minStock = invRow.min_stock || 0
-                                        if (minStock > 0 && newStock <= minStock) {
-                                            await supabase.from('alerts').insert({
-                                                id: `alert-stock-${item.bookId}-${Date.now()}`,
-                                                tenant_id: data.tenantId || 't1',
-                                                type: 'stock_bajo',
-                                                book_id: item.bookId,
-                                                message: `⚠️ Stock bajo: "${book?.title}" tiene solo ${newStock} u. (mínimo: ${minStock})`,
-                                                date: new Date().toISOString(),
-                                                read: false
-                                            })
-                                        }
+                                        const exits = [...(invRow.exits || []), { date: new Date().toISOString().slice(0, 10), qty: item.quantity, ref: `Venta ${commonData.channel} – ${commonId}` }]
+                                        await supabase.from('inventory_physical').update({ stock: newStock, exits }).eq('id', invRow.id)
                                     }
                                 }
                             }
-
-                            await addAuditLog(
-                                `Registró venta múltiple (${items.length} títulos) | Canal: ${commonData.channel} | Cliente: ${commonData.clientName || 'Consumidor'}`,
-                                'ventas'
-                            )
+                            await addAuditLog(`Registró venta múltiple (${items.length} títulos)`, 'ventas')
                             await reloadData()
                             setShowAdd(false)
                         } catch (err) {
@@ -666,7 +453,7 @@ export default function Sales() {
     )
 }
 
-function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
+function SaleForm({ onClose, onSave, books, data, formatCLP }) {
     const today = new Date().toISOString().slice(0, 10)
     const [common, setCommon] = useState({
         channel: 'Directa',
@@ -685,10 +472,8 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
     const [searchResults, setSearchResults] = useState([])
     const [saving, setSaving] = useState(false)
 
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
     const taxVal = 1.19
-    const totalNeto = Math.round(subtotal / taxVal)
-    const totalIva = subtotal - totalNeto
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
 
     const handleSearch = (q) => {
         setSearchTerm(q)
@@ -705,11 +490,11 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
     }
 
     const addItem = (book) => {
-        const inv = data?.inventory?.physical?.find(i => i.bookId === book.id)
+        const inv = data?.inventory?.physical?.find(i => i.book_id === book.id)
         const stock = inv?.stock ?? 0
         if (stock <= 0) {
-            alert('❌ Stock agotado para este título.');
-            return;
+            alert('❌ Stock agotado para este título.')
+            return
         }
         setItems(p => [...p, {
             bookId: book.id,
@@ -753,154 +538,116 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
         }
     }
 
-    const FORM_CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria']
-
     return (
-        <div className="fixed inset-0 bg-slate-900/40 dark:bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-            <div className="bg-white dark:bg-dark-200 w-full max-w-4xl p-0 shadow-2xl rounded-[1.5rem] border border-slate-200 dark:border-dark-300 flex flex-col max-h-[90vh] overflow-hidden slide-up">
-                {/* Header - Sharp & Clear */}
-                <div className="bg-slate-900 px-8 py-6 flex justify-between items-center shrink-0">
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-white dark:bg-dark-100 w-full max-w-5xl shadow-2xl rounded-[1.5rem] border border-white/20 flex flex-col max-h-[95vh] overflow-hidden">
+                {/* Technical Header */}
+                <div className="bg-slate-900 px-8 py-6 flex justify-between items-center border-b border-white/10 shrink-0">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                        <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/40">
                             <ShoppingCart className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold text-white tracking-tight">Registro de Venta</h3>
-                            <p className="text-[10px] text-primary-400 font-black uppercase tracking-widest mt-0.5">Gestión Profesional de Inventario</p>
+                            <h3 className="text-xl font-black text-white tracking-tight">TERMINAL PUNTO DE VENTA</h3>
+                            <p className="text-[10px] text-primary font-black uppercase tracking-widest">Sistema Premium v3.1.5</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
+                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-all bg-white/5 p-2 rounded-xl">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 flex flex-col p-8 gap-8 overflow-hidden">
-                    {/* Customer & Date - Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Canal de Venta</label>
-                            <select 
-                                value={common.channel} 
-                                onChange={e => setCommon(p => ({ ...p, channel: e.target.value }))}
-                                className="w-full bg-slate-50 dark:bg-dark-300 border-2 border-slate-200 dark:border-dark-400 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary transition-all outline-none"
-                            >
-                                {FORM_CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Fecha Operación</label>
-                            <input
-                                type="date"
-                                value={common.saleDate}
-                                onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value }))}
-                                className="w-full bg-slate-50 dark:bg-dark-300 border-2 border-slate-200 dark:border-dark-400 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary transition-all outline-none"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Cliente / Institución</label>
-                            <div className="relative">
-                                <input
-                                    list="cli-list"
-                                    value={common.clientName}
-                                    onChange={e => setCommon(p => ({ ...p, clientName: e.target.value }))}
-                                    placeholder="Nombre o RUT..."
-                                    className="w-full bg-slate-50 dark:bg-dark-300 border-2 border-slate-200 dark:border-dark-400 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary transition-all outline-none"
-                                />
-                                <datalist id="cli-list">
-                                    {data?.clients?.map(c => <option key={c.id} value={c.name} />)}
-                                </datalist>
-                                <Users className="absolute right-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+                    <div className="p-8 flex flex-col gap-8 overflow-y-auto">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="bg-slate-50 dark:bg-dark-200 p-4 rounded-2xl border-2 border-slate-100">
+                                <label className="text-[10px] font-black text-slate-500 uppercase block mb-1">Total Venta</label>
+                                <p className="text-xl font-bold text-emerald-600 font-mono">{formatCLP(subtotal)}</p>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-dark-200 p-4 rounded-2xl border-2 border-slate-100">
+                                <label className="text-[10px] font-black text-slate-500 uppercase block mb-1">Fecha</label>
+                                <input type="date" value={common.saleDate} onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value }))} className="bg-transparent border-none p-0 text-sm font-bold w-full focus:ring-0" />
+                            </div>
+                            <div className="md:col-span-2 bg-slate-50 dark:bg-dark-200 p-4 rounded-2xl border-2 border-slate-100">
+                                <label className="text-[10px] font-black text-slate-500 uppercase block mb-1">Cliente / Canal</label>
+                                <div className="flex gap-2">
+                                    <input placeholder="Nombre cliente..." value={common.clientName} onChange={e => setCommon(p => ({ ...p, clientName: e.target.value }))} className="bg-transparent border-b border-slate-300 text-sm font-bold w-full focus:ring-0" />
+                                    <select value={common.channel} onChange={e => setCommon(p => ({ ...p, channel: e.target.value }))} className="bg-slate-900 text-white text-[10px] font-bold rounded-lg px-2 py-1">
+                                        {FORM_CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Search & Items Section */}
-                    <div className="flex-1 flex flex-col min-h-0 bg-slate-100/50 dark:bg-dark-900/50 rounded-2xl border-2 border-slate-200/50 dark:border-white/5 p-4 gap-4">
+                        {/* Search Bar */}
                         <div className="relative">
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={e => handleSearch(e.target.value)}
-                                placeholder="Escribe para buscar un libro..."
-                                className="w-full bg-white dark:bg-dark-200 border-2 border-slate-200 dark:border-dark-300 rounded-xl pl-12 pr-4 py-4 text-sm font-bold shadow-lg shadow-slate-200/50 dark:shadow-none focus:border-primary transition-all outline-none"
-                            />
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <div className="flex items-center bg-slate-900 rounded-2xl p-4 shadow-xl">
+                                <Search className="w-6 h-6 text-primary mr-4" />
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    value={searchTerm}
+                                    onChange={e => handleSearch(e.target.value)}
+                                    placeholder="Presione para buscar libros por título o código..."
+                                    className="bg-transparent text-white w-full text-lg font-bold outline-none placeholder:text-slate-600"
+                                />
+                            </div>
                             
                             {searchResults.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-200 rounded-xl shadow-2xl border-2 border-slate-200 dark:border-dark-400 z-50 overflow-hidden divide-y divide-slate-100 dark:divide-dark-400">
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-200 rounded-2xl shadow-2xl border-2 border-slate-200 z-[100] max-h-60 overflow-y-auto">
                                     {searchResults.map(b => (
-                                        <button
-                                            key={b.id}
-                                            type="button"
-                                            onClick={() => addItem(b)}
-                                            className="w-full text-left px-5 py-4 hover:bg-primary/5 flex justify-between items-center group transition-colors"
-                                        >
+                                        <button key={b.id} type="button" onClick={() => addItem(b)} className="w-full text-left p-4 hover:bg-slate-50 flex justify-between items-center group transition-all">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary">{b.title}</span>
-                                                <span className="text-[10px] text-slate-400 font-mono mt-0.5">{b.isbn || 'SIN ISBN'} | {formatCLP(b.pvp)}</span>
+                                                <span className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{b.title}</span>
+                                                <span className="text-[10px] text-slate-500 font-mono">{b.isbn || 'SIN ISBN'} | Stock: {data?.inventory?.physical?.find(i => i.book_id === b.id)?.stock || 0}</span>
                                             </div>
-                                            <Plus className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100" />
+                                            <Plus className="w-5 h-5 text-slate-300 group-hover:text-primary" />
                                         </button>
                                     ))}
                                 </div>
                             )}
                         </div>
 
-                        {/* List - Fixed Header Contrast */}
-                        <div className="flex-1 overflow-y-auto">
-                            <table className="w-full border-separate border-spacing-y-2">
-                                <thead className="sticky top-0 bg-slate-100/50 backdrop-blur dark:bg-dark-900/50 z-20">
+                        {/* Items Table */}
+                        <div className="flex-1 min-h-[300px] border-2 border-slate-100 rounded-3xl overflow-hidden">
+                            <table className="w-full">
+                                <thead className="bg-slate-900 text-white text-[10px] uppercase tracking-widest font-black">
                                     <tr>
-                                        <th className="px-4 py-3 text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest text-left">Libro</th>
-                                        <th className="px-4 py-3 text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest text-center w-24">Cant.</th>
-                                        <th className="px-4 py-3 text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest text-right w-32">Unitario</th>
-                                        <th className="px-4 py-3 text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest text-right w-32">Total</th>
-                                        <th className="px-4 py-3 w-12 text-center"></th>
+                                        <th className="px-6 py-4 text-left">Descripción del Producto</th>
+                                        <th className="px-6 py-4 text-center w-24">Cantidad</th>
+                                        <th className="px-6 py-4 text-right w-36">Precio Unitario</th>
+                                        <th className="px-6 py-4 text-right w-40">Subtotal</th>
+                                        <th className="px-6 py-4 w-16"></th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-slate-100">
                                     {items.length === 0 ? (
                                         <tr>
-                                            <td colSpan="5" className="py-20 text-center">
-                                                <BookOpen className="w-12 h-12 text-slate-300 dark:text-dark-500 mx-auto mb-4" />
-                                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No hay libros en la lista</p>
+                                            <td colSpan="5" className="py-20 text-center opacity-20">
+                                                <ShoppingCart className="w-16 h-16 mx-auto mb-2" />
+                                                <p className="text-xs font-black uppercase tracking-widest">Ingrese productos para facturar</p>
                                             </td>
                                         </tr>
                                     ) : (
                                         items.map((it, i) => (
-                                            <tr key={i} className="bg-white dark:bg-dark-300 border-2 border-slate-200 dark:border-dark-400 rounded-xl overflow-hidden shadow-sm">
-                                                <td className="px-4 py-4 rounded-l-xl">
-                                                    <p className="text-sm font-black text-slate-900 dark:text-white line-clamp-1">{it.title}</p>
-                                                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg mt-1 inline-block ${it.stock < 5 ? 'bg-rose-500 text-white' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
-                                                        Stock: {it.stock} u.
-                                                    </span>
+                                            <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <p className="text-sm font-bold text-slate-900">{it.title}</p>
+                                                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 rounded-full uppercase">Disponible: {it.stock} u.</span>
                                                 </td>
-                                                <td className="px-4 py-4 text-center">
-                                                    <input
-                                                        type="number"
-                                                        value={it.quantity}
-                                                        onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 0)}
-                                                        className="w-16 bg-slate-50 dark:bg-dark-400 border-2 border-slate-200 dark:border-dark-500 rounded-lg py-2 text-center text-sm font-black text-primary outline-none focus:border-primary"
-                                                    />
+                                                <td className="px-6 py-4">
+                                                    <input type="number" min="1" value={it.quantity} onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 0)} className="w-full bg-slate-100 border-none rounded-xl p-2 text-center text-sm font-bold" />
                                                 </td>
-                                                <td className="px-4 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-1 font-mono text-sm">
-                                                        <span className="text-slate-400">$</span>
-                                                        <input
-                                                            type="text"
-                                                            value={it.unitPrice.toLocaleString('es-CL')}
-                                                            onChange={e => updateItem(i, 'unitPrice', parseInt(e.target.value.replace(/\D/g, '')) || 0)}
-                                                            className="w-24 bg-transparent border-b-2 border-slate-100 dark:border-dark-500 text-right font-black outline-none focus:border-primary"
-                                                        />
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center justify-end font-mono text-sm">
+                                                        <span className="text-slate-400 mr-1">$</span>
+                                                        <input type="text" value={it.unitPrice.toLocaleString('es-CL')} onChange={e => updateItem(i, 'unitPrice', parseInt(e.target.value.replace(/\D/g, '')) || 0)} className="w-24 bg-transparent border-b border-slate-200 text-right font-bold outline-none" />
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-4 text-right">
-                                                    <span className="text-base font-black text-slate-900 dark:text-white font-mono">{formatCLP(it.total)}</span>
-                                                </td>
-                                                <td className="px-4 py-4 rounded-r-xl text-center">
-                                                    <button onClick={() => removeItem(i)} className="text-slate-300 hover:text-rose-500 transition-colors">
-                                                        <X className="w-5 h-5" />
-                                                    </button>
+                                                <td className="px-6 py-4 text-right font-mono font-black text-slate-900">{formatCLP(it.total)}</td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <button onClick={() => removeItem(i)} className="text-slate-300 hover:text-rose-500 transition-colors"><X className="w-5 h-5" /></button>
                                                 </td>
                                             </tr>
                                         ))
@@ -910,36 +657,15 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
                         </div>
                     </div>
 
-                    {/* Summary Footer */}
-                    <div className="shrink-0 flex flex-col md:flex-row justify-between items-center gap-8 border-t-2 border-slate-100 dark:border-white/5 pt-8 -mx-8 px-8 mb-[-32px] pb-10 bg-slate-50 dark:bg-dark-300/30">
-                        <div className="flex flex-col gap-1">
-                            <div className="flex gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                <span>Subtotal Neto: {formatCLP(totalNeto)}</span>
-                                <span>IVA (19%): {formatCLP(totalIva)}</span>
-                            </div>
-                            <div className="flex items-baseline gap-4 mt-1">
-                                <span className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-                                    <span className="text-sm font-black text-primary uppercase mr-3 tracking-widest">Total:</span>
-                                    {formatCLP(subtotal)}
-                                </span>
-                            </div>
+                    <div className="p-8 bg-slate-50 border-t border-slate-200 flex justify-between items-center shrink-0">
+                        <div>
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Resumen Final</p>
+                            <p className="text-4xl font-black text-slate-900 font-mono tracking-tighter">{formatCLP(subtotal)}</p>
                         </div>
-
-                        <div className="flex gap-4 w-full md:w-auto">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-8 py-4 text-sm font-black text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all rounded-xl uppercase tracking-widest"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={saving || items.length === 0}
-                                className="flex-1 md:flex-none px-12 py-4 bg-primary hover:bg-primary-600 disabled:opacity-50 text-white rounded-xl font-black text-sm shadow-xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
-                            >
-                                {saving ? <Activity className="w-6 h-6 animate-spin" /> : <ShoppingCart className="w-6 h-6" />}
-                                Registrar Venta
+                        <div className="flex gap-4">
+                            <button type="button" onClick={onClose} className="px-8 py-3 rounded-2xl border-2 border-slate-200 text-sm font-black text-slate-500 hover:bg-white transition-all uppercase tracking-widest">Cancelar</button>
+                            <button type="submit" disabled={items.length === 0 || saving} className="px-12 py-3 bg-slate-900 text-white rounded-2xl shadow-2xl text-sm font-black uppercase tracking-widest hover:bg-black transition-all disabled:opacity-50">
+                                {saving ? 'Cargando...' : 'Finalizar Venta'}
                             </button>
                         </div>
                     </div>
