@@ -421,22 +421,33 @@ export default function Sales() {
                                     createdAt: new Date().toISOString()
                                 })
 
-                                // Update Stock
-                                if (item.bookId && item.quantity > 0) {
-                                    const { data: invRows } = await supabase
-                                        .from('inventory_physical')
-                                        .select('id, stock, exits')
-                                        .eq('book_id', item.bookId)
-                                        .order('id', { ascending: true })
-                                        .limit(1)
+                                    // Update Stock - Blindado (Crea registro si no existe)
+                                    if (item.bookId && item.quantity > 0) {
+                                        const { data: invRows } = await supabase
+                                            .from('inventory_physical')
+                                            .select('id, stock, exits')
+                                            .eq('book_id', item.bookId)
+                                            .limit(1)
 
-                                    if (invRows && invRows.length > 0) {
-                                        const invRow = invRows[0]
-                                        const newStock = Math.max(0, (invRow.stock || 0) - item.quantity)
-                                        const exits = [...(invRow.exits || []), { date: new Date().toISOString().slice(0, 10), qty: item.quantity, ref: `Venta ${commonData.channel} – ${commonId}` }]
-                                        await supabase.from('inventory_physical').update({ stock: newStock, exits }).eq('id', invRow.id)
+                                        const now = new Date().toISOString()
+                                        const exitRef = { date: now.slice(0, 10), qty: item.quantity, ref: `Venta ${commonData.channel} – ${commonId}` }
+
+                                        if (invRows && invRows.length > 0) {
+                                            // Actualizar existente
+                                            const invRow = invRows[0]
+                                            const newStock = (invRow.stock || 0) - item.quantity
+                                            const exits = [...(invRow.exits || []), exitRef]
+                                            await supabase.from('inventory_physical').update({ stock: newStock, exits }).eq('id', invRow.id)
+                                        } else {
+                                            // Crear nuevo registro si no existía (Sale forzadamente del stock)
+                                            await supabase.from('inventory_physical').insert({
+                                                book_id: item.bookId,
+                                                stock: -item.quantity,
+                                                exits: [exitRef],
+                                                tenant_id: data.user.tenant_id // Asegurar tenant_id
+                                            })
+                                        }
                                     }
-                                }
                             }
                             await addAuditLog(`Registró venta múltiple (${items.length} títulos)`, 'ventas')
                             await reloadData()
@@ -492,10 +503,7 @@ function SaleForm({ onClose, onSave, books, data, formatCLP }) {
     const addItem = (book) => {
         const inv = data?.inventory?.physical?.find(i => i.book_id === book.id)
         const stock = inv?.stock ?? 0
-        if (stock <= 0) {
-            alert('❌ Stock agotado para este título.')
-            return
-        }
+        // No bloqueamos, solo permitimos con advertencia si el stock es bajo
         setItems(p => [...p, {
             bookId: book.id,
             title: book.title,
@@ -651,14 +659,19 @@ function SaleForm({ onClose, onSave, books, data, formatCLP }) {
                                                 <td colSpan="5" className="py-20 text-center opacity-30 italic text-slate-500 text-xs">Añade títulos para comenzar la venta.</td>
                                             </tr>
                                         ) : (
-                                            items.map((it, i) => (
-                                                <tr key={i} className="hover:bg-white/5 transition-colors">
+                                            items.map((it, idx) => (
+                                                <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                                                     <td className="px-6 py-4">
-                                                        <p className="text-white font-medium">{it.title}</p>
+                                                        <p className="text-white font-bold text-sm">{it.title}</p>
+                                                        {it.stock <= 0 && (
+                                                            <p className="text-[9px] text-rose-500 font-black uppercase flex items-center gap-1 animate-pulse">
+                                                                <AlertTriangle className="w-3 h-3" /> Sin stock en sistema (quedará negativo)
+                                                            </p>
+                                                        )}
                                                         <p className="text-[10px] text-slate-500 mt-0.5 uppercase">Stock: {it.stock} u.</p>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <input type="number" min="1" value={it.quantity} onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 0)} className="w-20 mx-auto block bg-[#0f172a] border border-slate-700 rounded-lg py-1.5 text-center text-white text-sm" />
+                                                        <input type="number" min="1" value={it.quantity} onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 0)} className="w-20 mx-auto block bg-[#0f172a] border border-slate-700 rounded-lg py-1.5 text-center text-white text-sm" />
                                                     </td>
                                                     <td className="px-6 py-4 text-right font-mono text-slate-300">
                                                         {formatCLP(it.unitPrice)}
