@@ -108,39 +108,20 @@ export default function Books() {
                                         await updateBookDetails(editingBook.id, dataWithTenant)
                                         addAuditLog(`Actualizó título: '${bookData.title}'`, 'general')
                                     } else {
-                                        // 1. Create the book and get the REAL ID from DB
                                         const newBook = await addNewBook(dataWithTenant)
-                                        const realBookId = newBook.id
-                                        
-                                        addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
-                                        
-                                        // 2. Register documents using the REAL ID
-                                        if (bookData.finalPdfInterior || bookData.finalPdfCover) {
-                                            if (bookData.finalPdfInterior) {
-                                                await addDocument({
-                                                    bookId: realBookId,
-                                                    name: `PDF Interior Final: ${bookData.title}`,
-                                                    type: 'FINAL_INTERIOR',
-                                                    fileUrl: bookData.finalPdfInterior,
-                                                    uploadedBy: user.name
-                                                })
-                                            }
-                                            if (bookData.finalPdfCover) {
-                                                await addDocument({
-                                                    bookId: realBookId,
-                                                    name: `PDF Tapa Final: ${bookData.title}`,
-                                                    type: 'FINAL_COVER',
-                                                    fileUrl: bookData.finalPdfCover,
-                                                    uploadedBy: user.name
-                                                })
-                                            }
+                                        if (!newBook || !newBook.id) {
+                                            console.error('addNewBook returned null or no ID', newBook)
+                                            alert('Error al registrar el título en la base de datos. Verifica que todos los campos requeridos estén completos.')
+                                            return
                                         }
+                                        addAuditLog(`Registró nuevo título: '${bookData.title}'`, 'general')
                                     }
                                     setShowAdd(false)
                                     setEditingBook(null)
                                 } catch (err) {
                                     console.error('Error saving book:', err)
-                                    alert('Error al guardar el título. Revisa tu conexión.')
+                                    const errorMsg = err?.message || 'Error desconocido'
+                                    alert(`Error al guardar el título: ${errorMsg}`)
                                 }
                             }}
                             onClose={() => { setShowAdd(false); setEditingBook(null) }}
@@ -394,7 +375,7 @@ function CodesModal({ book, onClose, formatCLP }) {
 }
 
 function BookForm({ data, initialData, onSave, onClose }) {
-    const { user, addDocument } = useAuth()
+    const { user } = useAuth()
     const [isUploadingCover, setIsUploadingCover] = useState(false)
     const [form, setForm] = useState({
         title: initialData?.title || '',
@@ -423,33 +404,16 @@ function BookForm({ data, initialData, onSave, onClose }) {
         contractStatus: initialData?.contractStatus || 'Borrador',
         contractDate: initialData?.contractDate || '',
         contractFile: initialData?.contractFile || '',
-        deliveryDate: initialData?.deliveryDate || '',
-        finalPdfInterior: initialData?.finalPdfInterior || '',
-        finalPdfCover: initialData?.finalPdfCover || ''
+        deliveryDate: initialData?.deliveryDate || ''
     })
 
     useEffect(() => {
         if (initialData) {
-            // Check if we have documents that are production PDFs
-            // We search by ID or title match as a secondary fallback
-            const docs = data.documents || []
-            const interiorDoc = docs.find(d => d.bookId === initialData.id && d.type === 'FINAL_INTERIOR') || 
-                              docs.find(d => d.type === 'FINAL_INTERIOR' && d.name.includes(initialData.title) && d.bookId === initialData.id)
-            
-            const coverDoc = docs.find(d => d.bookId === initialData.id && d.type === 'FINAL_COVER') ||
-                           docs.find(d => d.type === 'FINAL_COVER' && d.name.includes(initialData.title) && d.bookId === initialData.id)
-
-            setForm({
-                ...initialData,
-                finalPdfInterior: initialData.finalPdfInterior || interiorDoc?.fileUrl || '',
-                finalPdfCover: initialData.finalPdfCover || coverDoc?.fileUrl || ''
-            })
+            setForm({ ...initialData })
         }
-    }, [initialData, data.documents])
+    }, [initialData])
 
     const authors = data.users.filter(u => u.role === 'AUTOR')
-    const [isUploadingInterior, setIsUploadingInterior] = useState(false)
-    const [isUploadingFinalCover, setIsUploadingFinalCover] = useState(false)
 
     const handleCoverUpload = async (e) => {
         const file = e.target.files[0]
@@ -474,55 +438,7 @@ function BookForm({ data, initialData, onSave, onClose }) {
         }
     }
 
-    const handleFinalFileUpload = async (e, type) => {
-        const file = e.target.files[0]
-        if (!file) return
-        
-        // 20MB limit as requested by user
-        if (file.size > 20 * 1024 * 1024) {
-            alert('El archivo PDF no puede pesar más de 20MB.')
-            return
-        }
-
-        const isInterior = type === 'interior'
-        if (isInterior) setIsUploadingInterior(true)
-        else setIsUploadingFinalCover(true)
-
-        try {
-            const folder = isInterior ? 'final_interiors' : 'final_covers'
-            const fileName = `${user.tenantId}/${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-            
-            const { error: uploadErr } = await supabase.storage.from('editorial_documents').upload(fileName, file)
-            if (uploadErr) throw uploadErr
-
-            const { data: publicUrlData } = supabase.storage.from('editorial_documents').getPublicUrl(fileName)
-            const publicUrl = publicUrlData.publicUrl
-            
-            if (isInterior) {
-                setForm(p => ({ ...p, finalPdfInterior: publicUrl }))
-            } else {
-                setForm(p => ({ ...p, finalPdfCover: publicUrl }))
-            }
-
-            // Also register it as a document if this is an existing book
-            if (initialData?.id) {
-                await addDocument({
-                    bookId: initialData.id,
-                    name: `PDF ${isInterior ? 'Interior' : 'Tapa'} Final: ${form.title}`,
-                    type: isInterior ? 'FINAL_INTERIOR' : 'FINAL_COVER',
-                    fileUrl: publicUrl,
-                    size: file.size,
-                    uploadedBy: user.name
-                })
-            }
-        } catch (err) {
-            console.error(err)
-            alert('Error al subir el archivo PDF. Revisa tu conexión.')
-        } finally {
-            if (isInterior) setIsUploadingInterior(false)
-            else setIsUploadingFinalCover(false)
-        }
-    }
+    // PDF upload functionality temporarily disabled for stability
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -727,107 +643,45 @@ function BookForm({ data, initialData, onSave, onClose }) {
                     </div>
                 </div>
 
-                <div className="sm:col-span-2 mt-2 pt-4 border-t border-slate-200 dark:border-dark-300">
-                    <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-500 flex items-center gap-2 mb-4 uppercase tracking-widest text-[11px]">
+                {/* Caja Contenedora — visible pero desactivada temporalmente */}
+                <div className="sm:col-span-2 mt-2 pt-4 border-t border-slate-200 dark:border-dark-300 relative">
+                    {/* Overlay de mantenimiento */}
+                    <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/50 backdrop-blur-[2px] rounded-xl z-10 flex items-center justify-center">
+                        <div className="bg-white dark:bg-dark-200 border border-amber-500/30 rounded-lg px-5 py-3 shadow-lg text-center max-w-xs">
+                            <Package className="w-5 h-5 text-amber-500 mx-auto mb-1" />
+                            <p className="text-xs font-bold text-slate-900 dark:text-white">Módulo en Mantenimiento</p>
+                            <p className="text-[10px] text-slate-500 dark:text-dark-600 mt-1">La carga de PDFs finales estará disponible próximamente.</p>
+                        </div>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-emerald-600/50 dark:text-emerald-500/30 flex items-center gap-2 mb-4 uppercase tracking-widest text-[11px]">
                         <Package className="w-4 h-4" /> Caja Contenedora: Versiones PDF Finales
                     </h4>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* PDF Interior */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-40 pointer-events-none select-none">
+                        {/* PDF Interior (desactivado) */}
                         <div className="p-4 bg-slate-50 dark:bg-dark-200/50 rounded-xl border border-slate-200 dark:border-dark-300 flex flex-col gap-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">PDF Interior (Maqueta Final)</span>
-                                {form.finalPdfInterior && <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold">CARGADO</span>}
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">PDF Interior (Maqueta Final)</span>
+                            <div className="flex-1 flex flex-col items-center justify-center py-4 border-2 border-dashed border-slate-200 dark:border-dark-400 rounded-lg">
+                                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-dark-300 flex items-center justify-center">
+                                    <Upload className="w-5 h-5 text-slate-400 dark:text-dark-600" />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-dark-600 mt-2">SUBIR PDF INTERIOR</span>
                             </div>
-                            
-                            {form.finalPdfInterior ? (
-                                <div className="flex items-center gap-2 p-2 bg-white dark:bg-dark-300 rounded-lg border border-slate-200 dark:border-dark-400">
-                                    <FileText className="w-8 h-8 text-red-500" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-bold">Archivo actual</p>
-                                        <a href={form.finalPdfInterior} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline font-medium truncate block">Ver / Descargar PDF</a>
-                                    </div>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setForm(p => ({ ...p, finalPdfInterior: '' }))}
-                                        className="p-1.5 hover:bg-rose-500/10 rounded-md text-slate-400 hover:text-rose-500 transition-colors"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center py-4 border-2 border-dashed border-slate-200 dark:border-dark-400 rounded-lg">
-                                    <input
-                                        type="file"
-                                        accept=".pdf"
-                                        className="hidden"
-                                        id="pdf-interior-upload"
-                                        onChange={(e) => handleFinalFileUpload(e, 'interior')}
-                                        disabled={isUploadingInterior}
-                                    />
-                                    <label
-                                        htmlFor="pdf-interior-upload"
-                                        className={`flex flex-col items-center gap-2 cursor-pointer group ${isUploadingInterior ? 'opacity-50' : ''}`}
-                                    >
-                                        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-dark-300 flex items-center justify-center group-hover:bg-primary-500/10 transition-colors">
-                                            <Upload className="w-5 h-5 text-slate-400 dark:text-dark-600 group-hover:text-primary" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-500 dark:text-dark-600">
-                                            {isUploadingInterior ? 'Subiendo...' : 'SUBIR PDF INTERIOR'}
-                                        </span>
-                                    </label>
-                                </div>
-                            )}
                         </div>
 
-                        {/* PDF Tapa */}
+                        {/* PDF Tapa (desactivado) */}
                         <div className="p-4 bg-slate-50 dark:bg-dark-200/50 rounded-xl border border-slate-200 dark:border-dark-300 flex flex-col gap-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">PDF Tapa (Arte Final)</span>
-                                {form.finalPdfCover && <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-bold">CARGADO</span>}
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">PDF Tapa (Arte Final)</span>
+                            <div className="flex-1 flex flex-col items-center justify-center py-4 border-2 border-dashed border-slate-200 dark:border-dark-400 rounded-lg">
+                                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-dark-300 flex items-center justify-center">
+                                    <Upload className="w-5 h-5 text-slate-400 dark:text-dark-600" />
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-dark-600 mt-2">SUBIR PDF TAPA</span>
                             </div>
-
-                            {form.finalPdfCover ? (
-                                <div className="flex items-center gap-2 p-2 bg-white dark:bg-dark-300 rounded-lg border border-slate-200 dark:border-dark-400">
-                                    <ImageIcon className="w-8 h-8 text-primary" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-bold">Archivo actual</p>
-                                        <a href={form.finalPdfCover} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline font-medium truncate block">Ver / Descargar PDF</a>
-                                    </div>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setForm(p => ({ ...p, finalPdfCover: '' }))}
-                                        className="p-1.5 hover:bg-rose-500/10 rounded-md text-slate-400 hover:text-rose-500 transition-colors"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center py-4 border-2 border-dashed border-slate-200 dark:border-dark-400 rounded-lg">
-                                    <input
-                                        type="file"
-                                        accept=".pdf"
-                                        className="hidden"
-                                        id="pdf-tapa-upload"
-                                        onChange={(e) => handleFinalFileUpload(e, 'tapa')}
-                                        disabled={isUploadingFinalCover}
-                                    />
-                                    <label
-                                        htmlFor="pdf-tapa-upload"
-                                        className={`flex flex-col items-center gap-2 cursor-pointer group ${isUploadingFinalCover ? 'opacity-50' : ''}`}
-                                    >
-                                        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-dark-300 flex items-center justify-center group-hover:bg-primary-500/10 transition-colors">
-                                            <Upload className="w-5 h-5 text-slate-400 dark:text-dark-600 group-hover:text-primary" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-500 dark:text-dark-600">
-                                            {isUploadingFinalCover ? 'Subiendo...' : 'SUBIR PDF TAPA'}
-                                        </span>
-                                    </label>
-                                </div>
-                            )}
                         </div>
                     </div>
-                    <p className="mt-3 text-[10px] text-slate-500 dark:text-dark-600 italic">⚠️ Límite de 20MB por archivo para optimización de recursos.</p>
+                    <p className="mt-3 text-[10px] text-slate-500/50 dark:text-dark-600/50 italic">⚠️ Límite de 20MB por archivo para optimización de recursos.</p>
                 </div>
 
                 <div className="sm:col-span-2 mb-2 pt-4 border-t border-slate-200 dark:border-dark-300">
