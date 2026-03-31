@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
     const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'es')
     const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'CLP')
-    const [taxRate, setTaxRate] = useState(() => parseFloat(localStorage.getItem('taxRate') || '0.19'))
+    const [taxRate, setTaxRate] = useState(() => parseFloat(localStorage.getItem('taxRate') || '19'))
     
     const queryClient = useQueryClient()
     

@@ -563,81 +563,78 @@ export default function Sales() {
                     taxRate={taxRate}
                     t={t}
                     onClose={() => setShowAdd(false)}
-                    onSave={async (saleData) => {
+                    onSave={async (items, commonData) => {
                         try {
-                            const id = `sale-${Date.now()}`
-                            const book = books.find(b => b.id === saleData.bookId)
-                            const finalSale = {
-                                ...saleData,
-                                id,
-                                bookTitle: book?.title || '',
-                                createdAt: new Date().toISOString()
-                            }
+                            const commonId = `invoice-${Date.now()}`
+                            
+                            for (const item of items) {
+                                const saleId = `sale-${Date.now()}-${item.bookId}`
+                                const book = books.find(b => b.id === item.bookId)
+                                
+                                const finalSale = {
+                                    ...commonData,
+                                    ...item,
+                                    id: saleId,
+                                    groupRef: commonId,
+                                    bookTitle: book?.title || '',
+                                    createdAt: new Date().toISOString()
+                                }
 
-                            // 1. Save the sale
-                            await addNewSale(finalSale)
+                                // 1. Save the sale
+                                await addNewSale(finalSale)
 
-                            // 2. Deduct stock — always query Supabase for the row (local state may lack `id`)
-                            if (saleData.bookId && saleData.quantity > 0) {
-                                const { data: invRows, error: invErr } = await supabase
-                                    .from('inventory_physical')
-                                    .select('id, stock, exits')
-                                    .eq('book_id', saleData.bookId)
-                                    .order('id', { ascending: true })
-                                    .limit(1)
-
-                                if (invErr) {
-                                    console.error('Error fetching inv:', invErr)
-                                } else if (invRows && invRows.length > 0) {
-                                    const invRow = invRows[0]
-                                    const newStock = Math.max(0, (invRow.stock || 0) - saleData.quantity)
-                                    const exits = [
-                                        ...(invRow.exits || []),
-                                        {
-                                            date: new Date().toISOString().slice(0, 10),
-                                            qty: saleData.quantity,
-                                            ref: `Venta ${saleData.channel} – ${id}`
-                                        }
-                                    ]
-                                    const { error: updErr } = await supabase
+                                // 2. Deduct stock
+                                if (item.bookId && item.quantity > 0) {
+                                    const { data: invRows } = await supabase
                                         .from('inventory_physical')
-                                        .update({ stock: newStock, exits })
-                                        .eq('id', invRow.id)
-                                    if (updErr) console.error('Stock update error:', updErr)
-                                    else {
-                                        console.log(`✅ Stock ${saleData.bookId}: ${invRow.stock} → ${newStock}`)
-                                        // ✅ #7: Alerta automática si stock bajo
+                                        .select('id, stock, exits, min_stock')
+                                        .eq('book_id', item.bookId)
+                                        .order('id', { ascending: true })
+                                        .limit(1)
+
+                                    if (invRows && invRows.length > 0) {
+                                        const invRow = invRows[0]
+                                        const newStock = Math.max(0, (invRow.stock || 0) - item.quantity)
+                                        const exits = [
+                                            ...(invRow.exits || []),
+                                            {
+                                                date: new Date().toISOString().slice(0, 10),
+                                                qty: item.quantity,
+                                                ref: `Venta ${commonData.channel} – ${commonId}`
+                                            }
+                                        ]
+                                        await supabase
+                                            .from('inventory_physical')
+                                            .update({ stock: newStock, exits })
+                                            .eq('id', invRow.id)
+                                        
+                                        // Low stock alert
                                         const minStock = invRow.min_stock || 0
                                         if (minStock > 0 && newStock <= minStock) {
                                             await supabase.from('alerts').insert({
-                                                id: `alert-stock-${saleData.bookId}-${Date.now()}`,
-                                                tenant_id: finalSale.tenantId || 't1',
+                                                id: `alert-stock-${item.bookId}-${Date.now()}`,
+                                                tenant_id: data.tenantId || 't1',
                                                 type: 'stock_bajo',
-                                                book_id: saleData.bookId,
-                                                message: `⚠️ Stock bajo: "${finalSale.bookTitle}" tiene solo ${newStock} u. (mínimo: ${minStock})`,
+                                                book_id: item.bookId,
+                                                message: `⚠️ Stock bajo: "${book?.title}" tiene solo ${newStock} u. (mínimo: ${minStock})`,
                                                 date: new Date().toISOString(),
                                                 read: false
                                             })
                                         }
                                     }
-                                } else {
-                                    console.warn('No inventory row found for book:', saleData.bookId)
                                 }
                             }
 
-                            // 3. Audit log
                             await addAuditLog(
-                                `Registró venta: "${finalSale.bookTitle}" | ${saleData.quantity} u. × ${formatCLP(saleData.unitPrice)} | Canal: ${saleData.channel}`,
+                                `Registró venta múltiple (${items.length} títulos) | Canal: ${commonData.channel} | Cliente: ${commonData.clientName || 'Consumidor'}`,
                                 'ventas'
                             )
 
-                            // 4. Force full reload so Inventario reflects updated stock
                             await reloadData()
-
                             setShowAdd(false)
                         } catch (err) {
                             console.error('Error al registrar venta:', err)
-                            alert(`Error al guardar: ${err.message || 'Error desconocido'}. Revisa la consola.`)
+                            alert(`Error al guardar: ${err.message || 'Error desconocido'}.`)
                         }
                     }}
                 />
@@ -648,12 +645,11 @@ export default function Sales() {
 
 function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
     const today = new Date().toISOString().slice(0, 10)
-    const [form, setForm] = useState({
-        bookId: '',
+    
+    // Header data
+    const [common, setCommon] = useState({
         channel: 'Directa',
         type: 'B2C (Consumidor final)',
-        quantity: 1,
-        unitPrice: '',
         saleDate: today,
         clientName: '',
         documentRef: '',
@@ -662,240 +658,290 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
         paymentStatus: 'Pendiente',
         dueDate: today
     })
+
+    // Line items
+    const [items, setItems] = useState([])
+    const [searchTerm, setSearchTerm] = useState('')
+    const [searchResults, setSearchResults] = useState([])
     const [saving, setSaving] = useState(false)
 
-    const quantity = parseInt(form.quantity) || 0
-    const unitPrice = parseInt(form.unitPrice?.toString().replace(/\D/g, '')) || 0
-    const total = quantity * unitPrice
-    // Neto / IVA breakdown
+    // Derived totals
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
     const taxVal = 1 + (taxRate / 100)
-    const neto = Math.round(total / taxVal)
-    const iva = total - neto
+    const totalNeto = Math.round(subtotal / taxVal)
+    const totalIva = subtotal - totalNeto
 
-    const selectedBook = books.find(b => b.id === form.bookId)
+    const handleSearch = (q) => {
+        setSearchTerm(q)
+        if (q.length < 2) {
+            setSearchResults([])
+            return
+        }
+        const lowerQ = q.toLowerCase()
+        const results = books.filter(b => 
+            b.title.toLowerCase().includes(lowerQ) || 
+            b.isbn?.toLowerCase().includes(lowerQ)
+        ).slice(0, 5)
+        setSearchResults(results)
+    }
 
-    // Inventory availability - use bookId (camelCase) after supabaseService transform
-    const inv = data?.inventory?.physical?.find(i => i.bookId === form.bookId)
-    const stock = inv?.stock ?? null
+    const addItem = (book) => {
+        const inv = data?.inventory?.physical?.find(i => i.bookId === book.id)
+        const stock = inv?.stock ?? 0
+        
+        if (stock <= 0) {
+            alert(`❌ "${book.title}" no tiene stock disponible.`);
+            return;
+        }
+
+        // Apply client discount if any
+        const client = data?.clients?.find(c => c.name === common.clientName)
+        const discount = client?.default_discount || 0
+        const finalPrice = book.pvp ? Math.round(book.pvp * (1 - discount/100)) : 0
+
+        setItems(p => [
+            ...p,
+            {
+                bookId: book.id,
+                title: book.title,
+                quantity: 1,
+                unitPrice: finalPrice,
+                stock: stock,
+                total: finalPrice
+            }
+        ])
+        setSearchTerm('')
+        setSearchResults([])
+    }
+
+    const removeItem = (idx) => setItems(p => p.filter((_, i) => i !== idx))
+
+    const updateItem = (idx, field, val) => {
+        setItems(p => p.map((item, i) => {
+            if (i !== idx) return item
+            const newItem = { ...item, [field]: val }
+            if (field === 'quantity' || field === 'unitPrice') {
+                newItem.total = (newItem.quantity || 0) * (newItem.unitPrice || 0)
+            }
+            return newItem
+        }))
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        if (!form.bookId) { alert('Debes seleccionar un libro.'); return }
-        if (quantity < 1) { alert('La cantidad debe ser mayor a 0.'); return }
-        if (unitPrice < 1) { alert('El precio unitario debe ser mayor a 0.'); return }
-        // Hard block: no inventory record → cannot sell
-        if (stock === null) {
-            alert('❌ Este libro no tiene registro de inventario físico. Registra el stock primero en la sección Inventario.')
-            return
+        if (items.length === 0) { alert('Debes agregar al menos un libro.'); return }
+        
+        // Critical validations
+        for (const item of items) {
+            if (item.quantity < 1) { alert(`Cantidad inválida para ${item.title}`); return }
+            if (item.quantity > item.stock) { alert(`Stock insuficiente para ${item.title} (Disponible: ${item.stock})`); return }
         }
-        // Hard block: quantity exceeds stock
-        if (quantity > stock) {
-            alert(`❌ Stock insuficiente. Disponible: ${stock} u. Intentas vender: ${quantity} u.`)
-            return
-        }
+
         setSaving(true)
-        await onSave({ ...form, quantity, unitPrice, totalAmount: total, neto, iva, saleDate: form.saleDate })
+        const itemsToSave = items.map(it => ({
+            bookId: it.bookId,
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+            totalAmount: it.total,
+            neto: Math.round(it.total / taxVal),
+            iva: it.total - Math.round(it.total / taxVal)
+        }))
+        
+        await onSave(itemsToSave, common)
         setSaving(false)
     }
 
     return (
-        <div className="fixed inset-0 bg-dark-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-in">
-            <div className="glass-card w-full max-w-xl p-6 slide-up border border-primary/30 max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-5 border-b border-slate-200 dark:border-dark-300 pb-3">
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <ShoppingCart className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> Registrar Nueva Venta
-                    </h3>
-                    <button onClick={onClose} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+        <div className="fixed inset-0 bg-dark-900/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
+            <div className="glass-card w-full max-w-2xl p-6 shadow-2xl border border-primary/20 flex flex-col max-h-[95vh]">
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <ShoppingCart className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Registro de Venta Prof.</h3>
+                            <p className="text-xs text-slate-500">Múltiples títulos en un solo ingreso</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-dark-300 rounded-full transition-colors">
+                        <X className="w-6 h-6 text-slate-400" />
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Book */}
-                    <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Título *</label>
-                        <select
-                            value={form.bookId}
-                            onChange={e => {
-                                const b = books.find(bk => bk.id === e.target.value)
-                                const client = data?.clients?.find(c => c.name === form.clientName)
-                                const discount = client?.default_discount || 0
-                                const finalPrice = b?.pvp ? Math.round(b.pvp * (1 - discount/100)) : p.unitPrice
-                                setForm(p => ({ ...p, bookId: e.target.value, unitPrice: String(finalPrice) }))
-                            }}
-                            className="input-field text-sm w-full"
-                            required
-                        >
-                            <option value="">Selecciona un título...</option>
-                            {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
-                        </select>
-                        {selectedBook && (
-                            <div className="flex flex-wrap gap-3 mt-1.5">
-                                {selectedBook.pvp > 0 && <span className="text-[10px] text-primary-400">PVP: {formatCLP(selectedBook.pvp)}</span>}
-                                {stock !== null && (
-                                    <span className={`text-[10px] font-medium ${stock < 10 ? 'text-red-400' : 'text-emerald-400'}`}>
-                                        Stock: {stock} u.
-                                    </span>
-                                )}
-                                {selectedBook.royaltyPercent > 0 && <span className="text-[10px] text-yellow-400">Royalty autor: {selectedBook.royaltyPercent}%</span>}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Channel + Type */}
-                    <div className="grid grid-cols-2 gap-3">
+                <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col gap-6">
+                    {/* Common Data */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Canal de Venta *</label>
-                            <select value={form.channel} onChange={e => setForm(p => ({ ...p, channel: e.target.value }))} className="input-field text-sm w-full">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 block">Canal *</label>
+                            <select 
+                                value={common.channel} 
+                                onChange={e => setCommon(p => ({ ...p, channel: e.target.value }))}
+                                className="input-field text-sm w-full bg-slate-50 border-slate-200"
+                            >
                                 {FORM_CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
-                            <p className="text-[10px] text-slate-500 mt-1">
-                                Las **consignaciones** deben registrarse en su sección propia para permitir liquidaciones posteriores.
-                            </p>
                         </div>
                         <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Tipo</label>
-                            <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value }))} className="input-field text-sm w-full">
-                                {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Qty + Price + Date */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Cantidad *</label>
-                            <input
-                                type="number" min="1"
-                                value={form.quantity}
-                                onChange={e => setForm(p => ({ ...p, quantity: e.target.value }))}
-                                className="input-field text-sm w-full"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Precio Unitario (CLP) *</label>
-                            <input
-                                type="text"
-                                value={form.unitPrice}
-                                onChange={e => setForm(p => ({ ...p, unitPrice: e.target.value.replace(/\D/g, '') }))}
-                                className="input-field text-sm w-full"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    {/* Breakdown Neto/IVA/Total */}
-                    <div className="bg-dark-100/50 p-4 rounded-xl border border-dark-300">
-                        <div className="flex items-center justify-between text-xs text-dark-500">
-                            <span>{t('neto')}: {formatCLP(neto)}</span>
-                            <span>{t('iva')} ({taxRate}%): {formatCLP(iva)}</span>
-                            <span className="text-sm text-emerald-400 font-bold ml-4">{t('total')}: {formatCLP(total)}</span>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
-                                <Calendar className="w-3.5 h-3.5" /> Fecha de Venta *
-                            </label>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 block">Fecha *</label>
                             <input
                                 type="date"
-                                value={form.saleDate}
-                                onChange={e => {
-                                    const newDate = e.target.value
-                                    const d = new Date(newDate)
-                                    d.setDate(d.getDate() + 30) // Default 30 days
-                                    setForm(p => ({ ...p, saleDate: newDate, dueDate: d.toISOString().slice(0, 10) }))
-                                }}
-                                className="input-field text-sm w-full dark:bg-dark-300"
-                                style={{ colorScheme: 'dark' }}
-                                required
+                                value={common.saleDate}
+                                onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value, dueDate: e.target.value }))}
+                                className="input-field text-sm w-full bg-slate-50 border-slate-200 shadow-inner"
                             />
                         </div>
                         <div>
-                            <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block flex items-center gap-1">
-                                <Calendar className="w-3.5 h-3.5 text-amber-500" /> Vencimiento de Pago
-                            </label>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 block">Cliente / Librería</label>
                             <input
-                                type="date"
-                                value={form.dueDate}
-                                onChange={e => setForm(p => ({ ...p, dueDate: e.target.value }))}
-                                className="input-field text-sm w-full dark:bg-dark-300"
-                                style={{ colorScheme: 'dark' }}
+                                list="client-list"
+                                value={common.clientName}
+                                onChange={e => setCommon(p => ({ ...p, clientName: e.target.value }))}
+                                placeholder="Escribe o selecciona..."
+                                className="input-field text-sm w-full bg-slate-50 border-slate-200"
                             />
-                        </div>
-                    </div>
-
-                    {/* Royalty preview */}
-                    {
-                        selectedBook?.royaltyPercent > 0 && total > 0 && (
-                            <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg px-3 py-2 flex items-center gap-2">
-                                <Users className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-                                <p className="text-[10px] text-yellow-300">
-                                    Royalty acumulado para el autor: <span className="font-mono font-bold">
-                                        {formatCLP(Math.round(total * (selectedBook.royaltyPercent / 100)))}
-                                    </span>
-                                    {' '}({selectedBook.royaltyPercent}% sobre total)
-                                </p>
-                            </div>
-                        )
-                    }
-
-                    {/* Client + Doc */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Cliente / Librería</label>
-                            <input
-                                type="text"
-                                list="clientsList"
-                                value={form.clientName}
-                                onChange={e => setForm(p => ({ ...p, clientName: e.target.value }))}
-                                className="input-field text-sm w-full"
-                                placeholder="Escribe o selecciona de la lista..."
-                            />
-                            <datalist id="clientsList">
-                                {data?.clients?.map(client => (
-                                    <option key={client.id} value={client.name}>
-                                        {client.type ? `[${client.type}] ` : ''}{client.name}
-                                    </option>
-                                ))}
+                            <datalist id="client-list">
+                                {data?.clients?.map(c => <option key={c.id} value={c.name}>{c.type}</option>)}
                             </datalist>
                         </div>
-                        <div>
-                            <label className="text-xs text-dark-600 mb-1 block">Ref. Documento</label>
-                            <input
-                                type="text"
-                                value={form.documentRef}
-                                onChange={e => setForm(p => ({ ...p, documentRef: e.target.value }))}
-                                className="input-field text-sm w-full"
-                                placeholder="Boleta / Factura nro."
-                            />
+                    </div>
+
+                    {/* Book Search & List */}
+                    <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 dark:bg-dark-900/50 rounded-2xl border border-slate-200 dark:border-dark-300 p-4">
+                        <div className="relative mb-4">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-2">
+                                <Search className="w-3 h-3" /> Buscar y Agregar Títulos
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={e => handleSearch(e.target.value)}
+                                    placeholder="Nombre del libro o ISBN..."
+                                    className="input-field w-full pl-10 pr-4 py-2.5 text-sm shadow-sm ring-primary/10 focus:ring-4"
+                                />
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            </div>
+
+                            {searchResults.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-dark-200 rounded-xl shadow-2xl border border-slate-200 dark:border-dark-300 z-50 overflow-hidden divide-y divide-slate-100">
+                                    {searchResults.map(b => (
+                                        <button
+                                            key={b.id}
+                                            type="button"
+                                            onClick={() => addItem(b)}
+                                            className="w-full text-left px-4 py-3 hover:bg-primary/10 flex justify-between items-center transition-colors group"
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary">{b.title}</span>
+                                                <span className="text-[10px] text-slate-500 font-mono italic">PVP Ref: {formatCLP(b.pvp)}</span>
+                                            </div>
+                                            <Plus className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Items Table */}
+                        <div className="flex-1 overflow-y-auto min-h-[200px] border border-slate-100 rounded-lg bg-white dark:bg-dark-300 shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="sticky top-0 bg-slate-50 dark:bg-dark-200 z-10 shadow-sm">
+                                    <tr className="border-b border-slate-200">
+                                        <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest w-1/2">Título</th>
+                                        <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Cant.</th>
+                                        <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Unitario</th>
+                                        <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Total</th>
+                                        <th className="px-4 py-2"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {items.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="px-4 py-12 text-center text-slate-400 text-sm italic">
+                                                Usa el buscador para añadir libros a la venta
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        items.map((item, idx) => (
+                                            <tr key={idx} className="group hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-4 py-3">
+                                                    <p className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1">{item.title}</p>
+                                                    <p className="text-[10px] text-emerald-500 font-medium">Stock: {item.stock} u.</p>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={item.quantity}
+                                                        onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 0)}
+                                                        className="w-16 mx-auto bg-transparent border-b border-slate-200 focus:border-primary text-sm text-center outline-none font-bold"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <span className="text-slate-400 text-xs">$</span>
+                                                        <input
+                                                            type="text"
+                                                            value={item.unitPrice.toLocaleString('es-CL')}
+                                                            onChange={e => updateItem(idx, 'unitPrice', parseInt(e.target.value.replace(/\D/g, '')) || 0)}
+                                                            className="w-20 bg-transparent border-b border-slate-200 focus:border-primary text-sm text-right outline-none font-mono"
+                                                        />
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">{formatCLP(item.total)}</span>
+                                                </td>
+                                                <td className="px-4 py-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeItem(idx)}
+                                                        className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    {/* Notes */}
-                    <div>
-                        <label className="text-xs text-dark-600 mb-1 block">Observaciones</label>
-                        <textarea
-                            value={form.notes}
-                            onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
-                            className="input-field text-sm w-full"
-                            rows={2}
-                            placeholder="Notas internas..."
-                        />
-                    </div>
+                    {/* Footer Summary */}
+                    <div className="shrink-0 flex flex-col md:flex-row justify-between items-end gap-4 border-t border-slate-200 dark:border-dark-300 pt-6">
+                        <div className="space-y-1">
+                            <div className="flex gap-4 text-xs font-medium text-slate-500 uppercase tracking-tighter">
+                                <p>Neto: <span className="text-slate-700 dark:text-white font-mono">{formatCLP(totalNeto)}</span></p>
+                                <p>IVA ({taxRate}%): <span className="text-slate-700 dark:text-white font-mono">{formatCLP(totalIva)}</span></p>
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-xs font-black text-primary uppercase">Total Venta:</span>
+                                <span className="text-3xl font-black text-primary font-mono tracking-tighter">{formatCLP(subtotal)}</span>
+                            </div>
+                        </div>
 
-                    <div className="flex justify-end gap-3 pt-2 border-t border-dark-300">
-                        <button type="button" onClick={onClose} className="btn-secondary text-sm px-4 py-2">Cancelar</button>
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="btn-primary text-sm px-5 py-2 flex items-center gap-2 disabled:opacity-60"
-                        >
-                            {saving ? 'Guardando...' : <><CheckCircle className="w-4 h-4" /> Registrar Venta</>}
-                        </button>
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="flex-1 md:flex-none px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={saving || items.length === 0}
+                                className="flex-2 md:flex-none px-10 py-3 bg-primary hover:bg-primary-600 disabled:opacity-50 disabled:grayscale text-white rounded-xl font-black text-sm shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-2"
+                            >
+                                {saving ? <Activity className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                                Registrar Venta
+                            </button>
+                        </div>
                     </div>
-                </form >
-            </div >
-        </div >
+                </form>
+            </div>
+        </div>
     )
 }

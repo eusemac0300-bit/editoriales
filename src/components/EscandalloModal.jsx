@@ -7,63 +7,134 @@ export default function EscandalloModal({ book, onClose }) {
     const [isSaving, setIsSaving] = useState(false)
     
     const [costs, setCosts] = useState({
-        edicion: 0, correccion: 0, maquetacion: 0, diseno: 0,
-        impresion: 0, marketing: 0, distribucion: 0, otros: 0
+        // Edición
+        preprensa: 0, traduccion: 0, prologo: 0, referato: 0, anticipo: 0, fotos: 0, ilustraciones: 0,
+        // Impresión
+        imprenta: 0, impresos: 0, traslados: 0,
+        // Otros
+        distribucion: 0, otros: 0
     })
-    const [pvp, setPvp] = useState(0)
+    const [marketingPercent, setMarketingPercent] = useState(15) // % sobre costos duros
+    const [pvpNeto, setPvpNeto] = useState(0)
     const [tiraje, setTiraje] = useState(0)
-    const [royalty, setRoyalty] = useState(0)
+    const [royaltyLibreria, setRoyaltyLibreria] = useState(10)
+    const [royaltyDirecta, setRoyaltyDirecta] = useState(30)
+    
+    // Proyección de ventas
+    const [ventasCanal, setVentasCanal] = useState({
+        directaPercent: 60,
+        libreriaPercent: 40
+    })
 
     useEffect(() => {
         if (book) {
-            const dbCosts = book.escandalloCosts || {}
-            setCosts({
-                edicion: Number(dbCosts.edicion) || 0,
-                correccion: Number(dbCosts.correccion) || 0,
-                maquetacion: Number(dbCosts.maquetacion) || 0,
-                diseno: Number(dbCosts.diseno) || 0,
-                impresion: Number(dbCosts.impresion) || 0,
-                marketing: Number(dbCosts.marketing) || 0,
-                distribucion: Number(dbCosts.distribucion) || 0,
-                otros: Number(dbCosts.otros) || 0
-            })
-            setPvp(Number(book.pvp) || 0)
+            const dbEsc = book.escandalloCosts || {}
+            
+            // Si ya tiene el formato nuevo (anidado)
+            if (dbEsc.costs) {
+                setCosts(dbEsc.costs)
+                setMarketingPercent(dbEsc.marketingPercent || 15)
+                setPvpNeto(dbEsc.pvpNeto || 0)
+                setRoyaltyLibreria(dbEsc.royaltyLibreria || 10)
+                setRoyaltyDirecta(dbEsc.royaltyDirecta || 30)
+                setVentasCanal(dbEsc.ventasCanal || { directaPercent: 60, libreriaPercent: 40 })
+            } else {
+                // Formato antiguo o migración inicial
+                setCosts({
+                    preprensa: Number(dbEsc.preprensa || dbEsc.edicion) || 0,
+                    traduccion: Number(dbEsc.traduccion) || 0,
+                    prologo: Number(dbEsc.prologo) || 0,
+                    referato: Number(dbEsc.referato) || 0,
+                    anticipo: Number(dbEsc.anticipo) || 0,
+                    fotos: Number(dbEsc.fotos) || 0,
+                    ilustraciones: Number(dbEsc.ilustraciones) || 0,
+                    imprenta: Number(dbEsc.imprenta || dbEsc.impresion) || 0,
+                    impresos: Number(dbEsc.impresos) || 0,
+                    traslados: Number(dbEsc.traslados) || 0,
+                    distribucion: Number(dbEsc.distribucion) || 0,
+                    otros: Number(dbEsc.otros) || 0
+                })
+                setPvpNeto(Math.round(Number(book.pvp) / 1.19) || 0)
+            }
             setTiraje(Number(book.tiraje) || 0)
-            setRoyalty(Number(book.royaltyPercent) || 0)
         }
     }, [book])
 
     const handleSave = async () => {
         setIsSaving(true)
         try {
-            const success = await updateBookDetails(book.id, {
-                escandalloCosts: costs,
-                pvp,
-                tiraje,
-                royaltyPercent: royalty
-            })
-
-            if (success) {
-                addAuditLog(`Actualizó escandallo para título: ${book.title}`, 'general')
-                alert('Costos de escandallo guardados correctamente.')
-                onClose()
+            // Empaquetamos todo en un solo objeto para el JSONB de Supabase
+            const advancedEscandallo = {
+                costs,
+                marketingPercent,
+                pvpNeto,
+                royaltyLibreria,
+                royaltyDirecta,
+                ventasCanal,
+                // Guardamos los totales para reportes rápidos si fuera necesario
+                summary: {
+                    inversionTotal,
+                    utilidadFinal,
+                    breakEvenReal,
+                    costoUnitarioTotal
+                }
             }
+
+            await updateBookDetails(book.id, {
+                escandalloCosts: advancedEscandallo,
+                pvp: Math.round(pvpNeto * 1.19), // El pvp principal sigue siendo con IVA para el catálogo
+                tiraje
+            })
+            
+            addAuditLog(`Actualizó análisis de proyecto (Escandallo) para: ${book.title}`, 'general')
+            alert('Análisis de proyecto guardado correctamente.')
+            onClose()
         } catch (err) {
-            console.error('Save failed', err)
-            alert('Error al guardar datos: ' + (err.message || 'Error desconocido'))
+            alert('Error al guardar: ' + err.message)
         } finally {
             setIsSaving(false)
         }
     }
 
-    const totalCosts = Object.values(costs).reduce((s, v) => s + v, 0)
-    const costPerUnit = tiraje > 0 ? totalCosts / tiraje : 0
-    const royaltyPerUnit = (pvp * royalty) / 100
-    const netMarginPerUnit = pvp - costPerUnit - royaltyPerUnit
-    const marginPercent = pvp > 0 ? (netMarginPerUnit / pvp) * 100 : 0
-    const breakEven = netMarginPerUnit > 0 ? Math.ceil(totalCosts / (pvp - royaltyPerUnit)) : 0
-    const projectedRevenue = tiraje * pvp
-    const projectedProfit = (tiraje * pvp) - totalCosts - (tiraje * royaltyPerUnit)
+    // --- CÁLCULOS LÓGICA ALFONSO ---
+    const IVA = 1.19
+    const pvpConIva = Math.round(pvpNeto * IVA)
+    
+    const totalEdicion = costs.preprensa + costs.traduccion + costs.prologo + costs.referato + costs.anticipo + costs.fotos + costs.ilustraciones
+    const totalImpresion = costs.imprenta + costs.impresos + costs.traslados
+    const costosDuros = totalEdicion + totalImpresion
+    const montoMarketing = Math.round(costosDuros * (marketingPercent / 100))
+    const inversionTotal = costosDuros + montoMarketing + costs.distribucion + costs.otros
+    
+    const costoUnitarioTotal = tiraje > 0 ? inversionTotal / tiraje : 0
+    
+    // Proyección Canales
+    const unidDirecta = Math.round(tiraje * (ventasCanal.directaPercent / 100))
+    const unidLibreria = Math.round(tiraje * (ventasCanal.libreriaPercent / 100))
+    
+    // Retorno Venta Librería (Neto)
+    const porcLibreria = 40 // Margen librería estándar
+    const fletesLibreria = 2 // Costo envío
+    const retornoUnitLibreria = pvpNeto - (pvpNeto * (royaltyLibreria / 100)) - (pvpNeto * (porcLibreria / 100)) - (pvpNeto * (fletesLibreria / 100))
+    const ingresoTotalLibreria = unidLibreria * retornoUnitLibreria
+    
+    // Retorno Venta Directa (Neto)
+    const porcPlataforma = 0
+    const porcTransbank = 2
+    const retornoUnitDirecta = pvpNeto - (pvpNeto * (royaltyDirecta / 100)) - (pvpNeto * (porcPlataforma / 100)) - (pvpNeto * (porcTransbank / 100))
+    const ingresoTotalDirecta = unidDirecta * retornoUnitDirecta
+    
+    const retornoTotalNeto = ingresoTotalLibreria + ingresoTotalDirecta
+    const utilidadFinal = retornoTotalNeto - inversionTotal
+    
+    // Ejemplares para cubrir costos (Punto de Equilibrio Real)
+    // Usamos el retorno promedio ponderado
+    const retornoPromedio = (unidDirecta + unidLibreria) > 0 
+        ? ((unidDirecta * retornoUnitDirecta) + (unidLibreria * retornoUnitLibreria)) / (unidDirecta + unidLibreria)
+        : 0
+        
+    const breakEvenReal = retornoPromedio > 0 ? Math.ceil(inversionTotal / retornoPromedio) : 0
+    const marginPercent = inversionTotal > 0 ? (utilidadFinal / inversionTotal) * 100 : 0
 
     const formatInputValue = (val) => {
         if (val === 0 || !val || isNaN(val)) return ''
@@ -102,164 +173,263 @@ export default function EscandalloModal({ book, onClose }) {
                 </div>
 
                 <div className="p-6 overflow-y-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Cost Inputs */}
-                        <div className="space-y-4">
-                            <div className="bg-slate-50 dark:bg-dark-50 rounded-xl p-4 border border-slate-100 dark:border-dark-300">
-                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <DollarSign className="w-4 h-4 text-primary" /> Costos de Producción
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* INPUTS COLUMN */}
+                        <div className="space-y-6">
+                            {/* Costos de Edición */}
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-xl p-5 border border-slate-100 dark:border-dark-300">
+                                <h3 className="text-xs font-black text-primary uppercase tracking-wider mb-4 flex items-center justify-between">
+                                    <span>Costos de Edición (Netos)</span>
+                                    <span className="text-[10px] font-medium text-slate-400">PAGO ÚNICO</span>
                                 </h3>
-                                <div className="space-y-3">
-                                    {costItems.map(item => (
-                                        <div key={item.key}>
-                                            <label className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-bold mb-1 flex items-center gap-1">
-                                                <span>{item.icon}</span> {item.label}
-                                            </label>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                                    {[
+                                        { k: 'preprensa', l: 'Preprensa' },
+                                        { k: 'traduccion', l: 'Traducción' },
+                                        { k: 'prologo', l: 'Prólogo' },
+                                        { k: 'referato', l: 'Referato' },
+                                        { k: 'anticipo', l: 'Derechos (Antic.)' },
+                                        { k: 'fotos', l: 'Fotografías' },
+                                        { k: 'ilustraciones', l: 'Ilustraciones' },
+                                    ].map(f => (
+                                        <div key={f.k}>
+                                            <label className="text-[9px] text-slate-500 font-bold uppercase mb-1 block">{f.l}</label>
                                             <div className="relative">
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
+                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
                                                 <input
                                                     type="text"
-                                                    value={formatInputValue(costs[item.key])}
+                                                    value={formatInputValue(costs[f.k])}
                                                     onChange={e => {
-                                                        const val = e.target.value.replace(/\D/g, '')
-                                                        setCosts(prev => ({ ...prev, [item.key]: val === '' ? 0 : parseInt(val, 10) }))
+                                                        const v = e.target.value.replace(/\D/g, '')
+                                                        setCosts(prev => ({ ...prev, [f.k]: v === '' ? 0 : parseInt(v, 10) }))
                                                     }}
-                                                    className="input-field pl-7 py-1.5 text-sm h-9"
-                                                    placeholder="0"
+                                                    className="input-field pl-6 py-1 h-8 text-xs font-mono"
                                                 />
                                             </div>
                                         </div>
                                     ))}
+                                    <div className="col-span-2 pt-2 border-t border-slate-200 mt-1 flex justify-between">
+                                        <span className="text-[10px] font-bold text-slate-400">SUBTOTAL EDICIÓN</span>
+                                        <span className="text-xs font-bold text-slate-900">{formatSafeCLP(totalEdicion)}</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="bg-slate-50 dark:bg-dark-50 rounded-xl p-4 border border-slate-100 dark:border-dark-300">
-                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4 text-emerald-400" /> Parámetros
-                                </h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-bold mb-1 block">Tiraje (unidades)</label>
+                            {/* Costos de Impresión y Cantidad */}
+                            <div className="bg-emerald-500/5 dark:bg-emerald-500/10 rounded-xl p-5 border border-emerald-500/20">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Inversión Imprenta</h3>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase">Tiraje:</span>
                                         <input
                                             type="text"
                                             value={formatInputValue(tiraje)}
-                                            onChange={e => {
-                                                const val = e.target.value.replace(/\D/g, '')
-                                                setTiraje(val === '' ? 0 : parseInt(val, 10))
-                                            }}
-                                            className="input-field py-1.5 text-sm h-9"
-                                            placeholder="0"
+                                            onChange={e => setTiraje(parseInt(e.target.value.replace(/\D/g, '') || '0'))}
+                                            className="w-16 bg-white border border-emerald-200 rounded px-1.5 py-0.5 text-xs font-bold text-emerald-700 text-center"
                                         />
                                     </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {[
+                                        { k: 'imprenta', l: 'Costo Imprenta' },
+                                        { k: 'impresos', l: 'Promocionales' },
+                                        { k: 'traslados', l: 'Logística/Fletes' },
+                                    ].map(f => (
+                                        <div key={f.k}>
+                                            <label className="text-[9px] text-emerald-600/70 font-bold uppercase mb-1 block">{f.l}</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-emerald-300">$</span>
+                                                <input
+                                                    type="text"
+                                                    value={formatInputValue(costs[f.k])}
+                                                    onChange={e => {
+                                                        const v = e.target.value.replace(/\D/g, '')
+                                                        setCosts(prev => ({ ...prev, [f.k]: v === '' ? 0 : parseInt(v, 10) }))
+                                                    }}
+                                                    className="input-field pl-6 py-1 h-8 text-xs font-mono border-emerald-100"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="flex flex-col justify-end p-2 bg-emerald-500/10 rounded-lg">
+                                        <p className="text-[8px] font-bold text-emerald-600 uppercase">Unitario Impresión</p>
+                                        <p className="text-sm font-black text-emerald-700">{formatSafeCLP(tiraje > 0 ? (totalImpresion / tiraje) : 0)}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Marketing y Parámetros Comerciales */}
+                            <div className="bg-slate-900 text-white rounded-xl p-5 shadow-xl">
+                                <h3 className="text-xs font-black text-primary uppercase mb-4 tracking-widest">COMERCIALIZACIÓN Y PROYECTO</h3>
+                                <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div>
-                                        <label className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-bold mb-1 block">PVP Proyectado</label>
+                                        <label className="text-[9px] text-slate-400 font-bold uppercase mb-1 block">PVP NETO (SIN IVA)</label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
+                                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-primary">$</span>
                                             <input
                                                 type="text"
-                                                value={formatInputValue(pvp)}
-                                                onChange={e => {
-                                                    const val = e.target.value.replace(/\D/g, '')
-                                                    setPvp(val === '' ? 0 : parseInt(val, 10))
-                                                }}
-                                                className="input-field pl-7 py-1.5 text-sm h-9"
-                                                placeholder="0"
+                                                value={formatInputValue(pvpNeto)}
+                                                onChange={e => setPvpNeto(parseInt(e.target.value.replace(/\D/g, '') || '0'))}
+                                                className="w-full bg-slate-800 border-none rounded-lg pl-7 py-2 text-sm font-black text-white focus:ring-2 ring-primary"
                                             />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-bold mb-1 block">% Regalía Autor</label>
+                                        <label className="text-[9px] text-slate-400 font-bold uppercase mb-1 block">PVP FINAL ({taxRate}% IVA)</label>
+                                        <div className="bg-slate-800 rounded-lg py-2 px-3 text-sm font-black text-emerald-400 border border-slate-700">
+                                            {formatSafeCLP(pvpConIva)}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-3 border-t border-slate-700 pt-4">
+                                    <div>
+                                        <label className="text-[8px] text-slate-400 font-bold uppercase mb-1 block">% MKT (S/Duros)</label>
                                         <input
                                             type="number"
-                                            value={royalty === 0 ? '' : royalty}
-                                            onChange={e => setRoyalty(e.target.value === '' ? 0 : parseFloat(e.target.value))}
-                                            className="input-field py-1.5 text-sm h-9"
-                                            placeholder="0"
+                                            value={marketingPercent}
+                                            onChange={e => setMarketingPercent(parseFloat(e.target.value) || 0)}
+                                            className="w-full bg-slate-800 border-none rounded p-1.5 text-xs text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[8px] text-slate-400 font-bold uppercase mb-1 block">% Reg. Librería</label>
+                                        <input
+                                            type="number"
+                                            value={royaltyLibreria}
+                                            onChange={e => setRoyaltyLibreria(parseFloat(e.target.value) || 0)}
+                                            className="w-full bg-slate-800 border-none rounded p-1.5 text-xs text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[8px] text-slate-400 font-bold uppercase mb-1 block">% Reg. Directa</label>
+                                        <input
+                                            type="number"
+                                            value={royaltyDirecta}
+                                            onChange={e => setRoyaltyDirecta(parseFloat(e.target.value) || 0)}
+                                            className="w-full bg-slate-800 border-none rounded p-1.5 text-xs text-white"
                                         />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Results Columns */}
-                        <div className="lg:col-span-2 flex flex-col gap-4">
+                        {/* RESULTS & ANALYTICS COLUMN */}
+                        <div className="space-y-6">
                             {/* Summary Metrics */}
-                            <div className="grid grid-cols-4 gap-3">
-                                <div className="bg-slate-50 dark:bg-dark-50 p-4 rounded-xl border border-slate-100 dark:border-dark-300 text-center">
-                                    <Target className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-                                    <p className="text-xl font-bold text-slate-900 dark:text-white">{breakEven}</p>
-                                    <p className="text-[10px] text-slate-500 uppercase">Punto Eq.</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white dark:bg-dark-100 p-5 rounded-2xl border-2 border-slate-100 dark:border-dark-300 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-2 opacity-10"><Target className="w-12 h-12" /></div>
+                                    <p className="text-[10px] text-slate-400 font-black uppercase mb-1 tracking-tighter">Inversión Total Proyecto</p>
+                                    <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{formatSafeCLP(inversionTotal)}</p>
+                                    <p className="text-[9px] text-slate-500 mt-1">Costo Unit. Real: <span className="font-bold text-primary">{formatSafeCLP(costoUnitarioTotal)}</span></p>
                                 </div>
-                                <div className="bg-slate-50 dark:bg-dark-50 p-4 rounded-xl border border-slate-100 dark:border-dark-300 text-center">
-                                    <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
-                                    <p className="text-lg font-bold text-slate-900 dark:text-white">{formatSafeCLP(costPerUnit)}</p>
-                                    <p className="text-[10px] text-slate-500 uppercase">Costo/Ud</p>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-dark-50 p-4 rounded-xl border border-slate-100 dark:border-dark-300 text-center">
-                                    <TrendingUp className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
-                                    <p className="text-lg font-bold text-slate-900 dark:text-white">{formatSafeCLP(netMarginPerUnit)}</p>
-                                    <p className="text-[10px] text-slate-500 uppercase">Margen Ud</p>
-                                </div>
-                                <div className="bg-slate-50 dark:bg-dark-50 p-4 rounded-xl border border-slate-100 dark:border-dark-300 text-center">
-                                    <BarChart3 className="w-5 h-5 text-purple-400 mx-auto mb-2" />
-                                    <p className={`text-xl font-bold ${marginPercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                        {marginPercent.toFixed(1)}%
-                                    </p>
-                                    <p className="text-[10px] text-slate-500 uppercase">Rentab.</p>
+                                <div className="bg-white dark:bg-dark-100 p-5 rounded-2xl border-2 border-slate-100 dark:border-dark-300 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-2 opacity-10"><BarChart3 className="w-12 h-12" /></div>
+                                    <p className="text-[10px] text-slate-400 font-black uppercase mb-1 tracking-tighter">Punto de Equilibrio</p>
+                                    <p className="text-2xl font-black text-amber-500 font-mono">{breakEvenReal} <span className="text-xs text-slate-400">/ {tiraje}</span></p>
+                                    <p className="text-[9px] text-slate-500 mt-1">Representa el <span className="font-bold">{(tiraje > 0 ? (breakEvenReal/tiraje)*100 : 0).toFixed(0)}%</span> del tiraje</p>
                                 </div>
                             </div>
 
-                            {/* Cost Breakdown */}
-                            <div className="bg-slate-50 dark:bg-dark-50 p-5 rounded-xl border border-slate-100 dark:border-dark-300 flex-1">
-                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Desglose Visual de Inversión</h3>
-                                <div className="space-y-3">
-                                    {costItems.map(item => {
-                                        const pct = totalCosts > 0 ? (costs[item.key] / totalCosts) * 100 : 0
-                                        if (costs[item.key] === 0) return null
-                                        return (
-                                            <div key={item.key} className="flex items-center gap-4">
-                                                <div className="w-24 text-xs text-slate-600 dark:text-dark-700">{item.label}</div>
-                                                <div className="flex-1 h-2 bg-slate-200 dark:bg-dark-300 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} />
-                                                </div>
-                                                <div className="w-20 text-right text-xs font-mono font-bold text-slate-900 dark:text-white">{formatSafeCLP(costs[item.key])}</div>
-                                                <div className="w-8 text-right text-[10px] text-slate-400">{pct.toFixed(0)}%</div>
+                            {/* Análisis de Retornos Canal por Canal */}
+                            <div className="bg-slate-50 dark:bg-dark-50 rounded-2xl border border-slate-200 dark:border-dark-300 overflow-hidden">
+                                <div className="bg-slate-100 dark:bg-dark-100 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                                    <h3 className="text-[10px] font-black text-slate-600 dark:text-dark-700 uppercase">ANÁLISIS DE RETORNO POR CANAL</h3>
+                                    <div className="flex gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[8px] font-bold text-blue-500">DIRECTA {ventasCanal.directaPercent}%</span>
+                                            <input type="range" min="0" max="100" value={ventasCanal.directaPercent} onChange={e => {
+                                                const d = parseInt(e.target.value)
+                                                setVentasCanal({ directaPercent: d, libreriaPercent: 100 - d })
+                                            }} className="w-16 h-1 bg-blue-200 rounded-lg appearance-none cursor-pointer" />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="p-4 grid grid-cols-2 gap-6">
+                                    {/* Venta Directa */}
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[8px] font-black rounded uppercase">Canal Directo</span>
+                                            <span className="text-[10px] font-bold">{unidDirecta} unidades</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between text-[10px] text-slate-500">
+                                                <span>Retorno Unit. (Neto)</span>
+                                                <span className="font-bold text-slate-900">{formatSafeCLP(retornoUnitDirecta)}</span>
                                             </div>
-                                        )
-                                    })}
-                                    <div className="pt-3 border-t border-slate-200 dark:border-dark-300 flex justify-between items-center">
-                                        <span className="text-sm font-bold text-slate-900 dark:text-white">COSTO TOTAL INICIAL</span>
-                                        <span className="text-lg font-black text-primary font-mono">{formatSafeCLP(totalCosts)}</span>
+                                            <div className="flex justify-between text-[10px] text-slate-500">
+                                                <span>Mkt/Plataf./TBK (4%)</span>
+                                                <span className="text-red-400">-{formatSafeCLP(pvpNeto * 0.04)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="pt-2 border-t border-slate-200">
+                                            <p className="text-[8px] text-slate-400 font-bold uppercase">Utilidad Proyectada Canal</p>
+                                            <p className="text-md font-black text-blue-600 font-mono">{formatSafeCLP(ingresoTotalDirecta)}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Venta Librería */}
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[8px] font-black rounded uppercase">Canal Librería</span>
+                                            <span className="text-[10px] font-bold">{unidLibreria} unidades</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between text-[10px] text-slate-500">
+                                                <span>Retorno Unit. (Neto)</span>
+                                                <span className="font-bold text-slate-900">{formatSafeCLP(retornoUnitLibreria)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-[10px] text-slate-500">
+                                                <span>Dto Librería (40%)</span>
+                                                <span className="text-red-400">-{formatSafeCLP(pvpNeto * 0.40)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="pt-2 border-t border-slate-200">
+                                            <p className="text-[8px] text-slate-400 font-bold uppercase">Utilidad Proyectada Canal</p>
+                                            <p className="text-md font-black text-purple-600 font-mono">{formatSafeCLP(ingresoTotalLibreria)}</p>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Financial Projection */}
-                                <div className="mt-8 grid grid-cols-2 gap-4">
-                                    <div className="bg-white dark:bg-dark-200 p-4 rounded-xl border border-slate-100 dark:border-dark-300 shadow-sm">
-                                        <p className="text-[10px] text-slate-500 uppercase mb-1">Retorno de Venta Total</p>
-                                        <p className="text-xl font-bold text-slate-900 dark:text-white font-mono">{formatSafeCLP(projectedRevenue)}</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">({tiraje} unidades al 100% de venta)</p>
+                            {/* BALANCE FINAL */}
+                            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 rounded-3xl shadow-2xl relative overflow-hidden border border-slate-700">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-3xl -mr-16 -mt-16 rounded-full" />
+                                <div className="relative">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <div>
+                                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">Resultado Neto Proyectado</p>
+                                            <h4 className="text-3xl font-black text-white font-mono">{formatSafeCLP(utilidadFinal)}</h4>
+                                        </div>
+                                        <div className={`px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 ${marginPercent >= 15 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                                            {marginPercent.toFixed(1)}% {marginPercent >= 15 ? <TrendingUp className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                                        </div>
                                     </div>
-                                    <div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-xl border border-primary/20 shadow-sm">
-                                        <p className="text-[10px] text-primary uppercase mb-1">Resultado Final Obra</p>
-                                        <p className={`text-xl font-bold font-mono ${projectedProfit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                            {formatSafeCLP(projectedProfit)}
-                                        </p>
-                                        <p className="text-[10px] text-primary/70 font-medium">Neto después de regalías y costos</p>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                                            <p className="text-[8px] font-bold text-slate-500 uppercase mb-1">Ingresos de Venta Totales</p>
+                                            <p className="text-sm font-bold text-slate-300 font-mono">{formatSafeCLP(retornoTotalNeto)}</p>
+                                        </div>
+                                        <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                                            <p className="text-[8px] font-bold text-slate-500 uppercase mb-1">Inversión Recuperada</p>
+                                            <p className="text-sm font-bold text-emerald-400 font-mono">{formatSafeCLP(inversionTotal)}</p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Break-even progress */}
-                                <div className="mt-6 px-4 py-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
-                                    <div className="flex justify-between text-xs mb-2">
-                                        <span className="text-slate-600 dark:text-dark-700 font-medium">Necesitas vender para recuperar inversión:</span>
-                                        <span className="text-amber-600 dark:text-amber-400 font-bold">{breakEven} / {tiraje} unidades</span>
-                                    </div>
-                                    <div className="h-3 bg-slate-200 dark:bg-dark-300 rounded-full overflow-hidden">
-                                        <div 
-                                            className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-1000" 
-                                            style={{ width: `${Math.min(100, tiraje > 0 ? (breakEven / tiraje) * 100 : 0)}%` }} 
-                                        />
+                                    <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
+                                        <div className="flex justify-between text-[10px]">
+                                            <span className="text-slate-400">DERECHOS DE AUTOR A PAGAR (ESTIMADOS):</span>
+                                            <span className="text-amber-400 font-bold font-mono">
+                                                {formatSafeCLP((unidDirecta * (pvpNeto * royaltyDirecta / 100)) + (unidLibreria * (pvpNeto * royaltyLibreria / 100)))}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between text-[10px]">
+                                            <span className="text-slate-400">COSTO POR EJEMPLAR VENDIDO:</span>
+                                            <span className="text-white font-bold font-mono">{formatSafeCLP(costoUnitarioTotal)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { GripVertical, MessageSquare, Calendar, User, Clock } from 'lucide-react'
+import { GripVertical, MessageSquare, Calendar, User, Clock, X, Edit } from 'lucide-react'
+import BookForm from '../../components/BookForm'
 
 const STAGES = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
 const stageColors = {
@@ -9,10 +10,11 @@ const stageColors = {
 }
 
 export default function Kanban() {
-    const { data, updateBookStatus, updateInventory, addAuditLog, user } = useAuth()
+    const { data, updateBookStatus, updateInventory, addAuditLog, user, updateBookDetails } = useAuth()
     const [draggedBook, setDraggedBook] = useState(null)
     const [commentModal, setCommentModal] = useState(null)
     const [publishModal, setPublishModal] = useState(null)
+    const [editingBook, setEditingBook] = useState(null)
     const [readTimestamps, setReadTimestamps] = useState(() => {
         try {
             return JSON.parse(localStorage.getItem('kanban_comment_read') || '{}')
@@ -115,7 +117,8 @@ export default function Kanban() {
                                             key={book.id}
                                             draggable
                                             onDragStart={() => handleDragStart(book)}
-                                            className={`kanban-card border-t-2 ${stageColors[stage]}`}
+                                            onClick={() => setEditingBook(book)}
+                                            className={`kanban-card border-t-2 cursor-pointer hover:shadow-md transition-shadow ${stageColors[stage]}`}
                                         >
                                             <div className="flex items-start gap-2">
                                                 <GripVertical className="w-4 h-4 text-dark-500 mt-0.5 shrink-0 cursor-grab" />
@@ -146,7 +149,7 @@ export default function Kanban() {
                                                     <div className="flex items-center justify-between mt-2">
                                                         <span className="text-[10px] text-slate-400 dark:text-dark-500">{book.isbn?.slice(-6)}</span>
                                                         <button
-                                                            onClick={() => openComments(book)}
+                                                            onClick={(e) => { e.stopPropagation(); openComments(book); }}
                                                             className={`flex items-center gap-1 text-xs transition-colors relative ${getUnreadCount(book.id) > 0
                                                                 ? 'text-primary' : 'text-slate-500 dark:text-dark-600 hover:text-primary'
                                                                 }`}
@@ -172,8 +175,41 @@ export default function Kanban() {
             {/* Comment Modal */}
             {commentModal && <CommentsModal book={commentModal} onClose={() => setCommentModal(null)} />}
 
+
             {/* Publish Modal */}
             {publishModal && <PublishModal book={publishModal} onClose={() => setPublishModal(null)} onConfirm={handlePublishConfirm} />}
+
+            {/* Book Detail/Edit Modal */}
+            {editingBook && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setEditingBook(null)} />
+                    <div className="relative glass-card w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 slide-up shadow-2xl border border-primary/20">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <Edit className="w-5 h-5 text-primary" /> Ficha de Producción: {editingBook.title}
+                            </h2>
+                            <button onClick={() => setEditingBook(null)} className="text-slate-400 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <BookForm
+                            data={data}
+                            initialData={editingBook}
+                            onSave={async (bookData) => {
+                                try {
+                                    await updateBookDetails(editingBook.id, { ...bookData, tenantId: user.tenantId })
+                                    addAuditLog(`Actualizó producción para: '${bookData.title}' desde Kanban`, 'general')
+                                    setEditingBook(null)
+                                } catch (err) {
+                                    console.error('Error al guardar desde Kanban:', err)
+                                    alert('Error al guardar los cambios.')
+                                }
+                            }}
+                            onClose={() => setEditingBook(null)}
+                        />
+                    </div>
+                </div>
+            )}
 
         </div>
     )
