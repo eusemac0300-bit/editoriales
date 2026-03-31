@@ -2,7 +2,7 @@ export const translations = {
     es: {
         sales_group: 'Grupo de Venta',
         dashboard: 'Dashboard',
-        inventory: 'Inventario',
+        inventory: 'Inventario / Stock',
         production: 'Producción',
         escandallo: 'Escandallo (Costos)',
         quotes: 'Cotizaciones',
