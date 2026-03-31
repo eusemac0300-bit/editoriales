@@ -15,7 +15,7 @@ const stageColors = {
 
 export default function Books() {
     const navigate = useNavigate()
-    const { data, addNewBook, updateBookDetails, deleteExistingBook, formatCLP, addAuditLog } = useAuth()
+    const { user, data, addNewBook, updateBookDetails, deleteExistingBook, formatCLP, addAuditLog } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
     const [editingBook, setEditingBook] = useState(null)
     const [showCodes, setShowCodes] = useState(null)
