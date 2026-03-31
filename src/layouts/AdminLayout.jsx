@@ -55,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.67', date: '2026-03-31', title: 'Sincronización Estética Despacho/Ventas', details: ['Restauración de paleta de colores oscuro (Dark Mode) en Ventas.', 'Uso de fondos slate-900 e inputs integrados para coherencia visual.', 'Botones de acción en azul vibrante siguiendo el patrón de Despacho.'] },
         { version: 'v3.1.5.66', date: '2026-03-31', title: 'Optimización de Legibilidad en Ventas', details: ['Cambio a esquema de colores claro (Light Mode) en formularios para facilitar la lectura.', 'Mejora de contrastes en campos de búsqueda y tablas de artículos.', 'Refinado de bordes y sombras para una apariencia técnica limpia.'] },
         { version: 'v3.1.5.65', date: '2026-03-31', title: 'Gestión de Autores y UI Premium v2', details: ['Soporte para indicadores visuales de autores (Ticket Azul/Rojo).', 'Refactorización final de Ventas con alto contraste.', 'Corrección definitiva de corrupción de código en formularios.', 'Optimización de espacio en selectores de autor.'] },
         { version: 'v3.1.5.63', date: '2026-03-31', title: 'Nueva Ventana Premium y Alta Visibilidad', details: ['Rediseño completo del formulario de ventas con alto contraste.', 'Controles de inventario blindados y cálculo de impuestos en tiempo real.', 'Corrección de errores de sintaxis en el módulo administrativo.'] },
