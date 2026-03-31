@@ -539,115 +539,117 @@ function SaleForm({ onClose, onSave, books, data, formatCLP }) {
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white dark:bg-dark-100 w-full max-w-5xl shadow-2xl rounded-[1.5rem] border border-white/20 flex flex-col max-h-[95vh] overflow-hidden">
-                {/* Technical Header */}
-                <div className="bg-slate-900 px-8 py-6 flex justify-between items-center border-b border-white/10 shrink-0">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-white w-full max-w-5xl shadow-2xl rounded-2xl flex flex-col max-h-[95vh] overflow-hidden border border-slate-200">
+                {/* Header - Azul oscuro para contraste pero contenido claro */}
+                <div className="bg-slate-900 px-8 py-5 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/40">
-                            <ShoppingCart className="w-6 h-6 text-white" />
+                        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+                            <ShoppingCart className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-white tracking-tight">TERMINAL PUNTO DE VENTA</h3>
-                            <p className="text-[10px] text-primary font-black uppercase tracking-widest">Sistema Premium v3.1.5</p>
+                            <h3 className="text-lg font-bold text-white tracking-tight">Registro de Nueva Venta</h3>
+                            <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-80">Edición y Control de Ingresos</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-all bg-white/5 p-2 rounded-xl">
-                        <X className="w-6 h-6" />
+                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-all bg-white/5 p-2 rounded-lg">
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-                    <div className="p-8 flex flex-col gap-8 overflow-y-auto">
-                        {/* Summary Cards */}
+                <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+                    <div className="p-6 flex flex-col gap-6 overflow-y-auto">
+                        {/* Cabecera del Formulario */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="bg-slate-50 dark:bg-dark-200 p-4 rounded-2xl border-2 border-slate-100">
-                                <label className="text-[10px] font-black text-slate-500 uppercase block mb-1">Total Venta</label>
-                                <p className="text-xl font-bold text-emerald-600 font-mono">{formatCLP(subtotal)}</p>
+                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Monto Acumulado</label>
+                                <p className="text-xl font-bold text-slate-900 font-mono">{formatCLP(subtotal)}</p>
                             </div>
-                            <div className="bg-slate-50 dark:bg-dark-200 p-4 rounded-2xl border-2 border-slate-100">
-                                <label className="text-[10px] font-black text-slate-500 uppercase block mb-1">Fecha</label>
-                                <input type="date" value={common.saleDate} onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value }))} className="bg-transparent border-none p-0 text-sm font-bold w-full focus:ring-0" />
+                            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Fecha de Venta</label>
+                                <input type="date" value={common.saleDate} onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1 text-sm font-semibold text-slate-900 outline-none focus:border-primary" />
                             </div>
-                            <div className="md:col-span-2 bg-slate-50 dark:bg-dark-200 p-4 rounded-2xl border-2 border-slate-100">
-                                <label className="text-[10px] font-black text-slate-500 uppercase block mb-1">Cliente / Canal</label>
-                                <div className="flex gap-2">
-                                    <input placeholder="Nombre cliente..." value={common.clientName} onChange={e => setCommon(p => ({ ...p, clientName: e.target.value }))} className="bg-transparent border-b border-slate-300 text-sm font-bold w-full focus:ring-0" />
-                                    <select value={common.channel} onChange={e => setCommon(p => ({ ...p, channel: e.target.value }))} className="bg-slate-900 text-white text-[10px] font-bold rounded-lg px-2 py-1">
+                            <div className="md:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-2">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase block">Datos del Cliente y Canal</label>
+                                    <select value={common.channel} onChange={e => setCommon(p => ({ ...p, channel: e.target.value }))} className="bg-slate-100 text-slate-700 text-[10px] font-bold rounded px-2 py-1 border border-slate-200 outline-none">
                                         {FORM_CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
+                                <input placeholder="Nombre, RUT o razón social del cliente..." value={common.clientName} onChange={e => setCommon(p => ({ ...p, clientName: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded px-3 py-1.5 text-sm font-medium text-slate-900 outline-none focus:border-primary" />
                             </div>
                         </div>
 
-                        {/* Search Bar */}
-                        <div className="relative">
-                            <div className="flex items-center bg-slate-900 rounded-2xl p-4 shadow-xl">
-                                <Search className="w-6 h-6 text-primary mr-4" />
+                        {/* Buscador de Productos */}
+                        <div className="relative group">
+                            <div className="flex items-center bg-white border-2 border-slate-200 group-focus-within:border-primary rounded-xl px-5 py-3 shadow-sm transition-all text-slate-900">
+                                <Search className="w-5 h-5 text-slate-400 mr-3" />
                                 <input
                                     type="text"
                                     autoFocus
                                     value={searchTerm}
                                     onChange={e => handleSearch(e.target.value)}
-                                    placeholder="Presione para buscar libros por título o código..."
-                                    className="bg-transparent text-white w-full text-lg font-bold outline-none placeholder:text-slate-600"
+                                    placeholder="Buscar libros por título, autor o ISBN..."
+                                    className="bg-transparent w-full text-base font-medium outline-none placeholder:text-slate-400"
                                 />
                             </div>
                             
                             {searchResults.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-200 rounded-2xl shadow-2xl border-2 border-slate-200 z-[100] max-h-60 overflow-y-auto">
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 z-[100] max-h-60 overflow-y-auto divide-y divide-slate-100">
                                     {searchResults.map(b => (
-                                        <button key={b.id} type="button" onClick={() => addItem(b)} className="w-full text-left p-4 hover:bg-slate-50 flex justify-between items-center group transition-all">
+                                        <button key={b.id} type="button" onClick={() => addItem(b)} className="w-full text-left p-3 hover:bg-slate-50 flex justify-between items-center group transition-all">
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{b.title}</span>
-                                                <span className="text-[10px] text-slate-500 font-mono">{b.isbn || 'SIN ISBN'} | Stock: {data?.inventory?.physical?.find(i => i.book_id === b.id)?.stock || 0}</span>
+                                                <span className="text-sm font-bold text-slate-900">{b.title}</span>
+                                                <span className="text-[10px] text-slate-500 font-mono italic">Stock: {data?.inventory?.physical?.find(i => i.book_id === b.id)?.stock || 0} u. | PVP: {formatCLP(b.pvp)}</span>
                                             </div>
-                                            <Plus className="w-5 h-5 text-slate-300 group-hover:text-primary" />
+                                            <Plus className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
                                         </button>
                                     ))}
                                 </div>
                             )}
                         </div>
 
-                        {/* Items Table */}
-                        <div className="flex-1 min-h-[300px] border-2 border-slate-100 rounded-3xl overflow-hidden">
-                            <table className="w-full">
-                                <thead className="bg-slate-900 text-white text-[10px] uppercase tracking-widest font-black">
+                        {/* Listado de Artículos */}
+                        <div className="flex-1 min-h-[250px] bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                            <table className="w-full border-collapse">
+                                <thead className="bg-slate-100 border-b border-slate-200">
                                     <tr>
-                                        <th className="px-6 py-4 text-left">Descripción del Producto</th>
-                                        <th className="px-6 py-4 text-center w-24">Cantidad</th>
-                                        <th className="px-6 py-4 text-right w-36">Precio Unitario</th>
-                                        <th className="px-6 py-4 text-right w-40">Subtotal</th>
-                                        <th className="px-6 py-4 w-16"></th>
+                                        <th className="px-6 py-3 text-left text-[10px] font-black text-slate-500 uppercase tracking-widest">Descripción</th>
+                                        <th className="px-6 py-3 text-center text-[10px] font-black text-slate-500 uppercase tracking-widest w-24">Cant.</th>
+                                        <th className="px-6 py-3 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest w-36">Precio</th>
+                                        <th className="px-6 py-3 text-right text-[10px] font-black text-slate-500 uppercase tracking-widest w-40">Total</th>
+                                        <th className="px-6 py-3 w-16"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {items.length === 0 ? (
                                         <tr>
-                                            <td colSpan="5" className="py-20 text-center opacity-20">
-                                                <ShoppingCart className="w-16 h-16 mx-auto mb-2" />
-                                                <p className="text-xs font-black uppercase tracking-widest">Ingrese productos para facturar</p>
+                                            <td colSpan="5" className="py-20 text-center">
+                                                <div className="opacity-20 flex flex-col items-center">
+                                                    <BookOpen className="w-12 h-12 mb-3" />
+                                                    <p className="text-xs font-bold uppercase tracking-widest">No hay libros seleccionados</p>
+                                                </div>
                                             </td>
                                         </tr>
                                     ) : (
                                         items.map((it, i) => (
-                                            <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="px-6 py-4">
-                                                    <p className="text-sm font-bold text-slate-900">{it.title}</p>
-                                                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 rounded-full uppercase">Disponible: {it.stock} u.</span>
+                                                    <p className="text-sm font-bold text-slate-900 leading-tight">{it.title}</p>
+                                                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-1">Disp: {it.stock} u.</span>
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <input type="number" min="1" value={it.quantity} onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 0)} className="w-full bg-slate-100 border-none rounded-xl p-2 text-center text-sm font-bold" />
+                                                    <input type="number" min="1" value={it.quantity} onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 0)} className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-center text-sm font-bold text-slate-900" />
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end font-mono text-sm">
                                                         <span className="text-slate-400 mr-1">$</span>
-                                                        <input type="text" value={it.unitPrice.toLocaleString('es-CL')} onChange={e => updateItem(i, 'unitPrice', parseInt(e.target.value.replace(/\D/g, '')) || 0)} className="w-24 bg-transparent border-b border-slate-200 text-right font-bold outline-none" />
+                                                        <input type="text" value={it.unitPrice.toLocaleString('es-CL')} onChange={e => updateItem(i, 'unitPrice', parseInt(e.target.value.replace(/\D/g, '')) || 0)} className="w-24 bg-transparent border-b border-slate-200 text-right font-bold text-slate-900 outline-none focus:border-primary" />
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-right font-mono font-black text-slate-900">{formatCLP(it.total)}</td>
+                                                <td className="px-6 py-4 text-right font-mono font-bold text-slate-900">{formatCLP(it.total)}</td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <button onClick={() => removeItem(i)} className="text-slate-300 hover:text-rose-500 transition-colors"><X className="w-5 h-5" /></button>
+                                                    <button onClick={() => removeItem(i)} className="text-slate-300 hover:text-red-500 transition-colors" title="Quitar"><X className="w-5 h-5" /></button>
                                                 </td>
                                             </tr>
                                         ))
@@ -657,15 +659,23 @@ function SaleForm({ onClose, onSave, books, data, formatCLP }) {
                         </div>
                     </div>
 
-                    <div className="p-8 bg-slate-50 border-t border-slate-200 flex justify-between items-center shrink-0">
-                        <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Resumen Final</p>
-                            <p className="text-4xl font-black text-slate-900 font-mono tracking-tighter">{formatCLP(subtotal)}</p>
+                    {/* Footer con Resumen */}
+                    <div className="p-6 bg-white border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
+                        <div className="flex items-center gap-6">
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total a Pagar</p>
+                                <p className="text-3xl font-bold text-slate-900 font-mono tracking-tighter">{formatCLP(subtotal)}</p>
+                            </div>
+                            <div className="h-10 w-px bg-slate-100 hidden md:block"></div>
+                            <div className="hidden md:block">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Items</p>
+                                <p className="text-lg font-bold text-slate-600">{items.length}</p>
+                            </div>
                         </div>
-                        <div className="flex gap-4">
-                            <button type="button" onClick={onClose} className="px-8 py-3 rounded-2xl border-2 border-slate-200 text-sm font-black text-slate-500 hover:bg-white transition-all uppercase tracking-widest">Cancelar</button>
-                            <button type="submit" disabled={items.length === 0 || saving} className="px-12 py-3 bg-slate-900 text-white rounded-2xl shadow-2xl text-sm font-black uppercase tracking-widest hover:bg-black transition-all disabled:opacity-50">
-                                {saving ? 'Cargando...' : 'Finalizar Venta'}
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <button type="button" onClick={onClose} className="flex-1 md:flex-none px-8 py-3 rounded-xl border border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all uppercase tracking-widest">Cancelar</button>
+                            <button type="submit" disabled={items.length === 0 || saving} className="flex-1 md:flex-none px-12 py-3 bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-900/10 text-xs font-bold uppercase tracking-widest hover:bg-black transition-all disabled:opacity-50">
+                                {saving ? 'Procesando...' : 'Confirmar Venta'}
                             </button>
                         </div>
                     </div>
