@@ -653,12 +653,11 @@ export default function Sales() {
                                 `Registró venta múltiple (${items.length} títulos) | Canal: ${commonData.channel} | Cliente: ${commonData.clientName || 'Consumidor'}`,
                                 'ventas'
                             )
-
                             await reloadData()
                             setShowAdd(false)
                         } catch (err) {
-                            console.error('Error al registrar venta:', err)
-                            alert(`Error al guardar: ${err.message || 'Error desconocido'}.`)
+                            console.error(err)
+                            alert('Error al registrar venta')
                         }
                     }}
                 />
@@ -669,8 +668,6 @@ export default function Sales() {
 
 function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
     const today = new Date().toISOString().slice(0, 10)
-    
-    // Header data
     const [common, setCommon] = useState({
         channel: 'Directa',
         type: 'B2C (Consumidor final)',
@@ -683,15 +680,13 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
         dueDate: today
     })
 
-    // Line items
     const [items, setItems] = useState([])
     const [searchTerm, setSearchTerm] = useState('')
     const [searchResults, setSearchResults] = useState([])
     const [saving, setSaving] = useState(false)
 
-    // Derived totals
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
-    const taxVal = 1 + (taxRate / 100)
+    const taxVal = 1.19
     const totalNeto = Math.round(subtotal / taxVal)
     const totalIva = subtotal - totalNeto
 
@@ -712,28 +707,18 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
     const addItem = (book) => {
         const inv = data?.inventory?.physical?.find(i => i.bookId === book.id)
         const stock = inv?.stock ?? 0
-        
         if (stock <= 0) {
-            alert(`❌ "${book.title}" no tiene stock disponible.`);
+            alert('❌ Stock agotado para este título.');
             return;
         }
-
-        // Apply client discount if any
-        const client = data?.clients?.find(c => c.name === common.clientName)
-        const discount = client?.default_discount || 0
-        const finalPrice = book.pvp ? Math.round(book.pvp * (1 - discount/100)) : 0
-
-        setItems(p => [
-            ...p,
-            {
-                bookId: book.id,
-                title: book.title,
-                quantity: 1,
-                unitPrice: finalPrice,
-                stock: stock,
-                total: finalPrice
-            }
-        ])
+        setItems(p => [...p, {
+            bookId: book.id,
+            title: book.title,
+            quantity: 1,
+            unitPrice: book.pvp || 0,
+            stock: stock,
+            total: book.pvp || 0
+        }])
         setSearchTerm('')
         setSearchResults([])
     }
@@ -744,212 +729,177 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
         setItems(p => p.map((item, i) => {
             if (i !== idx) return item
             const newItem = { ...item, [field]: val }
-            if (field === 'quantity' || field === 'unitPrice') {
-                newItem.total = (newItem.quantity || 0) * (newItem.unitPrice || 0)
-            }
+            newItem.total = (newItem.quantity || 0) * (newItem.unitPrice || 0)
             return newItem
         }))
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        if (items.length === 0) { alert('Debes agregar al menos un libro.'); return }
-        
-        // Critical validations
-        for (const item of items) {
-            if (item.quantity < 1) { alert(`Cantidad inválida para ${item.title}`); return }
-            if (item.quantity > item.stock) { alert(`Stock insuficiente para ${item.title} (Disponible: ${item.stock})`); return }
-        }
-
+        if (items.length === 0) return
         setSaving(true)
-        const itemsToSave = items.map(it => ({
-            bookId: it.bookId,
-            quantity: it.quantity,
-            unitPrice: it.unitPrice,
-            totalAmount: it.total,
-            neto: Math.round(it.total / taxVal),
-            iva: it.total - Math.round(it.total / taxVal)
-        }))
-        
-        await onSave(itemsToSave, common)
-        setSaving(false)
+        try {
+            const itemsToSave = items.map(it => ({
+                bookId: it.bookId,
+                quantity: it.quantity,
+                unitPrice: it.unitPrice,
+                totalAmount: it.total,
+                neto: Math.round(it.total / taxVal),
+                iva: it.total - Math.round(it.total / taxVal)
+            }))
+            await onSave(itemsToSave, common)
+        } finally {
+            setSaving(false)
+        }
     }
 
+    const FORM_CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria']
+
     return (
-        <div className="fixed inset-0 bg-dark-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-            <div className="glass-card w-full max-w-3xl p-0 shadow-2xl border border-white/10 dark:border-dark-300/50 flex flex-col max-h-[90vh] overflow-hidden slide-up">
-                {/* Modern Header with Gradient */}
-                <div className="relative overflow-hidden px-8 py-6 shrink-0 bg-gradient-to-br from-slate-900 via-slate-800 to-dark-300 border-b border-white/5">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32 animate-pulse" />
-                    <div className="relative flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center shadow-lg shadow-primary/20 transform rotate-3">
-                                <ShoppingCart className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black text-white tracking-tight">Registro de Venta Profesional</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Múltiples títulos · Gestión de Stock v3.0</p>
-                                </div>
-                            </div>
+        <div className="fixed inset-0 bg-slate-900/40 dark:bg-dark-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-dark-200 w-full max-w-4xl p-0 shadow-2xl rounded-[1.5rem] border border-slate-200 dark:border-dark-300 flex flex-col max-h-[90vh] overflow-hidden slide-up">
+                {/* Header - Sharp & Clear */}
+                <div className="bg-slate-900 px-8 py-6 flex justify-between items-center shrink-0">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                            <ShoppingCart className="w-6 h-6 text-white" />
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white border border-transparent hover:border-white/10">
-                            <X className="w-6 h-6" />
-                        </button>
+                        <div>
+                            <h3 className="text-xl font-bold text-white tracking-tight">Registro de Venta</h3>
+                            <p className="text-[10px] text-primary-400 font-black uppercase tracking-widest mt-0.5">Gestión Profesional de Inventario</p>
+                        </div>
                     </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-lg">
+                        <X className="w-6 h-6" />
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col p-8 gap-8">
-                    {/* Common Data Grid - Clean & Accessible */}
+                <form onSubmit={handleSubmit} className="flex-1 flex flex-col p-8 gap-8 overflow-hidden">
+                    {/* Customer & Date - Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest ml-1">Canal de Venta</label>
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Canal de Venta</label>
                             <select 
                                 value={common.channel} 
                                 onChange={e => setCommon(p => ({ ...p, channel: e.target.value }))}
-                                className="w-full bg-slate-50/50 dark:bg-dark-300/50 border border-slate-200 dark:border-dark-400 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                className="w-full bg-slate-50 dark:bg-dark-300 border-2 border-slate-200 dark:border-dark-400 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary transition-all outline-none"
                             >
                                 {FORM_CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest ml-1">Fecha Operación</label>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    value={common.saleDate}
-                                    onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value, dueDate: e.target.value }))}
-                                    className="w-full bg-slate-50/50 dark:bg-dark-300/50 border border-slate-200 dark:border-dark-400 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all outline-none pr-10"
-                                    style={{ colorScheme: 'dark' }}
-                                />
-                                <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                            </div>
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Fecha Operación</label>
+                            <input
+                                type="date"
+                                value={common.saleDate}
+                                onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value }))}
+                                className="w-full bg-slate-50 dark:bg-dark-300 border-2 border-slate-200 dark:border-dark-400 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary transition-all outline-none"
+                            />
                         </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest ml-1">Cliente / Institución</label>
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Cliente / Institución</label>
                             <div className="relative">
                                 <input
-                                    list="client-list"
+                                    list="cli-list"
                                     value={common.clientName}
                                     onChange={e => setCommon(p => ({ ...p, clientName: e.target.value }))}
                                     placeholder="Nombre o RUT..."
-                                    className="w-full bg-slate-50/50 dark:bg-dark-300/50 border border-slate-200 dark:border-dark-400 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                    className="w-full bg-slate-50 dark:bg-dark-300 border-2 border-slate-200 dark:border-dark-400 rounded-xl px-4 py-3 text-sm font-bold focus:border-primary transition-all outline-none"
                                 />
-                                <datalist id="client-list">
-                                    {data?.clients?.map(c => <option key={c.id} value={c.name}>{c.type}</option>)}
+                                <datalist id="cli-list">
+                                    {data?.clients?.map(c => <option key={c.id} value={c.name} />)}
                                 </datalist>
-                                <Users className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                <Users className="absolute right-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                             </div>
                         </div>
                     </div>
 
-                    {/* Book Search - Integrated Design */}
-                    <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30 dark:bg-dark-900/30 rounded-3xl border border-slate-200/50 dark:border-white/5 p-1">
-                        <div className="relative p-5 pb-2">
-                             <div className="relative group">
-                                <input
-                                    type="text"
-                                    value={searchTerm}
-                                    onChange={e => handleSearch(e.target.value)}
-                                    placeholder="Buscar título o ISBN para añadir..."
-                                    className="w-full bg-white dark:bg-dark-400 border border-slate-200 dark:border-dark-400 rounded-2xl pl-12 pr-4 py-3.5 text-sm shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none placeholder:text-slate-400"
-                                />
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-slate-100 dark:bg-dark-300 text-[9px] font-bold text-slate-400 uppercase">F2</div>
-                            </div>
-
+                    {/* Search & Items Section */}
+                    <div className="flex-1 flex flex-col min-h-0 bg-slate-100/50 dark:bg-dark-900/50 rounded-2xl border-2 border-slate-200/50 dark:border-white/5 p-4 gap-4">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={e => handleSearch(e.target.value)}
+                                placeholder="Escribe para buscar un libro..."
+                                className="w-full bg-white dark:bg-dark-200 border-2 border-slate-200 dark:border-dark-300 rounded-xl pl-12 pr-4 py-4 text-sm font-bold shadow-lg shadow-slate-200/50 dark:shadow-none focus:border-primary transition-all outline-none"
+                            />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            
                             {searchResults.length > 0 && (
-                                <div className="absolute top-[85%] left-5 right-5 mt-2 bg-white dark:bg-dark-200 rounded-2xl shadow-2xl border border-slate-200 dark:border-dark-400 z-50 overflow-hidden divide-y divide-slate-100 dark:divide-dark-400 flex flex-col max-h-60 overflow-y-auto slide-up">
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-200 rounded-xl shadow-2xl border-2 border-slate-200 dark:border-dark-400 z-50 overflow-hidden divide-y divide-slate-100 dark:divide-dark-400">
                                     {searchResults.map(b => (
                                         <button
                                             key={b.id}
                                             type="button"
                                             onClick={() => addItem(b)}
-                                            className="w-full text-left px-5 py-4 hover:bg-primary/5 dark:hover:bg-primary/10 flex justify-between items-center transition-all group"
+                                            className="w-full text-left px-5 py-4 hover:bg-primary/5 flex justify-between items-center group transition-colors"
                                         >
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">{b.title}</span>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-[10px] text-slate-500 font-mono">{b.isbn || 'Sin ISBN'}</span>
-                                                    <span className="text-[10px] text-emerald-500 font-bold tracking-tighter bg-emerald-500/10 px-1.5 rounded">{formatCLP(b.pvp)}</span>
-                                                </div>
+                                                <span className="text-sm font-black text-slate-900 dark:text-white group-hover:text-primary">{b.title}</span>
+                                                <span className="text-[10px] text-slate-400 font-mono mt-0.5">{b.isbn || 'SIN ISBN'} | {formatCLP(b.pvp)}</span>
                                             </div>
-                                            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center scale-0 group-hover:scale-100 transition-transform">
-                                                <Plus className="w-4 h-4" />
-                                            </div>
+                                            <Plus className="w-5 h-5 text-primary opacity-0 group-hover:opacity-100" />
                                         </button>
                                     ))}
                                 </div>
                             )}
                         </div>
 
-                        {/* Items Table - Pro Appearance */}
-                        <div className="flex-1 overflow-y-auto px-5 pb-5">
-                            <table className="w-full text-left border-separate border-spacing-y-2">
-                                <thead className="sticky top-0 bg-slate-50/50 dark:bg-dark-900/50 backdrop-blur-md z-10">
+                        {/* List - Fixed Header Contrast */}
+                        <div className="flex-1 overflow-y-auto">
+                            <table className="w-full border-separate border-spacing-y-2">
+                                <thead className="sticky top-0 bg-slate-100/50 backdrop-blur dark:bg-dark-900/50 z-20">
                                     <tr>
-                                        <th className="px-4 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest">Título</th>
-                                        <th className="px-4 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Cant.</th>
-                                        <th className="px-4 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Unitario</th>
-                                        <th className="px-4 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Total</th>
-                                        <th className="px-4 py-2 w-10"></th>
+                                        <th className="px-4 py-3 text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest text-left">Libro</th>
+                                        <th className="px-4 py-3 text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest text-center w-24">Cant.</th>
+                                        <th className="px-4 py-3 text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest text-right w-32">Unitario</th>
+                                        <th className="px-4 py-3 text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest text-right w-32">Total</th>
+                                        <th className="px-4 py-3 w-12 text-center"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {items.length === 0 ? (
                                         <tr>
-                                            <td colSpan="5" className="px-4 py-16 text-center">
-                                                <div className="flex flex-col items-center gap-3 opacity-30">
-                                                    <BookOpen className="w-10 h-10" />
-                                                    <p className="text-sm font-medium italic">Empieza buscando un título para agregarlo a la lista</p>
-                                                </div>
+                                            <td colSpan="5" className="py-20 text-center">
+                                                <BookOpen className="w-12 h-12 text-slate-300 dark:text-dark-500 mx-auto mb-4" />
+                                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No hay libros en la lista</p>
                                             </td>
                                         </tr>
                                     ) : (
-                                        items.map((item, idx) => (
-                                            <tr key={idx} className="group bg-white dark:bg-dark-300 rounded-2xl shadow-sm border border-slate-200 dark:border-white/5 transition-all hover:shadow-md hover:scale-[1.01]">
-                                                <td className="px-4 py-4 rounded-l-2xl">
-                                                    <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{item.title}</p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${item.stock < 10 ? 'bg-amber-500/15 text-amber-500' : 'bg-emerald-500/15 text-emerald-500'}`}>
-                                                            Stock: {item.stock} u.
-                                                        </span>
-                                                    </div>
+                                        items.map((it, i) => (
+                                            <tr key={i} className="bg-white dark:bg-dark-300 border-2 border-slate-200 dark:border-dark-400 rounded-xl overflow-hidden shadow-sm">
+                                                <td className="px-4 py-4 rounded-l-xl">
+                                                    <p className="text-sm font-black text-slate-900 dark:text-white line-clamp-1">{it.title}</p>
+                                                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg mt-1 inline-block ${it.stock < 5 ? 'bg-rose-500 text-white' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'}`}>
+                                                        Stock: {it.stock} u.
+                                                    </span>
                                                 </td>
-                                                <td className="px-4 py-4">
-                                                    <div className="flex items-center justify-center">
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            value={item.quantity}
-                                                            onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 0)}
-                                                            className="w-14 bg-slate-100 dark:bg-dark-400 rounded-lg py-1.5 text-sm text-center outline-none font-bold text-primary focus:ring-2 focus:ring-primary/20"
-                                                        />
-                                                    </div>
+                                                <td className="px-4 py-4 text-center">
+                                                    <input
+                                                        type="number"
+                                                        value={it.quantity}
+                                                        onChange={e => updateItem(i, 'quantity', parseInt(e.target.value) || 0)}
+                                                        className="w-16 bg-slate-50 dark:bg-dark-400 border-2 border-slate-200 dark:border-dark-500 rounded-lg py-2 text-center text-sm font-black text-primary outline-none focus:border-primary"
+                                                    />
                                                 </td>
-                                                <td className="px-4 py-4">
-                                                    <div className="flex items-center justify-end gap-1 font-mono text-sm text-slate-600 dark:text-dark-600 focus-within:text-primary transition-colors">
-                                                        <span className="text-[10px]">$</span>
+                                                <td className="px-4 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-1 font-mono text-sm">
+                                                        <span className="text-slate-400">$</span>
                                                         <input
                                                             type="text"
-                                                            value={item.unitPrice.toLocaleString('es-CL')}
-                                                            onChange={e => updateItem(idx, 'unitPrice', parseInt(e.target.value.replace(/\D/g, '')) || 0)}
-                                                            className="w-20 bg-transparent border-b border-dashed border-slate-200 dark:border-dark-400 text-right outline-none font-bold text-slate-700 dark:text-white focus:border-primary"
+                                                            value={it.unitPrice.toLocaleString('es-CL')}
+                                                            onChange={e => updateItem(i, 'unitPrice', parseInt(e.target.value.replace(/\D/g, '')) || 0)}
+                                                            className="w-24 bg-transparent border-b-2 border-slate-100 dark:border-dark-500 text-right font-black outline-none focus:border-primary"
                                                         />
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4 text-right">
-                                                    <span className="text-sm font-black text-slate-900 dark:text-white font-mono tracking-tight">{formatCLP(item.total)}</span>
+                                                    <span className="text-base font-black text-slate-900 dark:text-white font-mono">{formatCLP(it.total)}</span>
                                                 </td>
-                                                <td className="px-4 py-4 rounded-r-2xl">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeItem(idx)}
-                                                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                                                        title="Quitar"
-                                                    >
-                                                        <X className="w-4 h-4" />
+                                                <td className="px-4 py-4 rounded-r-xl text-center">
+                                                    <button onClick={() => removeItem(i)} className="text-slate-300 hover:text-rose-500 transition-colors">
+                                                        <X className="w-5 h-5" />
                                                     </button>
                                                 </td>
                                             </tr>
@@ -960,22 +910,16 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
                         </div>
                     </div>
 
-                    {/* Footer Summary - Clean & High Impact */}
-                    <div className="shrink-0 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-slate-100 dark:border-white/5 pt-6 bg-slate-50/50 dark:bg-dark-950/20 -mx-8 px-8 -mb-8 pb-8 rounded-b-3xl">
+                    {/* Summary Footer */}
+                    <div className="shrink-0 flex flex-col md:flex-row justify-between items-center gap-8 border-t-2 border-slate-100 dark:border-white/5 pt-8 -mx-8 px-8 mb-[-32px] pb-10 bg-slate-50 dark:bg-dark-300/30">
                         <div className="flex flex-col gap-1">
                             <div className="flex gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                <div className="flex items-center gap-2">
-                                    <span>Subtotal Neto:</span>
-                                    <span className="text-slate-600 dark:text-white font-mono">{formatCLP(totalNeto)}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span>IVA ({taxRate}%):</span>
-                                    <span className="text-slate-600 dark:text-white font-mono">{formatCLP(totalIva)}</span>
-                                </div>
+                                <span>Subtotal Neto: {formatCLP(totalNeto)}</span>
+                                <span>IVA (19%): {formatCLP(totalIva)}</span>
                             </div>
-                            <div className="flex items-baseline gap-3 mt-1">
-                                <span className="text-xs font-black text-primary uppercase tracking-widest">Total Venta:</span>
-                                <span className="text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tighter drop-shadow-sm">
+                            <div className="flex items-baseline gap-4 mt-1">
+                                <span className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
+                                    <span className="text-sm font-black text-primary uppercase mr-3 tracking-widest">Total:</span>
                                     {formatCLP(subtotal)}
                                 </span>
                             </div>
@@ -985,17 +929,17 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-6 py-4 text-sm font-bold text-slate-500 hover:text-slate-900 dark:text-dark-600 dark:hover:text-white transition-all rounded-2xl hover:bg-slate-100 dark:hover:bg-dark-300"
+                                className="px-8 py-4 text-sm font-black text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all rounded-xl uppercase tracking-widest"
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
                                 disabled={saving || items.length === 0}
-                                className="flex-1 md:flex-none px-10 py-4 bg-primary hover:bg-primary-600 disabled:opacity-50 disabled:grayscale text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                className="flex-1 md:flex-none px-12 py-4 bg-primary hover:bg-primary-600 disabled:opacity-50 text-white rounded-xl font-black text-sm shadow-xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3 uppercase tracking-widest"
                             >
-                                {saving ? <Activity className="w-5 h-5 animate-spin" /> : <ShoppingCart className="w-5 h-5" />}
-                                REGISTRAR VENTA
+                                {saving ? <Activity className="w-6 h-6 animate-spin" /> : <ShoppingCart className="w-6 h-6" />}
+                                Registrar Venta
                             </button>
                         </div>
                     </div>
