@@ -159,7 +159,19 @@ export default function BookForm({ data, initialData, onSave, onClose }) {
                             </div>
                             <select value={form.authorId} onChange={e => setForm(p => ({ ...p, authorId: e.target.value }))} className="input-field text-sm" required>
                                 <option value="">Seleccionar autor...</option>
-                                {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                {authors.map(a => {
+                                    const bio = (() => {
+                                        if (!a.bio) return {}
+                                        if (typeof a.bio === 'object') return a.bio
+                                        try { return JSON.parse(a.bio) } catch { return {} }
+                                    })()
+                                    const isPending = a.email?.includes('@pendiente.editorial') || !bio.rut || !bio.bankAccountNumber
+                                    return (
+                                        <option key={a.id} value={a.id}>
+                                            {a.name} {isPending ? '⚠️' : '✅'}
+                                        </option>
+                                    )
+                                })}
                             </select>
                             {showNewAuthor && (
                                 <div className="mt-2 p-3 bg-primary/5 border border-primary/20 rounded-lg flex gap-2 items-center">
