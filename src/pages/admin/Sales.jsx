@@ -330,66 +330,88 @@ export default function Sales() {
                 </div>
             </div>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="glass-card p-4 border-l-4 border-emerald-500">
-                    <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="w-4 h-4 text-emerald-500" />
-                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Venta en Firme</p>
+            {/* KPI Cards with Gradients & Glassmorphism */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="glass-card p-6 border-l-4 border-emerald-500 bg-gradient-to-br from-emerald-500/5 to-transparent relative group overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 -mr-4 -mt-4 transition-transform group-hover:scale-[2] duration-500">
+                        <TrendingUp className="w-20 h-20 text-emerald-500" />
                     </div>
-                    <p className="text-xl font-bold text-emerald-500 font-mono">{formatCLP(revenueFirme)}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">Directa, Librería, Web</p>
+                    <div className="relative">
+                        <p className="text-[11px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest mb-3">Venta en Firme</p>
+                        <p className="text-3xl font-black text-emerald-500 font-mono tracking-tighter">{formatCLP(revenueFirme)}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <p className="text-[10px] text-slate-400 font-medium">Directa, Librería, Web</p>
+                        </div>
+                    </div>
                 </div>
-                <div className="glass-card p-4 border-l-4 border-amber-500">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Activity className="w-4 h-4 text-amber-500" />
-                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Venta Flotante</p>
+
+                <div className="glass-card p-6 border-l-4 border-amber-500 bg-gradient-to-br from-amber-500/5 to-transparent relative group overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 -mr-4 -mt-4 transition-transform group-hover:scale-[2] duration-500">
+                        <Activity className="w-20 h-20 text-amber-500" />
                     </div>
-                    <p className="text-xl font-bold text-amber-500 font-mono">{formatCLP(revenueFlotante)}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">Consig., Eventos, Ferias</p>
+                    <div className="relative">
+                        <p className="text-[11px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest mb-3">Venta Flotante</p>
+                        <p className="text-3xl font-black text-amber-500 font-mono tracking-tighter">{formatCLP(revenueFlotante)}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            <p className="text-[10px] text-slate-400 font-medium">Consig., Eventos, Ferias</p>
+                        </div>
+                    </div>
                 </div>
-                <div className="glass-card p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <DollarSign className="w-4 h-4 text-primary" />
-                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Acumulado Rango</p>
+
+                <div className="glass-card p-6 border-l-4 border-primary bg-gradient-to-br from-primary/5 to-transparent relative group overflow-hidden">
+                    <div className="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 -mr-4 -mt-4 transition-transform group-hover:scale-[2] duration-500">
+                        <DollarSign className="w-20 h-20 text-primary" />
                     </div>
-                    <p className="text-xl font-bold text-slate-900 dark:text-white font-mono">{formatCLP(cumulativeRevenue)}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">{rangeSales.length} transacciones</p>
+                    <div className="relative">
+                        <p className="text-[11px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest mb-3">Acumulado Rango</p>
+                        <p className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">{formatCLP(cumulativeRevenue)}</p>
+                        <p className="text-[10px] text-slate-400 mt-2 font-medium bg-slate-100 dark:bg-dark-300 inline-block px-1.5 py-0.5 rounded italic">
+                            {rangeSales.length} transacciones
+                        </p>
+                    </div>
                 </div>
-                <div className="glass-card p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Package className="w-4 h-4 text-blue-500" />
-                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase tracking-wide">Unidades Totales</p>
+
+                <div className="glass-card p-6 border-l-4 border-blue-500 bg-gradient-to-br from-blue-500/5 to-transparent relative group overflow-hidden text-right md:text-left">
+                    <div className="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 -mr-4 -mt-4 transition-transform group-hover:scale-[2] duration-500">
+                        <Package className="w-20 h-20 text-blue-500" />
                     </div>
-                    <p className="text-xl font-bold text-blue-500 font-mono">{cumulativeUnits.toLocaleString()}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">En el rango seleccionado</p>
+                    <div className="relative">
+                        <p className="text-[11px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest mb-3">Unidades Totales</p>
+                        <p className="text-3xl font-black text-blue-500 font-mono tracking-tighter">{cumulativeUnits.toLocaleString()}</p>
+                        <p className="text-[10px] text-slate-400 mt-2 font-medium italic">Libros entregados</p>
+                    </div>
                 </div>
             </div>
 
             {/* Channel breakdown */}
             {revenueByChannel.length > 0 && (
-                <div className="glass-card p-4">
-                    <h3 className="text-xs font-semibold text-slate-500 dark:text-dark-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                        <BarChart3 className="w-3.5 h-3.5" /> Ingresos por Canal (Rango Seleccionado)
+                <div className="glass-card p-6 bg-slate-50/50 dark:bg-dark-950/20 border-dashed">
+                    <h3 className="text-[10px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <BarChart3 className="w-3.5 h-3.5" /> Analítica por Canal por Canales
                     </h3>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {revenueByChannel.map(([channel, amount]) => {
                             const pct = cumulativeRevenue > 0 ? Math.round((amount / cumulativeRevenue) * 100) : 0
                             const isFirme = FIRME_CHANNELS.includes(channel)
                             return (
-                                <div key={channel}>
-                                    <div className="flex justify-between text-xs mb-1">
-                                        <span className="text-slate-500 dark:text-dark-400 flex items-center gap-2">
-                                            {channel}
-                                            <span className={`text-[8px] px-1 rounded ${isFirme ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                <div key={channel} className="space-y-2 group">
+                                    <div className="flex justify-between items-baseline mb-1">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold text-slate-700 dark:text-white uppercase tracking-tight group-hover:text-primary transition-colors">{channel}</span>
+                                            <span className={`text-[8px] font-bold px-1 rounded-sm w-fit mt-0.5 ${isFirme ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
                                                 {isFirme ? 'FIRME' : 'FLOTANTE'}
                                             </span>
-                                        </span>
-                                        <span className="text-slate-900 dark:text-white font-mono">{formatCLP(amount)} <span className="text-slate-400 dark:text-dark-600">({pct}%)</span></span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-sm font-black text-slate-900 dark:text-white font-mono">{formatCLP(amount)}</span>
+                                            <span className="text-[10px] text-slate-400 dark:text-dark-600 block">({pct}%)</span>
+                                        </div>
                                     </div>
-                                    <div className="h-1.5 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden">
+                                    <div className="h-2 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden shadow-inner">
                                         <div
-                                            className={`h-full transition-all duration-700 rounded-full ${isFirme ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                                            className={`h-full transition-all duration-1000 origin-left rounded-full ${isFirme ? 'bg-gradient-to-r from-emerald-600 to-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'bg-gradient-to-r from-amber-600 to-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.3)]'}`}
                                             style={{ width: `${pct}%` }}
                                         />
                                     </div>
@@ -400,42 +422,44 @@ export default function Sales() {
                 </div>
             )}
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3">
-                <div className="relative flex-1 min-w-48">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-dark-600" />
+            {/* Filters Bar - Clean & Modern */}
+            <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-dark-400 p-4 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm">
+                <div className="relative flex-1 min-w-[280px] group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 group-focus-within:text-primary transition-colors" />
                     <input
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        placeholder="Buscar por libro, cliente o documento..."
-                        className="input-field pl-9 text-sm w-full"
+                        placeholder="Buscar por libro, cliente, RUT o documento..."
+                        className="w-full bg-slate-50/50 dark:bg-dark-900/50 border border-slate-200 dark:border-dark-300 rounded-2xl pl-11 pr-4 py-2.5 text-sm outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all"
                     />
                 </div>
-                <select
-                    value={filterChannel}
-                    onChange={e => setFilterChannel(e.target.value)}
-                    className="input-field text-sm"
-                >
-                    <option value="">Todos los canales</option>
-                    {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                {/* ✅ #9 Filtro por autor */}
-                {authors.length > 0 && (
+                <div className="flex gap-2 shrink-0">
                     <select
-                        value={filterAuthor}
-                        onChange={e => setFilterAuthor(e.target.value)}
-                        className="input-field text-sm"
+                        value={filterChannel}
+                        onChange={e => setFilterChannel(e.target.value)}
+                        className="bg-slate-50/50 dark:bg-dark-900/50 border border-slate-200 dark:border-dark-300 rounded-2xl px-4 py-2.5 text-xs font-bold uppercase text-slate-500 outline-none focus:border-primary transition-all cursor-pointer"
                     >
-                        <option value="">Todos los autores</option>
-                        {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                        <option value="">Canales</option>
+                        {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
-                )}
+                    {authors.length > 0 && (
+                        <select
+                            value={filterAuthor}
+                            onChange={e => setFilterAuthor(e.target.value)}
+                            className="bg-slate-50/50 dark:bg-dark-900/50 border border-slate-200 dark:border-dark-300 rounded-2xl px-4 py-2.5 text-xs font-bold uppercase text-slate-500 outline-none focus:border-primary transition-all cursor-pointer"
+                        >
+                            <option value="">Todo Autores</option>
+                            {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                        </select>
+                    )}
+                </div>
                 {(searchTerm || filterChannel || filterAuthor) && (
                     <button
                         onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterAuthor('') }}
-                        className="text-xs text-slate-500 dark:text-dark-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 px-2 transition-colors"
+                        className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                        title="Limpiar Filtros"
                     >
-                        <X className="w-3 h-3" /> Limpiar Filtros Extra
+                        <X className="w-5 h-5" />
                     </button>
                 )}
             </div>
@@ -752,151 +776,178 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
     }
 
     return (
-        <div className="fixed inset-0 bg-dark-900/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
-            <div className="glass-card w-full max-w-2xl p-6 shadow-2xl border border-primary/20 flex flex-col max-h-[95vh]">
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                            <ShoppingCart className="w-6 h-6 text-primary" />
+        <div className="fixed inset-0 bg-dark-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+            <div className="glass-card w-full max-w-3xl p-0 shadow-2xl border border-white/10 dark:border-dark-300/50 flex flex-col max-h-[90vh] overflow-hidden slide-up">
+                {/* Modern Header with Gradient */}
+                <div className="relative overflow-hidden px-8 py-6 shrink-0 bg-gradient-to-br from-slate-900 via-slate-800 to-dark-300 border-b border-white/5">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32 animate-pulse" />
+                    <div className="relative flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center shadow-lg shadow-primary/20 transform rotate-3">
+                                <ShoppingCart className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-white tracking-tight">Registro de Venta Profesional</h3>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Múltiples títulos · Gestión de Stock v3.0</p>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Registro de Venta Prof.</h3>
-                            <p className="text-xs text-slate-500">Múltiples títulos en un solo ingreso</p>
-                        </div>
+                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white border border-transparent hover:border-white/10">
+                            <X className="w-6 h-6" />
+                        </button>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-dark-300 rounded-full transition-colors">
-                        <X className="w-6 h-6 text-slate-400" />
-                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col gap-6">
-                    {/* Common Data */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 block">Canal *</label>
+                <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col p-8 gap-8">
+                    {/* Common Data Grid - Clean & Accessible */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest ml-1">Canal de Venta</label>
                             <select 
                                 value={common.channel} 
                                 onChange={e => setCommon(p => ({ ...p, channel: e.target.value }))}
-                                className="input-field text-sm w-full bg-slate-50 border-slate-200"
+                                className="w-full bg-slate-50/50 dark:bg-dark-300/50 border border-slate-200 dark:border-dark-400 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all outline-none"
                             >
                                 {FORM_CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 block">Fecha *</label>
-                            <input
-                                type="date"
-                                value={common.saleDate}
-                                onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value, dueDate: e.target.value }))}
-                                className="input-field text-sm w-full bg-slate-50 border-slate-200 shadow-inner"
-                            />
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest ml-1">Fecha Operación</label>
+                            <div className="relative">
+                                <input
+                                    type="date"
+                                    value={common.saleDate}
+                                    onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value, dueDate: e.target.value }))}
+                                    className="w-full bg-slate-50/50 dark:bg-dark-300/50 border border-slate-200 dark:border-dark-400 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all outline-none pr-10"
+                                    style={{ colorScheme: 'dark' }}
+                                />
+                                <Calendar className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            </div>
                         </div>
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 block">Cliente / Librería</label>
-                            <input
-                                list="client-list"
-                                value={common.clientName}
-                                onChange={e => setCommon(p => ({ ...p, clientName: e.target.value }))}
-                                placeholder="Escribe o selecciona..."
-                                className="input-field text-sm w-full bg-slate-50 border-slate-200"
-                            />
-                            <datalist id="client-list">
-                                {data?.clients?.map(c => <option key={c.id} value={c.name}>{c.type}</option>)}
-                            </datalist>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 dark:text-dark-600 uppercase tracking-widest ml-1">Cliente / Institución</label>
+                            <div className="relative">
+                                <input
+                                    list="client-list"
+                                    value={common.clientName}
+                                    onChange={e => setCommon(p => ({ ...p, clientName: e.target.value }))}
+                                    placeholder="Nombre o RUT..."
+                                    className="w-full bg-slate-50/50 dark:bg-dark-300/50 border border-slate-200 dark:border-dark-400 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+                                />
+                                <datalist id="client-list">
+                                    {data?.clients?.map(c => <option key={c.id} value={c.name}>{c.type}</option>)}
+                                </datalist>
+                                <Users className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Book Search & List */}
-                    <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 dark:bg-dark-900/50 rounded-2xl border border-slate-200 dark:border-dark-300 p-4">
-                        <div className="relative mb-4">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase mb-2 block flex items-center gap-2">
-                                <Search className="w-3 h-3" /> Buscar y Agregar Títulos
-                            </label>
-                            <div className="relative">
+                    {/* Book Search - Integrated Design */}
+                    <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30 dark:bg-dark-900/30 rounded-3xl border border-slate-200/50 dark:border-white/5 p-1">
+                        <div className="relative p-5 pb-2">
+                             <div className="relative group">
                                 <input
                                     type="text"
                                     value={searchTerm}
                                     onChange={e => handleSearch(e.target.value)}
-                                    placeholder="Nombre del libro o ISBN..."
-                                    className="input-field w-full pl-10 pr-4 py-2.5 text-sm shadow-sm ring-primary/10 focus:ring-4"
+                                    placeholder="Buscar título o ISBN para añadir..."
+                                    className="w-full bg-white dark:bg-dark-400 border border-slate-200 dark:border-dark-400 rounded-2xl pl-12 pr-4 py-3.5 text-sm shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all outline-none placeholder:text-slate-400"
                                 />
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 px-2 py-1 rounded bg-slate-100 dark:bg-dark-300 text-[9px] font-bold text-slate-400 uppercase">F2</div>
                             </div>
 
                             {searchResults.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-dark-200 rounded-xl shadow-2xl border border-slate-200 dark:border-dark-300 z-50 overflow-hidden divide-y divide-slate-100">
+                                <div className="absolute top-[85%] left-5 right-5 mt-2 bg-white dark:bg-dark-200 rounded-2xl shadow-2xl border border-slate-200 dark:border-dark-400 z-50 overflow-hidden divide-y divide-slate-100 dark:divide-dark-400 flex flex-col max-h-60 overflow-y-auto slide-up">
                                     {searchResults.map(b => (
                                         <button
                                             key={b.id}
                                             type="button"
                                             onClick={() => addItem(b)}
-                                            className="w-full text-left px-4 py-3 hover:bg-primary/10 flex justify-between items-center transition-colors group"
+                                            className="w-full text-left px-5 py-4 hover:bg-primary/5 dark:hover:bg-primary/10 flex justify-between items-center transition-all group"
                                         >
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary">{b.title}</span>
-                                                <span className="text-[10px] text-slate-500 font-mono italic">PVP Ref: {formatCLP(b.pvp)}</span>
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">{b.title}</span>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="text-[10px] text-slate-500 font-mono">{b.isbn || 'Sin ISBN'}</span>
+                                                    <span className="text-[10px] text-emerald-500 font-bold tracking-tighter bg-emerald-500/10 px-1.5 rounded">{formatCLP(b.pvp)}</span>
+                                                </div>
                                             </div>
-                                            <Plus className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center scale-0 group-hover:scale-100 transition-transform">
+                                                <Plus className="w-4 h-4" />
+                                            </div>
                                         </button>
                                     ))}
                                 </div>
                             )}
                         </div>
 
-                        {/* Items Table */}
-                        <div className="flex-1 overflow-y-auto min-h-[200px] border border-slate-100 rounded-lg bg-white dark:bg-dark-300 shadow-sm">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="sticky top-0 bg-slate-50 dark:bg-dark-200 z-10 shadow-sm">
-                                    <tr className="border-b border-slate-200">
-                                        <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest w-1/2">Título</th>
-                                        <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Cant.</th>
-                                        <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Unitario</th>
-                                        <th className="px-4 py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Total</th>
-                                        <th className="px-4 py-2"></th>
+                        {/* Items Table - Pro Appearance */}
+                        <div className="flex-1 overflow-y-auto px-5 pb-5">
+                            <table className="w-full text-left border-separate border-spacing-y-2">
+                                <thead className="sticky top-0 bg-slate-50/50 dark:bg-dark-900/50 backdrop-blur-md z-10">
+                                    <tr>
+                                        <th className="px-4 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest">Título</th>
+                                        <th className="px-4 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Cant.</th>
+                                        <th className="px-4 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Unitario</th>
+                                        <th className="px-4 py-2 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Total</th>
+                                        <th className="px-4 py-2 w-10"></th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody>
                                     {items.length === 0 ? (
                                         <tr>
-                                            <td colSpan="5" className="px-4 py-12 text-center text-slate-400 text-sm italic">
-                                                Usa el buscador para añadir libros a la venta
+                                            <td colSpan="5" className="px-4 py-16 text-center">
+                                                <div className="flex flex-col items-center gap-3 opacity-30">
+                                                    <BookOpen className="w-10 h-10" />
+                                                    <p className="text-sm font-medium italic">Empieza buscando un título para agregarlo a la lista</p>
+                                                </div>
                                             </td>
                                         </tr>
                                     ) : (
                                         items.map((item, idx) => (
-                                            <tr key={idx} className="group hover:bg-slate-50/50 transition-colors">
-                                                <td className="px-4 py-3">
-                                                    <p className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1">{item.title}</p>
-                                                    <p className="text-[10px] text-emerald-500 font-medium">Stock: {item.stock} u.</p>
+                                            <tr key={idx} className="group bg-white dark:bg-dark-300 rounded-2xl shadow-sm border border-slate-200 dark:border-white/5 transition-all hover:shadow-md hover:scale-[1.01]">
+                                                <td className="px-4 py-4 rounded-l-2xl">
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{item.title}</p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${item.stock < 10 ? 'bg-amber-500/15 text-amber-500' : 'bg-emerald-500/15 text-emerald-500'}`}>
+                                                            Stock: {item.stock} u.
+                                                        </span>
+                                                    </div>
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        value={item.quantity}
-                                                        onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 0)}
-                                                        className="w-16 mx-auto bg-transparent border-b border-slate-200 focus:border-primary text-sm text-center outline-none font-bold"
-                                                    />
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center justify-center">
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={item.quantity}
+                                                            onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 0)}
+                                                            className="w-14 bg-slate-100 dark:bg-dark-400 rounded-lg py-1.5 text-sm text-center outline-none font-bold text-primary focus:ring-2 focus:ring-primary/20"
+                                                        />
+                                                    </div>
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center justify-end gap-1">
-                                                        <span className="text-slate-400 text-xs">$</span>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center justify-end gap-1 font-mono text-sm text-slate-600 dark:text-dark-600 focus-within:text-primary transition-colors">
+                                                        <span className="text-[10px]">$</span>
                                                         <input
                                                             type="text"
                                                             value={item.unitPrice.toLocaleString('es-CL')}
                                                             onChange={e => updateItem(idx, 'unitPrice', parseInt(e.target.value.replace(/\D/g, '')) || 0)}
-                                                            className="w-20 bg-transparent border-b border-slate-200 focus:border-primary text-sm text-right outline-none font-mono"
+                                                            className="w-20 bg-transparent border-b border-dashed border-slate-200 dark:border-dark-400 text-right outline-none font-bold text-slate-700 dark:text-white focus:border-primary"
                                                         />
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">{formatCLP(item.total)}</span>
+                                                <td className="px-4 py-4 text-right">
+                                                    <span className="text-sm font-black text-slate-900 dark:text-white font-mono tracking-tight">{formatCLP(item.total)}</span>
                                                 </td>
-                                                <td className="px-4 py-2">
+                                                <td className="px-4 py-4 rounded-r-2xl">
                                                     <button
                                                         type="button"
                                                         onClick={() => removeItem(idx)}
-                                                        className="p-1.5 text-slate-300 hover:text-red-500 transition-colors"
+                                                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                                        title="Quitar"
                                                     >
                                                         <X className="w-4 h-4" />
                                                     </button>
@@ -909,34 +960,42 @@ function SaleForm({ books, data, formatCLP, taxRate, t, onSave, onClose }) {
                         </div>
                     </div>
 
-                    {/* Footer Summary */}
-                    <div className="shrink-0 flex flex-col md:flex-row justify-between items-end gap-4 border-t border-slate-200 dark:border-dark-300 pt-6">
-                        <div className="space-y-1">
-                            <div className="flex gap-4 text-xs font-medium text-slate-500 uppercase tracking-tighter">
-                                <p>Neto: <span className="text-slate-700 dark:text-white font-mono">{formatCLP(totalNeto)}</span></p>
-                                <p>IVA ({taxRate}%): <span className="text-slate-700 dark:text-white font-mono">{formatCLP(totalIva)}</span></p>
+                    {/* Footer Summary - Clean & High Impact */}
+                    <div className="shrink-0 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-slate-100 dark:border-white/5 pt-6 bg-slate-50/50 dark:bg-dark-950/20 -mx-8 px-8 -mb-8 pb-8 rounded-b-3xl">
+                        <div className="flex flex-col gap-1">
+                            <div className="flex gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <div className="flex items-center gap-2">
+                                    <span>Subtotal Neto:</span>
+                                    <span className="text-slate-600 dark:text-white font-mono">{formatCLP(totalNeto)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span>IVA ({taxRate}%):</span>
+                                    <span className="text-slate-600 dark:text-white font-mono">{formatCLP(totalIva)}</span>
+                                </div>
                             </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-xs font-black text-primary uppercase">Total Venta:</span>
-                                <span className="text-3xl font-black text-primary font-mono tracking-tighter">{formatCLP(subtotal)}</span>
+                            <div className="flex items-baseline gap-3 mt-1">
+                                <span className="text-xs font-black text-primary uppercase tracking-widest">Total Venta:</span>
+                                <span className="text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tighter drop-shadow-sm">
+                                    {formatCLP(subtotal)}
+                                </span>
                             </div>
                         </div>
 
-                        <div className="flex gap-3 w-full md:w-auto">
+                        <div className="flex gap-4 w-full md:w-auto">
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="flex-1 md:flex-none px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                                className="px-6 py-4 text-sm font-bold text-slate-500 hover:text-slate-900 dark:text-dark-600 dark:hover:text-white transition-all rounded-2xl hover:bg-slate-100 dark:hover:bg-dark-300"
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
                                 disabled={saving || items.length === 0}
-                                className="flex-2 md:flex-none px-10 py-3 bg-primary hover:bg-primary-600 disabled:opacity-50 disabled:grayscale text-white rounded-xl font-black text-sm shadow-xl shadow-primary/30 transition-all flex items-center justify-center gap-2"
+                                className="flex-1 md:flex-none px-10 py-4 bg-primary hover:bg-primary-600 disabled:opacity-50 disabled:grayscale text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/30 active:scale-95 transition-all flex items-center justify-center gap-3"
                             >
-                                {saving ? <Activity className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-                                Registrar Venta
+                                {saving ? <Activity className="w-5 h-5 animate-spin" /> : <ShoppingCart className="w-5 h-5" />}
+                                REGISTRAR VENTA
                             </button>
                         </div>
                     </div>
