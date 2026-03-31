@@ -277,64 +277,63 @@ export default function Sales() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="glass-card p-6 border-l-4 border-emerald-500 bg-emerald-50/50">
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Venta Firme</p>
-                    <p className="text-2xl font-black text-emerald-600 font-mono">{formatCLP(revenueFirme)}</p>
+                <div className="glass-card p-6 border-l-4 border-emerald-500 bg-emerald-500/5 transition-all hover:bg-emerald-500/10 group cursor-default">
+                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1 tracking-widest group-hover:text-emerald-400 transition-colors">Venta Firme</p>
+                    <p className="text-2xl font-black text-emerald-500 font-mono tracking-tighter">{formatCLP(revenueFirme)}</p>
                 </div>
-                <div className="glass-card p-6 border-l-4 border-amber-500 bg-amber-50/50">
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Venta Flotante</p>
-                    <p className="text-2xl font-black text-amber-600 font-mono">{formatCLP(revenueFlotante)}</p>
+                <div className="glass-card p-6 border-l-4 border-amber-500 bg-amber-500/5 transition-all hover:bg-amber-500/10 group cursor-default">
+                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1 tracking-widest group-hover:text-amber-400 transition-colors">Venta Flotante</p>
+                    <p className="text-2xl font-black text-amber-500 font-mono tracking-tighter">{formatCLP(revenueFlotante)}</p>
                 </div>
-                <div className="glass-card p-6 border-l-4 border-primary bg-primary/5">
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Total Rango</p>
-                    <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{formatCLP(cumulativeRevenue)}</p>
+                <div className="glass-card p-6 border-l-4 border-blue-500 bg-blue-500/5 transition-all hover:bg-blue-500/10 group cursor-default">
+                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1 tracking-widest group-hover:text-blue-400 transition-colors">Total Rango</p>
+                    <p className="text-2xl font-black text-white font-mono tracking-tighter">{formatCLP(cumulativeRevenue)}</p>
                 </div>
-                <div className="glass-card p-6 border-l-4 border-blue-500 bg-blue-50/50">
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Unidades</p>
-                    <p className="text-2xl font-black text-blue-600 font-mono">{cumulativeUnits.toLocaleString()}</p>
+                <div className="glass-card p-6 border-l-4 border-blue-400 bg-blue-400/5 transition-all hover:bg-blue-400/10 group cursor-default">
+                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1 tracking-widest group-hover:text-blue-300 transition-colors">Unidades</p>
+                    <p className="text-2xl font-black text-blue-400 font-mono tracking-tighter">{cumulativeUnits.toLocaleString()}</p>
                 </div>
             </div>
 
-            {/* Filters Bar */}
-            <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-dark-400 p-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
+            {/* Filters Bar Estilo Despacho */}
+            <div className="flex flex-wrap items-center gap-4 bg-[#1e293b]/50 dark:bg-[#1e293b]/50 p-4 rounded-3xl border border-white/5 shadow-xl backdrop-blur-xl">
                 <div className="relative flex-1 min-w-[280px]">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                     <input
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         placeholder="Buscar por libro, cliente, RUT o documento..."
-                        className="w-full bg-slate-50 dark:bg-dark-900/50 border border-slate-200 dark:border-dark-300 rounded-xl pl-11 pr-4 py-2.5 text-sm"
+                        className="w-full bg-[#0f172a] border border-white/5 rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-blue-500 transition-all shadow-inner"
                     />
                 </div>
                 <div className="flex gap-2">
                     <select
                         value={filterChannel}
                         onChange={e => setFilterChannel(e.target.value)}
-                        className="bg-slate-50 dark:bg-dark-900 border border-slate-200 dark:border-dark-300 rounded-xl px-4 py-2 text-xs font-bold uppercase text-slate-500"
+                        className="bg-[#0f172a] border border-white/5 rounded-2xl px-5 py-3 text-[10px] font-bold uppercase text-slate-400 outline-none cursor-pointer hover:border-blue-500/50 transition-all appearance-none min-w-[140px]"
                     >
-                        <option value="">Todos Canales</option>
+                        <option value="">Canales: Todos</option>
                         {CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                     
-                    {/* Author Filter with Visual Indicators */}
                     {authors.length > 0 && (
                         <select
                             value={filterAuthor}
                             onChange={e => setFilterAuthor(e.target.value)}
-                            className="bg-slate-50 dark:bg-dark-900 border border-slate-200 dark:border-dark-300 rounded-xl px-4 py-2 text-xs font-bold uppercase text-slate-500"
+                            className="bg-[#0f172a] border border-white/5 rounded-2xl px-5 py-3 text-[10px] font-bold uppercase text-slate-400 outline-none cursor-pointer hover:border-blue-500/50 transition-all appearance-none min-w-[140px]"
                         >
-                            <option value="">Todos Autores</option>
+                            <option value="">Autores: Todos</option>
                             {authors.map(a => (
-                                <option key={a.id} value={a.id} className={isAuthorComplete(a) ? 'text-primary' : 'text-rose-500'}>
-                                    {isAuthorComplete(a) ? '✅' : '⚠️'} {a.name}
+                                <option key={a.id} value={a.id} className={isAuthorComplete(a) ? 'text-blue-400' : 'text-rose-500'}>
+                                    {isAuthorComplete(a) ? '✓' : '!'} {a.name}
                                 </option>
                             ))}
                         </select>
                     )}
                 </div>
                 {(searchTerm || filterChannel || filterAuthor) && (
-                    <button onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterAuthor('') }} className="p-2 text-slate-400 hover:text-red-500 transition-all">
-                        <X className="w-5 h-5" />
+                    <button onClick={() => { setSearchTerm(''); setFilterChannel(''); setFilterAuthor('') }} className="p-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all border border-red-500/20">
+                        <X className="w-4 h-4" />
                     </button>
                 )}
             </div>
