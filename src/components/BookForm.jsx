@@ -60,11 +60,13 @@ export default function BookForm({ data, initialData, onSave, onClose }) {
         setSavingAuthor(true)
         try {
             const newId = `u${Date.now()}`
+            const slug = newAuthorName.trim().toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '')
             const newAuthor = {
                 id: newId,
                 name: newAuthorName.trim(),
                 role: 'AUTOR',
-                email: '',
+                email: `${slug}.${Date.now()}@pendiente.editorial`,
+                password: null,
                 tenantId: user?.tenantId
             }
             await addNewUser(newAuthor)
