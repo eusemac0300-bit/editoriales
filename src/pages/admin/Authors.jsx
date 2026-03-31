@@ -6,10 +6,20 @@ export default function AuthorsPage() {
     const { data, user, isAdmin, addNewUser, updateExistingUser, deleteExistingUser, addAuditLog } = useAuth()
     const [showAdd, setShowAdd] = useState(false)
     const [editingUser, setEditingUser] = useState(null)
+    const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
     const [deleteConfirm, setDeleteConfirm] = useState(null)
 
     const authors = data.users.filter(u => u.role === 'AUTOR')
 
+    const isComplete = (u) => {
+        if (u.email?.includes('@pendiente.editorial')) return false
+        const bio = (() => {
+            if (!u.bio) return {}
+            if (typeof u.bio === 'object') return u.bio
+            try { return JSON.parse(u.bio) } catch { return {} }
+        })()
+        return bio.rut && bio.address && bio.bankAccountNumber && bio.bankName
+    }
     const handleDelete = async (userId) => {
         const targetUser = data.users.find(u => u.id === userId)
         await deleteExistingUser(userId)
@@ -34,9 +44,27 @@ export default function AuthorsPage() {
                     </h1>
                     <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{authors.length} autores registrados en catálogo</p>
                 </div>
-                <button onClick={() => { setShowAdd(!showAdd); setEditingUser(null) }} className="btn-primary text-sm h-10">
-                    <Plus className="w-4 h-4 inline mr-1" /> Nuevo Autor
-                </button>
+                <div className="flex items-center gap-2">
+                    <div className="flex bg-slate-100 dark:bg-dark-200 p-1 rounded-xl mr-2">
+                        <button 
+                            onClick={() => setViewMode('grid')}
+                            className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-dark-300 shadow-sm text-primary' : 'text-slate-400'}`}
+                            title="Vista Cuadrícula"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-dark-300 shadow-sm text-primary' : 'text-slate-400'}`}
+                            title="Vista Lista"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        </button>
+                    </div>
+                    <button onClick={() => { setShowAdd(!showAdd); setEditingUser(null) }} className="btn-primary text-sm h-10">
+                        <Plus className="w-4 h-4 inline mr-1" /> Nuevo Autor
+                    </button>
+                </div>
             </div>
 
             {/* Add/Edit Form */}
@@ -75,54 +103,110 @@ export default function AuthorsPage() {
             )}
 
             {/* Authors list */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {authors.map(u => {
-                    const bio = (() => {
-                        if (!u.bio) return {}
-                        if (typeof u.bio === 'object') return u.bio
-                        try { return JSON.parse(u.bio) } catch { return {} }
-                    })()
-                    return (
-                        <div key={u.id} className="glass-card p-5 hover:bg-slate-50 dark:bg-dark-200/30 transition-colors group flex flex-col gap-4">
-                            <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-slate-900 dark:text-white shrink-0 bg-gradient-to-br from-purple-500 to-purple-700">
-                                    {u.avatar}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">{u.name}</h3>
-                                    <p className="text-sm text-slate-500 dark:text-dark-600 truncate">{u.email}</p>
-                                    {bio.rut && <p className="text-xs text-slate-500 dark:text-dark-500 mt-1 flex items-center gap-1"><FileText className="w-3 h-3" /> RUT: {bio.rut}</p>}
+            {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {authors.map(u => {
+                        const bio = (() => {
+                            if (!u.bio) return {}
+                            if (typeof u.bio === 'object') return u.bio
+                            try { return JSON.parse(u.bio) } catch { return {} }
+                        })()
+                        const complete = isComplete(u)
+                        return (
+                            <div key={u.id} className="glass-card p-5 hover:bg-slate-50 dark:bg-dark-200/30 transition-colors group flex flex-col gap-4 relative overflow-hidden">
+                                <div className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rotate-45 transition-colors ${complete ? 'bg-blue-500/10' : 'bg-red-500/10'}`} />
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-slate-900 dark:text-white shrink-0 bg-gradient-to-br from-purple-500 to-purple-700 relative">
+                                        {u.avatar}
+                                        <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-dark-200 shadow-sm ${complete ? 'bg-blue-500' : 'bg-red-500'}`} title={complete ? 'Datos Completos' : 'Datos Pendientes'} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-medium text-slate-900 dark:text-white">{u.name}</h3>
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${complete ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                {complete ? 'Completo' : 'Pendiente'}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-slate-500 dark:text-dark-600 truncate">{u.email}</p>
+                                        {bio.rut && <p className="text-xs text-slate-500 dark:text-dark-500 mt-1 flex items-center gap-1"><FileText className="w-3 h-3" /> RUT: {bio.rut}</p>}
+                                    </div>
+
+                                    <div className="flex items-center gap-1 transition-opacity">
+                                        <button
+                                            onClick={() => { setEditingUser(u); setShowAdd(false) }}
+                                            className="p-2 rounded-lg bg-slate-100 dark:bg-dark-200 text-slate-500 dark:text-dark-600 hover:text-primary-600 dark:hover:text-primary transition-all shadow-sm"
+                                            title="Editar autor"
+                                        >
+                                            <Edit3 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setDeleteConfirm(u)}
+                                            className="p-2 rounded-lg bg-slate-100 dark:bg-dark-200 hover:bg-red-500/10 text-slate-500 dark:text-dark-600 hover:text-red-400 transition-all shadow-sm"
+                                            title="Eliminar autor"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="flex items-center gap-1 transition-opacity">
+                                {/* Additional Metadata Display */}
+                                <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-dark-600 mt-2 bg-slate-50 dark:bg-dark-50 p-3 rounded-lg border border-slate-100 dark:border-dark-300/30">
+                                    <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">País</span>{bio.country || 'No registrado'}</div>
+                                    <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">Banco</span>{bio.bankName || 'No registrado'}</div>
+                                    <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">Tipo Cta.</span>{bio.bankAccountType || '—'}</div>
+                                    <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">Nº Cta.</span>{bio.bankAccountNumber ? '••••' + String(bio.bankAccountNumber).slice(-4) : '—'}</div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            ) : (
+                <div className="glass-card divide-y divide-slate-100 dark:divide-dark-300/50">
+                    {authors.map(u => {
+                        const complete = isComplete(u)
+                        const bio = (() => {
+                            if (!u.bio) return {}
+                            if (typeof u.bio === 'object') return u.bio
+                            try { return JSON.parse(u.bio) } catch { return {} }
+                        })()
+                        return (
+                            <div key={u.id} className="flex items-center gap-4 p-3 hover:bg-slate-50 dark:hover:bg-dark-200/20 transition-colors group">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shrink-0 bg-gradient-to-br from-purple-500 to-purple-700 relative`}>
+                                    {u.avatar}
+                                    <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white dark:border-dark-200 ${complete ? 'bg-blue-500' : 'bg-red-500'}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{u.name}</p>
+                                        <span className={`text-[9px] px-1 rounded font-bold uppercase ${complete ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}>
+                                            {complete ? 'Completo' : 'Pendiente'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-dark-600">
+                                        <span className="truncate">{u.email}</span>
+                                        {bio.rut && <span className="flex items-center gap-1"><FileText className="w-3 h-3" /> {bio.rut}</span>}
+                                        {bio.country && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {bio.country}</span>}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1">
                                     <button
                                         onClick={() => { setEditingUser(u); setShowAdd(false) }}
-                                        className="p-2 rounded-lg bg-slate-100 dark:bg-dark-200 text-slate-500 dark:text-dark-600 hover:text-primary-600 dark:hover:text-primary transition-all shadow-sm"
-                                        title="Editar autor"
+                                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-200 text-slate-400 dark:text-dark-600 hover:text-primary transition-all"
                                     >
-                                        <Edit3 className="w-4 h-4" />
+                                        <Edit3 className="w-3.5 h-3.5" />
                                     </button>
                                     <button
                                         onClick={() => setDeleteConfirm(u)}
-                                        className="p-2 rounded-lg bg-slate-100 dark:bg-dark-200 hover:bg-red-500/10 text-slate-500 dark:text-dark-600 hover:text-red-400 transition-all shadow-sm"
-                                        title="Eliminar autor"
+                                        className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-400 dark:text-dark-600 hover:text-red-500 transition-all"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
-
-                            {/* Additional Metadata Display */}
-                            <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-dark-600 mt-2 bg-slate-50 dark:bg-dark-50 p-3 rounded-lg">
-                                <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">País</span>{bio.country || 'No registrado'}</div>
-                                <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">Banco</span>{bio.bankName || 'No registrado'}</div>
-                                <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">Tipo Cta.</span>{bio.bankAccountType || '—'}</div>
-                                <div><span className="block text-[10px] text-slate-500 dark:text-dark-500 uppercase">Nº Cta.</span>{bio.bankAccountNumber ? '••••' + String(bio.bankAccountNumber).slice(-4) : '—'}</div>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
+                        )
+                    })}
+                </div>
+            )}
 
             {/* Delete confirmation modal */}
             {deleteConfirm && (
