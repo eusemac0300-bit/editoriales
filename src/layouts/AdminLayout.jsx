@@ -55,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.69', date: '2026-03-31', title: 'Modo Exploración en Ventas', details: ['Buscador inteligente: click en la lupa despliega automáticamente el catálogo rápido.', 'Soporte para exploración visual de títulos sin necesidad de escribir.', 'Interfaz mejorada en la selección de ítems con mayor detalle de ISBN y PVP.'] },
         { version: 'v3.1.5.68', date: '2026-03-31', title: 'Dashboard Premium v3 (Sincronía Total)', details: ['Integración total de la estética de Despacho en el Dashboard de Ventas.', 'Oscurecimiento de tarjetas KPI para eliminar contrastes excesivos.', 'Barra de filtros y búsqueda rediseñada con fondos profundos y bordes sutiles.'] },
         { version: 'v3.1.5.67', date: '2026-03-31', title: 'Sincronización Estética Despacho/Ventas', details: ['Restauración de paleta de colores oscuro (Dark Mode) en Ventas.', 'Uso de fondos slate-900 e inputs integrados para coherencia visual.', 'Botones de acción en azul vibrante siguiendo el patrón de Despacho.'] },
         { version: 'v3.1.5.66', date: '2026-03-31', title: 'Optimización de Legibilidad en Ventas', details: ['Cambio a esquema de colores claro (Light Mode) en formularios para facilitar la lectura.', 'Mejora de contrastes en campos de búsqueda y tablas de artículos.', 'Refinado de bordes y sombras para una apariencia técnica limpia.'] },

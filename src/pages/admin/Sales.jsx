@@ -476,15 +476,16 @@ function SaleForm({ onClose, onSave, books, data, formatCLP }) {
 
     const handleSearch = (q) => {
         setSearchTerm(q)
-        if (q.length < 2) {
-            setSearchResults([])
+        if (q.trim() === '') {
+            // Si está vacío, mostrar los primeros 15 títulos (Modo Exploración)
+            setSearchResults(books.slice(0, 15))
             return
         }
         const lowerQ = q.toLowerCase()
         const results = books.filter(b => 
             b.title.toLowerCase().includes(lowerQ) || 
             b.isbn?.toLowerCase().includes(lowerQ)
-        ).slice(0, 5)
+        ).slice(0, 15)
         setSearchResults(results)
     }
 
@@ -595,29 +596,39 @@ function SaleForm({ onClose, onSave, books, data, formatCLP }) {
                                 </div>
                             </div>
 
-                            {/* Selector de Libro - Integrado */}
-                            <div className="relative">
-                                <div className="flex items-center bg-[#0f172a] border border-slate-700/50 rounded-xl px-4 py-3 group focus-within:border-blue-500 transition-all">
-                                    <Search className="w-5 h-5 text-slate-500 mr-3" />
+                            <div className="relative group">
+                                <div 
+                                    className="flex items-center bg-[#0f172a] border border-white/5 rounded-xl px-4 py-3 group focus-within:border-blue-500 transition-all cursor-text shadow-inner"
+                                    onClick={() => handleSearch('')}
+                                >
+                                    <button type="button" className="p-1 hover:bg-blue-500/20 rounded-lg transition-colors mr-2">
+                                        <Search className="w-5 h-5 text-blue-400" />
+                                    </button>
                                     <input
                                         type="text"
                                         value={searchTerm}
                                         onChange={e => handleSearch(e.target.value)}
-                                        placeholder="Seleccionar..."
+                                        onFocus={() => handleSearch('')}
+                                        placeholder="Click en la lupa para ver catálogo o escribe para buscar..."
                                         className="bg-transparent text-white w-full text-base outline-none placeholder:text-slate-600"
                                     />
                                 </div>
                                 {searchResults.length > 0 && (
-                                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#1e293b] border border-slate-700 rounded-xl shadow-2xl z-[100] overflow-hidden">
-                                        {searchResults.map(b => (
-                                            <button key={b.id} type="button" onClick={() => addItem(b)} className="w-full text-left p-4 hover:bg-blue-600 group transition-colors flex justify-between items-center">
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-bold text-white group-hover:text-white">{(b.title || '').substring(0, 45)}</span>
-                                                    <span className="text-[10px] text-slate-400 group-hover:text-blue-100 italic">IVA Incl. | {formatCLP(b.pvp)}</span>
-                                                </div>
-                                                <Plus className="w-4 h-4 text-blue-500 group-hover:text-white" />
-                                            </button>
-                                        ))}
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#1e293b] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[100] overflow-hidden backdrop-blur-3xl">
+                                        <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                                            {searchResults.map(b => (
+                                                <button key={b.id} type="button" onClick={() => addItem(b)} className="w-full text-left p-4 hover:bg-blue-600 group transition-all flex justify-between items-center border-b border-white/5 last:border-0">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold text-white group-hover:text-white">{(b.title || '').substring(0, 55)}</span>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className="text-[10px] text-slate-400 group-hover:text-blue-100 font-mono tracking-tighter">ISBN: {b.isbn || 'N/A'}</span>
+                                                            <span className="text-[10px] text-blue-400 group-hover:text-white font-bold bg-blue-400/10 px-2 rounded-full">{formatCLP(b.pvp)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <Plus className="w-5 h-5 text-blue-500 group-hover:text-white opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0" />
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
