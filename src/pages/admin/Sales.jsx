@@ -6,7 +6,7 @@ import autoTable from 'jspdf-autotable'
 import {
     ShoppingCart, Plus, X, Search, TrendingUp, Activity,
     BookOpen, DollarSign, Calendar, Users, Package, BarChart3,
-    CheckCircle, XCircle, Download, FileSpreadsheet, AlertCircle
+    CheckCircle, XCircle, Download, FileSpreadsheet, AlertCircle, AlertTriangle
 } from 'lucide-react'
 
 const CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria', 'Consignación']

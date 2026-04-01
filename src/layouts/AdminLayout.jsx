@@ -55,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.72', date: '2026-04-01', title: 'Hotfix: Estabilidad en Ventas', details: ['Corrección de error crítico de importación (AlertTriangle) que impedía abrir el registro de ventas.', 'Mejora en la resiliencia del formulario bajo condiciones de bajo stock.'] },
         { version: 'v3.1.5.71', date: '2026-03-31', title: 'Blindaje de Stock y Ventas', details: ['Desbloqueo de ventas con stock cero: Permite el registro forzado con advertencia visual.', 'Auto-creación de inventario: Si un título no tiene ficha técnica, el sistema la genera automáticamente al vender.', 'Sincronización robusta de salidas físicas para todos los canales.'] },
         { version: 'v3.1.5.70', date: '2026-03-31', title: 'Optimización de Navegación', details: ['Renombrado de "Inventario" a "Inventario / Stock" para facilitar su localización.', 'Mejora en la jerarquía visual del sidebar para módulos críticos.'] },
         { version: 'v3.1.5.69', date: '2026-03-31', title: 'Modo Exploración en Ventas', details: ['Buscador inteligente: click en la lupa despliega automáticamente el catálogo rápido.', 'Soporte para exploración visual de títulos sin necesidad de escribir.', 'Interfaz mejorada en la selección de ítems con mayor detalle de ISBN y PVP.'] },
