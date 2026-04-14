@@ -94,7 +94,8 @@ export default function Inventory() {
 
     const filteredEntries = inventoryEntries.filter(p => {
         const book = getBook(p.bookId)
-        return !search || book?.title.toLowerCase().includes(search.toLowerCase())
+        const bookTitle = book?.title || p.bookId || ''
+        return !search || bookTitle.toLowerCase().includes(search.toLowerCase())
     })
 
     return (

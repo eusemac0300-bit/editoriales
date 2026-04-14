@@ -149,7 +149,7 @@ export function AuthProvider({ children }) {
         if (!user) return Promise.reject('No user session')
         return audit.addAuditLog({
             id: db.iUUID(),
-            tenant_id: user.tenantId,
+            tenantId: user.tenantId,
             date: new Date().toISOString(),
             user_id: user.id,
             user_name: user.name || user.email || 'Usuario',
