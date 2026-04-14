@@ -55,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.74', date: '2026-04-14', title: 'Blindaje de Inventario y Auditoría', details: ['Corrección de error crítico (toLowerCase) al buscar títulos inexistentes o eliminados en el inventario.', 'Sincronización de registros de auditoría para movimientos de stock.', 'Mejora en la estabilidad de carga de inventario digital.'] },
         { version: 'v3.1.5.73', date: '2026-04-01', title: 'Localización y Traducción', details: ['Corrección de la traducción del menú "Clientes" en el sidebar.', 'Unificación de términos en los archivos de lenguaje para mayor consistencia.'] },
         { version: 'v3.1.5.72', date: '2026-04-01', title: 'Hotfix: Estabilidad en Ventas', details: ['Corrección de error crítico de importación (AlertTriangle) que impedía abrir el registro de ventas.', 'Mejora en la resiliencia del formulario bajo condiciones de bajo stock.'] },
         { version: 'v3.1.5.71', date: '2026-03-31', title: 'Blindaje de Stock y Ventas', details: ['Desbloqueo de ventas con stock cero: Permite el registro forzado con advertencia visual.', 'Auto-creación de inventario: Si un título no tiene ficha técnica, el sistema la genera automáticamente al vender.', 'Sincronización robusta de salidas físicas para todos los canales.'] },
