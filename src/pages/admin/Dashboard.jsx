@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, Activity, Database, Trash2, Plus, CheckCircle2, Sparkles, FileText, Truck } from 'lucide-react'
 
 export default function AdminDashboard() {
-    const { data, formatCLP, t, user, loadDemo, clearDemo } = useAuth()
+    const { data, formatCLP, t, user, loadDemo, clearDemo, taxRate } = useAuth()
     const navigate = useNavigate()
     const [isPublishing, setIsPublishing] = useState(false)
     const { books, inventory, finances, alerts } = data
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
     const potentialRoyalties = books.filter(b => b.status === 'Publicado' && (b.royaltyPercent || 0) > 0).reduce((acc, book) => {
         const units = currentMonthSales.filter(s => s.bookId === book.id).reduce((s, sale) => s + (sale.quantity || 0), 0)
         if (units <= 0) return acc
-        const pvpNeto = (book.pvp || 0) / 1.19
+        const pvpNeto = (book.pvp || 0) / (1 + (taxRate || 19) / 100)
         const royaltyValue = pvpNeto * (book.royaltyPercent / 100) * units
         return acc + royaltyValue
     }, 0)

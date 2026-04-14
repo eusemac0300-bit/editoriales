@@ -1122,7 +1122,8 @@ export async function superAdminDeleteWorkspace(tenantId) {
     }
 }
 
-export async function seedDemoData(tenantId, adminUserId) {
+export async function seedDemoData(tenantId, adminUserId, taxRate = 19) {
+    const taxDivisor = 1 + (taxRate / 100)
     if (!tenantId) return
     const now = new Date().toISOString()
     const monthAgo = new Date(Date.now() - 2592000000).toISOString()
@@ -1292,8 +1293,8 @@ export async function seedDemoData(tenantId, adminUserId) {
                 quantity: qty,
                 unit_price: unitPrice,
                 total_amount: total,
-                neto: total / 1.19, 
-                iva: total - (total / 1.19),
+                neto: total / taxDivisor, 
+                iva: total - (total / taxDivisor),
                 status: saleCounter === 0 ? 'Pendiente' : 'Completada',
                 sale_date: saleCounter === 0 ? now : monthAgo
             })
@@ -1316,8 +1317,8 @@ export async function seedDemoData(tenantId, adminUserId) {
                 quantity: qty,
                 unit_price: b.pvp,
                 total_amount: total,
-                neto: total / 1.19,
-                iva: total - (total / 1.19),
+                neto: total / taxDivisor,
+                iva: total - (total / taxDivisor),
                 status: 'Completada',
                 sale_date: new Date(Date.now() - (saleCounter * 86400000)).toISOString() // Random days ago
             })

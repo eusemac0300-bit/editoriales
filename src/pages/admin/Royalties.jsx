@@ -17,7 +17,7 @@ const PERIODS = [
 ]
 
 export default function Royalties() {
-    const { data, formatCLP, addAuditLog, reloadData, t, user } = useAuth()
+    const { data, formatCLP, addAuditLog, reloadData, t, user, taxRate } = useAuth()
 
     const [selectedAuthor, setSelectedAuthor] = useState('all')
     const [selectedPeriod, setSelectedPeriod] = useState('2026-03')
@@ -48,8 +48,8 @@ export default function Royalties() {
     // ── Liquidaciones calculadas (en tiempo real, sin guardar) ───────────────
     const calculations = useMemo(() => books.map(book => {
         const salesData = salesByBook[book.id] || { units: 0, amount: 0 }
-        // Según Ciclo Editorial: % del PVP NETO (PVP / 1.19) por unidades vendidas
-        const pvpNeto = (book.pvp || 0) / 1.19
+        // Según Ciclo Editorial: % del PVP NETO (PVP / (1 + taxRate/100)) por unidades vendidas
+        const pvpNeto = (book.pvp || 0) / (1 + (taxRate || 19) / 100)
         const gross = Math.round(pvpNeto * (book.royaltyPercent / 100) * salesData.units)
         const advance = book.advance || 0
         const net = gross - advance

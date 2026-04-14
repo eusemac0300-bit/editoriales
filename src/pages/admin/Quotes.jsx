@@ -758,7 +758,7 @@ export default function Quotes() {
 }
 
 function QuoteForm({ data, initialData, onSave, onClose }) {
-    const { user } = useAuth()
+    const { user, taxRate } = useAuth()
     const [isUploading, setIsUploading] = useState(false)
     const formatMoneyStr = (val) => val === 0 || !val ? '' : new Intl.NumberFormat('es-CL').format(val)
 
@@ -1078,7 +1078,7 @@ function QuoteForm({ data, initialData, onSave, onClose }) {
                         {(() => {
                             const val = parseInt(form.quotedAmountStr.toString().replace(/\D/g, ''), 10) || 0
                             if (val > 0) {
-                                const neto = Math.round(val / 1.19)
+                                const neto = Math.round(val / (1 + taxRate / 100))
                                 const iva = val - neto
                                 return (
                                     <div className="flex items-center gap-3 text-[10px] bg-slate-50 dark:bg-dark-200/50 px-2 py-1.5 rounded border border-slate-200 dark:border-dark-300">

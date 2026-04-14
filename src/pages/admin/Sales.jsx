@@ -463,7 +463,7 @@ export default function Sales() {
     )
 }
 
-function SaleForm({ onClose, onSave, books, data, formatCLP }) {
+function SaleForm({ onClose, onSave, books, data, formatCLP, taxRate }) {
     const today = new Date().toISOString().slice(0, 10)
     const [common, setCommon] = useState({
         channel: 'Directa',
