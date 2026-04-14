@@ -5,7 +5,7 @@ import { Calculator, TrendingUp, Target, DollarSign, BarChart3, Save, Book } fro
 
 export default function Escandallo() {
     const [searchParams] = useSearchParams()
-    const { formatCLP, data, updateBookDetails, addAuditLog } = useAuth()
+    const { formatCLP, data, updateBookDetails, addAuditLog, taxRate } = useAuth()
     const getInitialState = (key, defaultVal) => {
         if (key === 'bookId') {
             const urlBookId = searchParams.get('bookId')
@@ -70,7 +70,7 @@ export default function Escandallo() {
                         imprenta: Number(dbEsc.impresion || dbEsc.imprenta) || 0,
                         impresos: 0, traslados: 0, distribucion: Number(dbEsc.distribucion) || 0, otros: Number(dbEsc.otros) || 0
                     })
-                    setPvpNeto(Math.round(Number(book.pvp) / 1.19) || 0)
+                    setPvpNeto(Math.round(Number(book.pvp) / (1 + taxRate / 100)) || 0)
                     setMarketingPercent(15)
                     setRoyaltyLibreria(10)
                     setRoyaltyDirecta(30)
@@ -142,7 +142,7 @@ export default function Escandallo() {
 
             const success = await updateBookDetails(selectedBookId, {
                 escandalloCosts: advancedEscandallo,
-                pvp: Math.round(pvpNeto * 1.19),
+                pvp: Math.round(pvpNeto * (1 + taxRate / 100)),
                 tiraje
             })
 

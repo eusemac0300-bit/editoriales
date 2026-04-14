@@ -3,7 +3,7 @@ import { Calculator, TrendingUp, Target, DollarSign, BarChart3, Save, X, Book, A
 import { useAuth } from '../context/AuthContext'
 
 export default function EscandalloModal({ book, onClose }) {
-    const { formatCLP, updateBookDetails, addAuditLog } = useAuth()
+    const { formatCLP, updateBookDetails, addAuditLog, taxRate } = useAuth()
     const [isSaving, setIsSaving] = useState(false)
     
     const [costs, setCosts] = useState({
@@ -54,7 +54,7 @@ export default function EscandalloModal({ book, onClose }) {
                     distribucion: Number(dbEsc.distribucion) || 0,
                     otros: Number(dbEsc.otros) || 0
                 })
-                setPvpNeto(Math.round(Number(book.pvp) / 1.19) || 0)
+                setPvpNeto(Math.round(Number(book.pvp) / (1 + taxRate / 100)) || 0)
             }
             setTiraje(Number(book.tiraje) || 0)
         }
@@ -82,7 +82,7 @@ export default function EscandalloModal({ book, onClose }) {
 
             await updateBookDetails(book.id, {
                 escandalloCosts: advancedEscandallo,
-                pvp: Math.round(pvpNeto * 1.19), // El pvp principal sigue siendo con IVA para el catálogo
+                pvp: Math.round(pvpNeto * (1 + taxRate / 100)), // El pvp principal sigue siendo con IVA para el catálogo
                 tiraje
             })
             
@@ -97,7 +97,7 @@ export default function EscandalloModal({ book, onClose }) {
     }
 
     // --- CÁLCULOS LÓGICA ALFONSO ---
-    const IVA = 1.19
+    const IVA = 1 + (taxRate / 100)
     const pvpConIva = Math.round(pvpNeto * IVA)
     
     const totalEdicion = costs.preprensa + costs.traduccion + costs.prologo + costs.referato + costs.anticipo + costs.fotos + costs.ilustraciones

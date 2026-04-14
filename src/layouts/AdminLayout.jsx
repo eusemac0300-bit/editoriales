@@ -55,6 +55,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.76', date: '2026-04-16', title: 'Corrección Calculadora IVA', details: ['Se solucionó el crash "taxRate is not defined" al abrir el análisis de costos (Escandallo).', 'Unificación del cálculo de IVA dinámico en toda la aplicación.'] },
         { version: 'v3.1.5.75', date: '2026-04-15', title: 'Blindaje de Buscadores', details: ['Blindaje global de buscadores (Inventario, Ventas, Eventos, Proveedores) para evitar crashes por valores nulos.'] },
         { version: 'v3.1.5.74', date: '2026-04-14', title: 'Blindaje de Inventario y Auditoría', details: ['Corrección de error crítico (toLowerCase) al buscar títulos inexistentes o eliminados en el inventario.', 'Sincronización de registros de auditoría para movimientos de stock.', 'Mejora en la estabilidad de carga de inventario digital.'] },
         { version: 'v3.1.5.73', date: '2026-04-01', title: 'Localización y Traducción', details: ['Corrección de la traducción del menú "Clientes" en el sidebar.', 'Unificación de términos en los archivos de lenguaje para mayor consistencia.'] },

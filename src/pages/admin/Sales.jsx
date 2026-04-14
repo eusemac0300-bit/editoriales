@@ -482,7 +482,7 @@ function SaleForm({ onClose, onSave, books, data, formatCLP }) {
     const [searchResults, setSearchResults] = useState([])
     const [saving, setSaving] = useState(false)
 
-    const taxVal = 1.19
+    const taxVal = 1 + (taxRate / 100)
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
 
     const handleSearch = (q) => {
