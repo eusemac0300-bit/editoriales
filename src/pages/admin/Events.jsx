@@ -97,11 +97,14 @@ export default function Events() {
     const events = data?.events || []
     
     const filteredEvents = useMemo(() => {
-        return events.filter(e => 
-            e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            e.location?.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    }, [events, searchTerm])
+        return (data.events || []).filter(e => {
+            if (!e) return false;
+            const name = (e.name || '').toLowerCase()
+            const location = (e.location || '').toLowerCase()
+            const query = searchTerm.toLowerCase()
+            return name.includes(query) || location.includes(query)
+        })
+    }, [data.events, searchTerm])
 
     const stats = useMemo(() => {
         const active = events.filter(e => e.status === 'open').length

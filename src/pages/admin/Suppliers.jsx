@@ -26,7 +26,7 @@ export default function Suppliers() {
         const query = search.toLowerCase()
 
         const matchesSearch = name.includes(query) || contact.includes(query) || tax.includes(query)
-        const matchesType = filterType === 'TODOS' || s.type === filterType
+        const matchesType = filterType === 'TODOS' || (s.type || '').toUpperCase() === filterType.toUpperCase()
         return matchesSearch && matchesType
     })
 

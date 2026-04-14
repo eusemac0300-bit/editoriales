@@ -8,14 +8,20 @@ import {
 import React from 'react'
 
 export default function Inventory() {
-    const { data, updateInventory, formatCLP, addAuditLog } = useAuth()
+    const { data, updateInventory, formatCLP, addAuditLog, loading, t } = useAuth()
     const [tab, setTab] = useState('fisico')
     const [addModal, setAddModal] = useState(null)
     const [addTitleModal, setAddTitleModal] = useState(false)
     const [search, setSearch] = useState('')
     const [expandedBookId, setExpandedBookId] = useState(null)
 
-    const getBook = (id) => data.books.find(b => b.id === id)
+    if (loading) return (
+        <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+    )
+
+    const getBook = (id) => data.books?.find(b => b.id === id)
 
     // Libros publicados que aún NO están en inventario físico
     const publishedBooks = data.books.filter(b => b.status === 'Publicado')
@@ -94,8 +100,9 @@ export default function Inventory() {
 
     const filteredEntries = inventoryEntries.filter(p => {
         const book = getBook(p.bookId)
-        const bookTitle = book?.title || p.bookId || ''
-        return !search || bookTitle.toLowerCase().includes(search.toLowerCase())
+        const bookTitle = (book?.title || p.bookId || '').toString()
+        const q = (search || '').toString().toLowerCase()
+        return !q || bookTitle.toLowerCase().includes(q)
     })
 
     return (
@@ -269,7 +276,7 @@ export default function Inventory() {
                                                             <div className="absolute -left-[20px] top-1 w-2 h-2 rounded-full bg-primary border-2 border-white dark:border-dark-100" />
                                                             <p className="text-[11px] text-slate-500 font-mono mb-0.5">{new Date(s.saleDate).toLocaleDateString('es-CL')}</p>
                                                             <p className="text-xs font-bold text-slate-800 dark:text-white">Venta Directa: <span className="text-primary">-{s.quantity} u.</span></p>
-                                                            <p className="text-[10px] text-slate-400 mt-0.5">Monto: {formatCLP(s.total_amount)}</p>
+                                                            <p className="text-[10px] text-slate-400 mt-0.5">Monto: {formatCLP(s.totalAmount || s.total_amount || 0)}</p>
                                                         </div>
                                                     ))}
 
@@ -278,7 +285,7 @@ export default function Inventory() {
                                                         <div key={`ex-${i}`} className="relative">
                                                             <div className="absolute -left-[20px] top-1 w-2 h-2 rounded-full bg-red-400 border-2 border-white dark:border-dark-100" />
                                                             <p className="text-[11px] text-slate-500 font-mono mb-0.5">{new Date(e.date).toLocaleDateString('es-CL')}</p>
-                                                            <p className="text-xs font-bold text-slate-800 dark:text-white">{e.type.toUpperCase()}: <span className="text-red-500">-{e.qty} u.</span></p>
+                                                            <p className="text-xs font-bold text-slate-800 dark:text-white">{(e.type || 'Movimiento').toUpperCase()}: <span className="text-red-500">-{e.qty} u.</span></p>
                                                             <p className="text-[10px] text-slate-400 italic mt-0.5">{e.note}</p>
                                                         </div>
                                                     ))}
@@ -299,8 +306,8 @@ export default function Inventory() {
                                                     <div className="space-y-4">
                                                         {relatedConsignments.map(c => {
                                                             const cSales = relatedSales.filter(s => s.notes?.includes(`consignación ${c.id}`))
-                                                            const mermas = cSales.filter(s => s.channel.includes('Merma'))
-                                                            const salesOnly = cSales.filter(s => !s.channel.includes('Merma'))
+                                                            const mermas = cSales.filter(s => s.channel?.includes('Merma'))
+                                                            const salesOnly = cSales.filter(s => !s.channel?.includes('Merma'))
                                                             const pending = c.sentQuantity - c.soldQuantity - c.returnedQuantity
 
                                                             return (
@@ -326,7 +333,7 @@ export default function Inventory() {
                                                                                         <span>-{m.quantity} u.</span>
                                                                                         <span>{new Date(m.saleDate).toLocaleDateString('es-CL')}</span>
                                                                                     </div>
-                                                                                    <p className="text-[9px] text-slate-500 leading-tight italic">"{m.notes.replace('MERMA: ','').split('(')[0]}"</p>
+                                                                                    <p className="text-[9px] text-slate-500 leading-tight italic">"{(m.notes || '').replace('MERMA: ','').split('(')[0]}"</p>
                                                                                 </div>
                                                                             ))}
                                                                         </div>

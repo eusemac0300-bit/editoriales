@@ -494,8 +494,8 @@ function SaleForm({ onClose, onSave, books, data, formatCLP }) {
         }
         const lowerQ = q.toLowerCase()
         const results = books.filter(b => 
-            b.title.toLowerCase().includes(lowerQ) || 
-            b.isbn?.toLowerCase().includes(lowerQ)
+            (b.title || '').toLowerCase().includes(lowerQ) || 
+            (b.isbn || '').toLowerCase().includes(lowerQ)
         ).slice(0, 15)
         setSearchResults(results)
     }
@@ -680,7 +680,7 @@ function SaleForm({ onClose, onSave, books, data, formatCLP }) {
                                                         {formatCLP(it.total)}
                                                     </td>
                                                     <td className="px-6 py-4 text-center">
-                                                        <button onClick={() => removeItem(i)} className="text-slate-600 hover:text-red-500"><X className="w-4 h-4" /></button>
+                                                        <button onClick={() => removeItem(idx)} className="text-slate-600 hover:text-red-500"><X className="w-4 h-4" /></button>
                                                     </td>
                                                 </tr>
                                             ))
