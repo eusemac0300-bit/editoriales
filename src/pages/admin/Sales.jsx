@@ -24,7 +24,7 @@ const PAYMENT_STATUS_COLORS = {
 }
 
 export default function Sales() {
-    const { data, formatCurrency, addNewSale, updateSaleDetails, addAuditLog, reloadData, taxRate, t } = useAuth()
+    const { user, data, formatCurrency, addNewSale, updateSaleDetails, addAuditLog, reloadData, taxRate, t } = useAuth()
     const formatCLP = formatCurrency
 
     const sales = useMemo(() => data?.finances?.sales || [], [data])
@@ -401,21 +401,17 @@ export default function Sales() {
                 <SaleForm
                     books={books}
                     data={data}
-                    formatCLP={formatCurrency}
-                    taxRate={taxRate}
-                    t={t}
                     onClose={() => setShowAdd(false)}
+
                     onSave={async (items, commonData) => {
                         try {
                             const commonId = `invoice-${Date.now()}`
                             for (const item of items) {
-                                const saleId = `sale-${Date.now()}-${item.bookId}`
                                 const book = books.find(b => b.id === item.bookId)
                                 
                                 await addNewSale({
                                     ...commonData,
                                     ...item,
-                                    id: saleId,
                                     groupRef: commonId,
                                     bookTitle: book?.title || '',
                                     createdAt: new Date().toISOString()
@@ -444,7 +440,7 @@ export default function Sales() {
                                                 book_id: item.bookId,
                                                 stock: -item.quantity,
                                                 exits: [exitRef],
-                                                tenant_id: data.user.tenant_id // Asegurar tenant_id
+                                                tenant_id: user.tenantId
                                             })
                                         }
                                     }
@@ -463,7 +459,9 @@ export default function Sales() {
     )
 }
 
-function SaleForm({ onClose, onSave, books, data, formatCLP, taxRate }) {
+function SaleForm({ onClose, onSave, books, data }) {
+    const { taxRate, formatCurrency } = useAuth()
+    const formatCLP = formatCurrency
     const today = new Date().toISOString().slice(0, 10)
     const [common, setCommon] = useState({
         channel: 'Directa',
@@ -482,7 +480,7 @@ function SaleForm({ onClose, onSave, books, data, formatCLP, taxRate }) {
     const [searchResults, setSearchResults] = useState([])
     const [saving, setSaving] = useState(false)
 
-    const taxVal = 1 + (taxRate / 100)
+    const taxVal = 1 + ((taxRate || 19) / 100)
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
 
     const handleSearch = (q) => {
