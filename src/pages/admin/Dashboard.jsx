@@ -106,7 +106,7 @@ export default function AdminDashboard() {
                                 if (window.confirm(`¿Publicar la ${APP_VERSION} para todas las editoriales ahora? Esto notificará a todos tus clientes.`)) {
                                     setIsPublishing(true)
                                     try {
-                                        await publishAppVersion(APP_VERSION, ['Manual Data Stability', 'Authors fix', 'Suppliers FK fix', 'Sales Tax Fix'])
+                                        await publishAppVersion(APP_VERSION, ['Manual Data Stability', 'Authors fix', 'Suppliers FK fix', 'Sales Tax Fix', 'Client Selector & Quick Create'])
                                         alert(`¡ÉXITO! Versión ${APP_VERSION} liberada globalmente. Se ha notificado a todas las editoriales.`)
                                     } catch (err) {
                                         console.error('Master Publish Error:', err);

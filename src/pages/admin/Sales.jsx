@@ -6,7 +6,8 @@ import autoTable from 'jspdf-autotable'
 import {
     ShoppingCart, Plus, X, Search, TrendingUp, Activity,
     BookOpen, DollarSign, Calendar, Users, Package, BarChart3,
-    CheckCircle, XCircle, Download, FileSpreadsheet, AlertCircle, AlertTriangle
+    CheckCircle, XCircle, Download, FileSpreadsheet, AlertCircle, AlertTriangle,
+    UserPlus
 } from 'lucide-react'
 
 const CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria', 'Consignación']
@@ -24,7 +25,7 @@ const PAYMENT_STATUS_COLORS = {
 }
 
 export default function Sales() {
-    const { user, data, formatCurrency, addNewSale, updateSaleDetails, addAuditLog, reloadData, taxRate, t } = useAuth()
+    const { user, data, formatCurrency, addNewSale, addNewClient, updateSaleDetails, addAuditLog, reloadData, taxRate, t } = useAuth()
     const formatCLP = formatCurrency
 
     const sales = useMemo(() => data?.finances?.sales || [], [data])
@@ -460,7 +461,7 @@ export default function Sales() {
 }
 
 function SaleForm({ onClose, onSave, books, data }) {
-    const { taxRate, formatCurrency } = useAuth()
+    const { taxRate, formatCurrency, data: authData, addNewClient, user } = useAuth()
     const formatCLP = formatCurrency
     const today = new Date().toISOString().slice(0, 10)
     const [common, setCommon] = useState({
@@ -468,6 +469,7 @@ function SaleForm({ onClose, onSave, books, data }) {
         type: 'B2C (Consumidor final)',
         saleDate: today,
         clientName: '',
+        clientId: '',
         documentRef: '',
         notes: '',
         status: 'Completada',
@@ -479,6 +481,47 @@ function SaleForm({ onClose, onSave, books, data }) {
     const [searchTerm, setSearchTerm] = useState('')
     const [searchResults, setSearchResults] = useState([])
     const [saving, setSaving] = useState(false)
+
+    // Client Selector State
+    const [clientSearch, setClientSearch] = useState('')
+    const [showClientList, setShowClientList] = useState(false)
+    const [isCreatingClient, setIsCreatingClient] = useState(false)
+    const [newClientName, setNewClientName] = useState('')
+
+    const clients = useMemo(() => authData?.clients || [], [authData])
+    const filteredClients = useMemo(() => {
+        if (!clientSearch) return clients.slice(0, 5)
+        return clients.filter(c => 
+            (c.name || '').toLowerCase().includes(clientSearch.toLowerCase()) ||
+            (c.rut || '').toLowerCase().includes(clientSearch.toLowerCase())
+        ).slice(0, 10)
+    }, [clients, clientSearch])
+
+    const handleSelectClient = (client) => {
+        setCommon(p => ({ ...p, clientName: client.name, clientId: client.id }))
+        setClientSearch(client.name)
+        setShowClientList(false)
+    }
+
+    const handleQuickCreateClient = async () => {
+        if (!clientSearch.trim()) return
+        setIsCreatingClient(true)
+        try {
+            const newClient = await addNewClient({
+                name: clientSearch,
+                type: common.type === 'B2B (Empresa / Librería)' ? 'Empresa' : 'Particular',
+                tenant_id: user.tenantId
+            })
+            if (newClient) {
+                handleSelectClient(newClient)
+            }
+        } catch (err) {
+            console.error(err)
+            alert('Error al crear cliente rápido')
+        } finally {
+            setIsCreatingClient(false)
+        }
+    }
 
     const taxVal = 1 + ((taxRate || 19) / 100)
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
@@ -566,14 +609,53 @@ function SaleForm({ onClose, onSave, books, data }) {
                         
                         {/* Datos Cliente / Referencia */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
+                            <div className="space-y-2 relative">
                                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">CLIENTE / LIBRERÍA</label>
-                                <input 
-                                    placeholder="Ej. Librería Antártica" 
-                                    value={common.clientName} 
-                                    onChange={e => setCommon(p => ({ ...p, clientName: e.target.value }))}
-                                    className="w-full bg-[#0f172a] border border-slate-700/50 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:border-blue-500 transition-all outline-none"
-                                />
+                                <div className="relative">
+                                    <input 
+                                        placeholder="Buscar o escribir nombre de cliente..." 
+                                        value={clientSearch || common.clientName} 
+                                        onFocus={() => setShowClientList(true)}
+                                        onChange={e => {
+                                            setClientSearch(e.target.value)
+                                            setCommon(p => ({ ...p, clientName: e.target.value, clientId: '' }))
+                                            setShowClientList(true)
+                                        }}
+                                        className="w-full bg-[#0f172a] border border-slate-700/50 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:border-blue-500 transition-all outline-none"
+                                    />
+                                    {showClientList && (
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1e293b] border border-slate-700 rounded-xl shadow-2xl z-[60] py-2 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {filteredClients.length > 0 ? (
+                                                <div className="max-h-48 overflow-y-auto">
+                                                    {filteredClients.map(c => (
+                                                        <button
+                                                            key={c.id}
+                                                            type="button"
+                                                            onClick={() => handleSelectClient(c)}
+                                                            className="w-full text-left px-4 py-3 hover:bg-blue-500/10 text-sm flex flex-col transition-colors border-b border-white/5 last:border-none"
+                                                        >
+                                                            <span className="font-bold text-white">{c.name}</span>
+                                                            {c.rut && <span className="text-[10px] text-slate-400 font-mono">{c.rut}</span>}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="px-4 py-3 text-sm text-slate-400 italic">No se encontraron clientes</div>
+                                            )}
+                                            
+                                            <button
+                                                type="button"
+                                                disabled={isCreatingClient || !clientSearch}
+                                                onClick={handleQuickCreateClient}
+                                                className="w-full text-left px-4 py-3 hover:bg-emerald-500/10 text-emerald-400 text-xs font-bold flex items-center gap-2 transition-all border-t border-slate-700/50 mt-1"
+                                            >
+                                                <UserPlus className="w-4 h-4" />
+                                                {isCreatingClient ? 'Creando...' : `Registrar "${clientSearch}" como nuevo cliente`}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                {showClientList && <div className="fixed inset-0 z-[55]" onClick={() => setShowClientList(false)}></div>}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">CONTACTO / REFERENCIA</label>
