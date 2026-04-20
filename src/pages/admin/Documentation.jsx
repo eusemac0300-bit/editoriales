@@ -106,18 +106,6 @@ export default function Documentation() {
                         <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">Recursos Adicionales</h3>
                         <ul className="space-y-4">
                             <li 
-                                onClick={() => handleDownload('manual_administrador.md')}
-                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-colors cursor-pointer group"
-                            >
-                                <div className="p-2 bg-indigo-100 dark:bg-indigo-500/10 rounded-lg text-indigo-500">
-                                    <FileText className="w-4 h-4" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-primary">Manual_Administrador.md</p>
-                                    <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Guía Operativa</p>
-                                </div>
-                            </li>
-                            <li 
                                 onClick={() => handleDownload('ciclo_del_libro.pdf')}
                                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-colors cursor-pointer group"
                             >
