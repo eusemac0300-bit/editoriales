@@ -493,7 +493,7 @@ function SaleForm({ onClose, onSave, books, data }) {
         if (!clientSearch) return clients.slice(0, 5)
         return clients.filter(c => 
             (c.name || '').toLowerCase().includes(clientSearch.toLowerCase()) ||
-            (c.rut || '').toLowerCase().includes(clientSearch.toLowerCase())
+            (c.tax_id || '').toLowerCase().includes(clientSearch.toLowerCase())
         ).slice(0, 10)
     }, [clients, clientSearch])
 
@@ -509,7 +509,7 @@ function SaleForm({ onClose, onSave, books, data }) {
         try {
             const newClient = await addNewClient({
                 name: clientSearch,
-                type: common.type === 'B2B (Empresa / Librería)' ? 'Empresa' : 'Particular',
+                type: common.type === 'B2B (Empresa / Librería)' ? 'libreria' : 'otro',
                 tenant_id: user.tenantId
             })
             if (newClient) {

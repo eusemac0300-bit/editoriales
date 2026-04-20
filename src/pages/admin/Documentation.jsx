@@ -56,7 +56,7 @@ export default function Documentation() {
                 </div>
                 <div className="relative z-10 bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl text-center hidden md:block">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Versión Actual</p>
-                    <p className="text-2xl font-black text-white">v3.1.5.80</p>
+                    <p className="text-2xl font-black text-white">v3.1.5.85</p>
                 </div>
             </header>
 
