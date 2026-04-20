@@ -93,8 +93,8 @@ export default function Documentation() {
                                     <div className="absolute -left-[2.25rem] top-0 w-8 h-8 rounded-full bg-white dark:bg-dark-100 border-2 border-primary flex items-center justify-center text-primary text-xs font-black shadow-sm">
                                         {i + 1}
                                     </div>
-                                    <h4 className="text-sm font-black text-slate-900 dark:text-white-200 mb-1">{flow.step}</h4>
-                                    <p className="text-sm text-slate-500 dark:text-dark-700 leading-relaxed">{flow.desc}</p>
+                                    <h4 className="text-sm font-black text-slate-900 dark:text-white mb-1">{flow.step}</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-300 leading-relaxed">{flow.desc}</p>
                                 </div>
                             ))}
                         </div>
