@@ -25,14 +25,7 @@ export default function Documentation() {
         }
     ]
 
-    const handleDownload = (filename) => {
-        const link = document.createElement('a');
-        link.href = `/${filename}`;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
+
 
     const workflows = [
         { step: '1. Catálogo', desc: 'Crea tus Autores y Títulos. Define el PVP y los metadatos.' },
@@ -116,24 +109,6 @@ export default function Documentation() {
                 </div>
 
                 <div className="space-y-6">
-                    <div className="glass-card p-6 border-l-4 border-l-purple-500">
-                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">Recursos Adicionales</h3>
-                        <ul className="space-y-4">
-                            <li 
-                                onClick={() => handleDownload('ciclo_del_libro.pdf')}
-                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-colors cursor-pointer group"
-                            >
-                                <div className="p-2 bg-blue-100 dark:bg-blue-500/10 rounded-lg text-blue-500">
-                                    <FileText className="w-4 h-4" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-primary">Ciclo_del_Libro.pdf</p>
-                                    <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Diagrama de Proceso</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                    
                     <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10">
                         <h4 className="text-xs font-black text-primary uppercase tracking-widest mb-2">Ayuda Experta</h4>
                         <p className="text-xs text-slate-600 dark:text-dark-700 leading-relaxed mb-4">
