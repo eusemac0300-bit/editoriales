@@ -517,8 +517,7 @@ function SaleForm({ onClose, onSave, books, data }) {
                 tax_id: '',
                 notes: 'Creado desde mesa de ventas',
                 credit_limit: 0,
-                default_discount: 0,
-                tenant_id: user?.tenantId
+                default_discount: 0
             })
             
             if (newClient) {

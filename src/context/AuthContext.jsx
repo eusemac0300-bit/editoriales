@@ -277,7 +277,7 @@ export function AuthProvider({ children }) {
         addSupplier: (supplierData) => suppliers.addSupplier({ ...supplierData, id: supplierData.id || db.iUUID() }),
         updateSupplier: (supplierId, updates) => suppliers.updateSupplier({ id: supplierId, updates }),
         deleteSupplier: (supplierId) => suppliers.deleteSupplier(supplierId),
-        addNewClient: (clientData) => clientsData.addClient({ ...clientData, id: clientData.id || db.iUUID() }),
+        addNewClient: (clientData) => clientsData.addClient({ ...clientData, id: clientData.id || db.iUUID(), tenantId: user?.tenantId }),
         updateExistingClient: (clientId, updates) => clientsData.updateClient({ id: clientId, updates }),
         deleteExistingClient: (clientId) => clientsData.deleteClient(clientId),
         addPurchaseOrder, 

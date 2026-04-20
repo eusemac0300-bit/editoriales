@@ -133,7 +133,7 @@ export default function Books() {
 
             {showEscandallo && (
                 <EscandalloModal
-                    book={showEscandallo}
+                    book={data.books.find(b => b.id === showEscandallo.id) || showEscandallo}
                     onClose={() => setShowEscandallo(null)}
                 />
             )}

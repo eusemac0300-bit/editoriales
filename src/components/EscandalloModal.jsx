@@ -338,7 +338,7 @@ export default function EscandalloModal({ book, onClose }) {
                                     <h3 className="text-[10px] font-black text-slate-600 dark:text-dark-700 uppercase">ANÁLISIS DE RETORNO POR CANAL</h3>
                                     <div className="flex gap-4">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[8px] font-bold text-blue-500">DIRECTA {ventasCanal.directaPercent}%</span>
+                                            <span className="text-[8px] font-bold text-blue-500">DISTRIBUCIÓN DE TIRADA ({tiraje} u.):</span>
                                             <input type="range" min="0" max="100" value={ventasCanal.directaPercent} onChange={e => {
                                                 const d = parseInt(e.target.value)
                                                 setVentasCanal({ directaPercent: d, libreriaPercent: 100 - d })
@@ -347,48 +347,72 @@ export default function EscandalloModal({ book, onClose }) {
                                     </div>
                                 </div>
                                 
-                                <div className="p-4 grid grid-cols-2 gap-6">
+                                <div className="p-4 grid grid-cols-2 gap-6 bg-slate-50/50 dark:bg-dark-50/20">
                                     {/* Venta Directa */}
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-start">
-                                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[8px] font-black rounded uppercase">Canal Directo</span>
-                                            <span className="text-[10px] font-bold">{unidDirecta} unidades</span>
+                                    <div className="space-y-3 p-3 bg-blue-500/5 rounded-xl border border-blue-500/10">
+                                        <div className="flex justify-between items-center">
+                                            <span className="px-2 py-0.5 bg-blue-500 text-white text-[8px] font-black rounded-full uppercase shadow-sm">Canal Directo</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <input 
+                                                    type="number"
+                                                    value={unidDirecta}
+                                                    onChange={e => {
+                                                        const val = parseInt(e.target.value) || 0
+                                                        const p = tiraje > 0 ? (val / tiraje) * 100 : 60
+                                                        setVentasCanal({ directaPercent: Math.min(100, Math.round(p)), libreriaPercent: 100 - Math.min(100, Math.round(p)) })
+                                                    }}
+                                                    className="w-16 bg-white dark:bg-dark-300 border border-blue-200 dark:border-blue-500/30 rounded text-center text-[10px] font-bold py-0.5"
+                                                />
+                                                <span className="text-[10px] font-bold text-slate-500">u.</span>
+                                            </div>
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 bg-white/40 dark:bg-dark-200/40 p-2 rounded-lg">
                                             <div className="flex justify-between text-[10px] text-slate-500">
                                                 <span>Retorno Unit. (Neto)</span>
-                                                <span className="font-bold text-slate-900">{formatSafeCLP(retornoUnitDirecta)}</span>
+                                                <span className="font-black text-white">{formatSafeCLP(retornoUnitDirecta)}</span>
                                             </div>
                                             <div className="flex justify-between text-[10px] text-slate-500">
                                                 <span>Mkt/Plataf./TBK (4%)</span>
-                                                <span className="text-red-400">-{formatSafeCLP(pvpNeto * 0.04)}</span>
+                                                <span className="text-red-500 font-medium">-{formatSafeCLP(pvpNeto * 0.04)}</span>
                                             </div>
                                         </div>
-                                        <div className="pt-2 border-t border-slate-200">
-                                            <p className="text-[8px] text-slate-400 font-bold uppercase">Utilidad Proyectada Canal</p>
-                                            <p className="text-md font-black text-blue-600 font-mono">{formatSafeCLP(ingresoTotalDirecta)}</p>
+                                        <div className="pt-2 flex flex-col items-center">
+                                            <p className="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Utilidad Proyectada</p>
+                                            <p className="text-lg font-black text-blue-600 font-mono tracking-tight">{formatSafeCLP(ingresoTotalDirecta)}</p>
                                         </div>
                                     </div>
 
                                     {/* Venta Librería */}
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-start">
-                                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[8px] font-black rounded uppercase">Canal Librería</span>
-                                            <span className="text-[10px] font-bold">{unidLibreria} unidades</span>
+                                    <div className="space-y-3 p-3 bg-purple-500/5 rounded-xl border border-purple-500/10">
+                                        <div className="flex justify-between items-center">
+                                            <span className="px-2 py-0.5 bg-purple-500 text-white text-[8px] font-black rounded-full uppercase shadow-sm">Canal Librería</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <input 
+                                                    type="number"
+                                                    value={unidLibreria}
+                                                    onChange={e => {
+                                                        const val = parseInt(e.target.value) || 0
+                                                        const p = tiraje > 0 ? (val / tiraje) * 100 : 40
+                                                        setVentasCanal({ libreriaPercent: Math.min(100, Math.round(p)), directaPercent: 100 - Math.min(100, Math.round(p)) })
+                                                    }}
+                                                    className="w-16 bg-white dark:bg-dark-300 border border-purple-200 dark:border-purple-500/30 rounded text-center text-[10px] font-bold py-0.5"
+                                                />
+                                                <span className="text-[10px] font-bold text-slate-500">u.</span>
+                                            </div>
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 bg-white/40 dark:bg-dark-200/40 p-2 rounded-lg">
                                             <div className="flex justify-between text-[10px] text-slate-500">
                                                 <span>Retorno Unit. (Neto)</span>
-                                                <span className="font-bold text-slate-900">{formatSafeCLP(retornoUnitLibreria)}</span>
+                                                <span className="font-black text-white">{formatSafeCLP(retornoUnitLibreria)}</span>
                                             </div>
                                             <div className="flex justify-between text-[10px] text-slate-500">
                                                 <span>Dto Librería (40%)</span>
-                                                <span className="text-red-400">-{formatSafeCLP(pvpNeto * 0.40)}</span>
+                                                <span className="text-red-500 font-medium">-{formatSafeCLP(pvpNeto * 0.40)}</span>
                                             </div>
                                         </div>
-                                        <div className="pt-2 border-t border-slate-200">
-                                            <p className="text-[8px] text-slate-400 font-bold uppercase">Utilidad Proyectada Canal</p>
-                                            <p className="text-md font-black text-purple-600 font-mono">{formatSafeCLP(ingresoTotalLibreria)}</p>
+                                        <div className="pt-2 flex flex-col items-center">
+                                            <p className="text-[8px] text-slate-400 font-bold uppercase mb-0.5">Utilidad Proyectada</p>
+                                            <p className="text-lg font-black text-purple-600 font-mono tracking-tight">{formatSafeCLP(ingresoTotalLibreria)}</p>
                                         </div>
                                     </div>
                                 </div>

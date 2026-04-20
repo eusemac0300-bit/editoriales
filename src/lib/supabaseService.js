@@ -601,9 +601,14 @@ export async function updateBook(bookId, updates) {
         .select()
         .single()
     
-    if (error && (error.message?.includes('final_pdf') || error.message?.includes('column'))) {
-        console.warn('Falling back: Updating book without final_pdf columns');
-        const { final_pdf_interior, final_pdf_cover, ...safeUpdates } = dbUpdates;
+    if (error && (error.message?.includes('column') || error.message?.includes('not found'))) {
+        console.warn('Falling back: Updating book without optional columns');
+        const { 
+            final_pdf_interior, final_pdf_cover, 
+            contract_status, contract_date, contract_file,
+            ...safeUpdates 
+        } = dbUpdates;
+        
         const { data: fallbackData, error: fallbackError } = await supabase
             .from('books')
             .update(safeUpdates)
@@ -612,30 +617,9 @@ export async function updateBook(bookId, updates) {
             .single()
         
         if (fallbackError) throw fallbackError
-
-        // Ensure PDFs are registered as documents if they were part of the update
-        const actualTenantId = updates.tenant_id || updates.tenantId;
-
-        if (dbUpdates.final_pdf_interior && actualTenantId) {
-            await addDocumentEntry({
-                bookId: bookId,
-                name: `Copia Interior: ${updates.title || 'Libro'}`,
-                type: 'FINAL_INTERIOR',
-                fileUrl: dbUpdates.final_pdf_interior,
-                tenantId: actualTenantId
-            })
-        }
-        if (dbUpdates.final_pdf_cover && actualTenantId) {
-            await addDocumentEntry({
-                bookId: bookId,
-                name: `Copia Tapa: ${updates.title || 'Libro'}`,
-                type: 'FINAL_COVER',
-                fileUrl: dbUpdates.final_pdf_cover,
-                tenantId: actualTenantId
-            })
-        }
         return fallbackData
     }
+    
     if (error) throw error
     return data
 }
@@ -851,26 +835,26 @@ export async function addBook(book) {
         .select()
         .single()
     
-    if (error && (error.message?.includes('final_pdf') || error.message?.includes('column'))) {
-        console.warn('Falling back: Inserting book without final_pdf columns');
-        const { final_pdf_interior, final_pdf_cover, ...safeData } = bookData;
-        const { data: fallbackData, error: fallbackError } = await supabase
+    if (error && (error.message?.includes('column') || error.message?.includes('not found'))) {
+        console.warn('Falling back: Inserting book without optional columns');
+        const { 
+            final_pdf_interior, final_pdf_cover, 
+            contract_status, contract_date, contract_file,
+            ...safeData 
+        } = bookData;
+        
+        const { data: fbData, error: fbErr } = await supabase
             .from('books')
             .insert(safeData)
             .select()
             .single()
-        if (fallbackError) {
-            console.error('Error adding book (even with fallback):', fallbackError)
-            return null
-        }
-        return fallbackData
+            
+        if (fbErr) throw fbErr;
+        return fbData;
     }
-
-    if (error) {
-        console.error('Error adding book:', error)
-        return null
-    }
-    return data
+    
+    if (error) throw error
+    return data;
 }
 
 // ============ INVENTORY UPSERT ============

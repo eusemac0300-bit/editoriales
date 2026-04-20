@@ -64,11 +64,20 @@ export default function Escandallo() {
                     setRoyaltyDirecta(dbEsc.royaltyDirecta || 30)
                     setVentasCanal(dbEsc.ventasCanal || { directaPercent: 60, libreriaPercent: 40 })
                 } else {
+                    // Mapeo exhaustivo para migración
                     setCosts({
-                        preprensa: Number(dbEsc.edicion || dbEsc.preprensa) || 0,
-                        traduccion: 0, prologo: 0, referato: 0, anticipo: 0, fotos: 0, ilustraciones: 0,
-                        imprenta: Number(dbEsc.impresion || dbEsc.imprenta) || 0,
-                        impresos: 0, traslados: 0, distribucion: Number(dbEsc.distribucion) || 0, otros: Number(dbEsc.otros) || 0
+                        preprensa: Number(dbEsc.preprensa || dbEsc.edicion || 0),
+                        traduccion: Number(dbEsc.traduccion || 0),
+                        prologo: Number(dbEsc.prologo || 0),
+                        referato: Number(dbEsc.referato || 0),
+                        anticipo: Number(dbEsc.anticipo || 0),
+                        fotos: Number(dbEsc.fotos || 0),
+                        ilustraciones: Number(dbEsc.ilustraciones || 0),
+                        imprenta: Number(dbEsc.imprenta || dbEsc.impresion || 0),
+                        impresos: Number(dbEsc.impresos || 0),
+                        traslados: Number(dbEsc.traslados || 0),
+                        distribucion: Number(dbEsc.distribucion || 0),
+                        otros: Number(dbEsc.otros || 0)
                     })
                     setPvpNeto(Math.round(Number(book.pvp) / (1 + taxRate / 100)) || 0)
                     setMarketingPercent(15)
@@ -340,9 +349,39 @@ export default function Escandallo() {
                             </div>
 
                             <div className="p-3 bg-slate-50 dark:bg-dark-50 rounded-lg border border-slate-100 dark:border-dark-100">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs font-medium text-slate-700">Mix de Canales de Venta</span>
-                                    <span className="text-[10px] text-slate-400">{ventasCanal.directaPercent}% Directa / {ventasCanal.libreriaPercent}% Librerías</span>
+                                <div className="flex flex-col gap-3 mb-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-bold text-slate-700">Canal Directo</span>
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="number"
+                                                value={udsDirecta}
+                                                onChange={e => {
+                                                    const val = parseInt(e.target.value) || 0
+                                                    const p = tiraje > 0 ? (val / tiraje) * 100 : 60
+                                                    setVentasCanal({ directaPercent: Math.round(p), libreriaPercent: 100 - Math.round(p) })
+                                                }}
+                                                className="w-16 bg-white dark:bg-dark-300 border border-slate-200 dark:border-dark-400 rounded text-center text-xs font-bold py-1"
+                                            />
+                                            <span className="text-[10px] text-slate-400">u.</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-bold text-slate-700">Canal Librería</span>
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="number"
+                                                value={udsLibreria}
+                                                onChange={e => {
+                                                    const val = parseInt(e.target.value) || 0
+                                                    const p = tiraje > 0 ? (val / tiraje) * 100 : 40
+                                                    setVentasCanal({ libreriaPercent: Math.round(p), directaPercent: 100 - Math.round(p) })
+                                                }}
+                                                className="w-16 bg-white dark:bg-dark-300 border border-slate-200 dark:border-dark-400 rounded text-center text-xs font-bold py-1"
+                                            />
+                                            <span className="text-[10px] text-slate-400">u.</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <input 
                                     type="range" min="0" max="100" step="5"
@@ -353,9 +392,9 @@ export default function Escandallo() {
                                     })}
                                     className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
                                 />
-                                <div className="flex justify-between text-[9px] text-slate-400 mt-1">
-                                    <span>Más Librería</span>
-                                    <span>Más Directa</span>
+                                <div className="flex justify-between text-[9px] text-slate-400 mt-2">
+                                    <span>Más Librería ({ventasCanal.libreriaPercent}%)</span>
+                                    <span>Más Directa ({ventasCanal.directaPercent}%)</span>
                                 </div>
                             </div>
 
