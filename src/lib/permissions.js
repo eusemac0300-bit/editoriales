@@ -1,7 +1,7 @@
 export const MODULES = [
     'Dashboard', 'Inventario', 'Producción', 'Escandallo', 'Cotizaciones',
     'Ventas', 'Consignaciones', 'Ferias y Eventos', 'Liquidaciones', 'Proveedores', 'Órdenes', 'Gastos', 'Flujo de Caja',
-    'Títulos', 'Autores', 'Usuarios', 'Documentos', 'Auditoría', 'Alertas', 'Marketing', 'Maquetación'
+    'Títulos', 'Autores', 'Usuarios', 'Documentos', 'Auditoría', 'Alertas', 'Marketing', 'Maquetación', 'Ayuda y Guía'
 ]
 
 export const DEFAULT_PERMISSIONS = {
@@ -9,13 +9,15 @@ export const DEFAULT_PERMISSIONS = {
         'Dashboard': true, 'Inventario': true, 'Producción': true, 'Escandallo': true, 'Cotizaciones': true,
         'Ventas': true, 'Consignaciones': true, 'Ferias y Eventos': true, 'Liquidaciones': true, 'Proveedores': true,
         'Órdenes': true, 'Gastos': true, 'Flujo de Caja': true, 'Títulos': true, 'Autores': true,
-        'Usuarios': true, 'Documentos': true, 'Auditoría': true, 'Alertas': true, 'Marketing': true, 'Maquetación': true
+        'Usuarios': true, 'Documentos': true, 'Auditoría': true, 'Alertas': true, 'Marketing': true, 'Maquetación': true,
+        'Ayuda y Guía': true
     },
     ADMIN: {
         'Dashboard': true, 'Inventario': true, 'Producción': true, 'Escandallo': true, 'Cotizaciones': true,
         'Ventas': true, 'Consignaciones': true, 'Ferias y Eventos': true, 'Liquidaciones': true, 'Proveedores': true,
         'Órdenes': true, 'Gastos': true, 'Flujo de Caja': true, 'Títulos': true, 'Autores': true,
-        'Usuarios': true, 'Documentos': true, 'Auditoría': true, 'Alertas': true, 'Marketing': true, 'Maquetación': true
+        'Usuarios': true, 'Documentos': true, 'Auditoría': true, 'Alertas': true, 'Marketing': true, 'Maquetación': true,
+        'Ayuda y Guía': true
     },
     VENDEDOR: {
         'Dashboard': true, 'Inventario': true, 'Producción': false, 'Escandallo': false, 'Cotizaciones': true,

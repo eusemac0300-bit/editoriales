@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { FileText, Calendar, Clock, Download, ExternalLink, Code2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import manualContent from '../../../DEVELOPER_MANUAL.md?raw'
+import adminManualContent from '../../../MANUAL_ADMINISTRADOR.md?raw'
 
 const DOCS = [
     {
@@ -13,6 +14,16 @@ const DOCS = [
         content: manualContent,
         icon: Code2,
         color: 'bg-purple-500'
+    },
+    {
+        id: 'admin_manual',
+        title: 'Manual del Administrador (User Guide)',
+        description: 'Guía detallada sobre la navegación, flujos de trabajo editoriales y el prompt para NotebookLM.',
+        date: new Date().toISOString().split('T')[0],
+        type: 'MARKDOWN',
+        content: adminManualContent,
+        icon: FileText,
+        color: 'bg-indigo-500'
     },
     {
         id: 'api_ref',
