@@ -510,14 +510,23 @@ function SaleForm({ onClose, onSave, books, data }) {
             const newClient = await addNewClient({
                 name: clientSearch,
                 type: common.type === 'B2B (Empresa / Librería)' ? 'libreria' : 'otro',
-                tenant_id: user.tenantId
+                contact_name: '',
+                email: '',
+                phone: '',
+                address: '',
+                tax_id: '',
+                notes: 'Creado desde mesa de ventas',
+                credit_limit: 0,
+                default_discount: 0,
+                tenant_id: user?.tenantId
             })
+            
             if (newClient) {
                 handleSelectClient(newClient)
             }
         } catch (err) {
-            console.error(err)
-            alert('Error al crear cliente rápido')
+            console.error('Error in handleQuickCreateClient:', err)
+            alert(`Error al crear cliente rápido: ${err.message || 'Error desconocido'}`)
         } finally {
             setIsCreatingClient(false)
         }
