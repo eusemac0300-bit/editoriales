@@ -56,6 +56,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.86', date: '2026-04-20', title: 'Persistencia Legal Corregida', details: ['Se solucionó el bug donde el estado del contrato se devolvía a "Borrador" automáticamente.', 'Sincronización robusta de fechas de contratación y archivos de contrato en Supabase.'] },
         { version: 'v3.1.5.85', date: '2026-04-20', title: 'Corrección Crítica: Creación de Clientes', details: ['Sincronización de tipos de cliente de base de datos (libreria/otro) en ventas rápidas.', 'Vinculación correcta del campo RUT/TaxID en buscadores globales.', 'Segmentación avanzada de recursos de documentación por rol jerárquico.'] },
         { version: 'v3.1.5.80', date: '2026-04-20', title: 'Centro de Documentación del Administrador', details: ['Nuevo módulo de Ayuda y Guía con acceso a tour interactivo.', 'Mapa de navegación técnico del ciclo editorial.', 'Prompt optimizado para NotebookLM integrado en la plataforma.'] },
         { version: 'v3.1.5.79', date: '2026-04-20', title: 'Selector de Clientes en Ventas', details: ['Búsqueda inteligente de clientes al registrar ventas.', 'Creación rápida de clientes desde el mismo formulario de venta.', 'Vinculación de ventas con el historial del cliente para reportes futuros.'] },

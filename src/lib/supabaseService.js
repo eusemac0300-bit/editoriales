@@ -140,6 +140,9 @@ export async function loadAllData(tenantId) {
             tiraje: b.tiraje || 0,
             escandalloCosts: b.escandallo_costs || { edicion: 0, correccion: 0, maquetacion: 0, diseno: 0, impresion: 0, marketing: 0, distribucion: 0, otros: 0 },
             deliveryDate: b.delivery_date || '',
+            contractStatus: b.contract_status || 'Borrador',
+            contractDate: b.contract_date || '',
+            contractFile: b.contract_file || '',
             finalPdfInterior: b.final_pdf_interior || '',
             finalPdfCover: b.final_pdf_cover || ''
         }))
@@ -583,6 +586,9 @@ export async function updateBook(bookId, updates) {
     if (updates.deliveryDate !== undefined) dbUpdates.delivery_date = updates.deliveryDate || null
     if (updates.authorId !== undefined) dbUpdates.author_id = updates.authorId
     if (updates.authorName !== undefined) dbUpdates.author_name = updates.authorName
+    if (updates.contractStatus !== undefined) dbUpdates.contract_status = updates.contractStatus
+    if (updates.contractDate !== undefined) dbUpdates.contract_date = updates.contractDate || null
+    if (updates.contractFile !== undefined) dbUpdates.contract_file = updates.contractFile
     
     // Check if we should include production PDF fields
     if (updates.finalPdfInterior !== undefined) dbUpdates.final_pdf_interior = updates.finalPdfInterior
@@ -832,6 +838,9 @@ export async function addBook(book) {
         has_legal_deposit: book.hasLegalDeposit,
         legal_deposit_number: book.legalDepositNumber,
         delivery_date: book.deliveryDate || null,
+        contract_status: book.contractStatus || 'Borrador',
+        contract_date: book.contractDate || null,
+        contract_file: book.contractFile || null,
         final_pdf_interior: book.finalPdfInterior || null,
         final_pdf_cover: book.finalPdfCover || null
     }
