@@ -4,6 +4,19 @@ import { useAuth } from '../../context/AuthContext'
 export default function Documentation() {
     const { t } = useAuth()
 
+    const scrollToWorkflow = () => {
+        const element = document.getElementById('workflow-section');
+        if (element) {
+            const offset = 100;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+    }
+
     const sections = [
         {
             title: 'Tour Virtual e Inducción',
@@ -11,15 +24,17 @@ export default function Documentation() {
             description: 'Recorrido visual guiado por las funcionalidades principales de la plataforma.',
             action: () => window.open('/tour_plataforma.html', '_blank'),
             label: 'Abrir Tour Interactivo',
-            color: 'bg-blue-500'
+            color: 'bg-blue-500',
+            isExternal: true
         },
         {
             title: 'Mapa de Navegación',
             icon: Map,
             description: 'Diagrama del flujo de trabajo: del catálogo a la liquidación de regalías.',
-            action: () => document.getElementById('workflow-section')?.scrollIntoView({ behavior: 'smooth' }),
+            action: scrollToWorkflow,
             label: 'Ver Mapa de Proceso',
-            color: 'bg-emerald-500'
+            color: 'bg-emerald-500',
+            isExternal: false
         }
     ]
 
@@ -70,7 +85,8 @@ export default function Documentation() {
                         <p className="text-sm text-slate-500 dark:text-dark-600 mb-6 flex-1">{section.description}</p>
                         {section.action ? (
                             <button onClick={section.action} className="w-full btn-primary py-3 flex items-center justify-center gap-2 text-sm">
-                                {section.label} <ExternalLink className="w-4 h-4" />
+                                {section.label} 
+                                {section.isExternal ? <ExternalLink className="w-4 h-4" /> : <Map className="w-4 h-4" />}
                             </button>
                         ) : (
                             <div className="w-full py-3 bg-slate-100 dark:bg-dark-300 rounded-xl text-xs font-bold text-slate-400 uppercase tracking-widest">
