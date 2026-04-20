@@ -26,7 +26,7 @@ export default function Documentation() {
             icon: MessageSquare,
             description: 'Copia el prompt optimizado para usarlo como consultor en NotebookLM.',
             action: () => {
-                const prompt = `Eres el Consultor Experto en la plataforma 'Editorial Pro' versión v3.1.5.79. Tu objetivo es ayudar al usuario a navegar por la plataforma y entender sus flujos de trabajo.\n\n**Contexto de la plataforma:**\n- Es un sistema ERP editorial que gestiona: Autores, Títulos, Inventario, Ventas, Consignaciones y Finanzas (Escandallo, Cashflow, Regalías).\n- Funcionalidad clave reciente: Selector inteligente de clientes con creación rápida en el módulo de ventas.`;
+                const prompt = `Eres el Consultor Experto en la plataforma 'Editorial Pro' versión v3.1.5.80. Tu objetivo es ayudar al usuario a navegar por la plataforma y entender sus flujos de trabajo.\n\n**Contexto de la plataforma:**\n- Es un sistema ERP editorial que gestiona: Autores, Títulos, Inventario, Ventas, Consignaciones y Finanzas (Escandallo, Cashflow, Regalías).\n- Funcionalidad clave reciente: Selector inteligente de clientes con creación rápida en el módulo de ventas.`;
                 navigator.clipboard.writeText(prompt);
                 alert('Prompt copiado al portapapeles');
             },
@@ -34,6 +34,15 @@ export default function Documentation() {
             color: 'bg-purple-500'
         }
     ]
+
+    const handleDownload = (filename) => {
+        const link = document.createElement('a');
+        link.href = `/${filename}`;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     const workflows = [
         { step: '1. Catálogo', desc: 'Crea tus Autores y Títulos. Define el PVP y los metadatos.' },
@@ -59,7 +68,7 @@ export default function Documentation() {
                 </div>
                 <div className="relative z-10 bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl text-center hidden md:block">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Versión Actual</p>
-                    <p className="text-2xl font-black text-white">v3.1.5.79</p>
+                    <p className="text-2xl font-black text-white">v3.1.5.80</p>
                 </div>
             </header>
 
@@ -108,22 +117,28 @@ export default function Documentation() {
                     <div className="glass-card p-6 border-l-4 border-l-purple-500">
                         <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest mb-4">Recursos Adicionales</h3>
                         <ul className="space-y-4">
-                            <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-colors cursor-pointer group">
-                                <div className="p-2 bg-red-100 dark:bg-red-500/10 rounded-lg text-red-500">
+                            <li 
+                                onClick={() => handleDownload('manual_administrador.md')}
+                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-colors cursor-pointer group"
+                            >
+                                <div className="p-2 bg-indigo-100 dark:bg-indigo-500/10 rounded-lg text-indigo-500">
                                     <FileText className="w-4 h-4" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-primary">Estructura_DB.pdf</p>
-                                    <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Esquema Técnico</p>
+                                    <p className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-primary">Manual_Administrador.md</p>
+                                    <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Guía Operativa</p>
                                 </div>
                             </li>
-                            <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-colors cursor-pointer group">
+                            <li 
+                                onClick={() => handleDownload('ciclo_del_libro.pdf')}
+                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-dark-200 transition-colors cursor-pointer group"
+                            >
                                 <div className="p-2 bg-blue-100 dark:bg-blue-500/10 rounded-lg text-blue-500">
                                     <FileText className="w-4 h-4" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-primary">Manual_Maestro.pdf</p>
-                                    <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Guía Avanzada</p>
+                                    <p className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-primary">Ciclo_del_Libro.pdf</p>
+                                    <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Diagrama de Proceso</p>
                                 </div>
                             </li>
                         </ul>
