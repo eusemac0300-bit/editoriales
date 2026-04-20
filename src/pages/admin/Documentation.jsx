@@ -20,18 +20,6 @@ export default function Documentation() {
             action: null,
             label: 'Ver en esta página',
             color: 'bg-emerald-500'
-        },
-        {
-            title: 'NotebookLM Prompt',
-            icon: MessageSquare,
-            description: 'Copia el prompt optimizado para usarlo como consultor en NotebookLM.',
-            action: () => {
-                const prompt = `Eres el Consultor Experto en la plataforma 'Editorial Pro' versión v3.1.5.80. Tu objetivo es ayudar al usuario a navegar por la plataforma y entender sus flujos de trabajo.\n\n**Contexto de la plataforma:**\n- Es un sistema ERP editorial que gestiona: Autores, Títulos, Inventario, Ventas, Consignaciones y Finanzas (Escandallo, Cashflow, Regalías).\n- Funcionalidad clave reciente: Selector inteligente de clientes con creación rápida en el módulo de ventas.`;
-                navigator.clipboard.writeText(prompt);
-                alert('Prompt copiado al portapapeles');
-            },
-            label: 'Copiar Prompt',
-            color: 'bg-purple-500'
         }
     ]
 
@@ -72,7 +60,7 @@ export default function Documentation() {
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {sections.map((section, idx) => (
                     <div key={idx} className="glass-card p-6 flex flex-col items-center text-center group hover:scale-[1.02] transition-all duration-300">
                         <div className={`w-14 h-14 ${section.color} rounded-2xl flex items-center justify-center text-white shadow-lg mb-4 group-hover:rotate-6 transition-transform`}>
