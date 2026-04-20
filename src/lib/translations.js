@@ -88,6 +88,7 @@ export const translations = {
         load_demo: 'Cargar Datos de Ejemplo',
         clear_demo: 'Borrar Datos de Ejemplo',
         units: 'Unidades',
+        documentation_nav: 'Guía y Ayuda',
     },
     en: {
         sales_group: 'Sales Group',
@@ -178,6 +179,7 @@ export const translations = {
         load_demo: 'Load Sample Data',
         clear_demo: 'Delete Sample Data',
         units: 'Units',
+        documentation_nav: 'Guide & Help',
     },
     pt: {
         sales_group: 'Grupo de Vendas',
@@ -268,5 +270,6 @@ export const translations = {
         load_demo: 'Carregar Dados de Exemplo',
         clear_demo: 'Apagar Dados de Exemplo',
         units: 'Unidades',
+        documentation_nav: 'Guia e Ajuda',
     },
 }

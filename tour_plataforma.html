@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tour Virtual - Editorial Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #38bdf8;
+            --transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .presentation {
+            height: 100vh;
+            width: 100%;
+            position: relative;
+        }
+
+        .slide {
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transform: scale(1.1) translateY(20px);
+            transition: var(--transition);
+            pointer-events: none;
+            text-align: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: all;
+        }
+
+        .slide-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.1), transparent),
+                        radial-gradient(circle at bottom left, rgba(56, 189, 248, 0.05), transparent);
+            z-index: -1;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to bottom right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            margin-bottom: 2rem;
+            font-weight: 900;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px border rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            text-align: left;
+            transition: var(--transition);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .card:hover {
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-10px);
+            border-color: var(--primary);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card p {
+            color: var(--text-dim);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 1rem 1.5rem;
+            border-radius: 1rem;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        button:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .nav-dots {
+            position: fixed;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .dot.active {
+            background: var(--primary);
+            transform: scale(1.5);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .version-badge {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(37, 99, 235, 0.1);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .feature-icon {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="version-badge">v3.1.5.79</div>
+    
+    <div class="nav-dots" id="dots"></div>
+
+    <div class="presentation" id="presentation">
+        <!-- Slide 1: Welcome -->
+        <div class="slide active">
+            <div class="slide-bg"></div>
+            <div class="subtitle">Bienvenido a</div>
+            <h1>Editorial Pro</h1>
+            <p style="max-width: 600px; color: var(--text-dim); margin-top: 1rem; font-size: 1.1rem;">
+                La suite tecnológica definitiva para la gestión integral de tu catálogo, 
+                producción y ventas editoriales.
+            </p>
+        </div>
+
+        <!-- Slide 2: Ciclo Editorial -->
+        <div class="slide">
+            <div class="slide-bg"></div>
+            <div class="subtitle">Estructura Central</div>
+            <h1>El Ciclo Editorial</h1>
+            <div class="content-grid">
+                <div class="card">
+                    <h2>📚 Catálogo</h2>
+                    <p>Gestión de autores, títulos y fichas técnicas. Centralización de metadatos y activos digitales.</p>
+                </div>
+                <div class="card">
+                    <h2>🏗️ Producción</h2>
+                    <p>Panel Kanban para seguimiento de proyectos. Control de Escandallo para análisis de costos unitarios.</p>
+                </div>
+                <div class="card">
+                    <h2>📦 Inventario</h2>
+                    <p>Stock en tiempo real. Diferenciación entre inventario físico y digital con alertas de quiebre.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Comercialización -->
+        <div class="slide">
+            <div class="slide-bg"></div>
+            <div class="subtitle">Ventas y Distribución</div>
+            <h1>Potencia Comercial</h1>
+            <div class="content-grid">
+                <div class="card">
+                    <h2>🛒 Ventas Directas</h2>
+                    <p>Registro rápido con selector de clientes integrado y autocompletado inteligente de títulos.</p>
+                </div>
+                <div class="card">
+                    <h2>🚚 Consignaciones</h2>
+                    <p>Control de capital "en la calle". Gestión de depósitos en librerías y distribuidores.</p>
+                </div>
+                <div class="card">
+                    <h2>🎪 Eventos y Ferias</h2>
+                    <p>Módulo especializado para ventas en terreno con reportes de rendimiento por canal.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Finanzas -->
+        <div class="slide">
+            <div class="slide-bg"></div>
+            <div class="subtitle">Control Financiero</div>
+            <h1>Trasparencia Total</h1>
+            <div class="content-grid">
+                <div class="card">
+                    <h2>💰 Cashflow</h2>
+                    <p>Flujo de caja dinámico. Visualización clara de ingresos y egresos operativos.</p>
+                </div>
+                <div class="card">
+                    <h2>⚖️ Liquidaciones</h2>
+                    <p>Cálculo automático de regalías para autores basado en el PVP neto o ventas reales.</p>
+                </div>
+                <div class="card">
+                    <h2>💸 Gastos</h2>
+                    <p>Centralización de facturas, consumibles y costos fijos para una utilidad real.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Inteligencia de Negocios -->
+        <div class="slide">
+            <div class="slide-bg"></div>
+            <div class="subtitle">Reportes y Auditoría</div>
+            <h1>Toma de Decisiones</h1>
+            <div class="content-grid">
+                <div class="card">
+                    <h2>📊 Dashboard</h2>
+                    <p>Métricas clave (KPIs) de ventas, stock y salud financiera en un solo vistazo.</p>
+                </div>
+                <div class="card">
+                    <h2>🕵️ Auditoría</h2>
+                    <p>Registro histórico de cada acción. Seguridad y trazabilidad para tu equipo.</p>
+                </div>
+                <div class="card">
+                    <h2>📈 Informes</h2>
+                    <p>Exportación de datos detallados para análisis profundo y contabilidad.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: NotebookLM Prompt -->
+        <div class="slide">
+            <div class="slide-bg"></div>
+            <div class="subtitle">Next Steps</div>
+            <h1>Documentación Inteligente</h1>
+            <p style="max-width: 800px; color: var(--text-dim); margin-top: 2rem; font-size: 1.1rem; line-height: 1.8;">
+                Utiliza el prompt adjunto para NotebookLM. <br>
+                Este guiará a la IA para que actúe como un consultor experto en tu propia plataforma, 
+                ayudándote a navegar y optimizar tus procesos.
+            </p>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="prev">Anterior</button>
+        <button id="next">Siguiente</button>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const dotsContainer = document.getElementById('dots');
+        let currentSlide = 0;
+
+        // Create dots
+        slides.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.classList.add('dot');
+            if (i === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => goToSlide(i));
+            dotsContainer.appendChild(dot);
+        });
+
+        const dots = document.querySelectorAll('.dot');
+
+        function updateSlides() {
+            slides.forEach((s, i) => {
+                s.classList.toggle('active', i === currentSlide);
+            });
+            dots.forEach((d, i) => {
+                d.classList.toggle('active', i === currentSlide);
+            });
+        }
+
+        function goToSlide(n) {
+            currentSlide = (n + slides.length) % slides.length;
+            updateSlides();
+        }
+
+        document.getElementById('next').addEventListener('click', () => goToSlide(currentSlide + 1));
+        document.getElementById('prev').addEventListener('click', () => goToSlide(currentSlide - 1));
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') goToSlide(currentSlide + 1);
+            if (e.key === 'ArrowLeft') goToSlide(currentSlide - 1);
+        });
+    </script>
+</body>
+</html>

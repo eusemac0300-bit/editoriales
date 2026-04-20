@@ -30,6 +30,7 @@ import AuditLog from './pages/admin/AuditLog'
 import Alerts from './pages/admin/Alerts'
 import Books from './pages/admin/Books'
 import Documents from './pages/admin/Documents'
+import Documentation from './pages/admin/Documentation'
 import UsersPage from './pages/admin/Users'
 import AuthorsPage from './pages/admin/Authors'
 import Reports from './pages/admin/Reports'
@@ -121,6 +122,7 @@ function AppRoutes() {
                 <Route path="libros" element={<Books />} />
                 <Route path="autores" element={<AuthorsPage />} />
                 <Route path="documentos" element={<Documents />} />
+                <Route path="documentacion" element={<Documentation />} />
                 <Route path="usuarios" element={<UsersPage />} />
                 <Route path="auditoria" element={<AuditLog />} />
                 <Route path="alertas" element={<Alerts />} />

@@ -7,7 +7,7 @@ import {
     BookOpen, LayoutDashboard, Package, Kanban, Calculator,
     DollarSign, FileText, Users, Bell, ClipboardList,
     FolderOpen, LogOut, Menu, X, ChevronDown, AlertTriangle, Printer, ShoppingCart, Truck, Contact, FileSpreadsheet, Receipt, Wallet,
-    Sun, Moon, Languages, Settings, Percent, Globe, Coins, Sparkles, Database, Trash2, Zap, Building, Tent, PieChart
+    Sun, Moon, Languages, Settings, Percent, Globe, Coins, Sparkles, Database, Trash2, Zap, Building, Tent, PieChart, HelpCircle
 } from 'lucide-react'
 
 const navItems = [
@@ -38,6 +38,7 @@ const navItems = [
     { to: '/admin/auditoria', icon: ClipboardList, label: 'audit' },
     { to: '/admin/alertas', icon: Bell, label: 'alerts' },
     { to: '/admin/reportes', icon: PieChart, label: 'reports' },
+    { to: '/admin/documentacion', icon: HelpCircle, label: 'documentation_nav' },
 ]
 
 export default function AdminLayout() {
@@ -55,6 +56,8 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.80', date: '2026-04-20', title: 'Centro de Documentación del Administrador', details: ['Nuevo módulo de Ayuda y Guía con acceso a tour interactivo.', 'Mapa de navegación técnico del ciclo editorial.', 'Prompt optimizado para NotebookLM integrado en la plataforma.'] },
+        { version: 'v3.1.5.79', date: '2026-04-20', title: 'Selector de Clientes en Ventas', details: ['Búsqueda inteligente de clientes al registrar ventas.', 'Creación rápida de clientes desde el mismo formulario de venta.', 'Vinculación de ventas con el historial del cliente para reportes futuros.'] },
         { version: 'v3.1.5.76', date: '2026-04-16', title: 'Corrección Calculadora IVA', details: ['Se solucionó el crash "taxRate is not defined" al abrir el análisis de costos (Escandallo).', 'Unificación del cálculo de IVA dinámico en toda la aplicación.'] },
         { version: 'v3.1.5.75', date: '2026-04-15', title: 'Blindaje de Buscadores', details: ['Blindaje global de buscadores (Inventario, Ventas, Eventos, Proveedores) para evitar crashes por valores nulos.'] },
         { version: 'v3.1.5.74', date: '2026-04-14', title: 'Blindaje de Inventario y Auditoría', details: ['Corrección de error crítico (toLowerCase) al buscar títulos inexistentes o eliminados en el inventario.', 'Sincronización de registros de auditoría para movimientos de stock.', 'Mejora en la estabilidad de carga de inventario digital.'] },
@@ -104,7 +107,7 @@ export default function AdminLayout() {
         'expenses': 'Gastos', 'cashflow': 'Flujo de Caja', 'royalties': 'Liquidaciones',
         'titles': 'Títulos', 'authors': 'Autores', 'users': 'Usuarios',
         'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes', 'events': 'Ferias y Eventos',
-        'sales_group': 'Ventas', 'reports': 'Informes'
+        'sales_group': 'Ventas', 'reports': 'Informes', 'documentation_nav': 'Ayuda y Guía'
     }
 
     const handleLogout = () => {
