@@ -57,6 +57,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.91', date: '2026-04-21', title: 'Sincronización Multi-Tenant', details: ['Unificación de criterios de filtrado para asegurar visibilidad de datos creados con UUIDs de respaldo.', 'Mejora en la resiliencia de carga de datos globales.'] },
         { version: 'v3.1.5.90', date: '2026-04-21', title: 'Tolerancia de Esquema', details: ['Implementación de tolerancia a esquemas antiguos en creación de clientes.', 'Mejora de logs de error en formularios de administración.'] },
         { version: 'v3.1.5.89', date: '2026-04-21', title: 'Solución Tenant Nulo', details: ['Búsqueda automática de tenant disponible para usuarios maestros.', 'Corrección de persistencia de sesión.'] },
         { version: 'v3.1.5.88', date: '2026-04-21', title: 'Hardening de Persistencia', details: ['Limpieza de campos camelCase (tenantId) en inserciones de Supabase.', 'Blindaje de seeding contra errores de esquema.'] },

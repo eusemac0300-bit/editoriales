@@ -9,6 +9,13 @@ export async function loadAllData(tenantId) {
     // Helper to switch between .eq and .is based on tenantId value (null requires .is)
     
 
+    const tFilter = (query) => {
+        if (!tenantId || tenantId === '00000000-0000-0000-0000-000000000000') {
+            return query.or('tenant_id.is.null,tenant_id.eq.00000000-0000-0000-0000-000000000000');
+        }
+        return query.eq('tenant_id', tenantId);
+    };
+
     try {
         const [
             usersRes,
@@ -31,27 +38,27 @@ export async function loadAllData(tenantId) {
             eventsRes,
             eventItemsRes
         ] = await Promise.all([
-            tenantId === null ? supabase.from('users').select('*').is('tenant_id', null) : supabase.from('users').select('*').eq('tenant_id', tenantId),
-            tenantId === null ? supabase.from('books').select('*').is('tenant_id', null) : supabase.from('books').select('*').eq('tenant_id', tenantId),
-            tenantId === null ? supabase.from('inventory_physical').select('*').is('tenant_id', null) : supabase.from('inventory_physical').select('*').eq('tenant_id', tenantId),
-            tenantId === null ? supabase.from('inventory_digital').select('*').is('tenant_id', null) : supabase.from('inventory_digital').select('*').eq('tenant_id', tenantId),
+            tFilter(supabase.from('users').select('*')),
+            tFilter(supabase.from('books').select('*')),
+            tFilter(supabase.from('inventory_physical').select('*')),
+            tFilter(supabase.from('inventory_digital').select('*')),
             
-            (tenantId === null ? supabase.from('invoices').select('*').is('tenant_id', null) : supabase.from('invoices').select('*').eq('tenant_id', tenantId)).order('date', { ascending: false }),
-            tenantId === null ? supabase.from('royalties').select('*').is('tenant_id', null) : supabase.from('royalties').select('*').eq('tenant_id', tenantId),
-            (tenantId === null ? supabase.from('audit_log').select('*').is('tenant_id', null) : supabase.from('audit_log').select('*').eq('tenant_id', tenantId)).order('date', { ascending: false }),
-            (tenantId === null ? supabase.from('comments').select('*').is('tenant_id', null) : supabase.from('comments').select('*').eq('tenant_id', tenantId)).order('date', { ascending: true }),
-            (tenantId === null ? supabase.from('alerts').select('*').is('tenant_id', null) : supabase.from('alerts').select('*').eq('tenant_id', tenantId)).order('date', { ascending: false }),
-            (tenantId === null ? supabase.from('documents').select('*').is('tenant_id', null) : supabase.from('documents').select('*').eq('tenant_id', tenantId)).order('created_at', { ascending: false }),
-            (tenantId === null ? supabase.from('sales').select('*, books(title)').is('tenant_id', null) : supabase.from('sales').select('*, books(title)').eq('tenant_id', tenantId)).order('sale_date', { ascending: false }),
-            (tenantId === null ? supabase.from('consignments').select('*, books(title)').is('tenant_id', null) : supabase.from('consignments').select('*, books(title)').eq('tenant_id', tenantId)).order('created_at', { ascending: false }),
+            tFilter(supabase.from('invoices').select('*')).order('date', { ascending: false }),
+            tFilter(supabase.from('royalties').select('*')),
+            tFilter(supabase.from('audit_log').select('*')).order('date', { ascending: false }),
+            tFilter(supabase.from('comments').select('*')).order('date', { ascending: true }),
+            tFilter(supabase.from('alerts').select('*')).order('date', { ascending: false }),
+            tFilter(supabase.from('documents').select('*')).order('created_at', { ascending: false }),
+            tFilter(supabase.from('sales').select('*, books(title)')).order('sale_date', { ascending: false }),
+            tFilter(supabase.from('consignments').select('*, books(title)')).order('created_at', { ascending: false }),
             
-            (tenantId === null ? supabase.from('quotes').select('*').is('tenant_id', null) : supabase.from('quotes').select('*').eq('tenant_id', tenantId)).order('created_at', { ascending: false }),
-            (tenantId === null ? supabase.from('suppliers').select('*').is('tenant_id', null) : supabase.from('suppliers').select('*').eq('tenant_id', tenantId)).order('name', { ascending: true }),
-            (tenantId === null ? supabase.from('purchase_orders').select('*, books(title), suppliers(name)').is('tenant_id', null) : supabase.from('purchase_orders').select('*, books(title), suppliers(name)').eq('tenant_id', tenantId)).order('date_ordered', { ascending: false }),
-            (tenantId === null ? supabase.from('expenses').select('*, suppliers(name)').is('tenant_id', null) : supabase.from('expenses').select('*, suppliers(name)').eq('tenant_id', tenantId)).order('date', { ascending: false }),
-            (tenantId === null ? supabase.from('clients').select('*').is('tenant_id', null) : supabase.from('clients').select('*').eq('tenant_id', tenantId)).order('name', { ascending: true }),
-            (tenantId === null ? supabase.from('events').select('*').is('tenant_id', null) : supabase.from('events').select('*').eq('tenant_id', tenantId)).order('start_date', { ascending: false }),
-            tenantId === null ? supabase.from('event_items').select('*, books(title)').is('tenant_id', null) : supabase.from('event_items').select('*, books(title)').eq('tenant_id', tenantId)
+            tFilter(supabase.from('quotes').select('*')).order('created_at', { ascending: false }),
+            tFilter(supabase.from('suppliers').select('*')).order('name', { ascending: true }),
+            tFilter(supabase.from('purchase_orders').select('*, books(title), suppliers(name)')).order('date_ordered', { ascending: false }),
+            tFilter(supabase.from('expenses').select('*, suppliers(name)')).order('date', { ascending: false }),
+            tFilter(supabase.from('clients').select('*')).order('name', { ascending: true }),
+            tFilter(supabase.from('events').select('*')).order('start_date', { ascending: false }),
+            tFilter(supabase.from('event_items').select('*, books(title)'))
         ])
 
         const users = usersRes.data;
