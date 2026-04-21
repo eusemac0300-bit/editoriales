@@ -1603,11 +1603,7 @@ export async function deleteSupplierFromDb(supplierId) {
 
 // ============ CLIENTS ============
 export async function addClientToDb(tenantId, clientData) {
-    let tid = tenantId || clientData.tenant_id || clientData.tenantId || null;
-    if (!tid) {
-        const { data: anyT } = await supabase.from('tenants').select('id').limit(1).maybeSingle();
-        tid = anyT?.id || '00000000-0000-0000-0000-000000000000';
-    }
+    const tid = ensureTenantId(tenantId || clientData.tenantId || clientData.tenant_id);
     
     // Explicitly destructure to keep only DB-compatible fields
     const { 
@@ -2135,27 +2131,39 @@ export async function clearDemoData(tenantId) {
 // ============ EVENTS / FERIAS ============
 export async function addEventToDb(tenantId, eventData, items) {
     const tid = ensureTenantId(tenantId);
-    const { data: event, error: eventErr } = await supabase
+    
+    const eventInsertData = {
+        name: eventData.name,
+        location: eventData.location,
+        notes: eventData.notes,
+        status: 'open',
+        tenant_id: tid
+    };
+
+    if (eventData.startDate && typeof eventData.startDate === 'string' && eventData.startDate.trim() !== '') {
+        eventInsertData.start_date = eventData.startDate;
+    }
+
+    if (eventData.endDate && typeof eventData.endDate === 'string' && eventData.endDate.trim() !== '') {
+        eventInsertData.end_date = eventData.endDate;
+    }
+
+    const { data: eventRecords, error: eventErr } = await supabase
         .from('events')
-        .insert([{
-            name: eventData.name,
-            start_date: (eventData.startDate && eventData.startDate.trim() !== "") ? eventData.startDate : null,
-            end_date: (eventData.endDate && eventData.endDate.trim() !== "") ? eventData.endDate : null,
-            location: eventData.location,
-            notes: eventData.notes,
-            status: 'open',
-            tenant_id: tid
-        }])
+        .insert([eventInsertData])
         .select()
     
     if (eventErr) throw eventErr
+    if (!eventRecords || eventRecords.length === 0) throw new Error("No se pudo crear el registro del evento");
+
+    const createdEvent = eventRecords[0];
 
     if (items && items.length > 0) {
         // 1. Insert event items
         const { error: itemsErr } = await supabase
             .from('event_items')
             .insert(items.map(item => ({
-                event_id: event[0].id,
+                event_id: createdEvent.id,
                 book_id: item.bookId,
                 initial_qty: item.initialQty,
                 tenant_id: tid
@@ -2195,16 +2203,24 @@ export async function addEventToDb(tenantId, eventData, items) {
 }
 
 export async function updateEventInDb(eventId, updates) {
+    const updateData = {
+        name: updates.name,
+        location: updates.location,
+        notes: updates.notes,
+        status: updates.status
+    };
+
+    if (updates.startDate !== undefined) {
+        updateData.start_date = (updates.startDate && typeof updates.startDate === 'string' && updates.startDate.trim() !== "") ? updates.startDate : null;
+    }
+
+    if (updates.endDate !== undefined) {
+        updateData.end_date = (updates.endDate && typeof updates.endDate === 'string' && updates.endDate.trim() !== "") ? updates.endDate : null;
+    }
+
     const { data, error } = await supabase
         .from('events')
-        .update({
-            name: updates.name,
-            start_date: (updates.startDate && updates.startDate.trim() !== "") ? updates.startDate : null,
-            end_date: (updates.endDate && updates.endDate.trim() !== "") ? updates.endDate : null,
-            location: updates.location,
-            notes: updates.notes,
-            status: updates.status
-        })
+        .update(updateData)
         .eq('id', eventId)
         .select()
     if (error) throw error
