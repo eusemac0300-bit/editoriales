@@ -438,7 +438,7 @@ export async function loginUser(email, password) {
             
             const { data: tenant } = await supabase
                 .from('tenants')
-                .select('plan, status')
+                .select('plan, status, logo_url')
                 .eq('id', realUser.tenant_id)
                 .single()
 
@@ -447,6 +447,7 @@ export async function loginUser(email, password) {
                 tenantId: realUser.tenant_id,
                 tenantPlan: tenant?.plan || 'ENTERPRISE',
                 tenantStatus: tenant?.status || 'ACTIVE',
+                tenantLogo: tenant?.logo_url || null,
                 email: realUser.email,
                 name: realUser.name || (isSuper ? 'Eusebio Manriquez (Owner)' : 'Administrador Maestro'),
                 role: isSuper ? 'SUPERADMIN' : realUser.role || 'ADMIN',
@@ -645,6 +646,9 @@ export async function addDocumentEntry(doc) {
             file_url: doc.fileUrl,
             size: doc.size,
             amount: doc.amount,
+            status: doc.status || 'Vigente',
+            start_date: doc.startDate,
+            end_date: doc.endDate,
             uploaded_by: doc.uploadedBy
         })
     return !error
@@ -656,6 +660,9 @@ export async function updateDocumentEntry(docId, updates) {
     if (updates.type !== undefined) dbUpdates.type = updates.type
     if (updates.bookId !== undefined) dbUpdates.book_id = updates.bookId
     if (updates.amount !== undefined) dbUpdates.amount = updates.amount
+    if (updates.status !== undefined) dbUpdates.status = updates.status
+    if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate
+    if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate
 
     const { error } = await supabase
         .from('documents')
@@ -1580,29 +1587,31 @@ export async function deleteSupplierFromDb(supplierId) {
 // ============ CLIENTS ============
 export async function addClientToDb(tenantId, clientData) {
     let tid = tenantId || clientData.tenant_id || clientData.tenantId || null;
-    const { default_discount, credit_limit, discount_percent, ...rest } = clientData;
+    
+    // Clean up fields that might cause schema mismatch
+    const { 
+        tenantId: _tId, 
+        tenant_id: _tid2, 
+        default_discount, 
+        credit_limit, 
+        discount_percent, 
+        ...safeData 
+    } = clientData;
 
     try {
+        // Try precise insert first with underscore tenant_id
         const { data, error } = await supabase
             .from('clients')
-            .insert([{ ...clientData, tenant_id: tid }])
+            .insert([{ ...safeData, tenant_id: tid }])
             .select();
 
         if (error) {
-            // Fallback for schema mismatch
-            if (error.message?.includes('column') || error.message?.includes('not found')) {
-                const { data: fbData, error: fbErr } = await supabase
-                    .from('clients')
-                    .insert([{ ...rest, tenant_id: tid }])
-                    .select();
-                if (fbErr) throw fbErr;
-                return fbData[0];
-            }
+            console.error('Error insertando cliente:', error);
             throw error;
         }
-        return data[0];
+        return data?.[0] || null;
     } catch (err) {
-        console.error('Error adding client:', err);
+        console.error('Excepción en addClientToDb:', err);
         throw err;
     }
 }
@@ -2314,6 +2323,72 @@ export async function deleteEventFromDb(eventId) {
         .eq('id', eventId)
     if (error) throw error
     return true
+}
+
+// ============ SETTINGS & BRANDING ============
+
+export async function getTenantSettings(tenantId) {
+    if (!tenantId) return null;
+    try {
+        const { data, error } = await supabase
+            .from('tenants')
+            .select('*')
+            .eq('id', tenantId)
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (err) {
+        console.error('Error fetching tenant settings:', err);
+        return null;
+    }
+}
+
+export async function updateTenantLogoInDb(tenantId, logoUrl) {
+    if (!tenantId) return false;
+    try {
+        const { error } = await supabase
+            .from('tenants')
+            .update({ logo_url: logoUrl })
+            .eq('id', tenantId);
+
+        if (error) {
+           console.warn('Could not update logo_url in tenants table. This column might be missing.', error);
+           return false;
+        }
+        return true;
+    } catch (err) {
+        console.error('Error updating tenant logo:', err);
+        return false;
+    }
+}
+
+export async function uploadEditorialLogo(tenantId, file) {
+    if (!tenantId || !file) return null;
+    
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${tenantId}/logo_${Date.now()}.${fileExt}`;
+        const filePath = `branding/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('editorial_documents')
+            .upload(filePath, file, {
+                upsert: true,
+                contentType: file.type
+            });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('editorial_documents')
+            .getPublicUrl(filePath);
+
+        return publicUrl;
+    } catch (err) {
+        console.error('Error uploading logo:', err);
+        throw err;
+    }
 }
 
 

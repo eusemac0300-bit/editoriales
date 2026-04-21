@@ -22,6 +22,8 @@ import SuperAdminDocumentation from './pages/superadmin/Documentation'
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard'
+import Management from './pages/admin/Management'
+import Settings from './pages/admin/Settings'
 import Kanban from './pages/admin/Kanban'
 import Inventory from './pages/admin/Inventory'
 import Escandallo from './pages/admin/Escandallo'
@@ -125,6 +127,7 @@ function AppRoutes() {
                 <Route path="documentacion" element={<Documentation />} />
                 <Route path="usuarios" element={<UsersPage />} />
                 <Route path="auditoria" element={<AuditLog />} />
+                <Route path="configuracion" element={<Settings />} />
                 <Route path="alertas" element={<Alerts />} />
                 <Route path="reportes" element={<Reports />} />
                 {/* <Route path="marketing" element={<Marketing />} />

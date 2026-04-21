@@ -107,6 +107,14 @@ export function AuthProvider({ children }) {
         }
     }, [])
 
+    const updateLogo = useCallback((newUrl) => {
+        if (user) {
+            const updatedUser = { ...user, tenantLogo: newUrl };
+            setUser(updatedUser);
+            localStorage.setItem('editorial_user', JSON.stringify(updatedUser));
+        }
+    }, [user]);
+
     const logout = useCallback(() => {
         setUser(null)
         localStorage.removeItem('editorial_user')

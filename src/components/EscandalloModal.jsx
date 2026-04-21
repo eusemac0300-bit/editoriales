@@ -32,7 +32,11 @@ export default function EscandalloModal({ book, onClose }) {
             
             // Si ya tiene el formato nuevo (anidado)
             if (dbEsc.costs) {
-                setCosts(dbEsc.costs)
+                setCosts({
+                    preprensa: 0, traduccion: 0, prologo: 0, referato: 0, anticipo: 0, fotos: 0, ilustraciones: 0,
+                    imprenta: 0, impresos: 0, traslados: 0, distribucion: 0, otros: 0,
+                    ...dbEsc.costs
+                })
                 setMarketingPercent(dbEsc.marketingPercent || 15)
                 setPvpNeto(dbEsc.pvpNeto || 0)
                 setRoyaltyLibreria(dbEsc.royaltyLibreria || 10)
@@ -337,12 +341,17 @@ export default function EscandalloModal({ book, onClose }) {
                                 <div className="bg-slate-100 dark:bg-dark-100 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
                                     <h3 className="text-[10px] font-black text-slate-600 dark:text-dark-700 uppercase">ANÁLISIS DE RETORNO POR CANAL</h3>
                                     <div className="flex gap-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[8px] font-bold text-blue-500">DISTRIBUCIÓN DE TIRADA ({tiraje} u.):</span>
-                                            <input type="range" min="0" max="100" value={ventasCanal.directaPercent} onChange={e => {
-                                                const d = parseInt(e.target.value)
-                                                setVentasCanal({ directaPercent: d, libreriaPercent: 100 - d })
-                                            }} className="w-16 h-1 bg-blue-200 rounded-lg appearance-none cursor-pointer" />
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] font-black text-blue-500 mb-1">DISTRIBUCIÓN DE VENTAS (Tiraje: {tiraje})</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[8px] font-bold text-slate-400">Librería</span>
+                                                <input type="range" min="0" max="100" value={ventasCanal.directaPercent} onChange={e => {
+                                                    const d = parseInt(e.target.value)
+                                                    setVentasCanal({ directaPercent: d, libreriaPercent: 100 - d })
+                                                }} className="w-24 h-1 bg-blue-200 rounded-lg appearance-none cursor-pointer" />
+                                                <span className="text-[8px] font-bold text-blue-500">Directa</span>
+                                            </div>
+                                            <p className="text-[8px] text-slate-400 mt-1 italic">Arrastra para definir cuántas unidades vendes por canal</p>
                                         </div>
                                     </div>
                                 </div>
@@ -369,7 +378,7 @@ export default function EscandalloModal({ book, onClose }) {
                                         <div className="space-y-1 bg-white/40 dark:bg-dark-200/40 p-2 rounded-lg">
                                             <div className="flex justify-between text-[10px] text-slate-500">
                                                 <span>Retorno Unit. (Neto)</span>
-                                                <span className="font-black text-white">{formatSafeCLP(retornoUnitDirecta)}</span>
+                                                <span className="font-black text-white bg-blue-500/20 px-1 rounded">{formatSafeCLP(retornoUnitDirecta)}</span>
                                             </div>
                                             <div className="flex justify-between text-[10px] text-slate-500">
                                                 <span>Mkt/Plataf./TBK (4%)</span>
@@ -403,7 +412,7 @@ export default function EscandalloModal({ book, onClose }) {
                                         <div className="space-y-1 bg-white/40 dark:bg-dark-200/40 p-2 rounded-lg">
                                             <div className="flex justify-between text-[10px] text-slate-500">
                                                 <span>Retorno Unit. (Neto)</span>
-                                                <span className="font-black text-white">{formatSafeCLP(retornoUnitLibreria)}</span>
+                                                <span className="font-black text-white bg-purple-500/20 px-1 rounded">{formatSafeCLP(retornoUnitLibreria)}</span>
                                             </div>
                                             <div className="flex justify-between text-[10px] text-slate-500">
                                                 <span>Dto Librería (40%)</span>

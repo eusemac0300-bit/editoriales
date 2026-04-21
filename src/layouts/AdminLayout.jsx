@@ -38,6 +38,7 @@ const navItems = [
     { to: '/admin/auditoria', icon: ClipboardList, label: 'audit' },
     { to: '/admin/alertas', icon: Bell, label: 'alerts' },
     { to: '/admin/reportes', icon: PieChart, label: 'reports' },
+    { to: '/admin/configuracion', icon: Settings, label: 'settings' },
     { to: '/admin/documentacion', icon: HelpCircle, label: 'documentation_nav' },
 ]
 
@@ -56,6 +57,7 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.87', date: '2026-04-21', title: 'Robustez en Costos y Legal', details: ['Sincronización robusta de "Prólogo" y "Referato" en Escandallo.', 'Corrección del guardado de estados legales (Firmado/Vencido).', 'Mejora en creación rápida de clientes y contrastes de legibilidad financiera.'] },
         { version: 'v3.1.5.86', date: '2026-04-20', title: 'Persistencia Legal Corregida', details: ['Se solucionó el bug donde el estado del contrato se devolvía a "Borrador" automáticamente.', 'Sincronización robusta de fechas de contratación y archivos de contrato en Supabase.'] },
         { version: 'v3.1.5.85', date: '2026-04-20', title: 'Corrección Crítica: Creación de Clientes', details: ['Sincronización de tipos de cliente de base de datos (libreria/otro) en ventas rápidas.', 'Vinculación correcta del campo RUT/TaxID en buscadores globales.', 'Segmentación avanzada de recursos de documentación por rol jerárquico.'] },
         { version: 'v3.1.5.80', date: '2026-04-20', title: 'Centro de Documentación del Administrador', details: ['Nuevo módulo de Ayuda y Guía con acceso a tour interactivo.', 'Mapa de navegación técnico del ciclo editorial.', 'Prompt optimizado para NotebookLM integrado en la plataforma.'] },
@@ -109,7 +111,7 @@ export default function AdminLayout() {
         'expenses': 'Gastos', 'cashflow': 'Flujo de Caja', 'royalties': 'Liquidaciones',
         'titles': 'Títulos', 'authors': 'Autores', 'users': 'Usuarios',
         'documents': 'Documentos', 'audit': 'Auditoría', 'alerts': 'Alertas', 'marketing': 'Marketing', 'marketing_3d': 'Marketing 3D', 'clients': 'Clientes', 'events': 'Ferias y Eventos',
-        'sales_group': 'Ventas', 'reports': 'Informes', 'documentation_nav': 'Ayuda y Guía'
+        'sales_group': 'Ventas', 'reports': 'Informes', 'documentation_nav': 'Ayuda y Guía', 'settings': 'Configuración'
     }
 
     const handleLogout = () => {

@@ -57,7 +57,11 @@ export default function Escandallo() {
                 // This prevents values from previous books from "sticking".
                 const dbEsc = book.escandalloCosts || {}
                 if (dbEsc.costs) {
-                    setCosts(dbEsc.costs)
+                    setCosts({
+                        preprensa: 0, traduccion: 0, prologo: 0, referato: 0, anticipo: 0, fotos: 0, ilustraciones: 0,
+                        imprenta: 0, impresos: 0, traslados: 0, distribucion: 0, otros: 0,
+                        ...dbEsc.costs
+                    })
                     setMarketingPercent(dbEsc.marketingPercent || 15)
                     setPvpNeto(dbEsc.pvpNeto || 0)
                     setRoyaltyLibreria(dbEsc.royaltyLibreria || 10)
@@ -210,9 +214,9 @@ export default function Escandallo() {
     const costItems = [
         { key: 'preprensa', label: 'Preprensa/Edición', icon: '✍️', category: 'edicion' },
         { key: 'traduccion', label: 'Traducción', icon: '🌐', category: 'edicion' },
-        { key: 'prologo', label: 'Prólogo/Derechos', icon: '📄', category: 'edicion' },
-        { key: 'referato', label: 'Referato/Lectura', icon: '👁️', category: 'edicion' },
-        { key: 'anticipo', label: 'Anticipo Autor', icon: '💰', category: 'edicion' },
+        { key: 'prologo', label: 'Prólogo', icon: '📄', category: 'edicion' },
+        { key: 'referato', label: 'Referato', icon: '👁️', category: 'edicion' },
+        { key: 'anticipo', label: 'Derechos (Antic.)', icon: '💰', category: 'edicion' },
         { key: 'imprenta', label: 'Imprenta (Neto)', icon: '🖨️', category: 'impresion' },
         { key: 'distribucion', label: 'Distribución/Flete', icon: '🚚', category: 'otros' },
         { key: 'otros', label: 'Otros Gastos', icon: '📦', category: 'otros' },

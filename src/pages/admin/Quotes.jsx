@@ -6,7 +6,7 @@ import autoTable from 'jspdf-autotable'
 import { supabase } from '../../lib/supabase'
 
 export default function Quotes() {
-    const { data, addNewQuote, updateQuoteDetails, deleteExistingQuote, formatCurrency, addAuditLog, taxRate, t } = useAuth()
+    const { user, data, addNewQuote, updateQuoteDetails, deleteExistingQuote, formatCurrency, addAuditLog, taxRate, t } = useAuth()
     const formatCLP = formatCurrency
     const [showAdd, setShowAdd] = useState(false)
     const [editingQuote, setEditingQuote] = useState(null)
@@ -81,6 +81,16 @@ export default function Quotes() {
         doc.setFontSize(18)
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
         doc.text('SOLICITUD DE COTIZACIÓN', pageMargin, pageMargin + 5)
+        
+        // Logo de la Editorial (si existe)
+        if (user?.tenantLogo) {
+            try {
+                // Posicionar logo a la derecha
+                doc.addImage(user.tenantLogo, 'PNG', 165, pageMargin - 5, 30, 30, undefined, 'FAST');
+            } catch (e) {
+                console.warn('Could not load logo for PDF', e);
+            }
+        }
 
         // Línea separadora decorativa
         doc.setDrawColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
