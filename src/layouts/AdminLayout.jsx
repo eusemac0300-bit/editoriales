@@ -57,6 +57,9 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.90', date: '2026-04-21', title: 'Tolerancia de Esquema', details: ['Implementación de tolerancia a esquemas antiguos en creación de clientes.', 'Mejora de logs de error en formularios de administración.'] },
+        { version: 'v3.1.5.89', date: '2026-04-21', title: 'Solución Tenant Nulo', details: ['Búsqueda automática de tenant disponible para usuarios maestros.', 'Corrección de persistencia de sesión.'] },
+        { version: 'v3.1.5.88', date: '2026-04-21', title: 'Hardening de Persistencia', details: ['Limpieza de campos camelCase (tenantId) en inserciones de Supabase.', 'Blindaje de seeding contra errores de esquema.'] },
         { version: 'v3.1.5.87', date: '2026-04-21', title: 'Robustez en Costos y Legal', details: ['Sincronización robusta de "Prólogo" y "Referato" en Escandallo.', 'Corrección del guardado de estados legales (Firmado/Vencido).', 'Mejora en creación rápida de clientes y contrastes de legibilidad financiera.'] },
         { version: 'v3.1.5.86', date: '2026-04-20', title: 'Persistencia Legal Corregida', details: ['Se solucionó el bug donde el estado del contrato se devolvía a "Borrador" automáticamente.', 'Sincronización robusta de fechas de contratación y archivos de contrato en Supabase.'] },
         { version: 'v3.1.5.85', date: '2026-04-20', title: 'Corrección Crítica: Creación de Clientes', details: ['Sincronización de tipos de cliente de base de datos (libreria/otro) en ventas rápidas.', 'Vinculación correcta del campo RUT/TaxID en buscadores globales.', 'Segmentación avanzada de recursos de documentación por rol jerárquico.'] },
