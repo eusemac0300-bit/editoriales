@@ -1,17 +1,18 @@
 import { supabase } from './supabase'
 
-// ============ LOAD ALL DATA ============
-export async function loadAllData(tenantId) {
-    if (tenantId === undefined) return null
-    
-    // We allow any tenantId that is present. The database uses TEXT for tenant_id columns.
-    // The previous UUID-only check was preventing demo and legacy accounts from loading certain data.
 // Helper to ensure we always have a valid tenant_id for insertions (prevents NOT NULL violations)
 const ensureTenantId = (tid) => {
     if (!tid || tid === 'null') return '00000000-0000-0000-0000-000000000000';
     if (typeof tid === 'object' && tid.tenantId) return tid.tenantId;
     return tid;
 };
+
+// ============ LOAD ALL DATA ============
+export async function loadAllData(tenantId) {
+    if (tenantId === undefined) return null
+    
+    // We allow any tenantId that is present. The database uses TEXT for tenant_id columns.
+    // The previous UUID-only check was preventing demo and legacy accounts from loading certain data.
 
     const tFilter = (query) => {
         if (!tenantId || tenantId === '00000000-0000-0000-0000-000000000000') {
