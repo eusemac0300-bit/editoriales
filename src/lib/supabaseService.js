@@ -880,37 +880,44 @@ export async function addBook(book) {
     return data;
 }
 
-// ============ INVENTORY UPSERT ============
-export async function upsertInventoryPhysical(bookId, updates) {
-    // Try update first
-    const { data, error: selectErr } = await supabase
-        .from('inventory_physical')
-        .select('id')
-        .eq('book_id', bookId)
-
-    if (data && data.length > 0) {
-        const { error } = await supabase
+export async function upsertInventoryPhysical(bookId, updatedData) {
+    try {
+        const tid = ensureTenantId(updatedData.tenantId);
+        
+        // Buscamos si existe el registro para este libro Y este tenant
+        const { data, error: selectErr } = await supabase
             .from('inventory_physical')
-            .update({
-                stock: updates.stock,
-                min_stock: updates.minStock,
-                entries: updates.entries,
-                exits: updates.exits
-            })
+            .select('id, stock, entries, exits')
             .eq('book_id', bookId)
-        return !error
-    } else {
-        const { error } = await supabase
-            .from('inventory_physical')
-            .insert({
-                tenant_id: ensureTenantId(updates.tenantId),
-                book_id: bookId,
-                stock: updates.stock,
-                min_stock: updates.minStock || 100,
-                entries: updates.entries || [],
-                exits: updates.exits || []
-            })
-        return !error
+            .eq('tenant_id', tid)
+            .maybeSingle()
+
+        const payload = {
+            book_id: bookId,
+            stock: updatedData.stock,
+            min_stock: updatedData.minStock || 100,
+            entries: updatedData.entries || [],
+            exits: updatedData.exits || [],
+            tenant_id: tid
+        }
+
+        if (data?.id) {
+            const { error: updErr } = await supabase
+                .from('inventory_physical')
+                .update(payload)
+                .eq('id', data.id)
+            if (updErr) throw updErr
+            return true
+        } else {
+            const { error: insErr } = await supabase
+                .from('inventory_physical')
+                .insert([payload])
+            if (insErr) throw insErr
+            return true
+        }
+    } catch (err) {
+        console.error('Upsert inventory failed:', err)
+        throw err
     }
 }
 
@@ -1774,9 +1781,20 @@ export async function receivePurchaseOrderInDb(poId, quantity, bookId, tenantId)
     if (invErr && invErr.code !== 'PGRST116') throw invErr
 
     if (inv) {
+        const newEntry = {
+            date: new Date().toISOString(),
+            quantity: quantity,
+            reason: `Recepción O.C. #${po.document_ref || poId.slice(0,8)}`,
+            type: 'compra'
+        }
+        const updatedEntries = [...(inv.entries || []), newEntry]
+        
         const { error: upErr } = await supabase
             .from('inventory_physical')
-            .update({ stock: inv.stock + quantity })
+            .update({ 
+                stock: (inv.stock || 0) + quantity,
+                entries: updatedEntries
+            })
             .eq('id', inv.id)
         if (upErr) throw upErr
     } else {
@@ -1786,7 +1804,14 @@ export async function receivePurchaseOrderInDb(poId, quantity, bookId, tenantId)
                 book_id: bookId,
                 tenant_id: ensureTenantId(tenantId),
                 stock: quantity,
-                min_stock: 10
+                min_stock: 100,
+                entries: [{
+                    date: new Date().toISOString(),
+                    quantity: quantity,
+                    reason: `Recepción O.C. #${po.document_ref || poId.slice(0,8)}`,
+                    type: 'compra'
+                }],
+                exits: []
             }])
         if (insErr) throw insErr
     }
@@ -2173,19 +2198,22 @@ export async function addEventToDb(tenantId, eventData, items) {
 
         // 2. Automatically deduct from inventory (Stock Movement)
         for (const item of items) {
+            // Buscamos inventario actual para este tenant
             const { data: inv } = await supabase
                 .from('inventory_physical')
                 .select('*')
                 .eq('book_id', item.bookId)
-                .single()
+                .eq('tenant_id', tid)
+                .maybeSingle()
             
+            const newExit = {
+                date: new Date().toISOString(),
+                quantity: item.initialQty,
+                reason: `Despacho a Feria: ${eventData.name}`,
+                type: 'feria'
+            }
+
             if (inv) {
-                const newExit = {
-                    date: new Date().toISOString(),
-                    quantity: item.initialQty,
-                    reason: `Despacho a Feria: ${eventData.name}`,
-                    type: 'feria'
-                }
                 const updatedExits = [...(inv.exits || []), newExit]
                 const newStock = (inv.stock || 0) - item.initialQty
                 
@@ -2196,11 +2224,21 @@ export async function addEventToDb(tenantId, eventData, items) {
                         exits: updatedExits 
                     })
                     .eq('id', inv.id)
+            } else {
+                // If no inventory record, create one with negative/correct stock
+                await supabase.from('inventory_physical').insert({
+                    book_id: item.bookId,
+                    tenant_id: tid,
+                    stock: -item.initialQty,
+                    min_stock: 100,
+                    entries: [],
+                    exits: [newExit]
+                })
             }
         }
     }
 
-    return event[0]
+    return createdEvent
 }
 
 export async function updateEventInDb(eventId, updates) {
@@ -2254,7 +2292,8 @@ export async function settleEventInDb(eventId, itemsData) {
                 .from('inventory_physical')
                 .select('*')
                 .eq('book_id', item.bookId)
-                .single()
+                .eq('tenant_id', event.tenant_id)
+                .maybeSingle()
             
             if (inv) {
                 const newEntry = {
@@ -2273,6 +2312,21 @@ export async function settleEventInDb(eventId, itemsData) {
                         entries: updatedEntries 
                     })
                     .eq('id', inv.id)
+            } else {
+                // If no inventory record, create one
+                await supabase.from('inventory_physical').insert({
+                    book_id: item.bookId,
+                    tenant_id: event.tenant_id,
+                    stock: item.returnedQty,
+                    min_stock: 100,
+                    entries: [{
+                        date: new Date().toISOString(),
+                        quantity: item.returnedQty,
+                        reason: `Retorno de Feria: ${event.name}`,
+                        type: 'retorno'
+                    }],
+                    exits: []
+                })
             }
         }
 
