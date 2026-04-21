@@ -461,9 +461,13 @@ export async function loginUser(email, password) {
         console.warn('[Login] Master/Super NOT found in DB, using fallback')
         const finalName = isSuper ? 'Eusebio Manriquez (Owner)' : (email === 'contacto@dpiprint.cl' ? 'Administrador DPI Print' : 'Eusebio Maestro (Admin)');
         
+        // Attempt to find ANY tenant to avoid null tenant_id errors in writes
+        const { data: firstTenant } = await supabase.from('tenants').select('id').limit(1).maybeSingle();
+        const fallbackId = firstTenant?.id || '00000000-0000-0000-0000-000000000000';
+
         return {
             id: isSuper ? 'super-val-uid' : 'master-val-uid',
-            tenantId: null, 
+            tenantId: fallbackId, 
             email: email,
             name: finalName,
             role: isSuper ? 'SUPERADMIN' : 'ADMIN',
@@ -1551,6 +1555,10 @@ export async function deleteSaleFromDb(saleId) {
 // ============ SUPPLIERS ============
 export async function addSupplierToDb(tenantId, supplierData) {
     let tid = tenantId || supplierData.tenant_id || supplierData.tenantId || null;
+    if (!tid) {
+        const { data: anyT } = await supabase.from('tenants').select('id').limit(1).maybeSingle();
+        tid = anyT?.id || '00000000-0000-0000-0000-000000000000';
+    }
     
     // Remote camelCase tenantId to avoid DB errors
     const { tenantId: _tId, tenant_id: _tid2, ...safeData } = supplierData;
@@ -1589,7 +1597,11 @@ export async function deleteSupplierFromDb(supplierId) {
 
 // ============ CLIENTS ============
 export async function addClientToDb(tenantId, clientData) {
-    const tid = tenantId || clientData.tenant_id || clientData.tenantId || null;
+    let tid = tenantId || clientData.tenant_id || clientData.tenantId || null;
+    if (!tid) {
+        const { data: anyT } = await supabase.from('tenants').select('id').limit(1).maybeSingle();
+        tid = anyT?.id || '00000000-0000-0000-0000-000000000000';
+    }
     
     // Explicitly destructure to keep only DB-compatible fields
     const { 
@@ -1655,7 +1667,11 @@ export async function deleteClientFromDb(clientId) {
 
 // ============ PURCHASE ORDERS ============
 export async function addPurchaseOrderToDb(tenantId, poData) {
-    const tid = tenantId || poData.tenantId || poData.tenant_id;
+    let tid = tenantId || poData.tenantId || poData.tenant_id || null;
+    if (!tid) {
+        const { data: anyT } = await supabase.from('tenants').select('id').limit(1).maybeSingle();
+        tid = anyT?.id || '00000000-0000-0000-0000-000000000000';
+    }
     const { tenantId: _tId, tenant_id: _tid2, ...safeData } = poData;
 
     const { data, error } = await supabase
@@ -1790,7 +1806,11 @@ export async function receivePurchaseOrderInDb(poId, quantity, bookId, tenantId)
 
 // ============ EXPENSES ============
 export async function addExpenseToDb(tenantId, expenseData) {
-    const tid = tenantId || expenseData.tenantId || expenseData.tenant_id;
+    let tid = tenantId || expenseData.tenantId || expenseData.tenant_id || null;
+    if (!tid) {
+        const { data: anyT } = await supabase.from('tenants').select('id').limit(1).maybeSingle();
+        tid = anyT?.id || '00000000-0000-0000-0000-000000000000';
+    }
     const { tenantId: _tId, tenant_id: _tid2, ...safeData } = expenseData;
     
     const { data, error } = await supabase

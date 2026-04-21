@@ -73,12 +73,7 @@ export function AuthProvider({ children }) {
         if (savedUserRecord) {
             try {
                 const parsed = JSON.parse(savedUserRecord)
-                // Clean up old dummy tenant IDs that cause FK violations
-                if (parsed?.tenantId === '00000000-0000-0000-0000-000000000000') {
-                    parsed.tenantId = null
-                    localStorage.setItem('editorial_user', JSON.stringify(parsed))
-                }
-                
+                // Keep tenantId even if it's the dummy one, to avoid NOT NULL constraint violations
                 if (parsed && parsed.id) {
                     setUser(parsed)
                 } else {
