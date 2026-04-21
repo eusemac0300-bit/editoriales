@@ -1158,7 +1158,7 @@ export async function seedDemoData(tenantId, adminUserId, taxRate = 19) {
                     'royalty_amount', 'category', 'description', 'supplier_id',
                     'format', 'cover', 'tiraje', 'escandallo_costs', 
                     'final_pdf_interior', 'final_pdf_cover', 
-                    'version_installed', 'escandalloCosts', 'escandallo_costs'
+                    'version_installed', 'escandalloCosts', 'escandallo_costs', 'tenantId'
                 ];
 
                 const ultraCleanData = data.map(item => {
@@ -1550,11 +1550,14 @@ export async function deleteSaleFromDb(saleId) {
 }
 // ============ SUPPLIERS ============
 export async function addSupplierToDb(tenantId, supplierData) {
-    let tid = tenantId || supplierData.tenant_id || supplierData.tenantId || null
+    let tid = tenantId || supplierData.tenant_id || supplierData.tenantId || null;
+    
+    // Remote camelCase tenantId to avoid DB errors
+    const { tenantId: _tId, tenant_id: _tid2, ...safeData } = supplierData;
     
     const { data, error } = await supabase
         .from('suppliers')
-        .insert([{ ...supplierData, tenant_id: tid }])
+        .insert([{ ...safeData, tenant_id: tid }])
         .select()
     
     if (error) {
@@ -1586,34 +1589,35 @@ export async function deleteSupplierFromDb(supplierId) {
 
 // ============ CLIENTS ============
 export async function addClientToDb(tenantId, clientData) {
-    let tid = tenantId || clientData.tenant_id || clientData.tenantId || null;
+    const tid = tenantId || clientData.tenant_id || clientData.tenantId || null;
     
-    // Clean up fields that might cause schema mismatch
+    // Explicitly destructure to keep only DB-compatible fields
     const { 
         tenantId: _tId, 
         tenant_id: _tid2, 
-        default_discount, 
-        credit_limit, 
-        discount_percent, 
-        ...safeData 
+        contactName,
+        taxId,
+        ...rest 
     } = clientData;
 
-    try {
-        // Try precise insert first with underscore tenant_id
-        const { data, error } = await supabase
-            .from('clients')
-            .insert([{ ...safeData, tenant_id: tid }])
-            .select();
+    const cleanedData = {
+        ...rest,
+        tenant_id: tid,
+        contact_name: clientData.contact_name || contactName || '',
+        tax_id: clientData.tax_id || taxId || ''
+    };
 
-        if (error) {
-            console.error('Error insertando cliente:', error);
-            throw error;
-        }
-        return data?.[0] || null;
-    } catch (err) {
-        console.error('Excepción en addClientToDb:', err);
-        throw err;
+    const { data, error } = await supabase
+        .from('clients')
+        .insert([cleanedData])
+        .select();
+
+    if (error) {
+        console.error('Error insertando cliente:', error);
+        throw error;
     }
+    
+    return data ? data[0] : null;
 }
 
 export async function updateClientInDb(clientId, clientData) {
@@ -1651,17 +1655,20 @@ export async function deleteClientFromDb(clientId) {
 
 // ============ PURCHASE ORDERS ============
 export async function addPurchaseOrderToDb(tenantId, poData) {
+    const tid = tenantId || poData.tenantId || poData.tenant_id;
+    const { tenantId: _tId, tenant_id: _tid2, ...safeData } = poData;
+
     const { data, error } = await supabase
         .from('purchase_orders')
-        .insert([{ ...poData, tenant_id: tenantId }])
+        .insert([{ ...safeData, tenant_id: tid }])
         .select()
     
     if (error && (error.message?.includes('quote_id') || error.message?.includes('column'))) {
         console.warn('Fallback: Adding PO without quote_id column');
-        const { quote_id, ...safeData } = poData;
+        const { quote_id, ...minimalSafeData } = safeData;
         // Append quote info to notes as fallback
         const quoteRef = poData.quote_id ? ` [Ref Cotización: ${poData.quote_id}]` : '';
-        const dataWithRef = { ...safeData, notes: (safeData.notes || '') + quoteRef, tenant_id: tenantId };
+        const dataWithRef = { ...minimalSafeData, notes: (minimalSafeData.notes || '') + quoteRef, tenant_id: tid };
         
         const { data: fallbackData, error: fallbackError } = await supabase
             .from('purchase_orders')
@@ -1783,9 +1790,12 @@ export async function receivePurchaseOrderInDb(poId, quantity, bookId, tenantId)
 
 // ============ EXPENSES ============
 export async function addExpenseToDb(tenantId, expenseData) {
+    const tid = tenantId || expenseData.tenantId || expenseData.tenant_id;
+    const { tenantId: _tId, tenant_id: _tid2, ...safeData } = expenseData;
+    
     const { data, error } = await supabase
         .from('expenses')
-        .insert([{ ...expenseData, tenant_id: tenantId }])
+        .insert([{ ...safeData, tenant_id: tid }])
         .select()
     if (error) throw error
     return data[0]
