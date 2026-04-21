@@ -88,7 +88,8 @@ export default function Clients() {
             }
             setIsModalOpen(false)
         } catch (err) {
-            alert('Error al guardar cliente')
+            console.error('[Clients] Submit Error:', err);
+            alert(`Error al guardar cliente: ${err.message || 'Error desconocido'}`)
         }
     }
 

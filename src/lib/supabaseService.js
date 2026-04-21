@@ -1625,6 +1625,17 @@ export async function addClientToDb(tenantId, clientData) {
         .select();
 
     if (error) {
+        if (error.message?.includes('column') || error.message?.includes('not found')) {
+            console.warn('Falling back: Inserting client without optional columns');
+            const { default_discount, credit_limit, ...ultraSafeData } = cleanedData;
+            const { data: fData, error: fErr } = await supabase
+                .from('clients')
+                .insert([ultraSafeData])
+                .select();
+            
+            if (fErr) throw fErr;
+            return fData ? fData[0] : null;
+        }
         console.error('Error insertando cliente:', error);
         throw error;
     }
