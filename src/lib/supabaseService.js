@@ -6,8 +6,12 @@ export async function loadAllData(tenantId) {
     
     // We allow any tenantId that is present. The database uses TEXT for tenant_id columns.
     // The previous UUID-only check was preventing demo and legacy accounts from loading certain data.
-    // Helper to switch between .eq and .is based on tenantId value (null requires .is)
-    
+// Helper to ensure we always have a valid tenant_id for insertions (prevents NOT NULL violations)
+const ensureTenantId = (tid) => {
+    if (!tid || tid === 'null') return '00000000-0000-0000-0000-000000000000';
+    if (typeof tid === 'object' && tid.tenantId) return tid.tenantId;
+    return tid;
+};
 
     const tFilter = (query) => {
         if (!tenantId || tenantId === '00000000-0000-0000-0000-000000000000') {
@@ -650,7 +654,7 @@ export async function addDocumentEntry(doc) {
         .from('documents')
         .insert({
             id: doc.id,
-            tenant_id: doc.tenantId,
+            tenant_id: ensureTenantId(doc.tenantId),
             book_id: doc.bookId,
             name: doc.name,
             type: doc.type,
@@ -710,7 +714,7 @@ export async function addAuditLogEntry(entry) {
         .from('audit_log')
         .insert({
             id: entry.id,
-            tenant_id: entry.tenantId,
+            tenant_id: ensureTenantId(entry.tenantId),
             date: entry.date,
             user_id: entry.userId,
             user_name: entry.userName,
@@ -726,7 +730,7 @@ export async function addCommentEntry(comment) {
         .from('comments')
         .insert({
             id: comment.id,
-            tenant_id: comment.tenantId,
+            tenant_id: ensureTenantId(comment.tenantId),
             book_id: comment.bookId,
             user_id: comment.userId,
             user_name: comment.userName,
@@ -757,7 +761,7 @@ export async function addInvoice(invoice) {
         .from('invoices')
         .insert({
             id: invoice.id,
-            tenant_id: invoice.tenantId,
+            tenant_id: ensureTenantId(invoice.tenantId),
             book_id: invoice.bookId,
             type: invoice.type,
             concept: invoice.concept,
@@ -811,7 +815,7 @@ export async function updateUserProfile(userId, updates) {
 export async function addBook(book) {
     const bookData = {
         id: book.id,
-        tenant_id: book.tenantId,
+        tenant_id: ensureTenantId(book.tenantId),
         title: book.title,
         author_id: book.authorId,
         author_name: book.authorName,
@@ -898,7 +902,7 @@ export async function upsertInventoryPhysical(bookId, updates) {
         const { error } = await supabase
             .from('inventory_physical')
             .insert({
-                tenant_id: updates.tenantId,
+                tenant_id: ensureTenantId(updates.tenantId),
                 book_id: bookId,
                 stock: updates.stock,
                 min_stock: updates.minStock || 100,
@@ -924,7 +928,7 @@ export async function saveFullData(data) {
         for (const book of data.books) {
             await supabase.from('books').upsert({
                 id: book.id,
-                tenant_id: book.tenantId, // Requires tenantId to be present on book
+                tenant_id: ensureTenantId(book.tenantId), // Requires tenantId to be present on book
                 title: book.title,
                 author_id: book.authorId,
                 author_name: book.authorName,
@@ -1027,7 +1031,7 @@ export async function addQuoteToDb(quote) {
         .from('quotes')
         .insert({
             id: quote.id,
-            tenant_id: quote.tenantId,
+            tenant_id: ensureTenantId(quote.tenantId),
             book_id: quote.bookId,
             provider: quote.provider,
             requested_amount: quote.requestedAmount,
@@ -1134,16 +1138,15 @@ export async function superAdminDeleteWorkspace(tenantId) {
 }
 
 export async function seedDemoData(tenantId, adminUserId, taxRate = 19) {
-    const taxDivisor = 1 + (taxRate / 100)
-    if (!tenantId) return
-    const now = new Date().toISOString()
-    const monthAgo = new Date(Date.now() - 2592000000).toISOString()
-    const twoMonthsAgo = new Date(Date.now() - 5184000000).toISOString()
-
     if (!tenantId) {
         console.error('[Seeding] Error: No se proporcionó tenantId para sembrar datos.');
         return;
     }
+    const tid = ensureTenantId(tenantId);
+    const taxDivisor = 1 + (taxRate / 100)
+    const now = new Date().toISOString()
+    const monthAgo = new Date(Date.now() - 2592000000).toISOString()
+    const twoMonthsAgo = new Date(Date.now() - 5184000000).toISOString()
 
     console.log(`[Seeding] Iniciando carga para tenant: ${tenantId}`);
 
@@ -1514,7 +1517,7 @@ export async function addSaleToDb(sale) {
         .from('sales')
         .insert({
             id: sale.id,
-            tenant_id: sale.tenantId,
+            tenant_id: ensureTenantId(sale.tenantId),
             book_id: sale.bookId,
             book_title: sale.bookTitle || '',
             channel: sale.channel,
@@ -1561,11 +1564,7 @@ export async function deleteSaleFromDb(saleId) {
 }
 // ============ SUPPLIERS ============
 export async function addSupplierToDb(tenantId, supplierData) {
-    let tid = tenantId || supplierData.tenant_id || supplierData.tenantId || null;
-    if (!tid) {
-        const { data: anyT } = await supabase.from('tenants').select('id').limit(1).maybeSingle();
-        tid = anyT?.id || '00000000-0000-0000-0000-000000000000';
-    }
+    const tid = ensureTenantId(tenantId || supplierData.tenant_id || supplierData.tenantId);
     
     // Remote camelCase tenantId to avoid DB errors
     const { tenantId: _tId, tenant_id: _tid2, ...safeData } = supplierData;
@@ -1788,7 +1787,7 @@ export async function receivePurchaseOrderInDb(poId, quantity, bookId, tenantId)
             .from('inventory_physical')
             .insert([{
                 book_id: bookId,
-                tenant_id: tenantId,
+                tenant_id: ensureTenantId(tenantId),
                 stock: quantity,
                 min_stock: 10
             }])
@@ -2135,6 +2134,7 @@ export async function clearDemoData(tenantId) {
 
 // ============ EVENTS / FERIAS ============
 export async function addEventToDb(tenantId, eventData, items) {
+    const tid = ensureTenantId(tenantId);
     const { data: event, error: eventErr } = await supabase
         .from('events')
         .insert([{
@@ -2144,7 +2144,7 @@ export async function addEventToDb(tenantId, eventData, items) {
             location: eventData.location,
             notes: eventData.notes,
             status: 'open',
-            tenant_id: tenantId
+            tenant_id: tid
         }])
         .select()
     
@@ -2158,7 +2158,7 @@ export async function addEventToDb(tenantId, eventData, items) {
                 event_id: event[0].id,
                 book_id: item.bookId,
                 initial_qty: item.initialQty,
-                tenant_id: tenantId
+                tenant_id: tid
             })))
         if (itemsErr) throw itemsErr
 
@@ -2267,7 +2267,7 @@ export async function settleEventInDb(eventId, itemsData) {
             const totalAmount = unitPrice * item.soldQty
 
             await supabase.from('sales').insert({
-                tenant_id: event.tenant_id,
+                tenant_id: ensureTenantId(event.tenant_id),
                 book_id: item.bookId,
                 book_title: item.bookTitle || 'Venta Feria',
                 channel: 'Feria / Evento',
