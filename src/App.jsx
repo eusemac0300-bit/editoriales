@@ -22,7 +22,6 @@ import SuperAdminDocumentation from './pages/superadmin/Documentation'
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard'
-import Management from './pages/admin/Management'
 import Settings from './pages/admin/Settings'
 import Kanban from './pages/admin/Kanban'
 import Inventory from './pages/admin/Inventory'
