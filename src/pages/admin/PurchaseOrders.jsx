@@ -81,7 +81,7 @@ export default function PurchaseOrders() {
         
         const finalY = doc.lastAutoTable.finalY + 20
         doc.setFont('helvetica', 'bold')
-        doc.text('TOTAL ORDEN (NETO):', 140, finalY)
+        doc.text('TOTAL ORDEN (NETO):', 110, finalY)
         doc.text(new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(po.total_cost), 190, finalY, { align: 'right' })
         
         if (po.notes) {

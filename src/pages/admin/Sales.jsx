@@ -180,7 +180,6 @@ export default function Sales() {
         })
 
         const finalY = doc.lastAutoTable.finalY || 120
-        doc.setFont('helvetica', 'bold')
         doc.setFontSize(12)
         doc.text(`Total Pagado: ${formatCLP(sale.totalAmount)}`, 190, finalY + 12, { align: 'right' })
 
@@ -569,6 +568,15 @@ function SaleForm({ onClose, onSave, books, data }) {
         if (items.length === 0) return
         setSaving(true)
         try {
+            // Validar stock antes de continuar
+            for (const it of items) {
+                if (it.quantity > it.stock) {
+                    alert(`No hay suficiente stock para "${it.title}". \nStock disponible: ${it.stock} \nCantidad solicitada: ${it.quantity}`);
+                    setSaving(false);
+                    return;
+                }
+            }
+
             const itemsToSave = items.map(it => ({
                 bookId: it.bookId,
                 quantity: it.quantity,
