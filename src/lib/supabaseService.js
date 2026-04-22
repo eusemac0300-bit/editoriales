@@ -2243,12 +2243,22 @@ export async function addEventToDb(tenantId, eventData, items) {
     return createdEvent
 }
 
-export async function updateEventInDb(eventId, updates) {
+export async function updateEventInDb(eventId, updates, items) {
+    const tid = ensureTenantId(updates.tenant_id || updates.tenantId);
+    
+    // 1. Fetch current items to calculate stock diffs
+    const { data: oldItems, error: fetchErr } = await supabase
+        .from('event_items')
+        .select('*')
+        .eq('event_id', eventId);
+    
+    if (fetchErr) throw fetchErr;
+
     const updateData = {
         name: updates.name,
         location: updates.location,
         notes: updates.notes,
-        status: updates.status
+        status: updates.status || 'open'
     };
 
     if (updates.startDate !== undefined) {
@@ -2259,13 +2269,108 @@ export async function updateEventInDb(eventId, updates) {
         updateData.end_date = (updates.endDate && typeof updates.endDate === 'string' && updates.endDate.trim() !== "") ? updates.endDate : null;
     }
 
-    const { data, error } = await supabase
+    // 2. Update metadata
+    const { data: eventRecords, error: eventErr } = await supabase
         .from('events')
         .update(updateData)
         .eq('id', eventId)
-        .select()
-    if (error) throw error
-    return data[0]
+        .select();
+    
+    if (eventErr) throw eventErr;
+
+    // 3. Process items and inventory if provided
+    if (items) {
+        // Find which items were removed
+        const removedItems = oldItems.filter(oi => !items.find(ni => ni.bookId === oi.book_id));
+        
+        // Find which items are new or updated
+        for (const newItem of items) {
+            const oldItem = oldItems.find(oi => oi.book_id === newItem.bookId);
+            const diff = newItem.initialQty - (oldItem?.initial_qty || 0);
+
+            if (diff !== 0) {
+                // Adjust inventory
+                const { data: inv } = await supabase
+                    .from('inventory_physical')
+                    .select('*')
+                    .eq('book_id', newItem.bookId)
+                    .eq('tenant_id', tid)
+                    .maybeSingle();
+                
+                if (inv) {
+                    const movement = {
+                        date: new Date().toISOString(),
+                        quantity: Math.abs(diff),
+                        reason: `Ajuste Feria (Edit): ${updates.name}`,
+                        type: diff > 0 ? 'feria' : 'retorno'
+                    };
+                    
+                    const newStock = (inv.stock || 0) - diff;
+                    const updatedHistory = diff > 0 
+                        ? [...(inv.exits || []), movement]
+                        : [...(inv.entries || []), movement];
+
+                    await supabase
+                        .from('inventory_physical')
+                        .update({ 
+                            stock: newStock,
+                            [diff > 0 ? 'exits' : 'entries']: updatedHistory
+                        })
+                        .eq('id', inv.id);
+                }
+            }
+
+            if (oldItem) {
+                // Update existing event item
+                await supabase
+                    .from('event_items')
+                    .update({ initial_qty: newItem.initialQty })
+                    .eq('id', oldItem.id);
+            } else {
+                // Insert new event item
+                await supabase
+                    .from('event_items')
+                    .insert({
+                        event_id: eventId,
+                        book_id: newItem.bookId,
+                        initial_qty: newItem.initialQty,
+                        tenant_id: tid
+                    });
+            }
+        }
+
+        // Handle removals
+        for (const removedItem of removedItems) {
+            // Return stock to inventory
+            const { data: inv } = await supabase
+                .from('inventory_physical')
+                .select('*')
+                .eq('book_id', removedItem.book_id)
+                .eq('tenant_id', tid)
+                .maybeSingle();
+
+            if (inv) {
+                const returnMovement = {
+                    date: new Date().toISOString(),
+                    quantity: removedItem.initial_qty,
+                    reason: `Retorno Feria (Remoción): ${updates.name}`,
+                    type: 'retorno'
+                };
+                await supabase
+                    .from('inventory_physical')
+                    .update({ 
+                        stock: (inv.stock || 0) + removedItem.initial_qty,
+                        entries: [...(inv.entries || []), returnMovement]
+                    })
+                    .eq('id', inv.id);
+            }
+            
+            // Delete from event_items
+            await supabase.from('event_items').delete().eq('id', removedItem.id);
+        }
+    }
+
+    return eventRecords[0];
 }
 
 export async function settleEventInDb(eventId, itemsData) {

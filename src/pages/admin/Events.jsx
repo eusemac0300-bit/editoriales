@@ -79,6 +79,7 @@ export default function Events() {
     
     const [searchTerm, setSearchTerm] = useState('')
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+    const [isEditing, setIsEditing] = useState(false)
     const [isSettleModalOpen, setIsSettleModalOpen] = useState(false)
     const [selectedEvent, setSelectedEvent] = useState(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -131,18 +132,47 @@ export default function Events() {
         }))
     }
 
-    // Asegurar que siempre haya al menos una fila al abrir el modal
-    useEffect(() => {
-        if (isCreateModalOpen && formData.items.length === 0) {
-            handleAddItem()
-        }
-    }, [isCreateModalOpen])
+    const handleOpenEdit = (event) => {
+        setFormData({
+            ...event,
+            items: event.items.map(item => ({
+                id: item.id,
+                bookId: item.bookId,
+                initialQty: item.initialQty
+            }))
+        })
+        setIsEditing(true)
+        setIsCreateModalOpen(true)
+    }
 
-    const handleCreateEvent = async (e) => {
+    const handleSaveEvent = async (e) => {
         e.preventDefault()
-        if (submitLock.current) return;
-        if (formData.items.length === 0) return alert('Debes agregar al menos un libro')
+        if (submitLock.current) return
         
+        // Stock Validation
+        const stockErrors = []
+        formData.items.forEach(item => {
+            const book = data.books?.find(b => b.id === item.bookId)
+            if (!book) return
+
+            const currentStock = inventory.find(inv => inv.bookId === item.bookId)?.stock || 0
+            
+            // Find if this item was already in the event (if editing)
+            const originalEvent = data.events?.find(ev => ev.id === formData.id)
+            const originalItem = originalEvent?.items?.find(oi => oi.bookId === item.bookId)
+            const originalQty = originalItem?.initialQty || 0
+            
+            const availableTotal = currentStock + originalQty
+            
+            if (item.initialQty > availableTotal) {
+                stockErrors.push(`${book.title}: Solicitado ${item.initialQty}, disponible total ${availableTotal} (Stock actual en bodega: ${currentStock})`)
+            }
+        })
+
+        if (stockErrors.length > 0) {
+            return alert('Error de Stock:\n\n' + stockErrors.join('\n') + '\n\nNo puedes despachar más unidades de las que tienes disponibles.')
+        }
+
         submitLock.current = true
         setIsSubmitting(true)
         try {
@@ -151,17 +181,30 @@ export default function Events() {
                 startDate: formData.startDate || null,
                 endDate: formData.endDate || null
             }
-            await addNewEvent(sanitizedData, formData.items)
-            // generateDispatchPDF(formData, formData.items) // Removido auto-generación por solicitud del usuario
+            
+            if (isEditing) {
+                await updateEvent({ id: formData.id, updates: sanitizedData, items: formData.items })
+            } else {
+                await addNewEvent(sanitizedData, formData.items)
+            }
+            
             setIsCreateModalOpen(false)
+            setIsEditing(false)
             setFormData({ name: '', startDate: new Date().toISOString().split('T')[0], endDate: '', location: '', notes: '', items: [] })
         } catch (err) {
-            alert('Error al crear evento: ' + err.message)
+            alert('Error al guardar evento: ' + err.message)
         } finally {
             submitLock.current = false
             setIsSubmitting(false)
         }
     }
+
+    // Asegurar que siempre haya al menos una fila al abrir el modal
+    useEffect(() => {
+        if (isCreateModalOpen && formData.items.length === 0) {
+            handleAddItem()
+        }
+    }, [isCreateModalOpen])
 
     const handleOpenSettle = (event) => {
         setSelectedEvent(event)
@@ -196,7 +239,7 @@ export default function Events() {
     }
 
     const handleReopenEvent = async (id) => {
-        if (!window.confirm('¿Deseas rectificar esta liquidación?\\n\\nEsto reabrirá el evento y eliminará las ventas automáticas generadas para que puedas volver a cuadrarlo correctamente.')) return
+        if (!window.confirm('¿Deseas rectificar esta liquidación?\n\nEsto reabrirá el evento y eliminará las ventas automáticas generadas para que puedas volver a cuadrarlo correctamente.')) return
         
         setIsSubmitting(true)
         try {
@@ -238,7 +281,11 @@ export default function Events() {
                         </div>
                     </div>
                     <button 
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={() => {
+                            setIsEditing(false)
+                            setFormData({ name: '', startDate: new Date().toISOString().split('T')[0], endDate: '', location: '', notes: '', items: [] })
+                            setIsCreateModalOpen(true)
+                        }}
                         className="px-6 py-4 bg-primary text-white rounded-2xl font-black text-sm uppercase tracking-tighter hover:bg-primary-600 transition-all shadow-lg shadow-primary/25 hover:-translate-y-1 active:translate-y-0 flex items-center gap-2"
                     >
                         <Plus className="w-5 h-5" /> Iniciar Feria
@@ -301,6 +348,13 @@ export default function Events() {
                                             title="Imprimir Guía de Despacho"
                                         >
                                             <FileText className="w-4 h-4" /> <span className="text-[10px] font-black uppercase">Guía</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => handleOpenEdit(event)}
+                                            className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-dark-700 dark:hover:bg-dark-200 transition-colors border border-slate-200 dark:border-dark-300 flex items-center gap-2 px-3"
+                                            title="Editar feria"
+                                        >
+                                            <Save className="w-4 h-4" /> <span className="text-[10px] font-black uppercase">Editar</span>
                                         </button>
                                         {event.status === 'closed' && (
                                             <button 
@@ -379,15 +433,19 @@ export default function Events() {
                     <div className="bg-white dark:bg-dark-100 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-dark-300 flex flex-col max-h-[90vh]">
                         <div className="p-8 border-b border-slate-100 dark:border-dark-300 flex justify-between items-center bg-slate-50/50 dark:bg-dark-50/10">
                             <div>
-                                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Iniciar Nueva Feria</h2>
-                                <p className="text-xs font-bold text-slate-400 dark:text-dark-600 uppercase tracking-widest mt-1">Crea el evento y selecciona el inventario inicial</p>
+                                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                                    {isEditing ? 'Editar Feria' : 'Iniciar Nueva Feria'}
+                                </h2>
+                                <p className="text-xs font-bold text-slate-400 dark:text-dark-600 uppercase tracking-widest mt-1">
+                                    {isEditing ? 'Modifica los datos del evento' : 'Crea el evento y selecciona el inventario inicial'}
+                                </p>
                             </div>
                             <button onClick={() => setIsCreateModalOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-dark-200 rounded-xl transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleCreateEvent} className="overflow-y-auto flex-1 p-8 space-y-8">
+                        <form onSubmit={handleSaveEvent} className="overflow-y-auto flex-1 p-8 space-y-8">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="col-span-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Nombre de la Feria / Evento</label>
@@ -470,7 +528,10 @@ export default function Events() {
                                                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">Cant.</p>
                                                     <input 
                                                         type="number" required min="1"
-                                                        className="w-full bg-transparent border-none text-sm font-black focus:ring-0 p-0 text-center text-primary"
+                                                        className={`w-full bg-transparent border-none text-sm font-black focus:ring-0 p-0 text-center ${
+                                                            !isEditing && item.initialQty > (inventory.find(inv => inv.bookId === item.bookId)?.stock || 0)
+                                                            ? 'text-rose-500' : 'text-primary'
+                                                        }`}
                                                         placeholder="0"
                                                         value={item.initialQty || ''}
                                                         onChange={e => {
@@ -479,6 +540,21 @@ export default function Events() {
                                                             setFormData(p => ({ ...p, items: nItems }))
                                                         }}
                                                     />
+                                                    {!isEditing && item.bookId && item.initialQty > (inventory.find(inv => inv.bookId === item.bookId)?.stock || 0) && (
+                                                        <p className="text-[8px] text-rose-500 font-bold uppercase text-center animate-pulse">Sin Stock</p>
+                                                    )}
+                                                    {isEditing && item.bookId && (() => {
+                                                        const currentStock = inventory.find(inv => inv.bookId === item.bookId)?.stock || 0
+                                                        const originalEvent = data.events?.find(ev => ev.id === formData.id)
+                                                        const originalItem = originalEvent?.items?.find(oi => oi.bookId === item.bookId)
+                                                        const originalQty = originalItem?.initialQty || 0
+                                                        const availableTotal = currentStock + originalQty
+                                                        
+                                                        if (item.initialQty > availableTotal) {
+                                                            return <p className="text-[8px] text-rose-500 font-bold uppercase text-center animate-pulse">Excede Stock</p>
+                                                        }
+                                                        return null
+                                                    })()}
                                                 </div>
                                                 <button 
                                                     type="button" 
@@ -508,10 +584,10 @@ export default function Events() {
                             </button>
                             <button 
                                 disabled={isSubmitting}
-                                onClick={handleCreateEvent}
+                                onClick={handleSaveEvent}
                                 className="flex-[2] px-6 py-4 bg-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-primary-600 transition-all shadow-lg shadow-primary/25 disabled:opacity-50"
                             >
-                                {isSubmitting ? 'Guardando...' : 'Iniciar Feria'}
+                                {isSubmitting ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Iniciar Feria')}
                             </button>
                         </div>
                     </div>

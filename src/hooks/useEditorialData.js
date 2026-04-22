@@ -360,7 +360,7 @@ export function useEvents(tenantId) {
     })
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, updates }) => db.updateEventInDb(id, updates),
+        mutationFn: ({ id, updates, items }) => db.updateEventInDb(id, updates, items),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
         },
