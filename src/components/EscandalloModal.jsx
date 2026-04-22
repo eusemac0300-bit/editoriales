@@ -301,7 +301,7 @@ export default function EscandalloModal({ book, onClose }) {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[8px] text-slate-400 font-bold uppercase mb-1 block">% Reg. Librería</label>
+                                        <label className="text-[8px] text-slate-400 font-bold uppercase mb-1 block">% Regalías Autor Librería</label>
                                         <input
                                             type="number"
                                             value={royaltyLibreria}
@@ -310,7 +310,7 @@ export default function EscandalloModal({ book, onClose }) {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[8px] text-slate-400 font-bold uppercase mb-1 block">% Reg. Directa</label>
+                                        <label className="text-[8px] text-slate-400 font-bold uppercase mb-1 block">% Regalías Autor Directa</label>
                                         <input
                                             type="number"
                                             value={royaltyDirecta}

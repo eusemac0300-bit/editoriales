@@ -168,7 +168,7 @@ export default function Royalties() {
                         <DollarSign className="w-6 h-6 text-primary" /> Liquidaciones de Regalías
                     </h1>
                     <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">
-                        Calculado desde ventas reales · Fórmula: ({t('units')} × PVP Neto × % Regalía) − Anticipo
+                        Calculado desde ventas reales · Fórmula: ({t('units')} × PVP Neto × % Regalías Autor) − Anticipo
                     </p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
@@ -203,7 +203,7 @@ export default function Royalties() {
                 <div className="glass-card p-4">
                     <div className="flex items-center gap-2 mb-1">
                         <Percent className="w-4 h-4 text-amber-500 dark:text-yellow-400" />
-                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase">Regalía Bruta</p>
+                        <p className="text-[11px] text-slate-500 dark:text-dark-500 uppercase">Regalía Autor Bruta</p>
                     </div>
                     <p className="text-xl font-bold text-amber-600 dark:text-yellow-400 font-mono">{formatCLP(totalGross)}</p>
                     <p className="text-[10px] text-slate-500 dark:text-dark-600 mt-1">suma de todos los autores</p>
@@ -252,7 +252,7 @@ export default function Royalties() {
                                     <h3 className="text-slate-900 dark:text-white font-semibold">{book.title}</h3>
                                     <p className="text-xs text-slate-500 dark:text-dark-600 flex items-center gap-1 mt-0.5">
                                         <User className="w-3 h-3" />
-                                        {book.authorName || '—'} · {book.royaltyPercent}% regalía
+                                        {book.authorName || '—'} · {book.royaltyPercent}% regalías autor
                                         {book.advance > 0 && <span className="ml-2 text-amber-600 dark:text-amber-500">· anticipo: {formatCLP(book.advance)}</span>}
                                     </p>
                                 </div>
@@ -302,7 +302,7 @@ export default function Royalties() {
                                     <p className="text-base font-bold text-slate-900 dark:text-white font-mono">{formatCLP(pvpNeto)}</p>
                                 </div>
                                 <div className="bg-slate-50 dark:bg-dark-200/60 rounded-lg p-3 text-center">
-                                    <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase mb-1">Regalía Bruta</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-500 uppercase mb-1">Regalía Autor Bruta</p>
                                     <p className="text-base font-bold text-amber-600 dark:text-yellow-400 font-mono">{formatCLP(gross)}</p>
                                 </div>
                                 <div className="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-3 text-center">
@@ -310,7 +310,7 @@ export default function Royalties() {
                                     <p className="text-base font-bold text-amber-700 dark:text-amber-300 font-mono">−{formatCLP(advance)}</p>
                                 </div>
                                 <div className={`rounded-lg p-3 text-center ${net >= 0 ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20' : 'bg-red-500/5 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20'}`}>
-                                    <p className={`text-[10px] uppercase mb-1 ${net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>= Regalía Neta</p>
+                                    <p className={`text-[10px] uppercase mb-1 ${net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>= Regalía Autor Neta</p>
                                     <p className={`text-base font-bold font-mono ${net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{formatCLP(net)}</p>
                                 </div>
                             </div>

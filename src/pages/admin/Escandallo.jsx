@@ -405,7 +405,7 @@ export default function Escandallo() {
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">Regalía Librería (%)</label>
+                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">Regalías Autor Librería (%)</label>
                                     <input
                                         type="number"
                                         value={royaltyLibreria}
@@ -414,7 +414,7 @@ export default function Escandallo() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">Regalía Directa (%)</label>
+                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">Regalías Autor Directa (%)</label>
                                     <input
                                         type="number"
                                         value={royaltyDirecta}
@@ -510,7 +510,7 @@ export default function Escandallo() {
                                 <div className="space-y-1">
                                     <div className="flex justify-between text-sm"><span className="text-slate-500">Ingresos:</span> <span className="font-semibold text-slate-900 dark:text-white">{formatSafeCLP(revenueDirecta)}</span></div>
                                     <div className="flex justify-between text-[10px]"><span className="text-slate-400">Costo Producción:</span> <span className="text-amber-600">-{formatSafeCLP(udsDirecta * costoUnitarioProd)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Royalties ({royaltyDirecta}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesDirecta)}</span></div>
+                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Regalías Autor ({royaltyDirecta}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesDirecta)}</span></div>
                                     <div className="flex justify-between text-[10px]"><span className="text-slate-400">Transbank (3%):</span> <span className="text-red-400">-{formatSafeCLP(costTransbank)}</span></div>
                                     <div className="flex justify-between text-xs pt-1 border-t border-emerald-100 dark:border-emerald-900/30"><span className="font-medium text-emerald-700">Utilidad Canal:</span> <span className="font-bold text-emerald-600">{formatSafeCLP(profitDirecta)}</span></div>
                                 </div>
@@ -520,13 +520,13 @@ export default function Escandallo() {
                                 <div className="space-y-1">
                                     <div className="flex justify-between text-sm"><span className="text-slate-500">Ingresos (Neto -40%):</span> <span className="font-semibold text-slate-900 dark:text-white">{formatSafeCLP(revenueLibreria)}</span></div>
                                     <div className="flex justify-between text-[10px]"><span className="text-slate-400">Costo Producción:</span> <span className="text-amber-600">-{formatSafeCLP(udsLibreria * costoUnitarioProd)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Royalties ({royaltyLibreria}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesLibreria)}</span></div>
+                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Regalías Autor ({royaltyLibreria}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesLibreria)}</span></div>
                                     <div className="flex justify-between text-xs pt-1 border-t border-blue-100 dark:border-blue-900/30"><span className="font-medium text-blue-700">Utilidad Canal:</span> <span className="font-bold text-blue-600">{formatSafeCLP(profitLibreria)}</span></div>
                                 </div>
                             </div>
                         </div>
                         <p className="text-[10px] text-slate-400 dark:text-slate-500 italic text-center px-4 mb-4">
-                            * La Utilidad Canal considera el retorno neto tras descontar costos de fabricación, derechos de autor y comisiones transaccionales.
+                            * La Utilidad Canal considera el retorno neto tras descontar costos de fabricación, regalías de autor y comisiones transaccionales.
                         </p>
 
                         <div className="bg-slate-900 dark:bg-dark-50 rounded-xl p-5 text-white">

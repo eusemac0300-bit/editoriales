@@ -242,7 +242,7 @@ export default function BookForm({ data, initialData, onSave, onClose }) {
                     </div>
                 </div>
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">% Regalía</label>
+                    <label className="text-xs text-dark-600 mb-1 block">% Regalías Autor</label>
                     <input type="number" value={form.royaltyPercent === 0 ? '' : form.royaltyPercent} onChange={e => setForm(p => ({ ...p, royaltyPercent: e.target.value }))} className="input-field text-sm" min="0" max="100" placeholder="0" />
                 </div>
                 <div>
