@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import {
     Users, Plus, Search, Edit3, Trash2, Phone, Mail,
     MapPin, Building2, ShieldCheck, X, Save, AlertTriangle,
-    Contact
+    Contact, LayoutGrid, List as ListIcon
 } from 'lucide-react'
 
 const TYPES = ['IMPRENTA', 'DISEÑO', 'MAQUETACIÓN', 'CORRECCIÓN', 'AGENCIA', 'OTROS']
@@ -15,6 +15,7 @@ export default function Suppliers() {
     const [showForm, setShowForm] = useState(false)
     const [editing, setEditing] = useState(null)
     const [deleting, setDeleting] = useState(null)
+    const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
 
     const suppliers = data.suppliers || []
 
@@ -100,73 +101,136 @@ export default function Suppliers() {
                         <option value="TODOS">Todos los tipos</option>
                         {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
+                    
+                    <div className="flex bg-slate-100 dark:bg-dark-100 p-1 rounded-lg">
+                        <button 
+                            onClick={() => setViewMode('grid')}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-dark-300 shadow-sm text-primary' : 'text-slate-400'}`}
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white dark:bg-dark-300 shadow-sm text-primary' : 'text-slate-400'}`}
+                        >
+                            <ListIcon className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {/* List */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filtered.map(s => {
-                    if (!s || !s.id) return null;
-                    return (
-                        <div key={s.id} className="glass-card p-5 group hover:ring-1 hover:ring-primary/30 transition-all">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-dark-200 flex items-center justify-center border border-slate-200 dark:border-dark-300">
-                                        <Building2 className="w-6 h-6 text-primary" />
+            {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {filtered.map(s => {
+                        if (!s || !s.id) return null;
+                        return (
+                            <div key={s.id} className="glass-card p-5 group hover:ring-1 hover:ring-primary/30 transition-all">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-dark-200 flex items-center justify-center border border-slate-200 dark:border-dark-300">
+                                            <Building2 className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="text-slate-900 dark:text-white font-semibold truncate px-1">{s.name || 'Sin Nombre'}</h3>
+                                            <span className="badge-blue text-[10px]">{s.type || 'IMPRENTA'}</span>
+                                        </div>
                                     </div>
-                                    <div className="min-w-0">
-                                        <h3 className="text-slate-900 dark:text-white font-semibold truncate px-1">{s.name || 'Sin Nombre'}</h3>
-                                        <span className="badge-blue text-[10px]">{s.type || 'IMPRENTA'}</span>
+                                    <div className="flex gap-1 transition-opacity">
+                                        <button onClick={() => { setEditing(s); setShowForm(true) }} className="p-2 hover:bg-slate-100 dark:hover:bg-dark-200 rounded-lg text-slate-400 dark:text-dark-500 hover:text-primary-600 transition-all shadow-sm">
+                                            <Edit3 className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => setDeleting(s)} className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-dark-500 hover:text-red-500 transition-all shadow-sm">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </div>
-                                </div>
-                                <div className="flex gap-1 transition-opacity">
-                                    <button onClick={() => { setEditing(s); setShowForm(true) }} className="p-2 hover:bg-slate-100 dark:hover:bg-dark-200 rounded-lg text-slate-400 dark:text-dark-500 hover:text-primary-600 transition-all shadow-sm">
-                                        <Edit3 className="w-4 h-4" />
-                                    </button>
-                                    <button onClick={() => setDeleting(s)} className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-slate-400 dark:text-dark-500 hover:text-red-500 transition-all shadow-sm">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-slate-900 dark:text-white font-medium flex items-center gap-2 text-sm">
-                                        <Contact className="w-4 h-4 text-slate-400" />
-                                        {s.contact_name || 'Sin Contacto'}
-                                    </span>
-                                    <span className="text-slate-400 dark:text-dark-500 uppercase font-mono text-[10px]">ID Fiscal: {s.tax_id || '-'}</span>
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-2 border-t border-slate-100 dark:border-dark-300 pt-3">
-                                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-dark-700">
-                                        <Mail className="w-3.5 h-3.5" />
-                                        <span className="truncate">{s.email || '-'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-dark-700">
-                                        <Phone className="w-3.5 h-3.5" />
-                                        <span>{s.phone || '-'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-dark-700">
-                                        <MapPin className="w-3.5 h-3.5" />
-                                        <span className="truncate">
-                                            {s.address || 'Sin dirección'}
-                                            {(s.comuna || s.ciudad) && `, ${[s.comuna, s.ciudad].filter(Boolean).join(', ')}`}
+                                <div className="space-y-3">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-slate-900 dark:text-white font-medium flex items-center gap-2 text-sm">
+                                            <Contact className="w-4 h-4 text-slate-400" />
+                                            {s.contact_name || 'Sin Contacto'}
                                         </span>
+                                        <span className="text-slate-400 dark:text-dark-500 uppercase font-mono text-[10px]">ID Fiscal: {s.tax_id || '-'}</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-2 border-t border-slate-100 dark:border-dark-300 pt-3">
+                                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-dark-700">
+                                            <Mail className="w-3.5 h-3.5" />
+                                            <span className="truncate">{s.email || '-'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-dark-700">
+                                            <Phone className="w-3.5 h-3.5" />
+                                            <span>{s.phone || '-'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-dark-700">
+                                            <MapPin className="w-3.5 h-3.5" />
+                                            <span className="truncate">
+                                                {s.address || 'Sin dirección'}
+                                                {(s.comuna || s.ciudad) && `, ${[s.comuna, s.ciudad].filter(Boolean).join(', ')}`}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    )
-                })}
-
-                {filtered.length === 0 && (
-                    <div className="lg:col-span-2 py-20 text-center glass-card">
-                        <Building2 className="w-12 h-12 text-slate-200 dark:text-dark-300 mx-auto mb-4 opacity-50" />
-                        <p className="text-slate-500 dark:text-dark-600">No se encontraron proveedores que coincidan con la búsqueda</p>
+                        )
+                    })}
+                </div>
+            ) : (
+                <div className="glass-card overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 dark:bg-dark-100/50 border-b border-slate-100 dark:border-dark-200">
+                                    <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-dark-600 uppercase tracking-wider">Proveedor</th>
+                                    <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-dark-600 uppercase tracking-wider">Tipo</th>
+                                    <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-dark-600 uppercase tracking-wider">Contacto</th>
+                                    <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-dark-600 uppercase tracking-wider">Email/Tel</th>
+                                    <th className="px-4 py-3 text-[10px] font-bold text-slate-500 dark:text-dark-600 uppercase tracking-wider text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-dark-200">
+                                {filtered.map(s => (
+                                    <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-dark-200/50 transition-colors">
+                                        <td className="px-4 py-3">
+                                            <div className="font-medium text-slate-900 dark:text-white uppercase text-xs">{s.name}</div>
+                                            <div className="text-[10px] text-slate-400 font-mono italic">{s.tax_id}</div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="badge-blue text-[10px]">{s.type}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-dark-800">
+                                            {s.contact_name}
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-dark-700">
+                                            <div>{s.email}</div>
+                                            <div>{s.phone}</div>
+                                        </td>
+                                        <td className="px-4 py-3 text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <button onClick={() => { setEditing(s); setShowForm(true) }} className="p-1.5 hover:bg-slate-100 dark:hover:bg-dark-200 rounded text-slate-400">
+                                                    <Edit3 className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={() => setDeleting(s)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded text-slate-400 hover:text-red-500">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            {filtered.length === 0 && (
+                <div className="py-20 text-center glass-card">
+                    <Building2 className="w-12 h-12 text-slate-200 dark:text-dark-300 mx-auto mb-4 opacity-50" />
+                    <p className="text-slate-500 dark:text-dark-600">No se encontraron proveedores que coincidan con la búsqueda</p>
+                </div>
+            )}
 
             {/* Form Modal */}
             {showForm && (

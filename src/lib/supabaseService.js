@@ -1543,8 +1543,11 @@ export async function addSaleToDb(sale) {
             created_at: sale.createdAt,
             updated_at: sale.updatedAt || sale.createdAt
         })
-    if (error) console.error('Error adding sale:', error)
-    return !error
+    if (error) {
+        console.error('Error adding sale:', error)
+        throw error
+    }
+    return true
 }
 
 export async function updateSaleInDb(saleId, updates) {

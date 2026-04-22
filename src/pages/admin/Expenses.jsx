@@ -16,6 +16,8 @@ export default function Expenses() {
     const [showForm, setShowForm] = useState(false)
     const [editing, setEditing] = useState(null)
     const [deleting, setDeleting] = useState(null)
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
     const expenses = data.finances?.expenses || []
 
@@ -27,7 +29,13 @@ export default function Expenses() {
 
         const matchesSearch = desc.includes(s) || supp.includes(s)
         const matchesCategory = filterCategory === 'TODAS' || e.category === filterCategory
-        return matchesSearch && matchesCategory
+        
+        // Month/Year filter
+        const eDate = new Date(e.date)
+        const matchesMonth = (eDate.getMonth() + 1) === selectedMonth
+        const matchesYear = eDate.getFullYear() === selectedYear
+        
+        return matchesSearch && matchesCategory && matchesMonth && matchesYear
     })
 
     const totalInMonth = filtered.reduce((acc, e) => acc + (e.amount || 0), 0)
@@ -102,6 +110,26 @@ export default function Expenses() {
                         <option value="TODAS">Categorías</option>
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
+                    
+                    <div className="flex gap-2 w-full md:w-auto">
+                        <select 
+                            value={selectedMonth}
+                            onChange={e => setSelectedMonth(parseInt(e.target.value))}
+                            className="input-field flex-1 md:w-32"
+                        >
+                            {[
+                                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+                            ].map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                        </select>
+                        <select 
+                            value={selectedYear}
+                            onChange={e => setSelectedYear(parseInt(e.target.value))}
+                            className="input-field flex-1 md:w-24"
+                        >
+                            {[2023, 2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                    </div>
                 </div>
             </div>
 

@@ -16,6 +16,8 @@ export default function Events() {
         formatCLP, t 
     } = useAuth()
 
+    const inventory = useMemo(() => data.inventory?.physical || [], [data.inventory])
+
     const generateDispatchPDF = (eventData, items) => {
         const doc = new jsPDF()
         const primaryColor = [79, 70, 229] // indigo-600
@@ -458,7 +460,9 @@ export default function Events() {
                                                     >
                                                         <option value="" className="dark:bg-dark-100 text-slate-400">Selecciona un libro...</option>
                                                         {data?.books?.filter(b => b.status !== 'archived').sort((a,b) => a.title.localeCompare(b.title)).map(b => (
-                                                            <option key={b.id} value={b.id} className="dark:bg-dark-100">{b.title}</option>
+                                                            <option key={b.id} value={b.id} className="dark:bg-dark-100">
+                                                                {b.title} (Stock: {inventory.find(inv => inv.bookId === b.id)?.stock || 0})
+                                                            </option>
                                                         ))}
                                                     </select>
                                                 </div>

@@ -538,7 +538,7 @@ function SaleForm({ onClose, onSave, books, data }) {
     }
 
     const addItem = (book) => {
-        const inv = data?.inventory?.physical?.find(i => i.book_id === book.id)
+        const inv = data?.inventory?.physical?.find(i => i.bookId === book.id)
         const stock = inv?.stock ?? 0
         // No bloqueamos, solo permitimos con advertencia si el stock es bajo
         setItems(p => [...p, {

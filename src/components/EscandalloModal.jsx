@@ -125,7 +125,9 @@ export default function EscandalloModal({ book, onClose }) {
     // Retorno Venta Directa (Neto)
     const porcPlataforma = 0
     const porcTransbank = 2
-    const retornoUnitDirecta = pvpNeto - (pvpNeto * (royaltyDirecta / 100)) - (pvpNeto * (porcPlataforma / 100)) - (pvpNeto * (porcTransbank / 100))
+    const porcMktDirecta = 2 // Comisión extra o marketing directo si aplica
+    const totalDeduccionDirecta = porcPlataforma + porcTransbank + porcMktDirecta // Total 4%
+    const retornoUnitDirecta = pvpNeto - (pvpNeto * (royaltyDirecta / 100)) - (pvpNeto * (totalDeduccionDirecta / 100))
     const ingresoTotalDirecta = unidDirecta * retornoUnitDirecta
     
     const retornoTotalNeto = ingresoTotalLibreria + ingresoTotalDirecta
@@ -381,8 +383,8 @@ export default function EscandalloModal({ book, onClose }) {
                                                 <span className="font-black text-white bg-blue-500/20 px-1 rounded">{formatSafeCLP(retornoUnitDirecta)}</span>
                                             </div>
                                             <div className="flex justify-between text-[10px] text-slate-500">
-                                                <span>Mkt/Plataf./TBK (4%)</span>
-                                                <span className="text-red-500 font-medium">-{formatSafeCLP(pvpNeto * 0.04)}</span>
+                                                <span>Mkt/Plataf./TBK ({totalDeduccionDirecta}%)</span>
+                                                <span className="text-red-500 font-medium">-{formatSafeCLP(pvpNeto * (totalDeduccionDirecta / 100))}</span>
                                             </div>
                                         </div>
                                         <div className="pt-2 flex flex-col items-center">

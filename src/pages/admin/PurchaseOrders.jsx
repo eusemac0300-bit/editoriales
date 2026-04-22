@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import {
     FileSpreadsheet, Plus, Search, Edit3, Trash2,
     Calendar, BookOpen, Building2, Package, CheckCircle,
-    X, Save, AlertTriangle, Filter, Truck, ArrowRight, DollarSign
+    X, Save, AlertTriangle, Filter, Truck, ArrowRight, DollarSign, FileText
 } from 'lucide-react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const STATUS_OPTIONS = ['BORRADOR', 'ENVIADA', 'EN_PROCESO', 'RECIBIDA', 'CANCELADA']
 
@@ -18,12 +20,74 @@ const STATUS_COLORS = {
 
 export default function PurchaseOrders() {
     const { data, addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder, addAuditLog } = useAuth()
-    const [search, setSearch] = useState('')
-    const [filterStatus, setFilterStatus] = useState('TODOS')
-    const [showForm, setShowForm] = useState(false)
-    const [editing, setEditing] = useState(null)
-    const [receiving, setReceiving] = useState(null)
     const [deleting, setDeleting] = useState(null)
+
+    const inventory = data.inventory?.physical || []
+
+    const generatePOPDF = (po) => {
+        const doc = new jsPDF()
+        const primaryColor = [79, 70, 229] // indigo-600
+        const secondaryColor = [31, 41, 55] // dark-800
+        
+        // Header
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(20)
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.text('ORDEN DE COMPRA', 20, 25)
+        
+        doc.setFontSize(10)
+        doc.setTextColor(100, 100, 100)
+        doc.text(`NRO: ${po.order_number}`, 190, 25, { align: 'right' })
+        
+        doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.setLineWidth(1)
+        doc.line(20, 30, 190, 30)
+        
+        // Info
+        doc.setFontSize(10)
+        doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
+        doc.text('EMITIDO A:', 20, 45)
+        doc.setFont('helvetica', 'bold')
+        doc.text(po.supplierName, 20, 50)
+        
+        doc.setFont('helvetica', 'normal')
+        doc.text('FECHA PEDIDO:', 120, 45)
+        doc.text(po.date_ordered, 120, 50)
+        
+        if (po.expected_date) {
+            doc.text('FECHA ENTREGA ESTIMADA:', 120, 60)
+            doc.text(po.expected_date, 120, 65)
+        }
+        
+        // Table
+        autoTable(doc, {
+            startY: 80,
+            head: [['Descripción / Título', 'ISBN', 'Cantidad', 'Costo Unitario', 'Subtotal']],
+            body: [[
+                po.bookTitle,
+                po.isbn || 'N/A',
+                po.expected_quantity,
+                po.expected_quantity > 0 ? new Intl.NumberFormat('es-CL').format(Math.round(po.total_cost / po.expected_quantity)) : '$0',
+                new Intl.NumberFormat('es-CL').format(po.total_cost)
+            ]],
+            theme: 'striped',
+            headStyles: { fillColor: primaryColor }
+        })
+        
+        const finalY = doc.lastAutoTable.finalY + 20
+        doc.setFont('helvetica', 'bold')
+        doc.text('TOTAL ORDEN (NETO):', 140, finalY)
+        doc.text(new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(po.total_cost), 190, finalY, { align: 'right' })
+        
+        if (po.notes) {
+            doc.setFont('helvetica', 'normal')
+            doc.text('NOTAS:', 20, finalY + 10)
+            doc.setFontSize(8)
+            doc.text(po.notes, 20, finalY + 15, { maxWidth: 170 })
+        }
+        
+        doc.save(`OC_${po.order_number}.pdf`)
+    }
 
     const pos = data.purchaseOrders || []
 
@@ -196,8 +260,15 @@ export default function PurchaseOrders() {
                                                     <Truck className="w-4 h-4" />
                                                 </button>
                                             )}
-                                            <button
-                                                onClick={() => { setEditing(p); setShowForm(true) }}
+                                                <button
+                                                    onClick={() => generatePOPDF(p)}
+                                                    className="p-2 hover:bg-primary/10 rounded-lg text-slate-500 dark:text-dark-600 hover:text-primary transition-all"
+                                                    title="Descargar PDF"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => { setEditing(p); setShowForm(true) }}
                                                 className="p-2 hover:bg-slate-50 dark:bg-dark-200 rounded-lg text-slate-500 dark:text-dark-600 hover:text-slate-900 dark:text-white transition-all"
                                                 title="Editar orden"
                                             >
@@ -241,11 +312,12 @@ export default function PurchaseOrders() {
                             </button>
                         </div>
 
-                        <POForm
+                             <POForm
                             po={editing}
                             books={data.books}
                             suppliers={data.suppliers}
                             quotes={data.quotes}
+                            inventory={inventory}
                             onSave={handleSave}
                             onCancel={() => setShowForm(false)}
                         />
@@ -334,7 +406,7 @@ export default function PurchaseOrders() {
     )
 }
 
-function POForm({ po, books, suppliers, quotes = [], onSave, onCancel }) {
+function POForm({ po, books, suppliers, quotes = [], inventory = [], onSave, onCancel }) {
     const [form, setForm] = useState({
         order_number: po?.order_number || `OC-${Date.now().toString().slice(-4)}`,
         supplier_id: po?.supplier_id || '',
@@ -431,7 +503,9 @@ function POForm({ po, books, suppliers, quotes = [], onSave, onCancel }) {
                     >
                         <option value="">Selecciona el libro...</option>
                         {books.map(b => (
-                            <option key={b.id} value={b.id}>{b.title} ({b.isbn || 'Sin ISBN'})</option>
+                            <option key={b.id} value={b.id}>
+                                {b.title} (Stock: {inventory.find(inv => inv.bookId === b.id)?.stock || 0})
+                            </option>
                         ))}
                     </select>
                 </div>
