@@ -20,6 +20,11 @@ const STATUS_COLORS = {
 
 export default function PurchaseOrders() {
     const { data, addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder, addAuditLog } = useAuth()
+    const [search, setSearch] = useState('')
+    const [filterStatus, setFilterStatus] = useState('TODOS')
+    const [showForm, setShowForm] = useState(false)
+    const [editing, setEditing] = useState(null)
+    const [receiving, setReceiving] = useState(null)
     const [deleting, setDeleting] = useState(null)
 
     const inventory = data.inventory?.physical || []
