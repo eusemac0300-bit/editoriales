@@ -293,7 +293,23 @@ export function useExpenses(tenantId) {
             queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
         },
     })
-    return { addExpense: addMutation.mutateAsync }
+    const updateMutation = useMutation({
+        mutationFn: ({ id, updates }) => db.updateExpenseInDb(id, updates),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        },
+    })
+    const deleteMutation = useMutation({
+        mutationFn: (id) => db.deleteExpenseFromDb(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
+        },
+    })
+    return { 
+        addExpense: addMutation.mutateAsync,
+        updateExpense: updateMutation.mutateAsync,
+        deleteExpense: deleteMutation.mutateAsync
+    }
 }
 
 export function useGlobalMeta(tenantId) {

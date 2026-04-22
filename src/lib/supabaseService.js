@@ -1536,7 +1536,6 @@ export async function addSaleToDb(sale) {
             neto: sale.neto || 0,
             iva: sale.iva || 0,
             sale_date: sale.saleDate,
-            client_id: sale.clientId,
             client_name: sale.clientName,
             document_ref: sale.documentRef,
             status: sale.status,

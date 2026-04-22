@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { 
     Tent, Plus, Search, Calendar, MapPin, 
@@ -80,6 +80,7 @@ export default function Events() {
     const [isSettleModalOpen, setIsSettleModalOpen] = useState(false)
     const [selectedEvent, setSelectedEvent] = useState(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const submitLock = useRef(false)
 
     // Form states
     const [formData, setFormData] = useState({
@@ -137,8 +138,10 @@ export default function Events() {
 
     const handleCreateEvent = async (e) => {
         e.preventDefault()
+        if (submitLock.current) return;
         if (formData.items.length === 0) return alert('Debes agregar al menos un libro')
         
+        submitLock.current = true
         setIsSubmitting(true)
         try {
             const sanitizedData = {
@@ -153,6 +156,7 @@ export default function Events() {
         } catch (err) {
             alert('Error al crear evento: ' + err.message)
         } finally {
+            submitLock.current = false
             setIsSubmitting(false)
         }
     }

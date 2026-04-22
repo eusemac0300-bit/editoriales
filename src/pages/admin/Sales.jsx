@@ -25,7 +25,7 @@ const PAYMENT_STATUS_COLORS = {
 }
 
 export default function Sales() {
-    const { user, data, formatCurrency, addNewSale, addNewClient, updateSaleDetails, addAuditLog, reloadData, taxRate, t } = useAuth()
+    const { user, data, formatCurrency, addNewSale, updateInventory, addNewClient, updateSaleDetails, addAuditLog, reloadData, taxRate, t } = useAuth()
     const formatCLP = formatCurrency
 
     const sales = useMemo(() => data?.finances?.sales || [], [data])
@@ -418,32 +418,20 @@ export default function Sales() {
                                     createdAt: new Date().toISOString()
                                 })
 
-                                    // Update Stock - Blindado (Crea registro si no existe)
+                                    // Update Stock - Using robust AuthContext helper
                                     if (item.bookId && item.quantity > 0) {
-                                        const { data: invRows } = await supabase
-                                            .from('inventory_physical')
-                                            .select('id, stock, exits')
-                                            .eq('book_id', item.bookId)
-                                            .limit(1)
-
-                                        const now = new Date().toISOString()
-                                        const exitRef = { date: now.slice(0, 10), qty: item.quantity, ref: `Venta ${commonData.channel} – ${commonId}` }
-
-                                        if (invRows && invRows.length > 0) {
-                                            // Actualizar existente
-                                            const invRow = invRows[0]
-                                            const newStock = (invRow.stock || 0) - item.quantity
-                                            const exits = [...(invRow.exits || []), exitRef]
-                                            await supabase.from('inventory_physical').update({ stock: newStock, exits }).eq('id', invRow.id)
-                                        } else {
-                                            // Crear nuevo registro si no existía (Sale forzadamente del stock)
-                                            await supabase.from('inventory_physical').insert({
-                                                book_id: item.bookId,
-                                                stock: -item.quantity,
-                                                exits: [exitRef],
-                                                tenant_id: user.tenantId
-                                            })
-                                        }
+                                        const nowStr = new Date().toISOString()
+                                        await updateInventory(item.bookId, (current) => {
+                                            const existing = current || { stock: 0, entries: [], exits: [] }
+                                            return {
+                                                ...existing,
+                                                stock: (existing.stock || 0) - item.quantity,
+                                                exits: [
+                                                    ...(existing.exits || []),
+                                                    { date: nowStr.slice(0, 10), qty: item.quantity, ref: `Venta ${commonData.channel} – ${commonId}` }
+                                                ]
+                                            }
+                                        })
                                     }
                             }
                             await addAuditLog(`Registró venta múltiple (${items.length} títulos)`, 'ventas')

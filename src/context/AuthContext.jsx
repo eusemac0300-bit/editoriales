@@ -293,6 +293,8 @@ export function AuthProvider({ children }) {
         deletePurchaseOrder: (poId) => po.deletePurchaseOrder(poId), 
         receivePurchaseOrder: (poId, qt, bId) => po.receivePurchaseOrder({ poId, quantity: qt, bookId: bId }),
         addExpense: (expData) => expenses.addExpense(sanitizeDates({ ...expData, id: expData.id || db.iUUID() })),
+        updateExpense: (id, updates) => expenses.updateExpense({ id, updates: sanitizeDates(updates) }),
+        deleteExpense: (id) => expenses.deleteExpense(id),
         markFreelanceOnboarded: () => {
              const updatedUser = { ...user, firstLogin: false }
              setUser(updatedUser)

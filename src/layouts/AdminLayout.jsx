@@ -57,6 +57,8 @@ export default function AdminLayout() {
     const [changelogOpen, setChangelogOpen] = useState(false)
     
     const updates = [
+        { version: 'v3.1.5.96', date: '2026-04-22', title: 'Hardening de Persistencia y Sync de Gastos/Ventas', details: ['Corregido esquema de tabla "sales" para soportar trazabilidad de clientes.', 'Implementación de guards síncronos en ferias para prevenir duplicados.', 'Activación de CRUD completo en el módulo de Gastos.'] },
+        { version: 'v3.1.5.95', date: '2026-04-22', title: 'Arreglado crash "Iniciar Feria" y sincronización total de stock', details: ['Corrección de error crítico al inicializar eventos.', 'Sincronización total de stock mediante helpers atómicos.'] },
         { version: 'v3.1.5.94', date: '2026-04-21', title: 'Resolución de Alcance de Funciones', details: ['Corrección de error "ensureTenantId is not defined" mediante el movimiento de la función al alcance global del servicio.', 'Estabilización de las operaciones de guardado de Libros y Eventos.'] },
         { version: 'v3.1.5.93', date: '2026-04-21', title: 'Blindaje de Eventos y Clientes', details: ['Corrección de error crítico en procesamiento de fechas de eventos.', 'Refactorización del mapeo de Clientes para consistencia multi-tenant.', 'Eliminación de dependencias de formato en la capa de datos.'] },
         { version: 'v3.1.5.92', date: '2026-04-21', title: 'Blindaje Global de Base de Datos', details: ['Implementación de ensureTenantId en todas las funciones de escritura para prevenir errores de restricción NOT NULL.', 'Corrección del módulo de Ferias/Eventos para inserciones multi-tenant robustas.', 'Sincronización de esquemas en carga masiva de datos.'] },
