@@ -1,4 +1,4 @@
-export const APP_VERSION = '3.2.0.01';
+export const APP_VERSION = '3.2.0.02';
 export const VERSION_DATE = '2026-04-22';
 export const VERSION_NAME = 'Estabilización Operativa y Gestión Documental';
 
