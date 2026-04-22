@@ -39,8 +39,8 @@ export default function EscandalloModal({ book, onClose }) {
                 })
                 setMarketingPercent(dbEsc.marketingPercent || 15)
                 setPvpNeto(dbEsc.pvpNeto || 0)
-                setRoyaltyLibreria(dbEsc.royaltyLibreria || 10)
-                setRoyaltyDirecta(dbEsc.royaltyDirecta || 30)
+                setRoyaltyLibreria(dbEsc.royaltyLibreria || book.royaltyPercent || 10)
+                setRoyaltyDirecta(dbEsc.royaltyDirecta || book.royaltyPercent || 30)
                 setVentasCanal(dbEsc.ventasCanal || { directaPercent: 60, libreriaPercent: 40 })
             } else {
                 // Formato antiguo o migración inicial
@@ -59,6 +59,8 @@ export default function EscandalloModal({ book, onClose }) {
                     otros: Number(dbEsc.otros) || 0
                 })
                 setPvpNeto(Math.round(Number(book.pvp) / (1 + taxRate / 100)) || 0)
+                setRoyaltyLibreria(book.royaltyPercent || 10)
+                setRoyaltyDirecta(book.royaltyPercent || 30)
             }
             setTiraje(Number(book.tiraje) || 0)
         }

@@ -64,8 +64,9 @@ export default function Escandallo() {
                     })
                     setMarketingPercent(dbEsc.marketingPercent || 15)
                     setPvpNeto(dbEsc.pvpNeto || 0)
-                    setRoyaltyLibreria(dbEsc.royaltyLibreria || 10)
-                    setRoyaltyDirecta(dbEsc.royaltyDirecta || 30)
+                    // If the book has a general royaltyPercent, use it as fallback for both channels
+                    setRoyaltyLibreria(dbEsc.royaltyLibreria || book.royaltyPercent || 10)
+                    setRoyaltyDirecta(dbEsc.royaltyDirecta || book.royaltyPercent || 30)
                     setVentasCanal(dbEsc.ventasCanal || { directaPercent: 60, libreriaPercent: 40 })
                 } else {
                     // Mapeo exhaustivo para migración
@@ -85,8 +86,8 @@ export default function Escandallo() {
                     })
                     setPvpNeto(Math.round(Number(book.pvp) / (1 + taxRate / 100)) || 0)
                     setMarketingPercent(15)
-                    setRoyaltyLibreria(10)
-                    setRoyaltyDirecta(30)
+                    setRoyaltyLibreria(book.royaltyPercent || 10)
+                    setRoyaltyDirecta(book.royaltyPercent || 30)
                     setVentasCanal({ directaPercent: 60, libreriaPercent: 40 })
                 }
                 setTiraje(Number(book.tiraje) || 0)
