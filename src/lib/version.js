@@ -1,7 +1,17 @@
-export const APP_VERSION = 'v3.2.1.1';
-export const APP_BUILD = '2026.04.23.005';
+export const APP_VERSION = 'v3.2.1.2';
+export const APP_BUILD = '2026.04.23.006';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.1.2',
+        date: '2026-04-23',
+        title: 'Restauración Estructural: Interfaz Original',
+        details: [
+            'Reversión total de cambios visuales en el Escandallo.',
+            'Restauración de espaciados, fuentes y flujo vertical original.',
+            'Eliminación de compactación de márgenes para mantener el diseño clásico.'
+        ]
+    },
     {
         version: 'v3.2.1.1',
         date: '2026-04-23',
