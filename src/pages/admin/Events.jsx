@@ -149,23 +149,26 @@ export default function Events() {
         e.preventDefault()
         if (submitLock.current) return
         
-        // Stock Validation
+        // Aggregated Stock Validation
         const stockErrors = []
-        formData.items.forEach(item => {
-            const book = data.books?.find(b => b.id === item.bookId)
+        const aggregatedItems = formData.items.reduce((acc, item) => {
+            acc[item.bookId] = (acc[item.bookId] || 0) + item.initialQty
+            return acc
+        }, {})
+
+        Object.keys(aggregatedItems).forEach(bookId => {
+            const totalRequested = aggregatedItems[bookId]
+            const book = data.books?.find(b => b.id === bookId)
             if (!book) return
 
-            const currentStock = inventory.find(inv => inv.bookId === item.bookId)?.stock || 0
-            
-            // Find if this item was already in the event (if editing)
+            const currentStock = inventory.find(inv => inv.bookId === bookId)?.stock || 0
             const originalEvent = data.events?.find(ev => ev.id === formData.id)
-            const originalItem = originalEvent?.items?.find(oi => oi.bookId === item.bookId)
+            const originalItem = originalEvent?.items?.find(oi => oi.bookId === bookId)
             const originalQty = originalItem?.initialQty || 0
-            
             const availableTotal = currentStock + originalQty
-            
-            if (item.initialQty > availableTotal) {
-                stockErrors.push(`${book.title}: Solicitado ${item.initialQty}, disponible total ${availableTotal} (Stock actual en bodega: ${currentStock})`)
+
+            if (totalRequested > availableTotal) {
+                stockErrors.push(`${book.title}: Solicitado ${totalRequested} en total, disponible ${availableTotal}`)
             }
         })
 
@@ -578,17 +581,41 @@ export default function Events() {
                             <button 
                                 type="button"
                                 onClick={() => setIsCreateModalOpen(false)}
-                                className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-dark-50/5 transition-all transition-all"
+                                className="flex-1 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 dark:hover:bg-dark-50/5 transition-all"
                             >
                                 Cancelar
                             </button>
-                            <button 
-                                disabled={isSubmitting}
-                                onClick={handleSaveEvent}
-                                className="flex-[2] px-6 py-4 bg-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-primary-600 transition-all shadow-lg shadow-primary/25 disabled:opacity-50"
-                            >
-                                {isSubmitting ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Iniciar Feria')}
-                            </button>
+                            {(() => {
+                                const aggregated = formData.items.reduce((acc, item) => {
+                                    acc[item.bookId] = (acc[item.bookId] || 0) + item.initialQty
+                                    return acc
+                                }, {})
+
+                                const hasStockErrors = Object.keys(aggregated).some(bookId => {
+                                    const totalRequested = aggregated[bookId]
+                                    const currentStock = inventory.find(inv => inv.bookId === bookId)?.stock || 0
+                                    const originalEvent = data.events?.find(ev => ev.id === formData.id)
+                                    const originalItem = originalEvent?.items?.find(oi => oi.bookId === bookId)
+                                    const originalQty = originalItem?.initialQty || 0
+                                    return totalRequested > (currentStock + originalQty)
+                                })
+
+                                return (
+                                    <button 
+                                        disabled={isSubmitting || hasStockErrors}
+                                        onClick={handleSaveEvent}
+                                        className={`flex-[2] px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg ${
+                                            hasStockErrors 
+                                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' 
+                                                : 'bg-primary text-white hover:bg-primary-600 shadow-primary/25'
+                                        }`}
+                                    >
+                                        {isSubmitting ? 'Guardando...' : 
+                                         hasStockErrors ? 'Stock Insuficiente' :
+                                         (isEditing ? 'Guardar Cambios' : 'Iniciar Feria')}
+                                    </button>
+                                )
+                            })()}
                         </div>
                     </div>
                 </div>
