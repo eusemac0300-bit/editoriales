@@ -2230,7 +2230,7 @@ export async function addEventToDb(tenantId, eventData, items) {
                 // If no inventory record, create one with negative/correct stock
                 await supabase.from('inventory_physical').insert({
                     book_id: item.bookId,
-                    tenant_id: tid,
+                tenant_id: tid,
                     stock: -item.initialQty,
                     min_stock: 100,
                     entries: [],
@@ -2244,7 +2244,10 @@ export async function addEventToDb(tenantId, eventData, items) {
 }
 
 export async function updateEventInDb(eventId, updates, items) {
-    if (!updates) throw new Error("No se proporcionaron datos para actualizar el evento");
+    console.log(`[Service] Actualizando evento ${eventId}...`, { updates, itemsCount: items?.length });
+    if (!eventId) throw new Error("ID de evento no proporcionado");
+    if (!updates) throw new Error(`No se proporcionaron datos para actualizar el evento (ID: ${eventId})`);
+    
     const tid = ensureTenantId(updates.tenant_id || updates.tenantId);
     
     // 1. Fetch current items to calculate stock diffs

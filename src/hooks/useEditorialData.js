@@ -360,7 +360,10 @@ export function useEvents(tenantId) {
     })
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, updates, items }) => db.updateEventInDb(id, updates, items),
+        mutationFn: (payload) => {
+            if (!payload || !payload.id) throw new Error("ID de evento no proporcionado para la actualización");
+            return db.updateEventInDb(payload.id, payload.updates, payload.items);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
         },
