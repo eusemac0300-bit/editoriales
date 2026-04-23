@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { loadSuperAdminData, superAdminDeleteUser, addUser as addSuperAdminUser, superAdminDeleteWorkspace, getGlobalEmail, setGlobalEmail, superAdminCreateTenant, loadOnboardingRequests, updateOnboardingStatus, superAdminApproveOnboarding, deleteAllOnboardingRequests } from '../../lib/supabaseService'
-import { Building2, Users, CreditCard, Activity, Search, ShieldAlert, CheckCircle2, XCircle, UserPlus, Database, Lock, User, AlertTriangle, MapPin, Copy } from 'lucide-react'
+import { Building2, Users, CreditCard, Activity, Search, ShieldAlert, CheckCircle2, XCircle, UserPlus, Database, Lock, User, AlertTriangle, MapPin, Copy, Eye, EyeOff } from 'lucide-react'
 import { APP_VERSION } from '../../lib/version'
 
 export default function SuperAdminDashboard() {
@@ -13,6 +13,7 @@ export default function SuperAdminDashboard() {
     const [searchTerm, setSearchTerm] = useState('')
     const [activeTab, setActiveTab] = useState(initialTab)
     const [onboardingRequests, setOnboardingRequests] = useState([])
+    const [showPassword, setShowPassword] = useState(false)
 
     // Create User Modal State
     const [showCreateModal, setShowCreateModal] = useState(false)
@@ -779,7 +780,14 @@ export default function SuperAdminDashboard() {
                                 <label className="text-xs text-dark-500 font-bold mb-1 block">Nueva Contraseña (Dejar vacío para no cambiar)</label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
-                                    <input type="text" className="input-field h-10 w-full pl-9 font-mono" value={editingUser.password} onChange={e => setEditingUser({ ...editingUser, password: e.target.value })} placeholder="Escribe nueva clave aquí..." />
+                                    <input type={showPassword ? "text" : "password"} className="input-field h-10 w-full pl-9 pr-10 font-mono" value={editingUser.password} onChange={e => setEditingUser({ ...editingUser, password: e.target.value })} placeholder="Escribe nueva clave aquí..." />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-500 hover:text-white transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
                                 </div>
                             </div>
 

@@ -1,6 +1,17 @@
-export const APP_VERSION = 'v3.2.0.15';
+export const APP_VERSION = 'v3.2.0.16';
+export const APP_BUILD = '2026.04.23.001';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.0.16',
+        date: '2026-04-23',
+        title: 'Seguridad y UX: Visibilidad de Contraseñas',
+        details: [
+            'Añadida funcionalidad de "Ojito" (Show/Hide) en el Login para evitar errores de escritura.',
+            'Implementada visualización de clave en el Modal de Edición de Usuarios del SuperAdmin.',
+            'Sincronización global del sistema de novedades con el registro maestro.'
+        ]
+    },
     {
         version: 'v3.2.0.15',
         date: '2026-04-23',
