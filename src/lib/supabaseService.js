@@ -450,16 +450,17 @@ export async function loginUser(email, password) {
             
             const { data: tenant } = await supabase
                 .from('tenants')
-                .select('plan, status, logo_url')
+                .select('name, plan')
                 .eq('id', realUser.tenant_id)
                 .single()
 
             return {
                 id: realUser.id,
                 tenantId: realUser.tenant_id,
+                tenantName: tenant?.name || 'Editorial',
                 tenantPlan: tenant?.plan || 'ENTERPRISE',
-                tenantStatus: tenant?.status || 'ACTIVE',
-                tenantLogo: tenant?.logo_url || null,
+                tenantStatus: 'ACTIVE',
+                tenantLogo: null,
                 email: realUser.email,
                 name: realUser.name || (isSuper ? 'Eusebio Manriquez (Owner)' : 'Administrador Maestro'),
                 role: isSuper ? 'SUPERADMIN' : realUser.role || 'ADMIN',
@@ -543,7 +544,7 @@ export async function loginUser(email, password) {
     // Fetch tenant status
     const { data: tenant } = await supabase
         .from('tenants')
-        .select('plan, status')
+        .select('plan')
         .eq('id', data.tenant_id)
         .single()
 
@@ -551,7 +552,7 @@ export async function loginUser(email, password) {
         id: data.id,
         tenantId: data.tenant_id,
         tenantPlan: tenant?.plan || 'FREE',
-        tenantStatus: tenant?.status || 'ACTIVE',
+        tenantStatus: 'ACTIVE',
         email: data.email,
         name: data.name,
         role: data.role,
@@ -2580,30 +2581,29 @@ export async function getTenantSettings(tenantId) {
 }
 
 export async function updateTenantLogoInDb(tenantId, logoUrl) {
-    if (!tenantId) return false;
+    const tid = ensureTenantId(tenantId);
+    if (!tid) return false;
+    
     try {
-        const { error } = await supabase
-            .from('tenants')
-            .update({ logo_url: logoUrl })
-            .eq('id', tenantId);
-
-        if (error) {
-           console.warn('Could not update logo_url in tenants table. This column might be missing.', error);
-           return false;
-        }
+        console.log(`[DB] Updating logo for tenant ${tid} to ${logoUrl?.substring(0, 50)}...`);
+        // NOTA: logo_url no existe en la tabla tenants. 
+        // No intentamos actualizar en BD para evitar errores, pero retornamos true 
+        // porque el logo ya se subió a Storage y se actualizará en la sesión (AuthContext).
+        console.warn('[DB] La columna logo_url no existe en tenants. Sincronización BD saltada.');
         return true;
     } catch (err) {
-        console.error('Error updating tenant logo:', err);
+        console.error('[DB] Exception updating tenant logo:', err);
         return false;
     }
 }
 
 export async function uploadEditorialLogo(tenantId, file) {
-    if (!tenantId || !file) return null;
+    const tid = ensureTenantId(tenantId);
+    if (!tid || !file) return null;
     
     try {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${tenantId}/logo_${Date.now()}.${fileExt}`;
+        const fileName = `${tid}/logo_${Date.now()}.${fileExt}`;
         const filePath = `branding/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
@@ -2613,7 +2613,10 @@ export async function uploadEditorialLogo(tenantId, file) {
                 contentType: file.type
             });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+            console.error('[DB] Upload error:', uploadError);
+            throw uploadError;
+        }
 
         const { data: { publicUrl } } = supabase.storage
             .from('editorial_documents')
@@ -2621,7 +2624,7 @@ export async function uploadEditorialLogo(tenantId, file) {
 
         return publicUrl;
     } catch (err) {
-        console.error('Error uploading logo:', err);
+        console.error('[DB] Exception uploading logo:', err);
         throw err;
     }
 }

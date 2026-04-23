@@ -1,8 +1,33 @@
-import { Book, Video, FileText, ExternalLink, Sparkles, Map, MessageSquare } from 'lucide-react'
+import { Book, Video, FileText, ExternalLink, Sparkles, Map, MessageSquare, Send, X } from 'lucide-react'
+import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { sendAdminNotification } from '../../lib/notificationService'
 
 export default function Documentation() {
-    const { t } = useAuth()
+    const { t, user } = useAuth()
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+    const [contactMessage, setContactMessage] = useState('')
+    const [isSending, setIsSending] = useState(false)
+
+    const handleSendConsultation = async () => {
+        if (!contactMessage.trim()) return
+
+        setIsSending(true)
+        const success = await sendAdminNotification({
+            subject: `Consulta de Soporte: ${user?.name || 'Usuario'} [${user?.tenantId || 'SaaS'}]`,
+            message: `El usuario ${user?.name} (${user?.email}) del Workspace [${user?.workspaceName || user?.tenantId}] ha enviado la siguiente consulta:\n\n---\n${contactMessage}\n---`,
+            type: 'Soporte Técnico / Funcionalidad Personalizada'
+        })
+
+        if (success) {
+            alert('¡Consulta enviada! El consultor técnico se pondrá en contacto contigo pronto.')
+            setIsContactModalOpen(false)
+            setContactMessage('')
+        } else {
+            alert('Error al enviar la consulta. Por favor, inténtalo de nuevo más tarde.')
+        }
+        setIsSending(false)
+    }
 
     const sections = [
         {
@@ -24,8 +49,6 @@ export default function Documentation() {
             isExternal: true
         }
     ]
-
-
 
     const workflows = [
         { step: '1. Catálogo', desc: 'Crea tus Autores y Títulos. Define el PVP y los metadatos.' },
@@ -51,7 +74,7 @@ export default function Documentation() {
                 </div>
                 <div className="relative z-10 bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-3xl text-center hidden md:block">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Versión Actual</p>
-                    <p className="text-2xl font-black text-white">v3.1.5.85</p>
+                    <p className="text-2xl font-black text-white">v3.2.1.2</p>
                 </div>
             </header>
 
@@ -110,16 +133,57 @@ export default function Documentation() {
 
                 <div className="space-y-6">
                     <div className="bg-primary/5 p-6 rounded-[2rem] border border-primary/10">
-                        <h4 className="text-xs font-black text-primary uppercase tracking-widest mb-2">Ayuda Experta</h4>
+                        <h4 className="text-xs font-black text-primary uppercase tracking-widest mb-2 font-mono">Ayuda Experta</h4>
                         <p className="text-xs text-slate-600 dark:text-dark-700 leading-relaxed mb-4">
                             ¿Necesitas una funcionalidad personalizada o soporte técnico avanzado?
                         </p>
-                        <button className="w-full py-3 bg-white dark:bg-dark-100 border border-slate-200 dark:border-dark-300 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-all">
+                        <button 
+                            onClick={() => setIsContactModalOpen(true)}
+                            className="w-full py-3 bg-white dark:bg-dark-100 border border-slate-200 dark:border-dark-300 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-primary transition-all hover:border-primary/30 shadow-sm hover:shadow-primary/10"
+                        >
                             Contactar Consultor
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Contacto */}
+            {isContactModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsContactModalOpen(false)} />
+                    <div className="relative bg-white dark:bg-dark-100 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-dark-300 overflow-hidden slide-up">
+                        <div className="bg-primary p-8 text-white relative">
+                            <div className="absolute top-4 right-4">
+                                <button onClick={() => setIsContactModalOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <MessageSquare className="w-10 h-10 mb-4 opacity-50" />
+                            <h3 className="text-2xl font-black tracking-tight">Nueva Consulta</h3>
+                            <p className="text-primary-100 text-sm mt-1">Escribe tu solicitud y el consultor técnico se contactará contigo.</p>
+                        </div>
+                        <div className="p-8">
+                            <textarea
+                                value={contactMessage}
+                                onChange={(e) => setContactMessage(e.target.value)}
+                                placeholder="Ej: Me gustaría integrar mi tienda Shopify con el inventario..."
+                                className="w-full h-40 bg-slate-50 dark:bg-dark-200 border border-slate-200 dark:border-dark-300 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-primary/10 outline-none transition-all resize-none"
+                            />
+                            <button
+                                onClick={handleSendConsultation}
+                                disabled={isSending || !contactMessage.trim()}
+                                className="w-full mt-6 btn-primary py-4 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-primary/20 disabled:opacity-50 disabled:grayscale"
+                            >
+                                {isSending ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <>Enviar Consulta <Send className="w-4 h-4" /></>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

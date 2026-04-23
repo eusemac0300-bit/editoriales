@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import * as db from '../../lib/supabaseService'
+import { APP_VERSION } from '../../lib/version'
 
 export default function Settings() {
     const { user, updateLogo } = useAuth()
@@ -66,7 +67,10 @@ export default function Settings() {
                             setSuccess('Logo actualizado correctamente.')
                             updateLogo(publicUrl) // Update global state
                         } else {
-                            setError('El logo se subió pero no pudimos actualizar tu perfil. Contacta a soporte.')
+                            // Si falló el update en DB pero tenemos la URL pública, al menos actualizamos el estado local
+                            // para que el usuario vea el cambio en esta sesión, avisando del error de persistencia.
+                            updateLogo(publicUrl)
+                            setError('El logo se subió pero no pudimos persistirlo en tu perfil global. Se verá en esta sesión, pero contacta a soporte para sincronizarlo permanentemente.')
                         }
                     }
                 } catch (err) {
@@ -297,7 +301,9 @@ export default function Settings() {
                     </div>
 
                     <div className="p-6 text-center">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Editorial Pro CMS — Versión 3.5.8</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-balance">
+                            Editorial Pro CMS — {APP_VERSION} — {user?.tenantName || 'Standard'} Edition
+                        </p>
                     </div>
                 </div>
            </div>
