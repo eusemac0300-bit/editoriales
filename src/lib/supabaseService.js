@@ -2157,7 +2157,7 @@ export async function clearDemoData(tenantId) {
 }
 
 // ============ EVENTS / FERIAS ============
-export async function addEventToDb(tenantId, eventData, items) {
+export async function addEventToDb({ tenantId, eventData, items }) {
     const tid = ensureTenantId(tenantId);
     
     const eventInsertData = {
@@ -2243,8 +2243,8 @@ export async function addEventToDb(tenantId, eventData, items) {
     return createdEvent
 }
 
-export async function updateEventInDb(eventId, updates, items) {
-    console.log(`[Service] Actualizando evento ${eventId}...`, { updates, itemsCount: items?.length });
+export async function updateEventInDb({ id, updates, items }) {
+    const eventId = id;
     if (!eventId) throw new Error("ID de evento no proporcionado");
     if (!updates) throw new Error(`No se proporcionaron datos para actualizar el evento (ID: ${eventId})`);
     

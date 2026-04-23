@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v3.2.0.08';
+export const APP_VERSION = 'v3.2.0.09';
 
 export const CHANGELOG = [
     {
