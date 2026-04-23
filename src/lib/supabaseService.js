@@ -999,6 +999,7 @@ export async function updateUser(userId, updates) {
     if (updates.bio !== undefined) mapped.bio = typeof updates.bio === 'string' ? updates.bio : JSON.stringify(updates.bio)
     if (updates.avatar !== undefined) mapped.avatar = updates.avatar
     if (updates.socialLinks !== undefined) mapped.social_links = updates.socialLinks
+    if (updates.first_login !== undefined) mapped.first_login = updates.first_login
 
     const { error } = await supabase
         .from('users')

@@ -1,7 +1,17 @@
-export const APP_VERSION = 'v3.2.0.16';
-export const APP_BUILD = '2026.04.23.001';
+export const APP_VERSION = 'v3.2.0.17';
+export const APP_BUILD = '2026.04.23.002';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.0.17',
+        date: '2026-04-23',
+        title: 'Gestión de Accesos: Reinicio de Bienvenida',
+        details: [
+            'Nuevo botón "Reiniciar Bienvenida" en edición de usuarios: Resetea el proceso para que el usuario elija su propia clave.',
+            'Solucionado bloqueo en el guardado de credenciales del SuperAdmin.',
+            'Asignación automática de clave temporal "bienvenido123" en procesos de reset.'
+        ]
+    },
     {
         version: 'v3.2.0.16',
         date: '2026-04-23',

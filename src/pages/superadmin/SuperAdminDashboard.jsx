@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { loadSuperAdminData, superAdminDeleteUser, addUser as addSuperAdminUser, superAdminDeleteWorkspace, getGlobalEmail, setGlobalEmail, superAdminCreateTenant, loadOnboardingRequests, updateOnboardingStatus, superAdminApproveOnboarding, deleteAllOnboardingRequests } from '../../lib/supabaseService'
+import { loadSuperAdminData, superAdminDeleteUser, addUser as addSuperAdminUser, superAdminDeleteWorkspace, getGlobalEmail, setGlobalEmail, superAdminCreateTenant, loadOnboardingRequests, updateOnboardingStatus, superAdminApproveOnboarding, deleteAllOnboardingRequests, updateUser } from '../../lib/supabaseService'
 import { Building2, Users, CreditCard, Activity, Search, ShieldAlert, CheckCircle2, XCircle, UserPlus, Database, Lock, User, AlertTriangle, MapPin, Copy, Eye, EyeOff } from 'lucide-react'
 import { APP_VERSION } from '../../lib/version'
 
@@ -211,7 +211,7 @@ export default function SuperAdminDashboard() {
         setActionLoading(true)
         setErrorMsg('')
 
-        const success = await db.updateUser(editingUser.id, {
+        const success = await updateUser(editingUser.id, {
             name: editingUser.name,
             role: editingUser.role,
             password: editingUser.password || undefined
@@ -224,6 +224,27 @@ export default function SuperAdminDashboard() {
             await fetchData()
         } else {
             setErrorMsg('Error al actualizar el usuario.')
+        }
+        setActionLoading(false)
+    }
+
+    const handleResetUserWelcome = async () => {
+        if (!editingUser) return
+        if (!window.confirm(`¿Estás seguro de reiniciar el proceso de bienvenida para ${editingUser.name}? Se le asignará la clave "bienvenido123" y deberá cambiarla al ingresar.`)) return
+        
+        setActionLoading(true)
+        const success = await updateUser(editingUser.id, {
+            password: 'bienvenido123',
+            first_login: true
+        })
+
+        if (success) {
+            alert('Proceso de bienvenida reiniciado. El usuario ahora debe entrar con "bienvenido123".')
+            setShowEditModal(false)
+            setEditingUser(null)
+            await fetchData()
+        } else {
+            setErrorMsg('Error al reiniciar el proceso.')
         }
         setActionLoading(false)
     }
@@ -807,9 +828,14 @@ export default function SuperAdminDashboard() {
                             </div>
 
                             <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-dark-300">
-                                <button type="button" onClick={() => { setShowEditModal(false); setEditingUser(null); }} className="h-10 px-4 rounded-xl border border-dark-400 text-dark-400 hover:text-white hover:bg-dark-300 font-bold text-sm transition-all">
-                                    Cancelar
-                                </button>
+                                <div className="flex gap-3">
+                                    <button type="button" onClick={() => { setShowEditModal(false); setEditingUser(null); }} className="h-10 px-4 rounded-xl border border-dark-400 text-dark-400 hover:text-white hover:bg-dark-300 font-bold text-sm transition-all">
+                                        Cancelar
+                                    </button>
+                                    <button type="button" onClick={handleResetUserWelcome} disabled={actionLoading} className="h-10 px-4 rounded-xl border border-amber-500/50 text-amber-500 hover:bg-amber-500/10 font-bold text-sm transition-all">
+                                        Reiniciar Bienvenida
+                                    </button>
+                                </div>
                                 <button type="submit" disabled={actionLoading} className="h-10 px-6 rounded-xl bg-primary hover:bg-primary-400 text-white font-black text-sm transition-all shadow-lg shadow-primary/20">
                                     {actionLoading ? 'Guardando...' : 'Actualizar Credenciales'}
                                 </button>
