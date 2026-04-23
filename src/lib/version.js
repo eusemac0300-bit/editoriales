@@ -1,7 +1,18 @@
-export const APP_VERSION = 'v3.2.0.18';
-export const APP_BUILD = '2026.04.23.003';
+export const APP_VERSION = 'v3.2.1.0';
+export const APP_BUILD = '2026.04.23.004';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.1.0',
+        date: '2026-04-23',
+        title: 'Optimización de Interfaz: Escandallo Pro',
+        details: [
+            'Rediseño completo de la calculadora de Escandallo usando pestañas (Costos, Parámetros, Regalías).',
+            'Implementación de secciones colapsables para maximizar la visibilidad "at a glance".',
+            'Panel de resumen financiero persistente durante la edición.',
+            'Corrección de compatibilidad en el tour virtual (background-clip).'
+        ]
+    },
     {
         version: 'v3.2.0.18',
         date: '2026-04-23',

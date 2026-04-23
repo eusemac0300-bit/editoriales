@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Calculator, TrendingUp, Target, DollarSign, BarChart3, Save, Book } from 'lucide-react'
+import { Calculator, TrendingUp, Target, DollarSign, BarChart3, Save, Book, ChevronDown, ChevronUp, Layers, Settings2, Users2 } from 'lucide-react'
 
 export default function Escandallo() {
     const [searchParams] = useSearchParams()
@@ -30,6 +30,8 @@ export default function Escandallo() {
     const [royaltyDirecta, setRoyaltyDirecta] = useState(() => getInitialState('royaltyDirecta', 30))
     const [ventasCanal, setVentasCanal] = useState(() => getInitialState('ventasCanal', { directaPercent: 60, libreriaPercent: 40 }))
     const [isSaving, setIsSaving] = useState(false)
+    const [activeTab, setActiveTab] = useState('production') // 'production', 'sales', 'channels'
+    const [sectionsOpen, setSectionsOpen] = useState({ breakdown: true, projection: false })
 
     // Save to session storage whenever they change
     useEffect(() => {
@@ -224,335 +226,354 @@ export default function Escandallo() {
     ]
 
     return (
-        <div className="space-y-6 fade-in">
+        <div className="space-y-6 fade-in pb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Calculator className="w-6 h-6 text-primary" />Calculadora de Escandallo (Costos) por Título
+                        <Calculator className="w-6 h-6 text-primary" />Calculadora de Escandallo
                     </h1>
-                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Simulador de rentabilidad y punto de equilibrio por obra literaria.</p>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Simulador de rentabilidad por obra literaria.</p>
                 </div>
                 <div className="flex gap-2">
                     <button
                         onClick={handleClear}
                         className="btn-secondary text-xs px-4"
                     >
-                        Limpiar Datos
+                        Limpiar
                     </button>
                     {selectedBookId && (
                         <button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="btn-primary flex items-center gap-2"
+                            className="btn-primary flex items-center gap-2 text-sm px-4"
                         >
                             {isSaving ? (
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <Save className="w-4 h-4" />
                             )}
-                            Guardar Escandallo (Costos) en Título
+                            Guardar Cambios
                         </button>
                     )}
                 </div>
             </div>
 
-            <div className="glass-card p-5 border-l-4 border-l-primary">
-                <label className="text-sm font-semibold text-slate-900 dark:text-white mb-2 block flex items-center gap-2">
-                    <Book className="w-4 h-4 text-primary" /> Seleccionar Título
-                </label>
-                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                    <select
-                        value={selectedBookId}
-                        onChange={(e) => handleBookChange(e.target.value)}
-                        className="input-field text-sm font-medium w-full md:w-1/2"
-                    >
-                        <option value="">-- Elige un Título --</option>
-                        {data?.books?.map(b => (
-                            <option key={b.id} value={b.id}>{b.title} ({b.authorName})</option>
-                        ))}
-                    </select>
-                    {selectedBookId ? (
-                        <span className="badge-blue border h-fit">Modo Edición: {data.books?.find(b => b.id === selectedBookId)?.title}</span>
-                    ) : (
-                        <span className="badge-yellow border h-fit">Modo: Simulador Libre</span>
-                    )}
+            <div className="glass-card p-4 border-l-4 border-l-primary">
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                    <div className="flex-1 w-full max-w-xl">
+                        <label className="text-[10px] font-bold text-dark-600 uppercase mb-1 block flex items-center gap-2">
+                            <Book className="w-3 h-3 text-primary" /> Título Seleccionado
+                        </label>
+                        <select
+                            value={selectedBookId}
+                            onChange={(e) => handleBookChange(e.target.value)}
+                            className="input-field text-sm font-medium w-full"
+                        >
+                            <option value="">-- Elige un Título --</option>
+                            {data?.books?.map(b => (
+                                <option key={b.id} value={b.id}>{b.title} ({b.authorName})</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {selectedBookId ? (
+                            <span className="badge-blue border px-3 py-1.5">Editando: {data.books?.find(b => b.id === selectedBookId)?.title.slice(0,25)}...</span>
+                        ) : (
+                            <span className="badge-yellow border px-3 py-1.5 text-xs">Simulador Libre</span>
+                        )}
+                    </div>
                 </div>
-                {!selectedBookId && (
-                    <p className="text-xs text-amber-400 mt-2 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                        Estás en el simulador libre. Los datos no se guardarán a menos que selecciones un título.
-                    </p>
-                )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Costs input */}
-                <div className="lg:col-span-1 space-y-4">
-                    <div className="glass-card p-5">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Costos de Producción (Netos)</h2>
-                            <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded">Sin IVA</span>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Inputs con Pestañas */}
+                <div className="lg:col-span-4 space-y-4 sticky top-6">
+                    <div className="glass-card p-0 overflow-hidden">
+                        <div className="flex border-b border-dark-300">
+                            <button 
+                                onClick={() => setActiveTab('production')}
+                                className={`flex-1 py-3 px-2 text-[10px] font-bold uppercase transition-all flex flex-col items-center gap-1 ${activeTab === 'production' ? 'bg-primary/10 text-primary border-b-2 border-primary' : 'text-dark-500 hover:bg-dark-300'}`}
+                            >
+                                <Layers className="w-4 h-4" /> Costos
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('sales')}
+                                className={`flex-1 py-3 px-2 text-[10px] font-bold uppercase transition-all flex flex-col items-center gap-1 ${activeTab === 'sales' ? 'bg-primary/10 text-primary border-b-2 border-primary' : 'text-dark-500 hover:bg-dark-300'}`}
+                            >
+                                <Settings2 className="w-4 h-4" /> Parámetros
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('channels')}
+                                className={`flex-1 py-3 px-2 text-[10px] font-bold uppercase transition-all flex flex-col items-center gap-1 ${activeTab === 'channels' ? 'bg-primary/10 text-primary border-b-2 border-primary' : 'text-dark-500 hover:bg-dark-300'}`}
+                            >
+                                <Users2 className="w-4 h-4" /> Regalías
+                            </button>
                         </div>
-                        <div className="space-y-3">
-                            {costItems.map(item => (
-                                <div key={item.key}>
-                                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 flex items-center gap-1">
-                                        <span>{item.icon}</span> {item.label}
-                                    </label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-dark-500">$</span>
-                                        <input
-                                            type="text"
-                                            value={formatInputValue(costs[item.key])}
-                                            onChange={e => {
-                                                const val = e.target.value.replace(/\D/g, '')
-                                                setCosts(prev => ({ ...prev, [item.key]: val === '' ? 0 : parseInt(val, 10) }))
-                                            }}
-                                            className="input-field pl-7 text-sm"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
 
-                    <div className="glass-card p-5">
-                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex justify-between items-center">
-                            Parámetros de Venta y Canales
-                            <span className="text-[10px] font-normal text-slate-400">PVP Neto: {formatSafeCLP(pvpNeto)}</span>
-                        </h2>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">PVP Neto (Sin IVA)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
-                                        <input
-                                            type="text"
-                                            value={formatInputValue(pvpNeto)}
-                                            onChange={e => {
-                                                const val = e.target.value.replace(/\D/g, '')
-                                                setPvpNeto(val === '' ? 0 : parseInt(val, 10))
-                                            }}
-                                            className="input-field pl-5 text-sm py-1.5"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">Tiraje</label>
-                                    <input
-                                        type="text"
-                                        value={formatInputValue(tiraje)}
-                                        onChange={e => {
-                                            const val = e.target.value.replace(/\D/g, '')
-                                            setTiraje(val === '' ? 0 : parseInt(val, 10))
-                                        }}
-                                        className="input-field text-sm py-1.5"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="p-3 bg-slate-50 dark:bg-dark-50 rounded-lg border border-slate-100 dark:border-dark-100">
-                                <div className="flex flex-col gap-3 mb-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs font-bold text-slate-700">Canal Directo</span>
-                                        <div className="flex items-center gap-2">
-                                            <input 
-                                                type="number"
-                                                value={udsDirecta}
-                                                onChange={e => {
-                                                    const val = parseInt(e.target.value) || 0
-                                                    const p = tiraje > 0 ? (val / tiraje) * 100 : 60
-                                                    setVentasCanal({ directaPercent: Math.round(p), libreriaPercent: 100 - Math.round(p) })
-                                                }}
-                                                className="w-16 bg-white dark:bg-dark-300 border border-slate-200 dark:border-dark-400 rounded text-center text-xs font-bold py-1"
-                                            />
-                                            <span className="text-[10px] text-slate-400">u.</span>
+                        <div className="p-4 max-h-[60vh] overflow-y-auto thin-scrollbar">
+                            {activeTab === 'production' && (
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-dark-500 uppercase border-b border-dark-300 pb-1 mb-3">Producción y Editorial</h3>
+                                    {costItems.map(item => (
+                                        <div key={item.key}>
+                                            <label className="text-[11px] text-slate-500 dark:text-dark-600 mb-1 flex items-center gap-1">
+                                                <span>{item.icon}</span> {item.label}
+                                            </label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-dark-500">$</span>
+                                                <input
+                                                    type="text"
+                                                    value={formatInputValue(costs[item.key])}
+                                                    onChange={e => {
+                                                        const val = e.target.value.replace(/\D/g, '')
+                                                        setCosts(prev => ({ ...prev, [item.key]: val === '' ? 0 : parseInt(val, 10) }))
+                                                    }}
+                                                    className="input-field h-9 pl-7 text-xs font-mono"
+                                                    placeholder="0"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs font-bold text-slate-700">Canal Librería</span>
-                                        <div className="flex items-center gap-2">
-                                            <input 
-                                                type="number"
-                                                value={udsLibreria}
+                                    ))}
+                                </div>
+                            )}
+
+                            {activeTab === 'sales' && (
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-bold text-dark-500 uppercase border-b border-dark-300 pb-1 mb-3">Ventas y Tiraje</h3>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label className="text-[11px] text-slate-500 uppercase mb-1 block">PVP Neto Sugerido</label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
+                                                <input
+                                                    type="text"
+                                                    value={formatInputValue(pvpNeto)}
+                                                    onChange={e => {
+                                                        const val = e.target.value.replace(/\D/g, '')
+                                                        setPvpNeto(val === '' ? 0 : parseInt(val, 10))
+                                                    }}
+                                                    className="input-field h-10 pl-7 text-sm font-bold text-primary"
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-dark-600 mt-1">S/IVA. Con IVA: {formatSafeCLP(Math.round(pvpNeto * (1 + taxRate/100)))}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-[11px] text-slate-500 uppercase mb-1 block">Tiraje (Unidades)</label>
+                                            <input
+                                                type="text"
+                                                value={formatInputValue(tiraje)}
                                                 onChange={e => {
-                                                    const val = parseInt(e.target.value) || 0
-                                                    const p = tiraje > 0 ? (val / tiraje) * 100 : 40
-                                                    setVentasCanal({ libreriaPercent: Math.round(p), directaPercent: 100 - Math.round(p) })
+                                                    const val = e.target.value.replace(/\D/g, '')
+                                                    setTiraje(val === '' ? 0 : parseInt(val, 10))
                                                 }}
-                                                className="w-16 bg-white dark:bg-dark-300 border border-slate-200 dark:border-dark-400 rounded text-center text-xs font-bold py-1"
+                                                className="input-field h-10 text-sm font-bold"
                                             />
-                                            <span className="text-[10px] text-slate-400">u.</span>
+                                        </div>
+                                        <div className="pt-2 border-t border-dark-300">
+                                            <label className="text-[11px] text-slate-500 uppercase mb-1 block">Inversión Marketing (% s/Prod)</label>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="number"
+                                                    value={marketingPercent}
+                                                    onChange={e => setMarketingPercent(parseFloat(e.target.value) || 0)}
+                                                    className="input-field h-9 w-20 text-sm text-center"
+                                                />
+                                                <span className="text-xs font-bold font-mono text-amber-500">{formatSafeCLP(marketingCost)}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <input 
-                                    type="range" min="0" max="100" step="5"
-                                    value={ventasCanal.directaPercent}
-                                    onChange={(e) => setVentasCanal({ 
-                                        directaPercent: parseInt(e.target.value), 
-                                        libreriaPercent: 100 - parseInt(e.target.value) 
-                                    })}
-                                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                                />
-                                <div className="flex justify-between text-[9px] text-slate-400 mt-2">
-                                    <span>Más Librería ({ventasCanal.libreriaPercent}%)</span>
-                                    <span>Más Directa ({ventasCanal.directaPercent}%)</span>
-                                </div>
-                            </div>
+                            )}
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">Regalías Autor Librería (%)</label>
-                                    <input
-                                        type="number"
-                                        value={royaltyLibreria}
-                                        onChange={e => setRoyaltyLibreria(parseFloat(e.target.value) || 0)}
-                                        className="input-field text-sm py-1.5"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">Regalías Autor Directa (%)</label>
-                                    <input
-                                        type="number"
-                                        value={royaltyDirecta}
-                                        onChange={e => setRoyaltyDirecta(parseFloat(e.target.value) || 0)}
-                                        className="input-field text-sm py-1.5"
-                                    />
-                                </div>
-                            </div>
+                            {activeTab === 'channels' && (
+                                <div className="space-y-5">
+                                    <h3 className="text-xs font-bold text-dark-500 uppercase border-b border-dark-300 pb-1 mb-3">Distribución y Regalías</h3>
+                                    
+                                    <div className="p-3 bg-dark-800/30 rounded-lg border border-dark-300">
+                                        <p className="text-[10px] text-dark-500 font-bold uppercase mb-3 flex justify-between">
+                                            Mix de Ventas <span>{ventasCanal.directaPercent}% Dir / {ventasCanal.libreriaPercent}% Lib</span>
+                                        </p>
+                                        <input 
+                                            type="range" min="0" max="100" step="5"
+                                            value={ventasCanal.directaPercent}
+                                            onChange={(e) => setVentasCanal({ 
+                                                directaPercent: parseInt(e.target.value), 
+                                                libreriaPercent: 100 - parseInt(e.target.value) 
+                                            })}
+                                            className="w-full h-1.5 bg-dark-400 rounded-lg appearance-none cursor-pointer accent-primary mb-4"
+                                        />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="text-center p-2 bg-dark-300/50 rounded border border-dark-400">
+                                                <p className="text-[9px] text-dark-600 uppercase">Directa</p>
+                                                <p className="text-xs font-bold">{udsDirecta} ud.</p>
+                                            </div>
+                                            <div className="text-center p-2 bg-dark-300/50 rounded border border-dark-400">
+                                                <p className="text-[9px] text-dark-600 uppercase">Librería</p>
+                                                <p className="text-xs font-bold">{udsLibreria} ud.</p>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                            <div>
-                                <label className="text-[10px] text-slate-500 uppercase mb-1 block">Inversión Marketing (% s/producción)</label>
-                                <input
-                                    type="number"
-                                    value={marketingPercent}
-                                    onChange={e => setMarketingPercent(parseFloat(e.target.value) || 0)}
-                                    className="input-field text-sm py-1.5"
-                                />
-                            </div>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="text-[11px] text-slate-500 uppercase mb-1 block">Regalía Librería (%)</label>
+                                            <input
+                                                type="number"
+                                                value={royaltyLibreria}
+                                                onChange={e => setRoyaltyLibreria(parseFloat(e.target.value) || 0)}
+                                                className="input-field h-9 text-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[11px] text-slate-500 uppercase mb-1 block">Regalía Directa (%)</label>
+                                            <input
+                                                type="number"
+                                                value={royaltyDirecta}
+                                                onChange={e => setRoyaltyDirecta(parseFloat(e.target.value) || 0)}
+                                                className="input-field h-9 text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Results */}
-                <div className="lg:col-span-2 space-y-4">
-
-                    {/* Key metrics */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="stat-card text-center">
-                            <Target className="w-5 h-5 text-amber-400 mx-auto mb-2" />
-                            <p className="text-2xl font-bold text-slate-900 dark:text-white">{breakEvenReal}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Punto de Equilibrio</p>
+                {/* Resultados Consolidados */}
+                <div className="lg:col-span-8 space-y-4">
+                    {/* KPIs Miniaturizados */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="glass-card p-3 border-b-2 border-b-amber-500">
+                            <p className="text-[9px] text-dark-600 font-black uppercase text-center mb-1">Punto Equilibrio</p>
+                            <div className="flex items-center justify-center gap-1">
+                                <Target className="w-3 h-3 text-amber-500" />
+                                <p className="text-xl font-black text-slate-900 dark:text-white leading-none">{breakEvenReal}</p>
+                            </div>
+                            <p className="text-[8px] text-dark-500 text-center mt-1 uppercase">unidades</p>
                         </div>
-                        <div className="stat-card text-center">
-                            <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
-                            <p className="text-lg font-bold text-slate-900 dark:text-white">{formatSafeCLP(costoUnitarioTotal)}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Costo Total Unit.</p>
+                        <div className="glass-card p-3 border-b-2 border-b-primary">
+                            <p className="text-[9px] text-dark-600 font-black uppercase text-center mb-1">Costo Unit. Total</p>
+                            <div className="flex items-center justify-center gap-1">
+                                <DollarSign className="w-3 h-3 text-primary" />
+                                <p className="text-lg font-black text-slate-900 dark:text-white leading-none">{formatSafeCLP(costoUnitarioTotal)}</p>
+                            </div>
+                            <p className="text-[8px] text-dark-500 text-center mt-1 uppercase">por ejemplar</p>
                         </div>
-                        <div className="stat-card text-center">
-                            <TrendingUp className="w-5 h-5 text-emerald-400 mx-auto mb-2" />
-                            <p className="text-lg font-bold text-slate-900 dark:text-white">{formatSafeCLP(margenUnitarioPromedio)}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Margen Prom/Ud.</p>
+                        <div className="glass-card p-3 border-b-2 border-b-emerald-500">
+                            <p className="text-[9px] text-dark-600 font-black uppercase text-center mb-1">Margen por Ud.</p>
+                            <div className="flex items-center justify-center gap-1">
+                                <TrendingUp className="w-3 h-3 text-emerald-500" />
+                                <p className="text-lg font-black text-slate-900 dark:text-white leading-none">{formatSafeCLP(margenUnitarioPromedio)}</p>
+                            </div>
+                            <p className="text-[8px] text-dark-500 text-center mt-1 uppercase">promedio</p>
                         </div>
-                        <div className="stat-card text-center">
-                            <BarChart3 className="w-5 h-5 text-purple-400 mx-auto mb-2" />
-                            <p className={`text-2xl font-bold ${(!isNaN(marginPercent) && marginPercent >= 0) ? 'text-emerald-400' : 'text-red-400'}`}>
-                                {isNaN(marginPercent) ? '0.0' : marginPercent.toFixed(1)}%
-                            </p>
-                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase">Margen Final %</p>
+                        <div className="glass-card p-3 border-b-2 border-b-purple-500">
+                            <p className="text-[9px] text-dark-600 font-black uppercase text-center mb-1">Margen Final %</p>
+                            <div className="flex items-center justify-center gap-1">
+                                <BarChart3 className="w-3 h-3 text-purple-500" />
+                                <p className={`text-xl font-black leading-none ${marginPercent >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {isNaN(marginPercent) ? '0.0' : marginPercent.toFixed(1)}%
+                                </p>
+                            </div>
+                            <p className="text-[8px] text-dark-500 text-center mt-1 uppercase">sobre venta</p>
                         </div>
                     </div>
 
-                    {/* Desglose visual */}
-                    <div className="glass-card p-5">
-                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Desglose de Inversión</h2>
-                        <div className="space-y-2">
-                            {costItems.map(item => {
-                                const val = costs[item.key] || 0
-                                const pct = inversionTotal > 0 ? (val / inversionTotal) * 100 : 0
-                                return (
-                                    <div key={item.key} className="flex items-center gap-3">
-                                        <span className="text-[10px] text-slate-600 dark:text-dark-700 w-32 truncate uppercase">{item.label}</span>
-                                        <div className="flex-1 h-3 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden">
-                                            <div className="h-full bg-gradient-to-r from-primary/80 to-primary rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                    {/* Desglose Colapsable */}
+                    <div className="glass-card overflow-hidden">
+                        <button 
+                            onClick={() => setSectionsOpen({...sectionsOpen, breakdown: !sectionsOpen.breakdown})}
+                            className="w-full flex items-center justify-between p-4 hover:bg-dark-300 transition-colors"
+                        >
+                            <h2 className="text-xs font-black uppercase text-slate-900 dark:text-white flex items-center gap-2">
+                                <Calculator className="w-4 h-4 text-primary" /> Desglose Detallado de Inversión
+                            </h2>
+                            {sectionsOpen.breakdown ? <ChevronUp className="w-4 h-4 text-dark-600" /> : <ChevronDown className="w-4 h-4 text-dark-600" />}
+                        </button>
+                        {sectionsOpen.breakdown && (
+                            <div className="p-4 pt-0 space-y-2 border-t border-dark-300 mt-2 slide-down">
+                                {costItems.map(item => {
+                                    const val = costs[item.key] || 0
+                                    const pct = inversionTotal > 0 ? (val / inversionTotal) * 100 : 0
+                                    if (val === 0) return null
+                                    return (
+                                        <div key={item.key} className="flex items-center gap-2">
+                                            <span className="text-[9px] text-dark-600 font-bold w-24 truncate uppercase">{item.label}</span>
+                                            <div className="flex-1 h-2 bg-dark-300 rounded-full overflow-hidden">
+                                                <div className="h-full bg-primary/80 transition-all" style={{ width: `${pct}%` }} />
+                                            </div>
+                                            <span className="text-[10px] font-mono text-dark-800 w-20 text-right">{formatSafeCLP(val)}</span>
+                                            <span className="text-[9px] text-dark-500 w-6 text-right">{pct.toFixed(0)}%</span>
                                         </div>
-                                        <span className="text-xs text-slate-700 dark:text-dark-800 w-24 text-right font-medium">{formatSafeCLP(val)}</span>
-                                        <span className="text-[10px] text-slate-400 w-8 text-right">{pct.toFixed(0)}%</span>
-                                    </div>
-                                )
-                            })}
-                            <div className="flex items-center gap-3">
-                                <span className="text-[10px] text-slate-600 dark:text-dark-700 w-32 truncate uppercase">Marketing ({marketingPercent}%)</span>
-                                <div className="flex-1 h-3 bg-slate-100 dark:bg-dark-300 rounded-full overflow-hidden">
-                                    <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{ width: `${(marketingCost / inversionTotal) * 100 || 0}%` }} />
+                                    )
+                                })}
+                                <div className="flex items-center gap-2 pt-2 border-t border-dark-300 mt-2">
+                                    <span className="text-xs font-black text-white w-24 uppercase">Inversión Total</span>
+                                    <div className="flex-1" />
+                                    <span className="text-sm font-black text-primary w-32 text-right">{formatSafeCLP(inversionTotal)}</span>
                                 </div>
-                                <span className="text-xs text-slate-700 dark:text-dark-800 w-24 text-right font-medium">{formatSafeCLP(marketingCost)}</span>
-                                <span className="text-[10px] text-slate-400 w-8 text-right">{((marketingCost / inversionTotal) * 100 || 0).toFixed(0)}%</span>
                             </div>
-                            <div className="flex items-center gap-3 pt-2 mt-2 border-t border-slate-200 dark:border-dark-300">
-                                <span className="text-xs text-slate-900 dark:text-white font-bold w-32 uppercase">Inversión Total</span>
-                                <div className="flex-1" />
-                                <span className="text-sm text-slate-900 dark:text-white font-black w-24 text-right">{formatSafeCLP(inversionTotal)}</span>
-                                <span className="text-[10px] text-slate-900 dark:text-white w-8 text-right">100%</span>
-                            </div>
-                        </div>
+                        )}
                     </div>
 
-                    {/* Proyección */}
-                    <div className="glass-card p-5">
-                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 font-display">Proyección Financiera Detallada</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                            <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-lg p-4 border border-emerald-100 dark:border-emerald-900/30">
-                                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold mb-1">Venta Directa ({ventasCanal.directaPercent}%)</p>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between text-sm"><span className="text-slate-500">Ingresos:</span> <span className="font-semibold text-slate-900 dark:text-white">{formatSafeCLP(revenueDirecta)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Costo Producción:</span> <span className="text-amber-600">-{formatSafeCLP(udsDirecta * costoUnitarioProd)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Regalías Autor ({royaltyDirecta}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesDirecta)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Transbank (3%):</span> <span className="text-red-400">-{formatSafeCLP(costTransbank)}</span></div>
-                                    <div className="flex justify-between text-xs pt-1 border-t border-emerald-100 dark:border-emerald-900/30"><span className="font-medium text-emerald-700">Utilidad Canal:</span> <span className="font-bold text-emerald-600">{formatSafeCLP(profitDirecta)}</span></div>
+                    {/* Proyección Colapsable */}
+                    <div className="glass-card overflow-hidden">
+                        <button 
+                            onClick={() => setSectionsOpen({...sectionsOpen, projection: !sectionsOpen.projection})}
+                            className="w-full flex items-center justify-between p-4 hover:bg-dark-300 transition-colors"
+                        >
+                            <h2 className="text-xs font-black uppercase text-slate-900 dark:text-white flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4 text-emerald-500" /> Proyección por Canales
+                            </h2>
+                            {sectionsOpen.projection ? <ChevronUp className="w-4 h-4 text-dark-600" /> : <ChevronDown className="w-4 h-4 text-dark-600" />}
+                        </button>
+                        {sectionsOpen.projection && (
+                            <div className="p-4 pt-0 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-dark-300 mt-2 slide-down">
+                                <div className="bg-emerald-950/20 rounded-lg p-3 border border-emerald-900/30">
+                                    <p className="text-[10px] text-emerald-500 font-bold uppercase mb-2">Canal Directo</p>
+                                    <div className="space-y-1 text-[11px]">
+                                        <div className="flex justify-between"><span className="text-dark-600">Ingresos:</span> <span className="font-bold text-white">{formatSafeCLP(revenueDirecta)}</span></div>
+                                        <div className="flex justify-between"><span className="text-dark-600">Regalías ({royaltyDirecta}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesDirecta)}</span></div>
+                                        <div className="flex justify-between font-bold pt-1 border-t border-emerald-900/30 text-emerald-400"><span>Utilidad:</span> <span>{formatSafeCLP(profitDirecta)}</span></div>
+                                    </div>
+                                </div>
+                                <div className="bg-blue-950/20 rounded-lg p-3 border border-blue-900/30">
+                                    <p className="text-[10px] text-blue-500 font-bold uppercase mb-2">Canal Librería</p>
+                                    <div className="space-y-1 text-[11px]">
+                                        <div className="flex justify-between"><span className="text-dark-600">Ingresos (40% desc):</span> <span className="font-bold text-white">{formatSafeCLP(revenueLibreria)}</span></div>
+                                        <div className="flex justify-between"><span className="text-dark-600">Regalías ({royaltyLibreria}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesLibreria)}</span></div>
+                                        <div className="flex justify-between font-bold pt-1 border-t border-blue-900/30 text-blue-400"><span>Utilidad:</span> <span>{formatSafeCLP(profitLibreria)}</span></div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-100 dark:border-blue-900/30">
-                                <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Venta Librerías ({ventasCanal.libreriaPercent}%)</p>
-                                <div className="space-y-1">
-                                    <div className="flex justify-between text-sm"><span className="text-slate-500">Ingresos (Neto -40%):</span> <span className="font-semibold text-slate-900 dark:text-white">{formatSafeCLP(revenueLibreria)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Costo Producción:</span> <span className="text-amber-600">-{formatSafeCLP(udsLibreria * costoUnitarioProd)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Regalías Autor ({royaltyLibreria}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesLibreria)}</span></div>
-                                    <div className="flex justify-between text-xs pt-1 border-t border-blue-100 dark:border-blue-900/30"><span className="font-medium text-blue-700">Utilidad Canal:</span> <span className="font-bold text-blue-600">{formatSafeCLP(profitLibreria)}</span></div>
-                                </div>
-                            </div>
-                        </div>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 italic text-center px-4 mb-4">
-                            * La Utilidad Canal considera el retorno neto tras descontar costos de fabricación, regalías de autor y comisiones transaccionales.
-                        </p>
+                        )}
+                    </div>
 
-                        <div className="bg-slate-900 dark:bg-dark-50 rounded-xl p-5 text-white">
-                            <div className="flex justify-between items-center mb-4">
-                                <div>
-                                    <p className="text-[10px] text-slate-400 uppercase tracking-wider">Utilidad Neta Estimada</p>
-                                    <p className={`text-3xl font-bold ${utilidadFinal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatSafeCLP(utilidadFinal)}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] text-slate-400 uppercase tracking-wider">Inversión Total</p>
-                                    <p className="text-xl font-semibold">{formatSafeCLP(inversionTotal)}</p>
-                                </div>
+                    {/* Resumen Final de Impacto - SIEMPRE VISIBLE */}
+                    <div className="bg-dark-50 rounded-xl p-5 border border-dark-300 shadow-xl shadow-black/20">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div className="text-center md:text-left">
+                                <p className="text-[10px] text-dark-600 uppercase font-bold tracking-widest mb-1">Utilidad Neta Estimada</p>
+                                <p className={`text-4xl font-black ${utilidadFinal >= 0 ? 'text-emerald-400 shadow-emerald-400/20' : 'text-red-400'} drop-shadow-sm`}>
+                                    {formatSafeCLP(utilidadFinal)}
+                                </p>
                             </div>
                             
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-xs text-slate-300">
-                                    <span>Progreso al punto de equilibrio ({breakEvenReal} uds.)</span>
-                                    <span>{((tiraje > 0) ? (Math.min(100, (tiraje / breakEvenReal) * 100)) : 0).toFixed(1)}%</span>
+                            <div className="flex-1 w-full max-w-xs">
+                                <div className="flex justify-between text-[10px] text-dark-500 font-bold uppercase mb-1">
+                                    <span>Punto Equilibrio: {breakEvenReal} uds.</span>
+                                    <span>{(tiraje > 0 ? Math.min(100, (tiraje / breakEvenReal) * 100) : 0).toFixed(0)}%</span>
                                 </div>
-                                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div className="h-2.5 bg-dark-400 rounded-full overflow-hidden border border-dark-300">
                                     <div className="h-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-500 transition-all duration-1000" 
                                          style={{ width: `${Math.min(100, tiraje > 0 ? (tiraje / breakEvenReal) * 100 : 0)}%` }} />
                                 </div>
-                                <p className="text-[10px] text-slate-400 italic text-center">
-                                    * El punto de equilibrio considera costos de producción, marketing y distribución.
-                                </p>
+                            </div>
+
+                            <div className="text-center md:text-right">
+                                <p className="text-[10px] text-dark-600 uppercase font-bold tracking-widest mb-1">Inversión Riesgo</p>
+                                <p className="text-2xl font-black text-white">{formatSafeCLP(inversionTotal)}</p>
                             </div>
                         </div>
                     </div>
