@@ -1,7 +1,17 @@
-export const APP_VERSION = 'v3.2.1.0';
-export const APP_BUILD = '2026.04.23.004';
+export const APP_VERSION = 'v3.2.1.1';
+export const APP_BUILD = '2026.04.23.005';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.1.1',
+        date: '2026-04-23',
+        title: 'Optimización de Interfaz: Escandallo Compacto',
+        details: [
+            'Restaurado diseño de formulario extendido (visibilidad total sin pestañas).',
+            'Optimización de espacios (paddings/gaps) y tamaños de fuente para maximizar datos en pantalla.',
+            'Consolidación de paneles de resultados para agilizar la lectura de utilidad neta.'
+        ]
+    },
     {
         version: 'v3.2.1.0',
         date: '2026-04-23',
