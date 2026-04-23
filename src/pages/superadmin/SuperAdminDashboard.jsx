@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { loadSuperAdminData, superAdminDeleteUser, addUser as addSuperAdminUser, superAdminDeleteWorkspace, getGlobalEmail, setGlobalEmail, superAdminCreateTenant, loadOnboardingRequests, updateOnboardingStatus, superAdminApproveOnboarding, deleteAllOnboardingRequests, updateUser } from '../../lib/supabaseService'
+import { loadSuperAdminData, superAdminDeleteUser, addUser as addSuperAdminUser, superAdminDeleteWorkspace, getGlobalEmail, setGlobalEmail, superAdminCreateTenant, loadOnboardingRequests, updateOnboardingStatus, superAdminApproveOnboarding, deleteAllOnboardingRequests, updateUser, iUUID } from '../../lib/supabaseService'
 import { Building2, Users, CreditCard, Activity, Search, ShieldAlert, CheckCircle2, XCircle, UserPlus, Database, Lock, User, AlertTriangle, MapPin, Copy, Eye, EyeOff } from 'lucide-react'
 import { APP_VERSION } from '../../lib/version'
 
@@ -180,17 +180,17 @@ export default function SuperAdminDashboard() {
 
         // Use basic custom logic for direct user provision on selected tenant
         const userObj = {
-            id: db.iUUID(),
+            id: iUUID(),
             tenantId: newUserData.tenant_id,
             email: newUserData.email,
             password: newUserData.password,
             name: newUserData.name,
             role: newUserData.role,
             avatar: newUserData.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
-            title: newUserData.role,
-            firstLogin: newUserData.role !== 'ADMIN',
+            title: newUserData.role === 'ADMIN' ? 'Administrador' : newUserData.role === 'AUTOR' ? 'Autor' : 'Colaborador',
+            firstLogin: true, // Siempre true para obligar a elegir clave
             socialLinks: {},
-            bio: null
+            bio: ''
         }
 
         const success = await addSuperAdminUser(userObj)

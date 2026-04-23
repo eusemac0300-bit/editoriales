@@ -1,7 +1,17 @@
-export const APP_VERSION = 'v3.2.0.17';
-export const APP_BUILD = '2026.04.23.002';
+export const APP_VERSION = 'v3.2.0.18';
+export const APP_BUILD = '2026.04.23.003';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.0.18',
+        date: '2026-04-23',
+        title: 'Hotfix: Creación y Acceso de Usuarios',
+        details: [
+            'Corregido error en la generación de IDs de nuevos usuarios que impedía el ingreso inicial.',
+            'Forzado de flujo de bienvenida para todos los nuevos perfiles (incluyendo administradores).',
+            'Estabilización del puente de autenticación local.'
+        ]
+    },
     {
         version: 'v3.2.0.17',
         date: '2026-04-23',
