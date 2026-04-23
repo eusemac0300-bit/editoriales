@@ -2377,7 +2377,8 @@ export async function updateEventInDb({ id, updates, items }) {
     return eventRecords[0];
 }
 
-export async function settleEventInDb(eventId, itemsData) {
+export async function settleEventInDb({ id, itemsData }) {
+    const eventId = id;
     // 1. Get event details for metadata
     const { data: event, error: fetchErr } = await supabase
         .from('events')

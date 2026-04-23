@@ -284,9 +284,15 @@ export function AuthProvider({ children }) {
         updateExistingClient: (clientId, updates) => clientsData.updateClient({ id: clientId, updates }),
         deleteExistingClient: (clientId) => clientsData.deleteClient(clientId),
         addPurchaseOrder, 
-        addNewEvent: (eventData, items) => eventsData.addEvent({ eventData: sanitizeDates(eventData), items }),
-        updateEvent: (id, updates) => eventsData.updateEvent({ id, updates: sanitizeDates(updates) }),
-        settleEvent: (id, itemsData) => eventsData.settleEvent({ id, itemsData }),
+        addNewEvent: (payload) => eventsData.addEvent({ 
+            ...payload, 
+            eventData: sanitizeDates(payload.eventData) 
+        }),
+        updateEvent: (payload) => eventsData.updateEvent({ 
+            ...payload, 
+            updates: sanitizeDates(payload.updates) 
+        }),
+        settleEvent: (payload) => eventsData.settleEvent(payload),
         reopenEvent: (id) => eventsData.reopenEvent(id),
         deleteEvent: (id) => eventsData.deleteEvent(id),
         updatePurchaseOrder: (poId, updates) => po.updatePurchaseOrder({ id: poId, updates: sanitizeDates(updates) }), 

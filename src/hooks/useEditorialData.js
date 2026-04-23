@@ -367,7 +367,7 @@ export function useEvents(tenantId) {
     })
 
     const settleMutation = useMutation({
-        mutationFn: ({ id, itemsData }) => db.settleEventInDb(id, itemsData),
+        mutationFn: (payload) => db.settleEventInDb(payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['editorialData', tenantId] })
         },

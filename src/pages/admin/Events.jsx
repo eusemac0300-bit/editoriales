@@ -229,7 +229,7 @@ export default function Events() {
 
         setIsSubmitting(true)
         try {
-            await settleEvent(selectedEvent.id, settleData)
+            await settleEvent({ id: selectedEvent.id, itemsData: settleData })
             setIsSettleModalOpen(false)
         } catch (err) {
             alert('Error al cerrar evento: ' + err.message)
