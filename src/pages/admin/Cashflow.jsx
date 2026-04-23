@@ -4,8 +4,10 @@ import {
     Wallet, TrendingUp, TrendingDown,
     ArrowRight, Calendar, Info,
     AlertCircle, CheckCircle2, DollarSign,
-    Truck, Users, Briefcase, FileText
+    Truck, Users, Briefcase, FileText, Download, Printer
 } from 'lucide-react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export default function Cashflow() {
     const { data, formatCLP } = useAuth()
@@ -49,14 +51,88 @@ export default function Cashflow() {
         }
     }, [consignments, royaltiesList, pos])
 
+    const handleExportPDF = () => {
+        const doc = new jsPDF()
+        const primaryColor = [79, 70, 229] // Indigo-600
+
+        // Header
+        doc.setFontSize(22)
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.text("PROYECCIÓN DE FLUJO DE CAJA", 14, 25)
+
+        doc.setFontSize(10)
+        doc.setTextColor(100, 100, 100)
+        doc.text(`Fecha de Reporte: ${new Date().toLocaleDateString('es-CL')}`, 14, 32)
+        doc.text(`Moneda: CLP`, 14, 37)
+
+        // Snapshot Card Table
+        autoTable(doc, {
+            startY: 45,
+            head: [['Concepto', 'Monto Proyectado']],
+            body: [
+                ['Cuentas por Cobrar (Estimado)', formatCLP(calculations.receivables)],
+                ['Compromisos de Pago (Regalías + OC)', formatCLP(calculations.payables)],
+                ['Balance Neto Proyectado', formatCLP(calculations.netBalance)]
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: primaryColor }
+        })
+
+        // Detailed Outgoings
+        const finalY = doc.lastAutoTable.finalY + 15
+        doc.setFontSize(14)
+        doc.setTextColor(40, 40, 40)
+        doc.text("Detalle de Próximas Salidas", 14, finalY)
+
+        autoTable(doc, {
+            startY: finalY + 5,
+            head: [['Concepto', 'Descripción', 'Monto']],
+            body: [
+                ['Regalías', 'Autores por liquidar (Aprobados)', formatCLP(calculations.details.royalties)],
+                ['Producción', 'Órdenes de Compra pendientes', formatCLP(calculations.details.pos)]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [249, 115, 22] } // Orange-500
+        })
+
+        // Detailed Receivables (Top 10)
+        const receiveY = doc.lastAutoTable.finalY + 15
+        doc.setFontSize(14)
+        doc.setTextColor(40, 40, 40)
+        doc.text("Cobros Pendientes (Consignaciones Activas)", 14, receiveY)
+
+        autoTable(doc, {
+            startY: receiveY + 5,
+            head: [['Cliente', 'Libro', 'Unid.', 'Valor Est.']],
+            body: consignments.filter(c => c.status !== 'FINALIZADO').slice(0, 15).map(c => [
+                c.clientName,
+                c.bookTitle,
+                c.sentQuantity - c.returnedQuantity - c.soldQuantity,
+                formatCLP((c.sentQuantity - c.returnedQuantity - c.soldQuantity) * 6000)
+            ]),
+            theme: 'grid',
+            headStyles: { fillColor: [16, 185, 129] } // Emerald-500
+        })
+
+        doc.save(`Proyeccion_Caja_${new Date().toISOString().slice(0, 10)}.pdf`)
+    }
+
     return (
         <div className="space-y-6 fade-in pb-10">
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Wallet className="w-6 h-6 text-primary" /> Flujo de Caja (Cashflow)
-                </h1>
-                <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Proyección de liquidez basada en compromisos pendientes</p>
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Wallet className="w-6 h-6 text-primary" /> Flujo de Caja (Cashflow)
+                    </h1>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">Proyección de liquidez basada en compromisos pendientes</p>
+                </div>
+                <button 
+                    onClick={handleExportPDF}
+                    className="btn-secondary py-2 px-4 flex items-center gap-2 text-sm shadow-sm"
+                >
+                    <Download className="w-4 h-4" /> Exportar Proyección
+                </button>
             </div>
 
             {/* Quick Summary Cards */}

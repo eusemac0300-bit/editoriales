@@ -1,18 +1,23 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { loadSuperAdminData, superAdminDeleteUser, addUser as addSuperAdminUser, superAdminDeleteWorkspace, getGlobalEmail, setGlobalEmail, superAdminCreateTenant, loadOnboardingRequests, updateOnboardingStatus, superAdminApproveOnboarding, deleteAllOnboardingRequests } from '../../lib/supabaseService'
 import { Building2, Users, CreditCard, Activity, Search, ShieldAlert, CheckCircle2, XCircle, UserPlus, Database, Lock, User, AlertTriangle, MapPin, Copy } from 'lucide-react'
 import { APP_VERSION } from '../../lib/version'
 
 export default function SuperAdminDashboard() {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const initialTab = searchParams.get('tab') || 'editoriales'
     const [tenants, setTenants] = useState([])
     const [allUsers, setAllUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
-    const [activeTab, setActiveTab] = useState('editoriales')
+    const [activeTab, setActiveTab] = useState(initialTab)
     const [onboardingRequests, setOnboardingRequests] = useState([])
 
     // Create User Modal State
     const [showCreateModal, setShowCreateModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [editingUser, setEditingUser] = useState(null)
     const [newUserData, setNewUserData] = useState({
         name: '', email: '', password: '', role: 'FREELANCE', tenant_id: ''
     })
@@ -49,6 +54,11 @@ export default function SuperAdminDashboard() {
     useEffect(() => {
         fetchData()
     }, [])
+
+    useEffect(() => {
+        const tab = searchParams.get('tab') || 'editoriales'
+        setActiveTab(tab)
+    }, [searchParams])
 
     const filteredTenants = tenants.filter(t =>
         t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -193,6 +203,30 @@ export default function SuperAdminDashboard() {
         }
         setActionLoading(false)
     }
+
+    const handleUpdateUser = async (e) => {
+        e.preventDefault()
+        if (!editingUser) return
+        setActionLoading(true)
+        setErrorMsg('')
+
+        const success = await db.updateUser(editingUser.id, {
+            name: editingUser.name,
+            role: editingUser.role,
+            password: editingUser.password || undefined
+        })
+
+        if (success) {
+            alert('Usuario actualizado correctamente.')
+            setShowEditModal(false)
+            setEditingUser(null)
+            await fetchData()
+        } else {
+            setErrorMsg('Error al actualizar el usuario.')
+        }
+        setActionLoading(false)
+    }
+
     const handleCreateTenant = async (e) => {
         e.preventDefault()
         if (!newTenantData.name) return
@@ -254,25 +288,25 @@ export default function SuperAdminDashboard() {
             {/* Tab Navigation */}
             <div className="flex gap-2 p-1 bg-dark-200/50 rounded-lg w-max border border-dark-300">
                 <button
-                    onClick={() => setActiveTab('editoriales')}
+                    onClick={() => { setActiveTab('editoriales'); setSearchParams({ tab: 'editoriales' }) }}
                     className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === 'editoriales' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-dark-500 hover:text-white hover:bg-dark-300/50'}`}
                 >
                     <Building2 className="w-4 h-4" /> Workspaces / Editoriales
                 </button>
                 <button
-                    onClick={() => setActiveTab('usuarios')}
+                    onClick={() => { setActiveTab('usuarios'); setSearchParams({ tab: 'usuarios' }) }}
                     className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === 'usuarios' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-dark-500 hover:text-white hover:bg-dark-300/50'}`}
                 >
                     <Users className="w-4 h-4" /> Usuarios Finales (BD)
                 </button>
                 <button
-                    onClick={() => setActiveTab('solicitudes')}
+                    onClick={() => { setActiveTab('solicitudes'); setSearchParams({ tab: 'solicitudes' }) }}
                     className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === 'solicitudes' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-dark-500 hover:text-white hover:bg-dark-300/50'}`}
                 >
                     <Activity className="w-4 h-4" /> Solicitudes Onboarding
                 </button>
                 <button
-                    onClick={() => setActiveTab('settings')}
+                    onClick={() => { setActiveTab('settings'); setSearchParams({ tab: 'settings' }) }}
                     className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${activeTab === 'settings' ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20' : 'text-dark-500 hover:text-white hover:bg-dark-300/50'}`}
                 >
                     <AlertTriangle className="w-4 h-4" /> Configuración App
@@ -454,19 +488,30 @@ export default function SuperAdminDashboard() {
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-right">
-                                                    {isProtected ? (
-                                                        <span className="flex items-center justify-end gap-1 text-[10px] font-bold text-amber-500 uppercase tracking-widest">
-                                                            <ShieldAlert className="w-3 h-3" /> Intocable
-                                                        </span>
-                                                    ) : (
-                                                        <button
-                                                            disabled={actionLoading}
-                                                            onClick={() => handleDeleteUser(u.id, u.email)}
-                                                            className="text-[11px] font-bold text-red-500 hover:text-white hover:bg-red-500 px-3 py-1.5 border border-red-500/20 rounded-lg transition-all"
-                                                        >
-                                                            {actionLoading ? 'Borrando...' : 'Force Delete'}
-                                                        </button>
-                                                    )}
+                                                     {isProtected ? (
+                                                         <span className="flex items-center justify-end gap-1 text-[10px] font-bold text-amber-500 uppercase tracking-widest">
+                                                             <ShieldAlert className="w-3 h-3" /> Intocable
+                                                         </span>
+                                                     ) : (
+                                                         <div className="flex justify-end gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setEditingUser({ ...u, password: '' })
+                                                                    setShowEditModal(true)
+                                                                }}
+                                                                className="text-[11px] font-bold text-primary hover:text-white hover:bg-primary px-3 py-1.5 border border-primary/20 rounded-lg transition-all"
+                                                            >
+                                                                Editar / Pass
+                                                            </button>
+                                                            <button
+                                                                disabled={actionLoading}
+                                                                onClick={() => handleDeleteUser(u.id, u.email)}
+                                                                className="text-[11px] font-bold text-red-500 hover:text-white hover:bg-red-500 px-3 py-1.5 border border-red-500/20 rounded-lg transition-all"
+                                                            >
+                                                                {actionLoading ? 'Borrar' : 'Force Delete'}
+                                                            </button>
+                                                         </div>
+                                                     )}
                                                 </td>
                                             </tr>
                                         )
@@ -696,6 +741,72 @@ export default function SuperAdminDashboard() {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit User Modal */}
+            {showEditModal && editingUser && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark-900/80 backdrop-blur-sm slide-in-bottom">
+                    <div className="bg-dark-200 border border-dark-300 rounded-2xl p-6 w-full max-w-lg shadow-2xl relative">
+                        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <Lock className="w-5 h-5 text-primary" /> Editar Credenciales / Perfil
+                        </h3>
+                        <p className="text-xs text-dark-500 mb-6 font-mono">
+                            ID: {editingUser.id}
+                        </p>
+
+                        {errorMsg && (
+                            <div className="mb-4 p-3 rounded-lg bg-red-400/10 border border-red-400/20 flex gap-2 items-center text-xs text-red-400">
+                                <AlertTriangle className="w-4 h-4 shrink-0" />
+                                {errorMsg}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleUpdateUser} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-dark-500 font-bold mb-1 block">Nombre</label>
+                                    <input required type="text" className="input-field h-10 w-full" value={editingUser.name} onChange={e => setEditingUser({ ...editingUser, name: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-dark-500 font-bold mb-1 block">Email (Solo lectura)</label>
+                                    <input disabled type="email" className="input-field h-10 w-full opacity-50 cursor-not-allowed" value={editingUser.email} />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-dark-500 font-bold mb-1 block">Nueva Contraseña (Dejar vacío para no cambiar)</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+                                    <input type="text" className="input-field h-10 w-full pl-9 font-mono" value={editingUser.password} onChange={e => setEditingUser({ ...editingUser, password: e.target.value })} placeholder="Escribe nueva clave aquí..." />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                <div>
+                                    <label className="text-xs text-dark-500 font-bold mb-1 block">Rol de Sistema</label>
+                                    <select required className="input-field h-10 w-full bg-dark-800" value={editingUser.role} onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}>
+                                        <option value="ADMIN">Administrador</option>
+                                        <option value="FREELANCE">Freelance</option>
+                                        <option value="AUTOR">Autor</option>
+                                        <option value="SUPERADMIN">Super Admin Root</option>
+                                    </select>
+                                </div>
+                                <div className="flex flex-col justify-end">
+                                    <p className="text-[10px] text-dark-600 mb-2 italic">Solo si es extremadamente necesario cambiar el perfil del usuario.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-dark-300">
+                                <button type="button" onClick={() => { setShowEditModal(false); setEditingUser(null); }} className="h-10 px-4 rounded-xl border border-dark-400 text-dark-400 hover:text-white hover:bg-dark-300 font-bold text-sm transition-all">
+                                    Cancelar
+                                </button>
+                                <button type="submit" disabled={actionLoading} className="h-10 px-6 rounded-xl bg-primary hover:bg-primary-400 text-white font-black text-sm transition-all shadow-lg shadow-primary/20">
+                                    {actionLoading ? 'Guardando...' : 'Actualizar Credenciales'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

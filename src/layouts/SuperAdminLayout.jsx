@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { BookOpen, LogOut, Menu, X, ChevronDown, Rocket, FileText } from 'lucide-react'
+import { BookOpen, LogOut, Menu, X, ChevronDown, Rocket, FileText, Users } from 'lucide-react'
 
 export default function SuperAdminLayout() {
     const { user, logout } = useAuth()
@@ -36,16 +36,22 @@ export default function SuperAdminLayout() {
                         <NavLink
                             to="/superadmin"
                             end
-                            onClick={() => setSidebarOpen(false)}
-                            className={({ isActive }) => isActive ? 'sidebar-link-active' : 'sidebar-link'}
+                            className={({ isActive }) => (isActive && !window.location.search.includes('usuarios')) ? 'sidebar-link-active' : 'sidebar-link'}
                         >
                             <BookOpen className="w-4 h-4" />
                             <span>Editoriales SaaS</span>
                         </NavLink>
+
+                        <NavLink
+                            to="/superadmin?tab=usuarios"
+                            className={({ isActive }) => window.location.search.includes('usuarios') ? 'sidebar-link-active' : 'sidebar-link'}
+                        >
+                            <Users className="w-4 h-4" />
+                            <span>Usuarios Globales</span>
+                        </NavLink>
                         
                         <NavLink
                             to="/superadmin/documentacion"
-                            onClick={() => setSidebarOpen(false)}
                             className={({ isActive }) => isActive ? 'sidebar-link-active' : 'sidebar-link'}
                         >
                             <FileText className="w-4 h-4" />

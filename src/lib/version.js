@@ -1,8 +1,17 @@
-export const APP_VERSION = 'v3.2.0.12';
+export const APP_VERSION = 'v3.2.0.15';
 
 export const CHANGELOG = [
     {
-        version: 'v3.2.0.07',
+        version: 'v3.2.0.15',
+        date: '2026-04-23',
+        changes: [
+            'Habilitada edición global de usuarios para SuperAdmin (Reset de passwords)',
+            'Nuevo modal de credenciales en el Panel Master',
+            'Corrección de visualización de menús administrativos'
+        ]
+    },
+    {
+        version: 'v3.2.0.13',
         date: '2026-04-23',
         changes: [
             'Corrección de error crítico al crear eventos (validación de tenant_id)',

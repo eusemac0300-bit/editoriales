@@ -5,6 +5,8 @@ import {
     Calendar, Download, ArrowUpRight, ArrowDownRight,
     Receipt, ShoppingBag, Truck, Users, Briefcase
 } from 'lucide-react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export default function Reports() {
     const { data, formatCurrency, t } = useAuth()
@@ -45,9 +47,64 @@ export default function Reports() {
             royalties: royaltiesCosts,
             totalOutgoings,
             netProfit,
-            margin: incomeFirme > 0 ? (netProfit / incomeFirme) * 100 : 0
+            margin: incomeFirme > 0 ? (netProfit / incomeFirme) * 100 : 0,
+            filteredSales,
+            filteredExpenses
         }
     }, [sales, expenses, royalties, pos, month])
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF()
+        const primaryColor = [31, 184, 166] // info-400 equivalent
+
+        // Header
+        doc.setFontSize(22)
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.text("INFORME DE FLUJO DE CAJA (P&L)", 14, 25)
+
+        doc.setFontSize(10)
+        doc.setTextColor(100, 100, 100)
+        doc.text(`Período: ${month}`, 14, 32)
+        doc.text(`Fecha de Reporte: ${new Date().toLocaleDateString('es-CL')}`, 14, 37)
+
+        // Summary Table
+        autoTable(doc, {
+            startY: 45,
+            head: [['Indicador', 'Valor']],
+            body: [
+                ['Venta en Firme (Cobrado)', formatCLP(metrics.incomeFirme)],
+                ['Ingresos Totales (Neto)', formatCLP(metrics.income)],
+                ['Producción (Pagos Imprenta)', formatCLP(metrics.production)],
+                ['Gastos Operativos', formatCLP(metrics.opEx)],
+                ['Regalías de Autores', formatCLP(metrics.royalties)],
+                ['Egresos Totales', formatCLP(metrics.totalOutgoings)],
+                ['Resultado del Ejercicio (P&L)', formatCLP(metrics.netProfit)]
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: primaryColor }
+        })
+
+        // Expenses Detail
+        const finalY = doc.lastAutoTable.finalY + 15
+        doc.setFontSize(14)
+        doc.setTextColor(40, 40, 40)
+        doc.text("Detalle de Gastos del Mes", 14, finalY)
+
+        autoTable(doc, {
+            startY: finalY + 5,
+            head: [['Fecha', 'Descripción', 'Categoría', 'Monto']],
+            body: metrics.filteredExpenses.map(e => [
+                e.date,
+                e.description,
+                e.category,
+                formatCLP(e.amount)
+            ]),
+            theme: 'grid',
+            headStyles: { fillColor: [244, 63, 94] } // Rose-500
+        })
+
+        doc.save(`Flujo_Caja_${month}.pdf`)
+    }
 
     return (
         <div className="space-y-6 fade-in pb-10">
@@ -66,7 +123,10 @@ export default function Reports() {
                         onChange={e => setMonth(e.target.value)}
                         className="input-field py-1"
                     />
-                    <button className="btn-secondary py-1 px-3 flex items-center gap-2 text-sm">
+                    <button 
+                        onClick={handleExportPDF}
+                        className="btn-secondary py-1 px-3 flex items-center gap-2 text-sm"
+                    >
                         <Download className="w-4 h-4" /> Exportar PDF
                     </button>
                 </div>

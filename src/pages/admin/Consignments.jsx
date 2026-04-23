@@ -18,11 +18,11 @@ export default function Consignments() {
     const [expandedItem, setExpandedItem] = useState(null) // ID of the consignment item
     const [newItem, setNewItem] = useState({ clientName: '', contactInfo: '', notes: '', items: [{ bookId: '', quantity: 1 }] })
 
-    const consignments = useMemo(() => data.finances?.consignments || [], [data.finances])
-    const books = useMemo(() => data.books.filter(b => b.status === 'Publicado'), [data.books])
-    const inventory = useMemo(() => data.inventory.physical || [], [data.inventory])
-    const sales = useMemo(() => data.finances?.sales || [], [data.finances])
-    const clients = useMemo(() => data.clients || [], [data.clients])
+    const consignments = useMemo(() => data?.finances?.consignments || [], [data?.finances])
+    const books = useMemo(() => (data?.books || []).filter(b => b.status === 'Publicado'), [data?.books])
+    const inventory = useMemo(() => data?.inventory?.physical || [], [data?.inventory])
+    const sales = useMemo(() => data?.finances?.sales || [], [data?.finances])
+    const clients = useMemo(() => data?.clients || [], [data?.clients])
 
     const filtered = useMemo(() => {
         let list = [...consignments]
@@ -564,8 +564,8 @@ export default function Consignments() {
 
             {/* Modal de Despacho */}
             {showAdd && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-dark-100 rounded-[2.5rem] w-full max-w-2xl border border-slate-200 dark:border-dark-300 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-dark-100 rounded-[2.5rem] w-full max-w-2xl border border-slate-200 dark:border-dark-300 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] slide-up">
                         <div className="p-8 pb-4">
                             <div className="flex items-center justify-between mb-8">
                                 <div>
@@ -586,18 +586,19 @@ export default function Consignments() {
                                         required
                                         value={newItem.clientName}
                                         onChange={e => {
-                                            const client = clients.find(c => c.name === e.target.value)
+                                            const val = e.target.value
+                                            const client = (clients || []).find(c => c.name === val)
                                             setNewItem({
                                                 ...newItem, 
-                                                clientName: e.target.value,
+                                                clientName: val,
                                                 contactInfo: client ? (client.email || client.phone || client.contact_name || '') : ''
                                             })
                                         }}
-                                        className="input-field w-full text-sm font-bold py-3 appearance-none cursor-pointer"
+                                        className="input-field w-full text-sm font-bold py-3 px-4 appearance-none cursor-pointer hover:border-primary/50 transition-all"
                                     >
-                                        <option value="">Seleccionar Cliente de Base de Datos...</option>
-                                        {clients.map(c => (
-                                            <option key={c.id} value={c.name}>{c.name}</option>
+                                        <option value="">{clients.length === 0 ? 'Sin clientes registrados...' : 'Seleccionar Cliente...'}</option>
+                                        {(clients || []).map(c => (
+                                            <option key={c.id || c.name} value={c.name}>{c.name}</option>
                                         ))}
                                     </select>
                                     {clients.length === 0 && (
@@ -634,18 +635,24 @@ export default function Consignments() {
                                         <div className="flex-[3] space-y-2">
                                             <label className="text-[9px] font-bold text-slate-500">Libro</label>
                                             <select 
+                                                required
                                                 value={it.bookId}
                                                 onChange={e => {
                                                     const ni = [...newItem.items]
                                                     ni[idx].bookId = e.target.value
                                                     setNewItem({...newItem, items: ni})
                                                 }}
-                                                className="input-field w-full text-xs font-bold"
+                                                className="input-field w-full text-xs font-bold py-2.5"
                                             >
                                                 <option value="">Seleccionar...</option>
-                                                {books.map(b => (
-                                                    <option key={b.id} value={b.id}>{b.title} (Stock: {inventory.find(inv => inv.bookId === b.id)?.stock || 0})</option>
-                                                ))}
+                                                {(books || []).map(b => {
+                                                    const stock = (inventory || []).find(inv => inv.bookId === b.id)?.stock || 0
+                                                    return (
+                                                        <option key={b.id} value={b.id} disabled={stock <= 0}>
+                                                            {b.title} (Stock: {stock})
+                                                        </option>
+                                                    )
+                                                })}
                                             </select>
                                         </div>
                                         <div className="flex-1 space-y-2">
@@ -699,7 +706,7 @@ export default function Consignments() {
 
             {/* Modal de Acción (Liquidar / Devolver) */}
             {selectedAction && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-dark-100 rounded-2xl w-full max-w-sm border border-slate-200 dark:border-dark-300 shadow-2xl p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
