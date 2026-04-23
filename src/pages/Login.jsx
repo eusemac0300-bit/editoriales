@@ -15,10 +15,12 @@ export default function Login() {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setError('')
         setLoading(true)
+        setError('')
+
+        const cleanEmail = email.trim().toLowerCase()
         try {
-            const result = await login(email, password)
+            const result = await login(cleanEmail, password)
             if (result.success) {
                 if (result.user.firstLogin) {
                     navigate('/activar-cuenta')
