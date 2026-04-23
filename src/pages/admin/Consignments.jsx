@@ -22,6 +22,7 @@ export default function Consignments() {
     const books = useMemo(() => data.books.filter(b => b.status === 'Publicado'), [data.books])
     const inventory = useMemo(() => data.inventory.physical || [], [data.inventory])
     const sales = useMemo(() => data.finances?.sales || [], [data.finances])
+    const clients = useMemo(() => data.clients || [], [data.clients])
 
     const filtered = useMemo(() => {
         let list = [...consignments]
@@ -580,23 +581,37 @@ export default function Consignments() {
                             
                             <div className="grid grid-cols-2 gap-6 mb-8">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 block tracking-widest">Cliente / Librería</label>
-                                    <input 
-                                        type="text" 
+                                    <label className="text-[10px] font-black uppercase text-slate-400 block tracking-widest">Cliente / Librería (Obligatorio)</label>
+                                    <select 
+                                        required
                                         value={newItem.clientName}
-                                        onChange={e => setNewItem({...newItem, clientName: e.target.value})}
-                                        className="input-field w-full text-sm font-bold py-3" 
-                                        placeholder="Ej. Librería Antártica" 
-                                    />
+                                        onChange={e => {
+                                            const client = clients.find(c => c.name === e.target.value)
+                                            setNewItem({
+                                                ...newItem, 
+                                                clientName: e.target.value,
+                                                contactInfo: client ? (client.email || client.phone || client.contact_name || '') : ''
+                                            })
+                                        }}
+                                        className="input-field w-full text-sm font-bold py-3 appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Seleccionar Cliente de Base de Datos...</option>
+                                        {clients.map(c => (
+                                            <option key={c.id} value={c.name}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                    {clients.length === 0 && (
+                                        <p className="text-[9px] text-red-500 font-bold mt-1">No hay clientes registrados en el sistema.</p>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 block tracking-widest">Contacto / Referencia</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-400 block tracking-widest">Contacto / Referencia (Auto)</label>
                                     <input 
                                         type="text" 
                                         value={newItem.contactInfo}
                                         onChange={e => setNewItem({...newItem, contactInfo: e.target.value})}
-                                        className="input-field w-full text-sm font-bold py-3" 
-                                        placeholder="Email o Teléfono" 
+                                        className="input-field w-full text-sm font-bold py-3 bg-slate-50/50" 
+                                        placeholder="Se completará al elegir cliente" 
                                     />
                                 </div>
                             </div>
