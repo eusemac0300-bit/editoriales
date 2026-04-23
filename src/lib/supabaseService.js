@@ -2244,6 +2244,7 @@ export async function addEventToDb(tenantId, eventData, items) {
 }
 
 export async function updateEventInDb(eventId, updates, items) {
+    if (!updates) throw new Error("No se proporcionaron datos para actualizar el evento");
     const tid = ensureTenantId(updates.tenant_id || updates.tenantId);
     
     // 1. Fetch current items to calculate stock diffs
@@ -2375,11 +2376,14 @@ export async function updateEventInDb(eventId, updates, items) {
 
 export async function settleEventInDb(eventId, itemsData) {
     // 1. Get event details for metadata
-    const { data: event } = await supabase
+    const { data: event, error: fetchErr } = await supabase
         .from('events')
         .select('*')
         .eq('id', eventId)
-        .single()
+        .maybeSingle()
+    
+    if (fetchErr) throw fetchErr;
+    if (!event) throw new Error("No se encontró el evento para liquidar");
 
     // 2. Update event_items with final counts
     for (const item of itemsData) {

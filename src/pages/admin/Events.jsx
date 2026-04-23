@@ -185,7 +185,7 @@ export default function Events() {
             if (isEditing) {
                 await updateEvent({ id: formData.id, updates: sanitizedData, items: formData.items })
             } else {
-                await addNewEvent(sanitizedData, formData.items)
+                await addNewEvent({ eventData: sanitizedData, items: formData.items })
             }
             
             setIsCreateModalOpen(false)
