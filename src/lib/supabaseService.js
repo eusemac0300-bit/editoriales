@@ -422,8 +422,16 @@ export async function loadSuperAdminData() {
 
 export async function superAdminDeleteUser(userId) {
     try {
+        // Fetch user email first to delete their onboarding request
+        const { data: user } = await supabase.from('users').select('email').eq('id', userId).single()
+        
         await supabase.from('comments').delete().eq('user_id', userId)
         await supabase.from('audit_log').delete().eq('user_id', userId)
+        
+        if (user && user.email) {
+            await supabase.from('onboarding_requests').delete().eq('admin_email', user.email)
+        }
+        
         const { error } = await supabase.from('users').delete().eq('id', userId)
         if (error) throw error
         return true

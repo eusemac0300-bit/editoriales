@@ -89,7 +89,19 @@ export default function Onboarding() {
             window.scrollTo({ top: 0, behavior: 'smooth' })
         } catch (err) {
             console.error('Error submitting onboarding:', err)
-            setError('Hubo un error al enviar tu solicitud. Intenta nuevamente.')
+            if (err?.code === '23505') {
+                setError({
+                    text: 'Ya existe una solicitud en curso o una cuenta con este Email o RUT.',
+                    details: `[${err.code}] ${err.message}`,
+                    isDuplicate: true
+                })
+            } else {
+                setError({
+                    text: 'Hubo un error al enviar tu solicitud. Revisa los detalles técnicos:',
+                    details: `[${err?.code || 'UNKNOWN'}] ${err?.message || 'Error de conexión o permisos'}`,
+                    isDuplicate: false
+                })
+            }
         } finally {
             setLoading(false)
         }
@@ -190,9 +202,29 @@ export default function Onboarding() {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors" />
                     
                     {error && (
-                        <div className="mb-8 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-300 text-sm slide-up font-medium">
-                            <AlertCircle className="w-5 h-5 shrink-0" />
-                            {error}
+                        <div className="mb-8 p-5 rounded-2xl bg-red-500/10 border border-red-500/20 flex flex-col gap-3 slide-up">
+                            <div className="flex items-start gap-3 text-red-300 text-sm font-medium">
+                                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                                <div className="flex flex-col gap-1">
+                                    <p>{typeof error === 'string' ? error : error.text}</p>
+                                    {error.details && (
+                                        <div className="bg-black/30 p-2 rounded text-xs font-mono text-red-200 break-all">
+                                            {error.details}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            {typeof error !== 'string' && error.isDuplicate && (
+                                <div className="mt-2 flex flex-col gap-2 sm:flex-row pl-8">
+                                    <button 
+                                        type="button"
+                                        onClick={() => navigate('/login')}
+                                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 text-xs font-bold rounded-xl transition-colors text-center"
+                                    >
+                                        Ir a Iniciar Sesión / Recuperar
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
