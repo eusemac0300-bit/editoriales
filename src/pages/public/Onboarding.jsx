@@ -320,6 +320,9 @@ export default function Onboarding() {
                                 </span>
                             ) : 'Enviar para Validación Master'}
                         </button>
+                        <div className="text-center text-slate-600 text-[10px] mt-4 font-mono">
+                            v3.2.0.02
+                        </div>
                     </form>
                 </div>
             </div>
