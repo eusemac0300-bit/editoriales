@@ -121,7 +121,15 @@ export function AuthProvider({ children }) {
         if (user && queryData && queryData.users) {
             // Check if user exists in the fetched list of users for this tenant
             const userExists = queryData.users.some(u => u.id === user.id)
-            if (!userExists && user.id !== 'superadmin' && user.id !== 'admin-user') {
+            const isBypassUser = 
+                user.id === 'superadmin' || 
+                user.id === 'admin-user' || 
+                user.id === 'master-val-uid' || 
+                user.id === 'super-val-uid' || 
+                user.role === 'SUPERADMIN' ||
+                ['master@editorial.cl', 'maestro@editorial.cl', 'master@editorialpro.com', 'contacto@dpiprint.cl', 'eusemac@me.com', 'eusemac@editorial.cl'].includes(user.email);
+
+            if (!userExists && !isBypassUser) {
                 console.warn('Usuario actual no encontrado en la base de datos para este Workspace. Cerrando sesión...')
                 logout()
             }

@@ -482,9 +482,15 @@ export async function loginUser(email, password) {
         console.warn('[Login] Master/Super NOT found in DB, using fallback')
         const finalName = isSuper ? 'Eusebio Manriquez (Owner)' : (email === 'contacto@dpiprint.cl' ? 'Administrador DPI Print' : 'Eusebio Maestro (Admin)');
         
-        // Attempt to find ANY tenant to avoid null tenant_id errors in writes
-        const { data: firstTenant } = await supabase.from('tenants').select('id').limit(1).maybeSingle();
-        const fallbackId = firstTenant?.id || '00000000-0000-0000-0000-000000000000';
+        // Attempt to find the latest active tenant first (avoid loading t1 demo)
+        const { data: latestTenant } = await supabase
+            .from('tenants')
+            .select('id')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+            
+        const fallbackId = latestTenant?.id || 'a7184eef-1d67-4182-a77a-b1027779618e';
 
         return {
             id: isSuper ? 'super-val-uid' : 'master-val-uid',
