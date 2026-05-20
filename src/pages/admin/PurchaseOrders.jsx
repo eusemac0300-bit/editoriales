@@ -3,10 +3,11 @@ import { useAuth } from '../../context/AuthContext'
 import {
     FileSpreadsheet, Plus, Search, Edit3, Trash2,
     Calendar, BookOpen, Building2, Package, CheckCircle,
-    X, Save, AlertTriangle, Filter, Truck, ArrowRight, DollarSign, FileText
+    X, Save, AlertTriangle, Filter, Truck, ArrowRight, DollarSign, FileText, UserPlus, Loader2
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { supabase } from '../../lib/supabase'
 
 const STATUS_OPTIONS = ['BORRADOR', 'ENVIADA', 'EN_PROCESO', 'RECIBIDA', 'CANCELADA']
 
@@ -412,6 +413,14 @@ export default function PurchaseOrders() {
 }
 
 function POForm({ po, books, suppliers, quotes = [], inventory = [], onSave, onCancel }) {
+    const { user, reloadData, addAuditLog } = useAuth()
+    const [showNewSupplier, setShowNewSupplier] = useState(false)
+    const [newSupplierName, setNewSupplierName] = useState('')
+    const [newSupplierEmail, setNewSupplierEmail] = useState('')
+    const [newSupplierPhone, setNewSupplierPhone] = useState('')
+    const [creatingSupplier, setCreatingSupplier] = useState(false)
+    const [supplierCreated, setSupplierCreated] = useState(null)
+
     const [form, setForm] = useState({
         order_number: po?.order_number || `OC-${Date.now().toString().slice(-4)}`,
         supplier_id: po?.supplier_id || '',
@@ -439,6 +448,37 @@ function POForm({ po, books, suppliers, quotes = [], inventory = [], onSave, onC
         }
 
         onSave(cleanForm)
+    }
+
+    const handleCreateSupplier = async () => {
+        if (!newSupplierName.trim()) return
+        setCreatingSupplier(true)
+        try {
+            const newId = `prov-${Date.now()}`
+            const { error } = await supabase.from('suppliers').insert({
+                id: newId,
+                tenant_id: user?.tenantId || 't1',
+                name: newSupplierName.trim(),
+                type: 'Imprenta',
+                email: newSupplierEmail.trim(),
+                phone: newSupplierPhone.trim(),
+                contact_name: ''
+            })
+            if (error) throw error
+            await addAuditLog(`Creó nuevo proveedor (rápido): ${newSupplierName}`, 'general')
+            await reloadData()
+            setForm(prev => ({ ...prev, supplier_id: newId }))
+            setSupplierCreated(newSupplierName.trim())
+            setShowNewSupplier(false)
+            setNewSupplierName('')
+            setNewSupplierEmail('')
+            setNewSupplierPhone('')
+            setTimeout(() => setSupplierCreated(null), 3000)
+        } catch (err) {
+            alert('Error al crear proveedor: ' + err.message)
+        } finally {
+            setCreatingSupplier(false)
+        }
     }
 
     return (
@@ -476,17 +516,97 @@ function POForm({ po, books, suppliers, quotes = [], inventory = [], onSave, onC
                         style={{ colorScheme: 'dark' }}
                     />
                 </div>
-                <div className="col-span-2">
-                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Proveedor / Imprenta *</label>
-                    <select
-                        required
-                        value={form.supplier_id}
-                        onChange={e => setForm({ ...form, supplier_id: e.target.value })}
-                        className="input-field w-full text-sm"
-                    >
-                        <option value="">Selecciona un proveedor...</option>
-                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.type})</option>)}
-                    </select>
+                <div className="col-span-2 relative">
+                    <div className="flex justify-between items-center mb-1">
+                        <label className="text-xs text-slate-500 dark:text-dark-600 block">Proveedor / Imprenta *</label>
+                        <button 
+                            type="button" 
+                            onClick={() => setShowNewSupplier(!showNewSupplier)} 
+                            className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
+                                showNewSupplier 
+                                    ? 'text-slate-500 dark:text-dark-600 hover:text-red-400' 
+                                    : 'text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/20'
+                            }`}
+                        >
+                            {showNewSupplier ? (
+                                <><X className="w-3 h-3" /> Cancelar</>
+                            ) : (
+                                <><UserPlus className="w-3 h-3" /> Nuevo Proveedor</>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Success toast */}
+                    {supplierCreated && (
+                        <div className="mb-2 flex items-center gap-2 text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-lg px-3 py-2">
+                            <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span>Proveedor <strong>{supplierCreated}</strong> creado y seleccionado ✓</span>
+                        </div>
+                    )}
+
+                    {showNewSupplier ? (
+                        <div className="border border-primary/20 rounded-xl bg-dark-200/50 p-3 space-y-2">
+                            <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-bold tracking-wider">Nuevo Proveedor / Imprenta</p>
+                            <input 
+                                type="text" 
+                                placeholder="Nombre de la empresa / imprenta *"
+                                value={newSupplierName}
+                                onChange={e => setNewSupplierName(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') { e.preventDefault(); handleCreateSupplier() }
+                                }}
+                                className="input-field w-full text-sm font-bold"
+                                autoFocus
+                            />
+                            <div className="grid grid-cols-2 gap-2">
+                                <input 
+                                    type="email" 
+                                    placeholder="Email (opcional)"
+                                    value={newSupplierEmail}
+                                    onChange={e => setNewSupplierEmail(e.target.value)}
+                                    className="input-field w-full text-xs"
+                                />
+                                <input 
+                                    type="text" 
+                                    placeholder="Teléfono (opcional)"
+                                    value={newSupplierPhone}
+                                    onChange={e => setNewSupplierPhone(e.target.value)}
+                                    className="input-field w-full text-xs"
+                                />
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowNewSupplier(false)}
+                                    className="btn-secondary text-xs px-3 py-2 flex-1"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={handleCreateSupplier}
+                                    disabled={!newSupplierName.trim() || creatingSupplier}
+                                    className="btn-primary text-xs px-4 py-2 flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {creatingSupplier ? (
+                                        <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Creando...</>
+                                    ) : (
+                                        <><UserPlus className="w-3.5 h-3.5" /> Crear Proveedor</>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <select
+                            required
+                            value={form.supplier_id}
+                            onChange={e => setForm({ ...form, supplier_id: e.target.value })}
+                            className="input-field w-full text-sm"
+                        >
+                            <option value="">Selecciona un proveedor...</option>
+                            {suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.type})</option>)}
+                        </select>
+                    )}
                 </div>
                 <div className="col-span-1">
                     <label className="text-xs text-slate-600 dark:text-dark-700 font-medium mb-1 block">Fecha Estimada Recepción</label>

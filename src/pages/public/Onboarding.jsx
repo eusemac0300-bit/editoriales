@@ -7,6 +7,7 @@ import {
 import { submitOnboardingRequest } from '../../lib/supabaseService'
 import { sendAdminNotification } from '../../lib/notificationService'
 import { supabase } from '../../lib/supabase'
+import { APP_VERSION } from '../../lib/version'
 
 export default function Onboarding() {
     const navigate = useNavigate()
@@ -321,7 +322,7 @@ export default function Onboarding() {
                             ) : 'Enviar para Validación Master'}
                         </button>
                         <div className="text-center text-slate-600 text-[10px] mt-4 font-mono">
-                            v3.2.0.02
+                            {APP_VERSION}
                         </div>
                     </form>
                 </div>

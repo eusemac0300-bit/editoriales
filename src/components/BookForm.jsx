@@ -55,6 +55,17 @@ export default function BookForm({ data, initialData, onSave, onClose }) {
 
     const authors = localAuthors
 
+    const selectedAuthor = authors.find(a => a.id === form.authorId)
+    const isAuthorPending = selectedAuthor && (() => {
+        if (selectedAuthor.email?.includes('@pendiente.editorial')) return true
+        const bio = (() => {
+            if (!selectedAuthor.bio) return {}
+            if (typeof selectedAuthor.bio === 'object') return selectedAuthor.bio
+            try { return JSON.parse(selectedAuthor.bio) } catch { return {} }
+        })()
+        return !bio.rut || !bio.address || !bio.bankAccountNumber || !bio.bankName
+    })()
+
     const handleCreateAuthor = async () => {
         if (!newAuthorName.trim()) return
         setSavingAuthor(true)
@@ -160,15 +171,9 @@ export default function BookForm({ data, initialData, onSave, onClose }) {
                             <select value={form.authorId} onChange={e => setForm(p => ({ ...p, authorId: e.target.value }))} className="input-field text-sm" required>
                                 <option value="">Seleccionar autor...</option>
                                 {authors.map(a => {
-                                    const bio = (() => {
-                                        if (!a.bio) return {}
-                                        if (typeof a.bio === 'object') return a.bio
-                                        try { return JSON.parse(a.bio) } catch { return {} }
-                                    })()
-                                    const isPending = a.email?.includes('@pendiente.editorial') || !bio.rut || !bio.bankAccountNumber
                                     return (
                                         <option key={a.id} value={a.id}>
-                                            {a.name} {isPending ? '⚠️' : '✅'}
+                                            {a.name}
                                         </option>
                                     )
                                 })}
@@ -196,6 +201,12 @@ export default function BookForm({ data, initialData, onSave, onClose }) {
                                 </div>
                             )}
                             <p className="text-[10px] text-slate-400 dark:text-dark-500 mt-1">Puedes completar el perfil del autor luego en la sección Usuarios.</p>
+                            {isAuthorPending && (
+                                <div className="mt-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 text-[10px] flex items-center gap-1.5 leading-snug">
+                                    <span className="font-semibold shrink-0">⚠️ Nota:</span>
+                                    <span>Este autor está <strong>Pendiente</strong>. Le faltan datos de contacto, fiscales o bancarios. Recuerda completarlos para emitir sus liquidaciones de regalías.</span>
+                                </div>
+                            )}
                         </div>
                         <div>
                             <label className="text-xs text-dark-600 mb-1 block">Género *</label>

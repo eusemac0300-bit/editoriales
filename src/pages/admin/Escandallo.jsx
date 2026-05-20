@@ -28,6 +28,8 @@ export default function Escandallo() {
     const [marketingPercent, setMarketingPercent] = useState(() => getInitialState('marketingPercent', 15))
     const [royaltyLibreria, setRoyaltyLibreria] = useState(() => getInitialState('royaltyLibreria', 10))
     const [royaltyDirecta, setRoyaltyDirecta] = useState(() => getInitialState('royaltyDirecta', 30))
+    const [comisionDirecta, setComisionDirecta] = useState(() => getInitialState('comisionDirecta', 3))
+    const [comisionLibreria, setComisionLibreria] = useState(() => getInitialState('comisionLibreria', 0))
     const [ventasCanal, setVentasCanal] = useState(() => getInitialState('ventasCanal', { directaPercent: 60, libreriaPercent: 40 }))
     const [isSaving, setIsSaving] = useState(false)
 
@@ -40,8 +42,10 @@ export default function Escandallo() {
         sessionStorage.setItem('escandallo_state_marketingPercent', JSON.stringify(marketingPercent))
         sessionStorage.setItem('escandallo_state_royaltyLibreria', JSON.stringify(royaltyLibreria))
         sessionStorage.setItem('escandallo_state_royaltyDirecta', JSON.stringify(royaltyDirecta))
+        sessionStorage.setItem('escandallo_state_comisionDirecta', JSON.stringify(comisionDirecta))
+        sessionStorage.setItem('escandallo_state_comisionLibreria', JSON.stringify(comisionLibreria))
         sessionStorage.setItem('escandallo_state_ventasCanal', JSON.stringify(ventasCanal))
-    }, [selectedBookId, costs, pvpNeto, tiraje, marketingPercent, royaltyLibreria, royaltyDirecta, ventasCanal])
+    }, [selectedBookId, costs, pvpNeto, tiraje, marketingPercent, royaltyLibreria, royaltyDirecta, comisionDirecta, comisionLibreria, ventasCanal])
 
     const handleBookChange = (bookId) => {
         if (bookId === selectedBookId) return
@@ -67,6 +71,8 @@ export default function Escandallo() {
                     // If the book has a general royaltyPercent, use it as fallback for both channels
                     setRoyaltyLibreria(dbEsc.royaltyLibreria || book.royaltyPercent || 10)
                     setRoyaltyDirecta(dbEsc.royaltyDirecta || book.royaltyPercent || 30)
+                    setComisionDirecta(dbEsc.comisionDirecta !== undefined ? dbEsc.comisionDirecta : 3)
+                    setComisionLibreria(dbEsc.comisionLibreria || 0)
                     setVentasCanal(dbEsc.ventasCanal || { directaPercent: 60, libreriaPercent: 40 })
                 } else {
                     // Mapeo exhaustivo para migración
@@ -88,6 +94,8 @@ export default function Escandallo() {
                     setMarketingPercent(15)
                     setRoyaltyLibreria(book.royaltyPercent || 10)
                     setRoyaltyDirecta(book.royaltyPercent || 30)
+                    setComisionDirecta(3)
+                    setComisionLibreria(0)
                     setVentasCanal({ directaPercent: 60, libreriaPercent: 40 })
                 }
                 setTiraje(Number(book.tiraje) || 0)
@@ -121,6 +129,8 @@ export default function Escandallo() {
         setMarketingPercent(15)
         setRoyaltyLibreria(10)
         setRoyaltyDirecta(30)
+        setComisionDirecta(3)
+        setComisionLibreria(0)
         setVentasCanal({ directaPercent: 60, libreriaPercent: 40 })
         
         // Limpiar session storage
@@ -145,6 +155,8 @@ export default function Escandallo() {
                 pvpNeto,
                 royaltyLibreria,
                 royaltyDirecta,
+                comisionDirecta,
+                comisionLibreria,
                 ventasCanal,
                 summary: {
                     inversionTotal,
@@ -192,21 +204,24 @@ export default function Escandallo() {
     const udsDirecta = (tiraje * ventasCanal.directaPercent) / 100
     const udsLibreria = (tiraje * ventasCanal.libreriaPercent) / 100
 
+    const costoUnitarioFlete = tiraje > 0 ? (costs.distribucion || 0) / tiraje : 0
+
     const revenueDirecta = udsDirecta * pvpNeto
-    const costTransbank = revenueDirecta * 0.03 // Estimado Transbank
+    const costTransbankDirecta = revenueDirecta * (comisionDirecta / 100) 
     const royaltiesDirecta = (revenueDirecta * royaltyDirecta) / 100
-    const profitDirecta = revenueDirecta - (udsDirecta * costoUnitarioProd) - costTransbank - royaltiesDirecta
+    const profitDirecta = revenueDirecta - (udsDirecta * costoUnitarioProd) - (udsDirecta * costoUnitarioFlete) - costTransbankDirecta - royaltiesDirecta
 
     const revenueLibreria = udsLibreria * (pvpNeto * 0.6) // 40% descuento comercial
+    const costTransbankLibreria = revenueLibreria * (comisionLibreria / 100)
     const royaltiesLibreria = (udsLibreria * pvpNeto * royaltyLibreria) / 100
-    const profitLibreria = revenueLibreria - (udsLibreria * costoUnitarioProd) - royaltiesLibreria
+    const profitLibreria = revenueLibreria - (udsLibreria * costoUnitarioProd) - (udsLibreria * costoUnitarioFlete) - costTransbankLibreria - royaltiesLibreria
 
-    const utilidadFinal = profitDirecta + profitLibreria - marketingCost - (costs.distribucion || 0) - (costs.otros || 0)
+    const utilidadFinal = profitDirecta + profitLibreria - marketingCost - (costs.otros || 0)
     
-    // Margen real promedio por unidad (después de descuentos y royalties)
+    // Margen real promedio por unidad (después de descuentos, royalties y flete)
     const revenueTotalReal = revenueDirecta + revenueLibreria
     const totalRoyalties = royaltiesDirecta + royaltiesLibreria
-    const margenBrutoTotal = revenueTotalReal - totalRoyalties - costTransbank
+    const margenBrutoTotal = revenueTotalReal - totalRoyalties - costTransbankDirecta - costTransbankLibreria - (costs.distribucion || 0)
     const margenUnitarioPromedio = tiraje > 0 ? (margenBrutoTotal / tiraje) - costoUnitarioProd : 0
 
     const breakEvenReal = margenUnitarioPromedio > 0 ? Math.ceil(inversionTotal / margenUnitarioPromedio) : 0
@@ -424,6 +439,27 @@ export default function Escandallo() {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">Comisión Transbank/Pasarela Directa (%)</label>
+                                    <input
+                                        type="number"
+                                        value={comisionDirecta}
+                                        onChange={e => setComisionDirecta(parseFloat(e.target.value) || 0)}
+                                        className="input-field text-sm py-1.5"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-slate-500 uppercase mb-1 block">Comisión Pasarela Librería (%)</label>
+                                    <input
+                                        type="number"
+                                        value={comisionLibreria}
+                                        onChange={e => setComisionLibreria(parseFloat(e.target.value) || 0)}
+                                        className="input-field text-sm py-1.5"
+                                    />
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="text-[10px] text-slate-500 uppercase mb-1 block">Inversión Marketing (% s/producción)</label>
                                 <input
@@ -509,9 +545,9 @@ export default function Escandallo() {
                                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold mb-1">Venta Directa ({ventasCanal.directaPercent}%)</p>
                                 <div className="space-y-1">
                                     <div className="flex justify-between text-sm"><span className="text-slate-500">Ingresos:</span> <span className="font-semibold text-slate-900 dark:text-white">{formatSafeCLP(revenueDirecta)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Costo Producción:</span> <span className="text-amber-600">-{formatSafeCLP(udsDirecta * costoUnitarioProd)}</span></div>
+                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Costo Producción + Flete:</span> <span className="text-amber-600">-{formatSafeCLP(udsDirecta * (costoUnitarioProd + costoUnitarioFlete))}</span></div>
                                     <div className="flex justify-between text-[10px]"><span className="text-slate-400">Regalías Autor ({royaltyDirecta}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesDirecta)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Transbank (3%):</span> <span className="text-red-400">-{formatSafeCLP(costTransbank)}</span></div>
+                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Comisión Pasarela ({comisionDirecta}%):</span> <span className="text-red-400">-{formatSafeCLP(costTransbankDirecta)}</span></div>
                                     <div className="flex justify-between text-xs pt-1 border-t border-emerald-100 dark:border-emerald-900/30"><span className="font-medium text-emerald-700">Utilidad Canal:</span> <span className="font-bold text-emerald-600">{formatSafeCLP(profitDirecta)}</span></div>
                                 </div>
                             </div>
@@ -519,8 +555,9 @@ export default function Escandallo() {
                                 <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold mb-1">Venta Librerías ({ventasCanal.libreriaPercent}%)</p>
                                 <div className="space-y-1">
                                     <div className="flex justify-between text-sm"><span className="text-slate-500">Ingresos (Neto -40%):</span> <span className="font-semibold text-slate-900 dark:text-white">{formatSafeCLP(revenueLibreria)}</span></div>
-                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Costo Producción:</span> <span className="text-amber-600">-{formatSafeCLP(udsLibreria * costoUnitarioProd)}</span></div>
+                                    <div className="flex justify-between text-[10px]"><span className="text-slate-400">Costo Producción + Flete:</span> <span className="text-amber-600">-{formatSafeCLP(udsLibreria * (costoUnitarioProd + costoUnitarioFlete))}</span></div>
                                     <div className="flex justify-between text-[10px]"><span className="text-slate-400">Regalías Autor ({royaltyLibreria}%):</span> <span className="text-red-400">-{formatSafeCLP(royaltiesLibreria)}</span></div>
+                                    {comisionLibreria > 0 && <div className="flex justify-between text-[10px]"><span className="text-slate-400">Comisión Pasarela ({comisionLibreria}%):</span> <span className="text-red-400">-{formatSafeCLP(costTransbankLibreria)}</span></div>}
                                     <div className="flex justify-between text-xs pt-1 border-t border-blue-100 dark:border-blue-900/30"><span className="font-medium text-blue-700">Utilidad Canal:</span> <span className="font-bold text-blue-600">{formatSafeCLP(profitLibreria)}</span></div>
                                 </div>
                             </div>

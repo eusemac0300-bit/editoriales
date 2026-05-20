@@ -17,9 +17,11 @@ export default function Consignments() {
     const [selectedAction, setSelectedAction] = useState(null) // { type: 'liquidate' | 'return' | 'shrinkage', item }
     const [expandedItem, setExpandedItem] = useState(null) // ID of the consignment item
     const [newItem, setNewItem] = useState({ clientName: '', contactInfo: '', notes: '', items: [{ bookId: '', quantity: 1 }] })
+    const [showNewClient, setShowNewClient] = useState(false)
+    const [newClientName, setNewClientName] = useState('')
 
     const consignments = useMemo(() => data?.finances?.consignments || [], [data?.finances])
-    const books = useMemo(() => (data?.books || []).filter(b => b.status === 'Publicado'), [data?.books])
+    const books = useMemo(() => data?.books || [], [data?.books])
     const inventory = useMemo(() => data?.inventory?.physical || [], [data?.inventory])
     const sales = useMemo(() => data?.finances?.sales || [], [data?.finances])
     const clients = useMemo(() => data?.clients || [], [data?.clients])
@@ -137,6 +139,30 @@ export default function Consignments() {
             setNewItem({ clientName: '', contactInfo: '', notes: '', items: [{ bookId: '', quantity: 1 }] })
         } catch (err) {
             alert('Error al registrar: ' + err.message)
+        }
+    }
+
+    const handleCreateClient = async () => {
+        if (!newClientName.trim()) return
+        try {
+            const newId = `cli-${Date.now()}`
+            const { error } = await supabase.from('clients').insert({
+                id: newId,
+                tenant_id: user?.tenantId || 't1',
+                name: newClientName.trim(),
+                email: '',
+                phone: '',
+                contact_name: '',
+                tax_id: ''
+            })
+            if (error) throw error
+            await addAuditLog(`Creó nuevo cliente (rápido): ${newClientName}`, 'general')
+            await reloadData()
+            setNewItem(prev => ({ ...prev, clientName: newClientName.trim() }))
+            setShowNewClient(false)
+            setNewClientName('')
+        } catch (err) {
+            alert('Error al crear cliente: ' + err.message)
         }
     }
 
@@ -580,29 +606,59 @@ export default function Consignments() {
                             </div>
                             
                             <div className="grid grid-cols-2 gap-6 mb-8">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 block tracking-widest">Cliente / Librería (Obligatorio)</label>
-                                    <select 
-                                        required
-                                        value={newItem.clientName}
-                                        onChange={e => {
-                                            const val = e.target.value
-                                            const client = (clients || []).find(c => c.name === val)
-                                            setNewItem({
-                                                ...newItem, 
-                                                clientName: val,
-                                                contactInfo: client ? (client.email || client.phone || client.contact_name || '') : ''
-                                            })
-                                        }}
-                                        className="input-field w-full text-sm font-bold py-3 px-4 appearance-none cursor-pointer hover:border-primary/50 transition-all"
-                                    >
-                                        <option value="">{clients.length === 0 ? 'Sin clientes registrados...' : 'Seleccionar Cliente...'}</option>
-                                        {(clients || []).map(c => (
-                                            <option key={c.id || c.name} value={c.name}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                    {clients.length === 0 && (
-                                        <p className="text-[9px] text-red-500 font-bold mt-1">No hay clientes registrados en el sistema.</p>
+                                <div className="space-y-2 relative">
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 block tracking-widest">Cliente / Librería (Obligatorio)</label>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setShowNewClient(!showNewClient)} 
+                                            className="text-[10px] text-primary hover:underline font-bold"
+                                        >
+                                            {showNewClient ? 'Cancelar' : '+ Nuevo Cliente'}
+                                        </button>
+                                    </div>
+                                    {showNewClient ? (
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Nombre del nuevo cliente..."
+                                                value={newClientName}
+                                                onChange={e => setNewClientName(e.target.value)}
+                                                className="input-field w-full text-sm font-bold"
+                                            />
+                                            <button 
+                                                type="button"
+                                                onClick={handleCreateClient}
+                                                className="btn-primary text-xs px-4"
+                                            >
+                                                Crear
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <select 
+                                                required
+                                                value={newItem.clientName}
+                                                onChange={e => {
+                                                    const val = e.target.value
+                                                    const client = (clients || []).find(c => c.name === val)
+                                                    setNewItem({
+                                                        ...newItem, 
+                                                        clientName: val,
+                                                        contactInfo: client ? (client.email || client.phone || client.contact_name || '') : ''
+                                                    })
+                                                }}
+                                                className="input-field w-full text-sm font-bold py-3 px-4 appearance-none cursor-pointer hover:border-primary/50 transition-all"
+                                            >
+                                                <option value="">{clients.length === 0 ? 'Sin clientes registrados...' : 'Seleccionar Cliente...'}</option>
+                                                {(clients || []).map(c => (
+                                                    <option key={c.id || c.name} value={c.name}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                            {clients.length === 0 && (
+                                                <p className="text-[9px] text-red-500 font-bold mt-1">No hay clientes registrados en el sistema.</p>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                                 <div className="space-y-2">

@@ -474,6 +474,7 @@ function SaleForm({ onClose, onSave, books, data }) {
     const [showClientList, setShowClientList] = useState(false)
     const [isCreatingClient, setIsCreatingClient] = useState(false)
     const [newClientName, setNewClientName] = useState('')
+    const [clientDiscount, setClientDiscount] = useState(0)
 
     const clients = useMemo(() => authData?.clients || [], [authData])
     const filteredClients = useMemo(() => {
@@ -488,6 +489,18 @@ function SaleForm({ onClose, onSave, books, data }) {
         setCommon(p => ({ ...p, clientName: client.name, clientId: client.id }))
         setClientSearch(client.name)
         setShowClientList(false)
+        
+        const newDiscount = client.default_discount || 0
+        setClientDiscount(newDiscount)
+        
+        setItems(p => p.map(item => {
+            const unitPrice = item.originalPrice * (1 - (newDiscount / 100))
+            return {
+                ...item,
+                unitPrice: unitPrice,
+                total: unitPrice * item.quantity
+            }
+        }))
     }
 
     const handleQuickCreateClient = async () => {
@@ -539,14 +552,19 @@ function SaleForm({ onClose, onSave, books, data }) {
     const addItem = (book) => {
         const inv = data?.inventory?.physical?.find(i => i.bookId === book.id)
         const stock = inv?.stock ?? 0
+        
+        const originalPrice = book.pvp || 0
+        const unitPrice = originalPrice * (1 - (clientDiscount / 100))
+        
         // No bloqueamos, solo permitimos con advertencia si el stock es bajo
         setItems(p => [...p, {
             bookId: book.id,
             title: book.title,
             quantity: 1,
-            unitPrice: book.pvp || 0,
+            originalPrice: originalPrice,
+            unitPrice: unitPrice,
             stock: stock,
-            total: book.pvp || 0
+            total: unitPrice
         }])
         setSearchTerm('')
         setSearchResults([])
@@ -638,8 +656,11 @@ function SaleForm({ onClose, onSave, books, data }) {
                                                             onClick={() => handleSelectClient(c)}
                                                             className="w-full text-left px-4 py-3 hover:bg-blue-500/10 text-sm flex flex-col transition-colors border-b border-white/5 last:border-none"
                                                         >
-                                                            <span className="font-bold text-white">{c.name}</span>
-                                                            {c.rut && <span className="text-[10px] text-slate-400 font-mono">{c.rut}</span>}
+                                                            <div className="flex justify-between items-center w-full">
+                                                                <span className="font-bold text-white">{c.name}</span>
+                                                                {c.default_discount > 0 && <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-bold">{c.default_discount}% DCTO</span>}
+                                                            </div>
+                                                            {c.tax_id && <span className="text-[10px] text-slate-400 font-mono mt-0.5">{c.tax_id}</span>}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -659,6 +680,11 @@ function SaleForm({ onClose, onSave, books, data }) {
                                         </div>
                                     )}
                                 </div>
+                                {clientDiscount > 0 && (
+                                    <div className="absolute right-0 top-0 text-[10px] text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                                        Descuento Aplicado: {clientDiscount}%
+                                    </div>
+                                )}
                                 {showClientList && <div className="fixed inset-0 z-[55]" onClick={() => setShowClientList(false)}></div>}
                             </div>
                             <div className="space-y-2">

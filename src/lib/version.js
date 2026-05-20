@@ -1,7 +1,29 @@
-export const APP_VERSION = 'v3.2.1.2';
-export const APP_BUILD = '2026.04.23.006';
+export const APP_VERSION = 'v3.2.1.4';
+export const APP_BUILD = '2026.05.19.002';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.1.4',
+        date: '2026-05-19',
+        title: 'Auto-recuperación de Sesiones Huérfanas e Inline Author Fix',
+        details: [
+            'Seguridad: Cierre de sesión automático para sesiones locales (localStorage) huérfanas después de borrar base de datos.',
+            'Libros: Solucionado error de creación de autores inline ("desde acá") en formularios de libros.',
+            'Flujo: Redirección automática a inicio de sesión tras detección de sesión inválida.'
+        ]
+    },
+    {
+        version: 'v3.2.1.3',
+        date: '2026-05-19',
+        title: 'Estabilización de Flujo y Directorio de Autores',
+        details: [
+            'Autores: Correo y contraseña opcionales con autogeneración inteligente.',
+            'Seguridad: Bloqueo de autocompletado en formularios para evitar pisar credenciales.',
+            'Libros: Alerta visual explicativa cuando se selecciona un autor con datos pendientes.',
+            'Compras: Creación de proveedores integrada in-line dentro del formulario de OCs.',
+            'Consignaciones: Corregido bloqueo de interfaz por bucle infinito al seleccionar Distribución.'
+        ]
+    },
     {
         version: 'v3.2.1.2',
         date: '2026-04-23',

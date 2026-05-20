@@ -116,6 +116,18 @@ export function AuthProvider({ children }) {
         queryClient.clear()
     }, [queryClient])
 
+    // Stale session validation: If logged in user doesn't exist in fetched data, log them out.
+    useEffect(() => {
+        if (user && queryData && queryData.users) {
+            // Check if user exists in the fetched list of users for this tenant
+            const userExists = queryData.users.some(u => u.id === user.id)
+            if (!userExists && user.id !== 'superadmin' && user.id !== 'admin-user') {
+                console.warn('Usuario actual no encontrado en la base de datos para este Workspace. Cerrando sesión...')
+                logout()
+            }
+        }
+    }, [user, queryData, logout])
+
     const hasPermission = useCallback((requiredRole) => {
         if (!user) return false
         if (requiredRole === 'SUPERADMIN') return user.role === 'SUPERADMIN'

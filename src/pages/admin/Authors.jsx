@@ -42,7 +42,9 @@ export default function AuthorsPage() {
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <UsersIcon className="w-6 h-6 text-primary" />Directorio de Autores
                     </h1>
-                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{authors.length} autores registrados en catálogo</p>
+                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">
+                        {authors.length} autores registrados. Los autores marcados como <span className="text-red-500 font-semibold cursor-help border-b border-dashed border-red-500/30" title="Falta completar RUT, dirección o datos bancarios">Pendiente</span> requieren completar sus datos fiscales/bancarios para liquidaciones de regalías.
+                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex bg-slate-100 dark:bg-dark-200 p-1 rounded-xl mr-2">
@@ -123,7 +125,10 @@ export default function AuthorsPage() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-lg font-medium text-slate-900 dark:text-white">{u.name}</h3>
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${complete ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}>
+                                            <span 
+                                                className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase cursor-help ${complete ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}
+                                                title={complete ? 'Todos los datos de liquidación y fiscalidad completos' : 'Falta completar RUT, dirección o datos bancarios para liquidación de regalías'}
+                                            >
                                                 {complete ? 'Completo' : 'Pendiente'}
                                             </span>
                                         </div>
@@ -178,7 +183,10 @@ export default function AuthorsPage() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{u.name}</p>
-                                        <span className={`text-[9px] px-1 rounded font-bold uppercase ${complete ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}>
+                                        <span 
+                                            className={`text-[9px] px-1 rounded font-bold uppercase cursor-help ${complete ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'}`}
+                                            title={complete ? 'Todos los datos de liquidación y fiscalidad completos' : 'Falta completar RUT, dirección o datos bancarios para liquidación de regalías'}
+                                        >
                                             {complete ? 'Completo' : 'Pendiente'}
                                         </span>
                                     </div>
@@ -273,31 +281,47 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
         setError('')
 
         // Validation
-        if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
-            setError('Todos los campos obligatorios deben estar completos.')
+        if (!form.name.trim()) {
+            setError('El nombre completo es obligatorio.')
             return
         }
 
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+        let finalEmail = form.email.trim()
+        let finalPassword = form.password.trim()
+
+        if (finalEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(finalEmail)) {
             setError('El correo electrónico no es válido.')
             return
         }
 
+        // Generate email if empty
+        if (!finalEmail) {
+            const slug = form.name.trim().toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '')
+            finalEmail = `${slug}.${Date.now()}@pendiente.editorial`
+        }
+
+        // Generate password if empty
+        if (!finalPassword) {
+            finalPassword = 'pendiente-1234'
+        } else if (finalPassword.length < 4) {
+            setError('La contraseña debe tener al menos 4 caracteres.')
+            return
+        }
+
         // Check duplicate email (only for new users or if email changed)
-        const emailTaken = users.some(u => u.email === form.email && u.id !== existingUser?.id)
+        const emailTaken = users.some(u => u.email === finalEmail && u.id !== existingUser?.id)
         if (emailTaken) {
             setError('Ya existe un usuario con este correo electrónico.')
             return
         }
 
-        if (form.password.length < 4) {
-            setError('La contraseña debe tener al menos 4 caracteres.')
-            return
-        }
-
         setSaving(true)
         try {
-            await onSave(form)
+            await onSave({
+                ...form,
+                email: finalEmail,
+                password: finalPassword
+            })
         } catch (err) {
             setError('Error al guardar: ' + (err.message || 'Inténtalo de nuevo.'))
         }
@@ -314,7 +338,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3" autoComplete="off">
                 <div className="sm:col-span-2">
                     <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Nombre Completo *</label>
                     <input
@@ -323,21 +347,22 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                         className="input-field text-sm"
                         placeholder="Ej: María López"
                         required
+                        autoComplete="new-name"
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Correo Electrónico *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Correo Electrónico (Opcional)</label>
                     <input
                         type="email"
                         value={form.email}
                         onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                         className="input-field text-sm"
-                        placeholder="correo@editorial.cl"
-                        required
+                        placeholder="correo@editorial.cl (o dejar vacío para autogenerar)"
+                        autoComplete="new-email"
                     />
                 </div>
                 <div>
-                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Contraseña *</label>
+                    <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 block">Contraseña (Opcional)</label>
                     <div className="relative">
                         <input
                             type={showPassword ? 'text' : 'password'}
@@ -345,7 +370,7 @@ function UserForm({ existingUser, users, onSave, onCancel }) {
                             onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                             className="input-field text-sm pr-9"
                             placeholder="Mín. 4 caracteres"
-                            required
+                            autoComplete="new-password"
                         />
                         <button
                             type="button"
