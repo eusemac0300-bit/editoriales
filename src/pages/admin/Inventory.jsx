@@ -12,6 +12,7 @@ export default function Inventory() {
     const [tab, setTab] = useState('fisico')
     const [addModal, setAddModal] = useState(null)
     const [addTitleModal, setAddTitleModal] = useState(false)
+    const [editMinStockModal, setEditMinStockModal] = useState(null)
     const [search, setSearch] = useState('')
     const [expandedBookId, setExpandedBookId] = useState(null)
 
@@ -74,7 +75,7 @@ export default function Inventory() {
     }
 
     // Registrar un título ya impreso manualmente con stock inicial
-    const handleAddExistingTitle = async ({ bookId, stock, note }) => {
+    const handleAddExistingTitle = async ({ bookId, stock, minStock, note }) => {
         const entry = {
             date: new Date().toISOString().split('T')[0],
             qty: parseInt(stock),
@@ -88,7 +89,7 @@ export default function Inventory() {
             return {
                 bookId: bId || bookId,
                 stock: parseInt(stock),
-                minStock: 100,
+                minStock: minStock !== undefined ? minStock : 100,
                 entries: [entry],
                 exits: []
             }
@@ -223,7 +224,19 @@ export default function Inventory() {
                                                 <p className={`text-2xl font-black font-mono transition-colors ${isCritical ? 'text-red-500 animate-pulse' : isVirtual ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
                                                     {p.stock}
                                                 </p>
-                                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-black tracking-widest">En Bodega</p>
+                                                <p className="text-[10px] text-slate-500 dark:text-dark-600 uppercase font-black tracking-widest flex items-center justify-end gap-1">
+                                                    En Bodega
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditMinStockModal({ bookId: p.bookId, minStock: p.minStock || 100 });
+                                                        }}
+                                                        className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-dark-300 hover:bg-primary/20 hover:text-primary transition-colors ml-1 border border-transparent hover:border-primary/30"
+                                                        title="Editar stock mínimo de alerta"
+                                                    >
+                                                        Min: {p.minStock || 100}
+                                                    </button>
+                                                </p>
                                             </div>
                                             
                                             <div className="flex gap-1" onClick={e => e.stopPropagation()}>
@@ -458,6 +471,26 @@ export default function Inventory() {
                     onSubmit={handleAddExistingTitle}
                 />
             )}
+
+            {/* Modal: Editar Stock Mínimo */}
+            {editMinStockModal && (
+                <EditMinStockModal
+                    item={editMinStockModal}
+                    bookTitle={getBook(editMinStockModal.bookId)?.title}
+                    onClose={() => setEditMinStockModal(null)}
+                    onSubmit={async (bookId, newMinStock) => {
+                        await updateInventory(bookId, (existing) => {
+                            if (existing) {
+                                return { ...existing, minStock: parseInt(newMinStock) || 0 }
+                            }
+                            return existing
+                        })
+                        const book = getBook(bookId)
+                        addAuditLog(`Inventario: Stock mínimo actualizado a ${newMinStock} para '${book?.title}'`, 'inventario')
+                        setEditMinStockModal(null)
+                    }}
+                />
+            )}
         </div>
     )
 }
@@ -565,13 +598,14 @@ function AddExistingTitleModal({ books, inventoryPhysical, onClose, onSubmit }) 
     // Mostrar todos los libros publicados y también todos (para libros externos/antes del sistema)
     const [selectedBook, setSelectedBook] = useState('')
     const [stock, setStock] = useState('')
+    const [minStock, setMinStock] = useState('100')
     const [note, setNote] = useState('')
     const [error, setError] = useState('')
 
     const handleSubmit = () => {
         if (!selectedBook) { setError('Debes seleccionar un título.'); return }
         if (!stock || parseInt(stock) <= 0) { setError('Ingresa una cantidad válida.'); return }
-        onSubmit({ bookId: selectedBook, stock, note })
+        onSubmit({ bookId: selectedBook, stock, minStock: parseInt(minStock) || 0, note })
     }
 
     const existingBookIds = new Set(inventoryPhysical.map(p => p.bookId))
@@ -639,6 +673,21 @@ function AddExistingTitleModal({ books, inventoryPhysical, onClose, onSubmit }) 
                     </div>
 
                     <div>
+                        <label className="text-xs text-dark-600 mb-1 block">Alerta de Stock Mínimo</label>
+                        <input
+                            type="number"
+                            value={minStock}
+                            onChange={e => { setMinStock(e.target.value); setError('') }}
+                            className="input-field"
+                            placeholder="Ej: 100"
+                            min="0"
+                        />
+                        <p className="text-[10px] text-dark-500 mt-1">
+                            El sistema te alertará cuando el inventario caiga por debajo de este número.
+                        </p>
+                    </div>
+
+                    <div>
                         <label className="text-xs text-dark-600 mb-1 block">Nota de Referencia</label>
                         <input
                             value={note}
@@ -663,3 +712,71 @@ function AddExistingTitleModal({ books, inventoryPhysical, onClose, onSubmit }) 
         </div>
     )
 }
+
+/* ─────────────────────────────────────────────
+   Modal: Editar Stock Mínimo
+───────────────────────────────────────────── */
+function EditMinStockModal({ item, bookTitle, onClose, onSubmit }) {
+    const [minStock, setMinStock] = useState(item.minStock || '100')
+    const [error, setError] = useState('')
+
+    const handleSubmit = () => {
+        if (minStock === '' || parseInt(minStock) < 0) { setError('Ingresa una cantidad válida mayor o igual a 0.'); return }
+        onSubmit(item.bookId, parseInt(minStock))
+    }
+
+    return (
+        <div className="fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="glass-card max-w-sm w-full p-6 slide-up" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5 text-amber-500" />
+                        Ajustar Alerta de Stock
+                    </h3>
+                    <button onClick={onClose} className="p-1 text-dark-600 hover:text-white transition-colors">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-dark-600 mb-4 bg-slate-50 dark:bg-dark-100 px-3 py-2 rounded-lg">
+                    {bookTitle}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-dark-600 mb-5">
+                    Define la cantidad mínima de ejemplares que deben quedar en bodega antes de recibir una alerta de "Urgente: Reimpresión" en el Dashboard.
+                </p>
+
+                {error && (
+                    <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />{error}
+                    </div>
+                )}
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs text-dark-600 mb-1 block">Stock Mínimo</label>
+                        <input
+                            type="number"
+                            value={minStock}
+                            onChange={e => { setMinStock(e.target.value); setError('') }}
+                            className="input-field text-lg font-mono font-bold"
+                            placeholder="Ej: 100"
+                            min="0"
+                            autoFocus
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-2 mt-6">
+                    <button onClick={onClose} className="btn-secondary flex-1">Cancelar</button>
+                    <button
+                        onClick={handleSubmit}
+                        className="btn-primary flex-1 flex items-center justify-center gap-2"
+                    >
+                        <Save className="w-4 h-4" />
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
