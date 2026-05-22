@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Calculator, TrendingUp, Target, DollarSign, BarChart3, Save, Book } from 'lucide-react'
+import { Calculator, TrendingUp, Target, DollarSign, BarChart3, Save, Book, ShoppingCart } from 'lucide-react'
 
 export default function Escandallo() {
     const [searchParams] = useSearchParams()
@@ -32,6 +32,7 @@ export default function Escandallo() {
     const [comisionLibreria, setComisionLibreria] = useState(() => getInitialState('comisionLibreria', 0))
     const [ventasCanal, setVentasCanal] = useState(() => getInitialState('ventasCanal', { directaPercent: 60, libreriaPercent: 40 }))
     const [isSaving, setIsSaving] = useState(false)
+    const [linkedPO, setLinkedPO] = useState(null) // Tracks if imprenta was auto-filled from a Purchase Order
 
     // Save to session storage whenever they change
     useEffect(() => {
@@ -57,14 +58,25 @@ export default function Escandallo() {
         if (selectedBookId && data?.books) {
             const book = data.books.find(b => b.id === selectedBookId)
             if (book) {
+                // Look up the most recent non-cancelled Purchase Order for this book
+                const bookPOs = (data.purchaseOrders || [])
+                    .filter(po => po.book_id === selectedBookId && po.status !== 'CANCELADA')
+                    .sort((a, b) => new Date(b.date_ordered || 0) - new Date(a.date_ordered || 0))
+                const latestPO = bookPOs[0] || null
+                const poImprentaCost = latestPO ? Number(latestPO.total_cost || 0) : 0
+
                 // Explicitly set EVERY value. If it doesn't exist in the book, reset to default (0).
                 // This prevents values from previous books from "sticking".
                 const dbEsc = book.escandalloCosts || {}
                 if (dbEsc.costs) {
+                    const savedImprenta = dbEsc.costs.imprenta || 0
+                    // If we have a PO cost and the saved imprenta is 0, use PO cost
+                    const finalImprenta = (savedImprenta === 0 && poImprentaCost > 0) ? poImprentaCost : savedImprenta
                     setCosts({
                         preprensa: 0, traduccion: 0, prologo: 0, referato: 0, anticipo: 0, fotos: 0, ilustraciones: 0,
                         imprenta: 0, impresos: 0, traslados: 0, distribucion: 0, otros: 0,
-                        ...dbEsc.costs
+                        ...dbEsc.costs,
+                        imprenta: finalImprenta
                     })
                     setMarketingPercent(dbEsc.marketingPercent || 15)
                     setPvpNeto(dbEsc.pvpNeto || 0)
@@ -75,7 +87,9 @@ export default function Escandallo() {
                     setComisionLibreria(dbEsc.comisionLibreria || 0)
                     setVentasCanal(dbEsc.ventasCanal || { directaPercent: 60, libreriaPercent: 40 })
                 } else {
-                    // Mapeo exhaustivo para migración
+                    // Mapeo exhaustivo para migración — PO cost takes precedence over empty imprenta
+                    const legacyImprenta = Number(dbEsc.imprenta || dbEsc.impresion || 0)
+                    const finalImprenta = (legacyImprenta === 0 && poImprentaCost > 0) ? poImprentaCost : legacyImprenta
                     setCosts({
                         preprensa: Number(dbEsc.preprensa || dbEsc.edicion || 0),
                         traduccion: Number(dbEsc.traduccion || 0),
@@ -84,7 +98,7 @@ export default function Escandallo() {
                         anticipo: Number(dbEsc.anticipo || 0),
                         fotos: Number(dbEsc.fotos || 0),
                         ilustraciones: Number(dbEsc.ilustraciones || 0),
-                        imprenta: Number(dbEsc.imprenta || dbEsc.impresion || 0),
+                        imprenta: finalImprenta,
                         impresos: Number(dbEsc.impresos || 0),
                         traslados: Number(dbEsc.traslados || 0),
                         distribucion: Number(dbEsc.distribucion || 0),
@@ -99,12 +113,25 @@ export default function Escandallo() {
                     setVentasCanal({ directaPercent: 60, libreriaPercent: 40 })
                 }
                 setTiraje(Number(book.tiraje) || 0)
+                
+                // Track linked PO for visual indicator
+                if (latestPO && poImprentaCost > 0) {
+                    setLinkedPO({
+                        orderNumber: latestPO.order_number,
+                        supplierName: latestPO.supplierName || 'Proveedor',
+                        totalCost: poImprentaCost,
+                        status: latestPO.status,
+                        allPOs: bookPOs.length
+                    })
+                } else {
+                    setLinkedPO(null)
+                }
             } else {
                 // If the user selects "-- Elige un Título --" or similar
                 resetCalculator()
             }
         }
-    }, [selectedBookId, data?.books])
+    }, [selectedBookId, data?.books, data?.purchaseOrders])
 
     // Formatting helper to avoid NaN in inputs
     const formatInputValue = (val) => {
@@ -132,6 +159,7 @@ export default function Escandallo() {
         setComisionDirecta(3)
         setComisionLibreria(0)
         setVentasCanal({ directaPercent: 60, libreriaPercent: 40 })
+        setLinkedPO(null)
         
         // Limpiar session storage
         Object.keys(sessionStorage).forEach(key => {
@@ -233,7 +261,7 @@ export default function Escandallo() {
         { key: 'prologo', label: 'Prólogo', icon: '📄', category: 'edicion' },
         { key: 'referato', label: 'Referato', icon: '👁️', category: 'edicion' },
         { key: 'anticipo', label: 'Derechos (Antic.)', icon: '💰', category: 'edicion' },
-        { key: 'imprenta', label: 'Imprenta (Neto)', icon: '🖨️', category: 'impresion' },
+        { key: 'imprenta', label: 'Imprenta (Neto)', icon: '🖨️', category: 'impresion', linkedField: true },
         { key: 'distribucion', label: 'Distribución/Flete', icon: '🚚', category: 'otros' },
         { key: 'otros', label: 'Otros Gastos', icon: '📦', category: 'otros' },
     ]
@@ -313,6 +341,13 @@ export default function Escandallo() {
                                 <div key={item.key}>
                                     <label className="text-xs text-slate-500 dark:text-dark-600 mb-1 flex items-center gap-1">
                                         <span>{item.icon}</span> {item.label}
+                                        {item.linkedField && linkedPO && (
+                                            <span className="ml-auto flex items-center gap-1 text-[9px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded-full font-semibold">
+                                                <ShoppingCart className="w-3 h-3" />
+                                                OC #{linkedPO.orderNumber} · {linkedPO.supplierName}
+                                                {linkedPO.allPOs > 1 && <span className="opacity-60">(+{linkedPO.allPOs - 1})</span>}
+                                            </span>
+                                        )}
                                     </label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-dark-500">$</span>
@@ -322,8 +357,10 @@ export default function Escandallo() {
                                             onChange={e => {
                                                 const val = e.target.value.replace(/\D/g, '')
                                                 setCosts(prev => ({ ...prev, [item.key]: val === '' ? 0 : parseInt(val, 10) }))
+                                                // If manually editing imprenta, clear the linked PO indicator
+                                                if (item.key === 'imprenta') setLinkedPO(prev => prev ? { ...prev, manualOverride: true } : null)
                                             }}
-                                            className="input-field pl-7 text-sm"
+                                            className={`input-field pl-7 text-sm ${item.linkedField && linkedPO && !linkedPO.manualOverride ? 'ring-1 ring-emerald-400/50 bg-emerald-50/30 dark:bg-emerald-950/10' : ''}`}
                                             placeholder="0"
                                         />
                                     </div>
