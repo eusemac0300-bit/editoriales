@@ -1,5 +1,5 @@
-export const APP_VERSION = 'v3.2.3.03';
-export const APP_BUILD = '2026.05.22.002';
+export const APP_VERSION = 'v3.2.3.04';
+export const APP_BUILD = '2026.05.22.003';
 
 export const CHANGELOG = [
     {

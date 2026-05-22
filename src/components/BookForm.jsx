@@ -273,7 +273,7 @@ export default function BookForm({ data, initialData, onSave, onClose }) {
                 </div>
                 <div className="sm:col-span-2">
                     <label className="text-xs text-dark-600 mb-1 block">Sinopsis</label>
-                    <textarea value={form.synopsis} onChange={e => setForm(p => ({ ...p, synopsis: e.target.value }))} className="input-field text-sm" rows={2} />
+                    <textarea value={form.synopsis} onChange={e => setForm(p => ({ ...p, synopsis: e.target.value }))} className="input-field text-sm min-h-[100px] resize-y py-2" rows={5} placeholder="Ingresa la sinopsis del libro..." />
                 </div>
 
                 <div className="sm:col-span-2 mt-2 pt-4 border-t border-slate-200 dark:border-dark-300">

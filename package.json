@@ -1,7 +1,7 @@
 {
   "name": "editorial-app",
   "private": true,
-  "version": "3.2.3.03",
+  "version": "3.2.3.04",
   "type": "module",
   "scripts": {
     "dev": "vite",
