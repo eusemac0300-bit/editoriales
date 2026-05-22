@@ -511,9 +511,15 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
             const inv = data?.inventory?.physical?.find(i => i.bookId === editSale.bookId)
             const stock = inv?.stock ?? 0
             const originalPrice = book?.pvp || editSale.unitPrice || 0
+            
+            // Para encontrar el descuento desde los valores de DB:
+            // Sabemos que unitPrice (Final) = round( (PVP / taxVal) * (1 - D/100) * taxVal )
+            // Despejando D, aunque es aproximado, lo más seguro es usar el valor guardado
+            // o calcularlo: (1 - (unitPrice/originalPrice)) * 100
             const discount = originalPrice > 0 && editSale.unitPrice > 0 
                 ? Math.round((1 - editSale.unitPrice / originalPrice) * 100) 
                 : 0
+            
             return [{
                 bookId: editSale.bookId,
                 title: editSale.bookTitle || book?.title || '',
@@ -556,7 +562,9 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
         setClientDiscount(newDiscount)
         
         setItems(p => p.map(item => {
-            const unitPrice = Math.round(item.originalPrice * (1 - (newDiscount / 100)))
+            const originalNeto = item.originalPrice / taxVal
+            const discountedNeto = originalNeto * (1 - (newDiscount / 100))
+            const unitPrice = Math.round(discountedNeto * taxVal)
             return {
                 ...item,
                 discount: newDiscount,
@@ -618,7 +626,11 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
         
         const originalPrice = book.pvp || 0
         const discount = clientDiscount || 0
-        const unitPrice = Math.round(originalPrice * (1 - (discount / 100)))
+        
+        // Calculo sobre el neto:
+        const originalNeto = originalPrice / taxVal
+        const discountedNeto = originalNeto * (1 - (discount / 100))
+        const unitPrice = Math.round(discountedNeto * taxVal)
         
         // No bloqueamos, solo permitimos con advertencia si el stock es bajo
         setItems(p => [...p, {
@@ -645,7 +657,10 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
             if (field === 'discount') {
                 const discountVal = parseFloat(val) || 0
                 newItem.discount = discountVal
-                newItem.unitPrice = Math.round(newItem.originalPrice * (1 - (discountVal / 100)))
+                
+                const originalNeto = newItem.originalPrice / taxVal
+                const discountedNeto = originalNeto * (1 - (discountVal / 100))
+                newItem.unitPrice = Math.round(discountedNeto * taxVal)
             }
             newItem.total = (newItem.quantity || 0) * (newItem.unitPrice || 0)
             return newItem
