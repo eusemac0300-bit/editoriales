@@ -6,7 +6,9 @@ import { Kanban, Calendar, FileText, X, Package, Upload, Image as ImageIcon, Sha
 const STAGES = ['Original', 'Contratación', 'Edición', 'Corrección', 'Maquetación', 'Imprenta', 'Publicado']
 
 export default function BookForm({ data, initialData, onSave, onClose }) {
-    const { user, addNewUser } = useAuth()
+    const { user, addNewUser, taxRate, formatCurrency } = useAuth()
+    const taxVal = 1 + ((taxRate || 19) / 100)
+    const formatCLP = formatCurrency || ((val) => `$${Math.round(val).toLocaleString('es-CL')}`)
     const [isUploadingCover, setIsUploadingCover] = useState(false)
     const [showNewAuthor, setShowNewAuthor] = useState(false)
     const [newAuthorName, setNewAuthorName] = useState('')
@@ -246,11 +248,17 @@ export default function BookForm({ data, initialData, onSave, onClose }) {
                 </div>
 
                 <div>
-                    <label className="text-xs text-dark-600 mb-1 block">PVP (CLP)</label>
+                    <label className="text-xs text-dark-600 mb-1 block">PVP (CLP) - Bruto</label>
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-dark-500">$</span>
                         <input type="text" value={formatMoney(form.pvp)} onChange={e => setForm(p => ({ ...p, pvp: e.target.value.replace(/\D/g, '') }))} className="input-field pl-7 text-sm" placeholder="0" />
                     </div>
+                    {form.pvp > 0 && (
+                        <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-500 px-1">
+                            <span>Neto: <strong className="text-slate-400">{formatCLP(Math.round(form.pvp / taxVal))}</strong></span>
+                            <span>IVA: <strong className="text-slate-400">{formatCLP(form.pvp - Math.round(form.pvp / taxVal))}</strong></span>
+                        </div>
+                    )}
                 </div>
                 <div>
                     <label className="text-xs text-dark-600 mb-1 block">% Regalías Autor</label>
