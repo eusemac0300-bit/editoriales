@@ -9,6 +9,7 @@ export default function AdminDashboard() {
     const { data, formatCLP, t, user, loadDemo, clearDemo, taxRate } = useAuth()
     const navigate = useNavigate()
     const [isPublishing, setIsPublishing] = useState(false)
+    const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
     const { books, inventory, finances, alerts } = data
 
     const totalBooks = (books || []).length
@@ -20,10 +21,16 @@ export default function AdminDashboard() {
     console.log(`[Dashboard ${APP_VERSION}]`, { tenant: user?.tenantId, email: user?.email, totalBooks, hasDemoData, firstBookId: books?.[0]?.id })
 
     // Ventas
-    const currentMonth = new Date().toISOString().slice(0, 7)
+    const currentYear = selectedMonth.slice(0, 4)
     const activeSales = (finances?.sales || []).filter(s => s.status !== 'Anulada')
-    const salesThisMonth = activeSales.filter(s => s.saleDate?.startsWith(currentMonth))
+    
+    // Mes en curso
+    const salesThisMonth = activeSales.filter(s => s.saleDate?.startsWith(selectedMonth))
     const incomeThisMonth = salesThisMonth.reduce((sum, s) => sum + (s.totalAmount || 0), 0)
+    
+    // Año en curso (Histórico)
+    const salesThisYear = activeSales.filter(s => s.saleDate?.startsWith(currentYear))
+    const incomeThisYear = salesThisYear.reduce((sum, s) => sum + (s.totalAmount || 0), 0)
 
     // Best Seller Identification (Top of all time)
     const salesByBook = activeSales.reduce((acc, s) => {
@@ -52,7 +59,7 @@ export default function AdminDashboard() {
     }, 0)
 
     // Royalties Projection (Calculated in real-time from sales)
-    const currentMonthSales = activeSales.filter(s => s.saleDate?.startsWith(currentMonth))
+    const currentMonthSales = activeSales.filter(s => s.saleDate?.startsWith(selectedMonth))
     const potentialRoyalties = books.filter(b => b.status === 'Publicado' && (b.royaltyPercent || 0) > 0).reduce((acc, book) => {
         const units = currentMonthSales.filter(s => s.bookId === book.id).reduce((s, sale) => s + (sale.quantity || 0), 0)
         if (units <= 0) return acc
@@ -69,7 +76,8 @@ export default function AdminDashboard() {
         { label: 'VALOR EN LA CALLE', value: formatCLP(consignmentValue), icon: Truck, color: 'from-amber-400 to-amber-600', change: `${activeConsignments.length} consignaciones activas`, link: '/admin/consignaciones' },
         { label: 'TOP VENTAS (Histórico)', value: bestSellerBook ? bestSellerBook.title : '—', icon: TrendingUp, color: 'from-yellow-400 to-yellow-600', change: `${bestSellerCount} unidades vendidas`, link: '/admin/libros', bestseller: true },
         { label: 'URGENTE: REIMPRESIÓN', value: criticalBook ? criticalBook.title : '—', icon: AlertTriangle, color: 'from-rose-500 to-rose-700', change: criticalBook ? `Quedan solo ${criticalStockItem.stock} uds.` : 'Sin quiebres', link: '/admin/inventario' },
-        { label: t('sales_month'), value: formatCLP(incomeThisMonth), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${salesThisMonth.length} ${t('sales').toLowerCase()}`, up: incomeThisMonth > 0, link: '/admin/ventas' },
+        { label: t('sales_month'), value: formatCLP(incomeThisMonth), icon: DollarSign, color: 'from-emerald-500 to-emerald-700', change: `${salesThisMonth.length} ventas en ${selectedMonth}`, up: incomeThisMonth > 0, link: '/admin/ventas' },
+        { label: 'INGRESOS AÑO EN CURSO', value: formatCLP(incomeThisYear), icon: Activity, color: 'from-cyan-500 to-cyan-700', change: `${salesThisYear.length} ventas en ${currentYear}`, up: incomeThisYear > 0, link: '/admin/ventas' },
         { label: t('published_books'), value: published, icon: BookOpen, color: 'from-primary to-primary-700', change: `${totalBooks} ${t('titles').toLowerCase()}`, link: '/admin/libros' },
         { label: t('physical_stock'), value: `${totalStock} uds.`, icon: Package, color: 'from-blue-500 to-blue-700', change: lowStockCount > 0 ? `⚠ ${lowStockCount} alertas de stock` : 'Todo ok', link: '/admin/inventario' },
         { label: 'REGALÍAS ESTIMADAS (MES)', value: formatCLP(potentialRoyalties), icon: Users, color: 'from-purple-500 to-purple-700', change: `Suma proyectada por ventas`, link: '/admin/liquidaciones' },
@@ -85,9 +93,21 @@ export default function AdminDashboard() {
     return (
         <div className="space-y-6 fade-in">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{t('dashboard')}</h1>
-                    <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{t('welcome')}, {useAuth().user?.name}</p>
+                <div className="flex items-center gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">{t('dashboard')}</h1>
+                        <p className="text-slate-500 dark:text-dark-600 text-sm mt-1">{t('welcome')}, {useAuth().user?.name}</p>
+                    </div>
+                    <div className="h-8 w-px bg-slate-200 dark:bg-dark-300 hidden md:block"></div>
+                    <div className="flex flex-col">
+                        <label className="text-[10px] font-black text-slate-400 dark:text-dark-600 uppercase tracking-widest mb-1">Período</label>
+                        <input
+                            type="month"
+                            value={selectedMonth}
+                            onChange={e => setSelectedMonth(e.target.value)}
+                            className="input-field py-1 text-sm bg-white dark:bg-dark-200"
+                        />
+                    </div>
                 </div>
 
                 {/* Master Control Hub (Exclusive for master@editorial.cl, maestro, eusemac) */}
