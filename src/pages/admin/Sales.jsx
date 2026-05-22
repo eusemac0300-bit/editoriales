@@ -494,9 +494,10 @@ function SaleForm({ onClose, onSave, books, data }) {
         setClientDiscount(newDiscount)
         
         setItems(p => p.map(item => {
-            const unitPrice = item.originalPrice * (1 - (newDiscount / 100))
+            const unitPrice = Math.round(item.originalPrice * (1 - (newDiscount / 100)))
             return {
                 ...item,
+                discount: newDiscount,
                 unitPrice: unitPrice,
                 total: unitPrice * item.quantity
             }
@@ -554,7 +555,8 @@ function SaleForm({ onClose, onSave, books, data }) {
         const stock = inv?.stock ?? 0
         
         const originalPrice = book.pvp || 0
-        const unitPrice = originalPrice * (1 - (clientDiscount / 100))
+        const discount = clientDiscount || 0
+        const unitPrice = Math.round(originalPrice * (1 - (discount / 100)))
         
         // No bloqueamos, solo permitimos con advertencia si el stock es bajo
         setItems(p => [...p, {
@@ -562,6 +564,7 @@ function SaleForm({ onClose, onSave, books, data }) {
             title: book.title,
             quantity: 1,
             originalPrice: originalPrice,
+            discount: discount,
             unitPrice: unitPrice,
             stock: stock,
             total: unitPrice
@@ -576,6 +579,12 @@ function SaleForm({ onClose, onSave, books, data }) {
         setItems(p => p.map((item, i) => {
             if (i !== idx) return item
             const newItem = { ...item, [field]: val }
+            // Recalculate unitPrice when discount changes
+            if (field === 'discount') {
+                const discountVal = parseFloat(val) || 0
+                newItem.discount = discountVal
+                newItem.unitPrice = Math.round(newItem.originalPrice * (1 - (discountVal / 100)))
+            }
             newItem.total = (newItem.quantity || 0) * (newItem.unitPrice || 0)
             return newItem
         }))
@@ -756,40 +765,58 @@ function SaleForm({ onClose, onSave, books, data }) {
                                 <table className="w-full text-sm">
                                     <thead className="bg-white/5 text-[10px] uppercase font-bold text-slate-500">
                                         <tr>
-                                            <th className="px-6 py-4 text-left">Libro</th>
-                                            <th className="px-6 py-4 text-center w-28">Cantidad</th>
-                                            <th className="px-6 py-4 text-right w-32">P. Unitario</th>
-                                            <th className="px-6 py-4 text-right w-32">Subtotal</th>
-                                            <th className="px-6 py-4 w-12"></th>
+                                            <th className="px-4 py-4 text-left">Libro</th>
+                                            <th className="px-2 py-4 text-center w-20">Cant.</th>
+                                            <th className="px-2 py-4 text-right w-24">PVP Original</th>
+                                            <th className="px-2 py-4 text-center w-20">Dcto %</th>
+                                            <th className="px-2 py-4 text-right w-24">P. Final</th>
+                                            <th className="px-2 py-4 text-right w-24">Subtotal</th>
+                                            <th className="px-2 py-4 w-10"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
                                         {items.length === 0 ? (
                                             <tr>
-                                                <td colSpan="5" className="py-20 text-center opacity-30 italic text-slate-500 text-xs">Añade títulos para comenzar la venta.</td>
+                                                <td colSpan="7" className="py-20 text-center opacity-30 italic text-slate-500 text-xs">Añade títulos para comenzar la venta.</td>
                                             </tr>
                                         ) : (
                                             items.map((it, idx) => (
                                                 <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <p className="text-white font-bold text-sm">{it.title}</p>
+                                                    <td className="px-4 py-3">
+                                                        <p className="text-white font-bold text-sm leading-tight">{it.title}</p>
                                                         {it.stock <= 0 && (
                                                             <p className="text-[9px] text-rose-500 font-black uppercase flex items-center gap-1 animate-pulse">
-                                                                <AlertTriangle className="w-3 h-3" /> Sin stock en sistema (quedará negativo)
+                                                                <AlertTriangle className="w-3 h-3" /> Sin stock
                                                             </p>
                                                         )}
                                                         <p className="text-[10px] text-slate-500 mt-0.5 uppercase">Stock: {it.stock} u.</p>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <input type="number" min="1" value={it.quantity} onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 0)} className="w-20 mx-auto block bg-[#0f172a] border border-slate-700 rounded-lg py-1.5 text-center text-white text-sm" />
+                                                    <td className="px-2 py-3">
+                                                        <input type="number" min="1" value={it.quantity} onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 0)} className="w-16 mx-auto block bg-[#0f172a] border border-slate-700 rounded-lg py-1.5 text-center text-white text-sm" />
                                                     </td>
-                                                    <td className="px-6 py-4 text-right font-mono text-slate-300">
+                                                    <td className="px-2 py-3 text-right font-mono text-slate-500 text-xs">
+                                                        {formatCLP(it.originalPrice)}
+                                                    </td>
+                                                    <td className="px-2 py-3 text-center">
+                                                        <div className="flex items-center justify-center gap-0.5">
+                                                            <input 
+                                                                type="number" 
+                                                                min="0" 
+                                                                max="100" 
+                                                                value={it.discount || 0} 
+                                                                onChange={e => updateItem(idx, 'discount', parseFloat(e.target.value) || 0)} 
+                                                                className="w-14 bg-[#0f172a] border border-amber-700/40 rounded-lg py-1.5 text-center text-amber-400 text-sm font-bold" 
+                                                            />
+                                                            <span className="text-amber-500/60 text-[10px] font-bold">%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-2 py-3 text-right font-mono text-slate-300 text-sm">
                                                         {formatCLP(it.unitPrice)}
                                                     </td>
-                                                    <td className="px-6 py-4 text-right font-bold text-white font-mono">
+                                                    <td className="px-2 py-3 text-right font-bold text-white font-mono text-sm">
                                                         {formatCLP(it.total)}
                                                     </td>
-                                                    <td className="px-6 py-4 text-center">
+                                                    <td className="px-2 py-3 text-center">
                                                         <button onClick={() => removeItem(idx)} className="text-slate-600 hover:text-red-500"><X className="w-4 h-4" /></button>
                                                     </td>
                                                 </tr>
