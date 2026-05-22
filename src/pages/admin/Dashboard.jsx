@@ -315,7 +315,7 @@ export default function AdminDashboard() {
                                             const isBest = book.id === bestSellerId
                                             return (
                                                 <tr key={book.id} className="table-row">
-                                                    <td className="py-3 px-2 text-sm font-semibold text-slate-900 dark:text-white-200">
+                                                    <td className="py-3 px-2 text-sm font-semibold text-slate-900 dark:text-white">
                                                         <div className="flex items-center gap-2">
                                                             {book.title}
                                                             {isBest && <TrendingUp className="w-3 h-3 text-yellow-500" title="Best Seller" />}
