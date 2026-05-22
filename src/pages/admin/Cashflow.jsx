@@ -18,16 +18,20 @@ export default function Cashflow() {
     const royaltiesList = data.finances?.royalties || []
     const consignments = data.finances?.consignments || []
     const pos = data.purchaseOrders || []
+    const books = data.books || []
+
+    const getConsignmentValue = (c) => {
+        const book = books.find(b => b.title === c.bookTitle)
+        const pvp = book?.pvp || 10000
+        const qty = c.sentQuantity - (c.returnedQuantity || 0) - (c.soldQuantity || 0)
+        return qty * pvp * 0.6
+    }
 
     const calculations = useMemo(() => {
         // 1. Cuentas por Cobrar (Consignaciones Pendientes y Vendidas no liquidadas)
         const pendingReceivables = consignments
             .filter(c => c.status !== 'FINALIZADO')
-            .reduce((acc, c) => {
-                // Estimamos el valor neto de lo que está en librerías
-                const unitPrice = 10000 // Precio promedio estimado por ahora
-                return acc + ((c.sentQuantity - c.returnedQuantity - c.soldQuantity) * unitPrice * 0.6) // 60% es para editorial
-            }, 0)
+            .reduce((acc, c) => acc + getConsignmentValue(c), 0)
 
         // 2. Cuentas por Pagar (Regalías aprobadas no pagadas + OC en proceso)
         const pendingRoyalties = royaltiesList
@@ -107,8 +111,8 @@ export default function Cashflow() {
             body: consignments.filter(c => c.status !== 'FINALIZADO').slice(0, 15).map(c => [
                 c.clientName,
                 c.bookTitle,
-                c.sentQuantity - c.returnedQuantity - c.soldQuantity,
-                formatCLP((c.sentQuantity - c.returnedQuantity - c.soldQuantity) * 6000)
+                c.sentQuantity - (c.returnedQuantity || 0) - (c.soldQuantity || 0),
+                formatCLP(getConsignmentValue(c))
             ]),
             theme: 'grid',
             headStyles: { fillColor: [16, 185, 129] } // Emerald-500
@@ -221,9 +225,9 @@ export default function Cashflow() {
                                 </div>
                                 <div className="text-right">
                                     <p className="text-sm font-bold text-emerald-400 font-mono">
-                                        {formatCLP((c.sentQuantity - c.returnedQuantity - c.soldQuantity) * 6000)}
+                                        {formatCLP(getConsignmentValue(c))}
                                     </p>
-                                    <p className="text-[10px] text-slate-500 dark:text-dark-500">{c.sentQuantity - c.returnedQuantity - c.soldQuantity} unid.</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-dark-500">{c.sentQuantity - (c.returnedQuantity || 0) - (c.soldQuantity || 0)} unid.</p>
                                 </div>
                             </div>
                         ))}
@@ -237,7 +241,7 @@ export default function Cashflow() {
                         <div className="mt-4 flex items-center gap-2 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
                             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                             <p className="text-xs text-emerald-600">
-                                El valor se estima sobre el 60% del PVP registrado para la editorial.
+                                El valor se estima sobre el 60% del PVP real del catálogo de la editorial.
                             </p>
                         </div>
                     </div>
