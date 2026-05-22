@@ -7,7 +7,7 @@ import {
     ShoppingCart, Plus, X, Search, TrendingUp, Activity,
     BookOpen, DollarSign, Calendar, Users, Package, BarChart3,
     CheckCircle, XCircle, Download, FileSpreadsheet, AlertCircle, AlertTriangle,
-    UserPlus
+    UserPlus, Pencil
 } from 'lucide-react'
 
 const CHANNELS = ['Directa', 'Librería', 'Web', 'Evento / Feria', 'Consignación']
@@ -33,6 +33,7 @@ export default function Sales() {
     const authors = useMemo(() => data?.users?.filter(u => u.role === 'AUTOR') || [], [data])
 
     const [showAdd, setShowAdd] = useState(false)
+    const [editingSale, setEditingSale] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [filterChannel, setFilterChannel] = useState('')
     const [filterAuthor, setFilterAuthor] = useState('')
@@ -382,6 +383,7 @@ export default function Sales() {
                                             <div className="flex justify-end gap-1">
                                                 {sale.status !== 'Anulada' && (
                                                     <>
+                                                        <button onClick={() => setEditingSale(sale)} className="p-1.5 hover:bg-blue-500/10 text-blue-400 rounded" title="Editar"><Pencil className="w-3.5 h-3.5" /></button>
                                                         <button onClick={() => handleDownloadPDF(sale)} className="p-1.5 hover:bg-emerald-500/10 text-emerald-500 rounded" title="Descargar PDF"><Download className="w-3.5 h-3.5" /></button>
                                                         <button onClick={() => handleDelete(sale)} className="p-1.5 hover:bg-rose-500/10 text-rose-500 rounded" title="Anular"><XCircle className="w-3.5 h-3.5" /></button>
                                                     </>
@@ -396,7 +398,7 @@ export default function Sales() {
                 </div>
             </div>
 
-            {/* Sale Form Modal */}
+            {/* Sale Form Modal - New */}
             {showAdd && (
                 <SaleForm
                     books={books}
@@ -443,34 +445,94 @@ export default function Sales() {
                     }}
                 />
             )}
+
+            {/* Sale Form Modal - Edit */}
+            {editingSale && (
+                <SaleForm
+                    books={books}
+                    data={data}
+                    editSale={editingSale}
+                    onClose={() => setEditingSale(null)}
+                    onSave={async (items, commonData) => {
+                        try {
+                            const item = items[0]
+                            if (!item) return
+                            const book = books.find(b => b.id === item.bookId)
+                            await updateSaleDetails(editingSale.id, {
+                                bookId: item.bookId,
+                                bookTitle: book?.title || editingSale.bookTitle,
+                                channel: commonData.channel,
+                                type: commonData.type,
+                                quantity: item.quantity,
+                                unitPrice: item.unitPrice,
+                                totalAmount: item.totalAmount,
+                                neto: item.neto,
+                                iva: item.iva,
+                                saleDate: commonData.saleDate,
+                                clientName: commonData.clientName,
+                                documentRef: commonData.documentRef,
+                                notes: commonData.notes
+                            })
+                            await addAuditLog(`Editó venta: "${book?.title || editingSale.bookTitle}"`, 'ventas')
+                            await reloadData()
+                            setEditingSale(null)
+                        } catch (err) {
+                            console.error(err)
+                            alert('Error al editar venta: ' + (err.message || err))
+                        }
+                    }}
+                />
+            )}
         </div>
     )
 }
 
-function SaleForm({ onClose, onSave, books, data }) {
+function SaleForm({ onClose, onSave, books, data, editSale }) {
     const { taxRate, formatCurrency, data: authData, addNewClient, user } = useAuth()
     const formatCLP = formatCurrency
     const today = new Date().toISOString().slice(0, 10)
+    const isEditing = !!editSale
     const [common, setCommon] = useState({
-        channel: 'Directa',
-        type: 'B2C (Consumidor final)',
-        saleDate: today,
-        clientName: '',
-        clientId: '',
-        documentRef: '',
-        notes: '',
-        status: 'Completada',
-        paymentStatus: 'Pendiente',
-        dueDate: today
+        channel: editSale?.channel || 'Directa',
+        type: editSale?.type || 'B2C (Consumidor final)',
+        saleDate: editSale?.saleDate || today,
+        clientName: editSale?.clientName || '',
+        clientId: editSale?.clientId || '',
+        documentRef: editSale?.documentRef || '',
+        notes: editSale?.notes || '',
+        status: editSale?.status || 'Completada',
+        paymentStatus: editSale?.paymentStatus || 'Pendiente',
+        dueDate: editSale?.dueDate || today
     })
 
-    const [items, setItems] = useState([])
+    const [items, setItems] = useState(() => {
+        if (editSale) {
+            const book = books.find(b => b.id === editSale.bookId)
+            const inv = data?.inventory?.physical?.find(i => i.bookId === editSale.bookId)
+            const stock = inv?.stock ?? 0
+            const originalPrice = book?.pvp || editSale.unitPrice || 0
+            const discount = originalPrice > 0 && editSale.unitPrice > 0 
+                ? Math.round((1 - editSale.unitPrice / originalPrice) * 100) 
+                : 0
+            return [{
+                bookId: editSale.bookId,
+                title: editSale.bookTitle || book?.title || '',
+                quantity: editSale.quantity || 1,
+                originalPrice: originalPrice,
+                discount: discount >= 0 ? discount : 0,
+                unitPrice: editSale.unitPrice || originalPrice,
+                stock: stock,
+                total: (editSale.unitPrice || originalPrice) * (editSale.quantity || 1)
+            }]
+        }
+        return []
+    })
     const [searchTerm, setSearchTerm] = useState('')
     const [searchResults, setSearchResults] = useState([])
     const [saving, setSaving] = useState(false)
 
     // Client Selector State
-    const [clientSearch, setClientSearch] = useState('')
+    const [clientSearch, setClientSearch] = useState(editSale?.clientName || '')
     const [showClientList, setShowClientList] = useState(false)
     const [isCreatingClient, setIsCreatingClient] = useState(false)
     const [newClientName, setNewClientName] = useState('')
@@ -595,12 +657,14 @@ function SaleForm({ onClose, onSave, books, data }) {
         if (items.length === 0) return
         setSaving(true)
         try {
-            // Validar stock antes de continuar
-            for (const it of items) {
-                if (it.quantity > it.stock) {
-                    alert(`No hay suficiente stock para "${it.title}". \nStock disponible: ${it.stock} \nCantidad solicitada: ${it.quantity}`);
-                    setSaving(false);
-                    return;
+            // Validar stock antes de continuar (solo si no es edición, para simplificar por ahora)
+            if (!isEditing) {
+                for (const it of items) {
+                    if (it.quantity > it.stock) {
+                        alert(`No hay suficiente stock para "${it.title}". \nStock disponible: ${it.stock} \nCantidad solicitada: ${it.quantity}`);
+                        setSaving(false);
+                        return;
+                    }
                 }
             }
 
@@ -626,8 +690,8 @@ function SaleForm({ onClose, onSave, books, data }) {
                     <div className="flex items-center gap-3">
                         <ShoppingCart className="w-8 h-8 text-blue-500" />
                         <div>
-                            <h3 className="text-2xl font-bold text-white uppercase tracking-tight">Registro de Venta</h3>
-                            <p className="text-sm text-slate-400">Control de múltiples títulos y canales.</p>
+                            <h3 className="text-2xl font-bold text-white uppercase tracking-tight">{isEditing ? 'Editar Venta' : 'Registro de Venta'}</h3>
+                            <p className="text-sm text-slate-400">{isEditing ? 'Modificar datos de la venta seleccionada.' : 'Control de múltiples títulos y canales.'}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="text-slate-500 hover:text-white transition-all bg-white/5 p-2 rounded-full border border-white/10">
@@ -843,7 +907,7 @@ function SaleForm({ onClose, onSave, books, data }) {
                         <div className="flex gap-4 w-full md:w-auto">
                             <button type="button" onClick={onClose} className="flex-1 md:flex-none px-12 py-4 rounded-2xl border border-slate-700 text-sm font-bold text-slate-400 hover:bg-white/5 transition-all uppercase">Cancelar</button>
                             <button type="submit" disabled={items.length === 0 || saving} className="flex-1 md:flex-none px-12 py-4 bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 text-white rounded-2xl text-sm font-bold uppercase transition-all">
-                                {saving ? 'Procesando...' : 'Efectuar Venta y Registrar'}
+                                {saving ? 'Procesando...' : isEditing ? 'Guardar Cambios' : 'Efectuar Venta y Registrar'}
                             </button>
                         </div>
                     </div>

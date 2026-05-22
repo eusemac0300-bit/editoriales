@@ -1570,6 +1570,25 @@ export async function updateSaleInDb(saleId, updates) {
     const dbUpdates = {}
     if (updates.status !== undefined) dbUpdates.status = updates.status
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes
+    if (updates.bookId !== undefined) dbUpdates.book_id = updates.bookId
+    if (updates.book_id !== undefined) dbUpdates.book_id = updates.book_id
+    if (updates.bookTitle !== undefined) dbUpdates.book_title = updates.bookTitle
+    if (updates.book_title !== undefined) dbUpdates.book_title = updates.book_title
+    if (updates.channel !== undefined) dbUpdates.channel = updates.channel
+    if (updates.type !== undefined) dbUpdates.type = updates.type
+    if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity
+    if (updates.unitPrice !== undefined) dbUpdates.unit_price = updates.unitPrice
+    if (updates.unit_price !== undefined) dbUpdates.unit_price = updates.unit_price
+    if (updates.totalAmount !== undefined) dbUpdates.total_amount = updates.totalAmount
+    if (updates.total_amount !== undefined) dbUpdates.total_amount = updates.total_amount
+    if (updates.neto !== undefined) dbUpdates.neto = updates.neto
+    if (updates.iva !== undefined) dbUpdates.iva = updates.iva
+    if (updates.saleDate !== undefined) dbUpdates.sale_date = updates.saleDate
+    if (updates.sale_date !== undefined) dbUpdates.sale_date = updates.sale_date
+    if (updates.clientName !== undefined) dbUpdates.client_name = updates.clientName
+    if (updates.client_name !== undefined) dbUpdates.client_name = updates.client_name
+    if (updates.documentRef !== undefined) dbUpdates.document_ref = updates.documentRef
+    if (updates.document_ref !== undefined) dbUpdates.document_ref = updates.document_ref
     dbUpdates.updated_at = new Date().toISOString()
 
     const { error } = await supabase
