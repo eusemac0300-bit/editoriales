@@ -69,8 +69,10 @@ export default function Sales() {
     const FIRME_CHANNELS = ['Directa', 'Librería', 'Web']
     const FLOTANTE_CHANNELS = ['Evento / Feria', 'Consignación']
 
-    const revenueFirme = rangeSales.filter(s => FIRME_CHANNELS.includes(s.channel)).reduce((sum, s) => sum + (s.totalAmount || 0), 0)
-    const revenueFlotante = rangeSales.filter(s => FLOTANTE_CHANNELS.includes(s.channel)).reduce((sum, s) => sum + (s.totalAmount || 0), 0)
+    const isFlotanteSale = (s) => (s.notes || '').includes('[FLOTANTE]') || FLOTANTE_CHANNELS.includes(s.channel)
+    
+    const revenueFirme = rangeSales.filter(s => !isFlotanteSale(s)).reduce((sum, s) => sum + (s.totalAmount || 0), 0)
+    const revenueFlotante = rangeSales.filter(s => isFlotanteSale(s)).reduce((sum, s) => sum + (s.totalAmount || 0), 0)
 
     const revenueByChannel = useMemo(() => {
         const map = {}
@@ -371,7 +373,12 @@ export default function Sales() {
                                             <p className="text-[10px] text-slate-400">{sale.documentRef || 'Sin documento'}</p>
                                         </td>
                                         <td className="px-4 py-4">
-                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{sale.channel}</span>
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{sale.channel}</span>
+                                                {((sale.notes || '').includes('[FLOTANTE]') || FLOTANTE_CHANNELS.includes(sale.channel)) && (
+                                                    <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">Flotante</span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-4 py-4 text-xs text-slate-600 dark:text-slate-400">{sale.clientName || '—'}</td>
                                         <td className="px-4 py-4 text-right font-black font-mono">{sale.quantity}</td>
@@ -499,7 +506,8 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
         clientName: editSale?.clientName || '',
         clientId: editSale?.clientId || '',
         documentRef: editSale?.documentRef || '',
-        notes: editSale?.notes || '',
+        notes: (editSale?.notes || '').replace('[FLOTANTE] ', '').replace('[FLOTANTE]', '').trim(),
+        isFloating: (editSale?.notes || '').includes('[FLOTANTE]'),
         status: editSale?.status || 'Completada',
         paymentStatus: editSale?.paymentStatus || 'Pendiente',
         dueDate: editSale?.dueDate || today
@@ -691,7 +699,11 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
                 neto: Math.round(it.total / taxVal),
                 iva: it.total - Math.round(it.total / taxVal)
             }))
-            await onSave(itemsToSave, common)
+            
+            const finalNotes = common.isFloating ? `[FLOTANTE] ${common.notes}`.trim() : common.notes;
+            const payloadCommon = { ...common, notes: finalNotes };
+            
+            await onSave(itemsToSave, payloadCommon)
         } finally {
             setSaving(false)
         }
@@ -790,16 +802,33 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
                         <div className="space-y-4 pt-4">
                             <div className="flex justify-between items-center px-1">
                                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">TÍTULOS A VENDER</label>
-                                <div className="flex items-center gap-4">
+                                <div className="flex flex-wrap items-center gap-3">
                                     <select 
                                         value={common.channel} 
                                         onChange={e => setCommon(p => ({ ...p, channel: e.target.value }))}
-                                        className="bg-[#0f172a] text-blue-400 text-xs font-bold border-none outline-none cursor-pointer"
+                                        className="bg-[#0f172a] text-blue-400 text-xs font-bold border border-slate-700/50 rounded px-2 py-1 outline-none cursor-pointer"
                                     >
                                         {FORM_CHANNELS.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
-                                    <input type="date" value={common.saleDate} onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value }))} className="bg-transparent text-slate-400 text-xs border-none outline-none" />
+                                    <select 
+                                        value={common.type} 
+                                        onChange={e => setCommon(p => ({ ...p, type: e.target.value }))}
+                                        className="bg-[#0f172a] text-blue-400 text-xs font-bold border border-slate-700/50 rounded px-2 py-1 outline-none cursor-pointer"
+                                    >
+                                        <option value="B2C (Consumidor final)">B2C (Consumidor final)</option>
+                                        <option value="B2B (Empresa / Librería)">B2B (Empresa / Librería)</option>
+                                    </select>
+                                    <label className="flex items-center gap-1.5 cursor-pointer bg-[#0f172a] border border-slate-700/50 rounded px-2 py-1">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={common.isFloating}
+                                            onChange={e => setCommon(p => ({ ...p, isFloating: e.target.checked }))}
+                                            className="w-3.5 h-3.5 rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-blue-500/50 cursor-pointer"
+                                        />
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Venta Flotante</span>
+                                    </label>
                                 </div>
+                                <input type="date" value={common.saleDate} onChange={e => setCommon(p => ({ ...p, saleDate: e.target.value }))} className="bg-transparent text-slate-400 text-xs border-none outline-none" />
                             </div>
 
                             <div className="relative group">

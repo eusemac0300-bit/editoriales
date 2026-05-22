@@ -27,9 +27,10 @@ export default function Reports() {
         const filteredRoyalties = royalties.filter(r => r.approvedDate?.startsWith(month))
         const filteredPos = pos.filter(p => p.date_ordered?.startsWith(month))
 
+        const isFlotanteSale = (s) => (s.notes || '').includes('[FLOTANTE]') || FLOTANTE_CHANNELS.includes(s.channel)
         const totalIncome = filteredSales.reduce((acc, s) => acc + (s.neto || 0), 0)
-        const incomeFirme = filteredSales.filter(s => FIRME_CHANNELS.includes(s.channel)).reduce((acc, s) => acc + (s.neto || 0), 0)
-        const incomeFlotante = filteredSales.filter(s => FLOTANTE_CHANNELS.includes(s.channel)).reduce((acc, s) => acc + (s.neto || 0), 0)
+        const incomeFirme = filteredSales.filter(s => !isFlotanteSale(s)).reduce((acc, s) => acc + (s.neto || 0), 0)
+        const incomeFlotante = filteredSales.filter(s => isFlotanteSale(s)).reduce((acc, s) => acc + (s.neto || 0), 0)
 
         const productionCosts = filteredPos.reduce((acc, p) => acc + (p.total_cost || 0), 0)
         const operationalExpenses = filteredExpenses.reduce((acc, e) => acc + (e.amount || 0), 0)
