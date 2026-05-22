@@ -44,10 +44,11 @@ export default function AdminDashboard() {
 
     // Critical Stock Identification
     const physicalInv = inventory?.physical || []
-    const criticalStockItem = [...physicalInv]
-        .filter(i => i.stock >= 0)
-        .sort((a, b) => a.stock - b.stock)[0]
-    const criticalBook = books.find(b => b.id === criticalStockItem?.bookId)
+    const criticalStockItems = [...physicalInv]
+        .filter(i => i.minStock > 0 && i.stock <= i.minStock)
+        .sort((a, b) => a.stock - b.stock)
+    const criticalStockItem = criticalStockItems[0]
+    const criticalBook = criticalStockItem ? books.find(b => b.id === criticalStockItem.bookId) : null
 
     // Consignments (Floating Value)
     const activeConsignments = (finances?.consignments || []).filter(c => c.status === 'activa')
