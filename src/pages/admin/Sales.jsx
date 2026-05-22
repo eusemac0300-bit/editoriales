@@ -844,11 +844,13 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
                                 <table className="w-full text-sm">
                                     <thead className="bg-white/5 text-[10px] uppercase font-bold text-slate-500">
                                         <tr>
-                                            <th className="px-4 py-4 text-left">Libro</th>
+                                            <th className="px-2 py-4 text-left">Libro</th>
                                             <th className="px-2 py-4 text-center w-20">Cant.</th>
-                                            <th className="px-2 py-4 text-right w-24">PVP Original</th>
+                                            <th className="px-2 py-4 text-right w-24">PVP (Bruto)</th>
+                                            <th className="px-2 py-4 text-right w-24">Neto Orig.</th>
                                             <th className="px-2 py-4 text-center w-20">Dcto %</th>
-                                            <th className="px-2 py-4 text-right w-24">P. Final</th>
+                                            <th className="px-2 py-4 text-right w-24">Neto Final</th>
+                                            <th className="px-2 py-4 text-right w-24">P. Final (Inc. IVA)</th>
                                             <th className="px-2 py-4 text-right w-24">Subtotal</th>
                                             <th className="px-2 py-4 w-10"></th>
                                         </tr>
@@ -856,7 +858,7 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
                                     <tbody className="divide-y divide-white/5">
                                         {items.length === 0 ? (
                                             <tr>
-                                                <td colSpan="7" className="py-20 text-center opacity-30 italic text-slate-500 text-xs">Añade títulos para comenzar la venta.</td>
+                                                <td colSpan="9" className="py-20 text-center opacity-30 italic text-slate-500 text-xs">Añade títulos para comenzar la venta.</td>
                                             </tr>
                                         ) : (
                                             items.map((it, idx) => (
@@ -876,6 +878,9 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
                                                     <td className="px-2 py-3 text-right font-mono text-slate-500 text-xs">
                                                         {formatCLP(it.originalPrice)}
                                                     </td>
+                                                    <td className="px-2 py-3 text-right font-mono text-slate-500 text-xs">
+                                                        {formatCLP(Math.round(it.originalPrice / taxVal))}
+                                                    </td>
                                                     <td className="px-2 py-3 text-center">
                                                         <div className="flex items-center justify-center gap-0.5">
                                                             <input 
@@ -890,6 +895,9 @@ function SaleForm({ onClose, onSave, books, data, editSale }) {
                                                         </div>
                                                     </td>
                                                     <td className="px-2 py-3 text-right font-mono text-slate-300 text-sm">
+                                                        {formatCLP(Math.round(it.unitPrice / taxVal))}
+                                                    </td>
+                                                    <td className="px-2 py-3 text-right font-mono text-blue-300 text-sm">
                                                         {formatCLP(it.unitPrice)}
                                                     </td>
                                                     <td className="px-2 py-3 text-right font-bold text-white font-mono text-sm">
