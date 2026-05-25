@@ -1,7 +1,15 @@
-export const APP_VERSION = 'v3.2.3.11';
-export const APP_BUILD = '2026.05.25.001';
+export const APP_VERSION = 'v3.2.3.12';
+export const APP_BUILD = '2026.05.25.002';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.12',
+        date: '2026-05-25',
+        title: 'Hotfix: Actualización de Estado de Logo',
+        details: [
+            'Corregido error "e is not a function" al intentar actualizar el logo en el contexto global tras una subida exitosa.'
+        ]
+    },
     {
         version: 'v3.2.3.11',
         date: '2026-05-25',

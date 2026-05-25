@@ -279,7 +279,7 @@ export function AuthProvider({ children }) {
     const isGlobalLoading = initializing || (user && queryLoading)
 
     const contextValue = useMemo(() => ({
-        user, data, login, logout, hasPermission,
+        user, data, login, logout, hasPermission, updateLogo,
         isSuperAdmin: () => user?.role === 'SUPERADMIN',
         isAdmin: () => ['ADMIN', 'SUPERADMIN'].includes(user?.role),
         isFreelance: () => user?.role === 'FREELANCE',
@@ -336,7 +336,7 @@ export function AuthProvider({ children }) {
         currency, setCurrency, taxRate, setTaxRate, formatCurrency,
         loading: isGlobalLoading, reloadData: refetchData
     }), [
-        user, data, login, logout, hasPermission, addAuditLog, updateBookStatus, addComment, 
+        user, data, login, logout, hasPermission, updateLogo, addAuditLog, updateBookStatus, addComment, 
         addNewBook, updateBookDetails, deleteExistingBook, updateInventory, refetchData,
         addNewUser, updateExistingUser, deleteExistingUser,
         addNewQuote, updateQuoteDetails, deleteExistingQuote,
