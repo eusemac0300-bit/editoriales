@@ -104,8 +104,8 @@ export default function Quotes() {
         const currentDate = new Date(quote.createdAt).toLocaleDateString('es-CL', {
             year: 'numeric', month: 'long', day: 'numeric'
         })
-        doc.text(`Fecha: ${currentDate}`, 195, pageMargin + 16, { align: 'right' })
-        doc.text(`ID Ref: #${quote.id.substring(0, 8).toUpperCase()}`, 195, pageMargin + 21, { align: 'right' })
+        doc.text(`Fecha: ${currentDate}`, pageMargin, pageMargin + 16)
+        doc.text(`ID Ref: #${quote.id.substring(0, 8).toUpperCase()}`, pageMargin, pageMargin + 21)
 
         // Cuerpo: Saludo formal
         doc.setFontSize(10)
@@ -290,9 +290,9 @@ export default function Quotes() {
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(9)
         doc.setTextColor(lightGray[0], lightGray[1], lightGray[2])
-        const currentDate = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
-        doc.text(`Fecha: ${currentDate}`, 195, pageMargin + 16, { align: 'right' })
-        doc.text(`OC REF: #${ocRef}`, 195, pageMargin + 21, { align: 'right' })
+        const currentDatePO = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })
+        doc.text(`Fecha: ${currentDatePO}`, pageMargin, pageMargin + 16)
+        doc.text(`OC REF: #${ocRef}`, pageMargin, pageMargin + 21)
 
         // Proveedor
         doc.setFontSize(10)

@@ -1,7 +1,15 @@
-export const APP_VERSION = 'v3.2.3.12';
-export const APP_BUILD = '2026.05.25.002';
+export const APP_VERSION = 'v3.2.3.13';
+export const APP_BUILD = '2026.05.25.003';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.13',
+        date: '2026-05-25',
+        title: 'Mejora en Exportación de PDFs (Cotizaciones y O.C.)',
+        details: [
+            'Ajustado el diseño de cabecera en PDFs de cotización y órdenes de compra para evitar que el texto "Fecha" y "ID Ref" quede debajo del logo de la editorial.'
+        ]
+    },
     {
         version: 'v3.2.3.12',
         date: '2026-05-25',
