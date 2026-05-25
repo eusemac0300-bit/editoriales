@@ -1,7 +1,15 @@
-export const APP_VERSION = 'v3.2.3.13';
-export const APP_BUILD = '2026.05.25.003';
+export const APP_VERSION = 'v3.2.3.14';
+export const APP_BUILD = '2026.05.25.004';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.14',
+        date: '2026-05-25',
+        title: 'Detalle visual en PDFs',
+        details: [
+            'Se recorta la línea divisoria horizontal en cotizaciones y OC para que no cruce por encima del logo de la editorial.'
+        ]
+    },
     {
         version: 'v3.2.3.13',
         date: '2026-05-25',

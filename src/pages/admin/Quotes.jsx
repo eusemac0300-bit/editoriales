@@ -82,11 +82,13 @@ export default function Quotes() {
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
         doc.text('SOLICITUD DE COTIZACIÓN', pageMargin, pageMargin + 5)
         
+        let lineEndX = 195
         // Logo de la Editorial (si existe)
         if (user?.tenantLogo) {
             try {
                 // Posicionar logo a la derecha
                 doc.addImage(user.tenantLogo, 'PNG', 165, pageMargin - 5, 30, 30, undefined, 'FAST');
+                lineEndX = 160
             } catch (e) {
                 console.warn('Could not load logo for PDF', e);
             }
@@ -95,7 +97,7 @@ export default function Quotes() {
         // Línea separadora decorativa
         doc.setDrawColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
         doc.setLineWidth(0.5)
-        doc.line(pageMargin, pageMargin + 9, 195, pageMargin + 9)
+        doc.line(pageMargin, pageMargin + 9, lineEndX, pageMargin + 9)
 
         // Fechas y Datos de Cabecera
         doc.setFont('helvetica', 'normal')
@@ -276,10 +278,20 @@ export default function Quotes() {
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
         doc.text('ORDEN DE COMPRA', pageMargin, pageMargin + 5)
 
+        let lineEndX = 195
+        if (user?.tenantLogo) {
+            try {
+                doc.addImage(user.tenantLogo, 'PNG', 165, pageMargin - 5, 30, 30, undefined, 'FAST');
+                lineEndX = 160
+            } catch (e) {
+                console.warn('Could not load logo for PDF', e);
+            }
+        }
+
         // Línea separadora decorativa
         doc.setDrawColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
         doc.setLineWidth(0.5)
-        doc.line(pageMargin, pageMargin + 9, 195, pageMargin + 9)
+        doc.line(pageMargin, pageMargin + 9, lineEndX, pageMargin + 9)
 
         const quotesSorted = data?.quotes ? [...data.quotes].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)) : []
         const quoteIndex = quotesSorted.findIndex(q => q.id === quote.id)
