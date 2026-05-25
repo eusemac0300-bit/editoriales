@@ -1,7 +1,15 @@
-export const APP_VERSION = 'v3.2.3.10';
-export const APP_BUILD = '2026.05.22.004';
+export const APP_VERSION = 'v3.2.3.11';
+export const APP_BUILD = '2026.05.25.001';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.11',
+        date: '2026-05-25',
+        title: 'Solución a Carga de Logos',
+        details: [
+            'Agregada instrucción de creación de bucket para logos de editoriales.'
+        ]
+    },
     {
         version: 'v3.2.1.4',
         date: '2026-05-19',
