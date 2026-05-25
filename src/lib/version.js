@@ -1,7 +1,15 @@
-export const APP_VERSION = 'v3.2.3.14';
-export const APP_BUILD = '2026.05.25.004';
+export const APP_VERSION = 'v3.2.3.15';
+export const APP_BUILD = '2026.05.25.005';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.15',
+        date: '2026-05-25',
+        title: 'Logo en Órdenes de Compra',
+        details: [
+            'Se añade el logo de la editorial en los PDFs generados desde el módulo de Órdenes de Compra, alineando el diseño con las cotizaciones.'
+        ]
+    },
     {
         version: 'v3.2.3.14',
         date: '2026-05-25',

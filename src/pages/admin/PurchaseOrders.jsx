@@ -20,7 +20,7 @@ const STATUS_COLORS = {
 }
 
 export default function PurchaseOrders() {
-    const { data, addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder, addAuditLog } = useAuth()
+    const { user, data, addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, receivePurchaseOrder, addAuditLog } = useAuth()
     const [search, setSearch] = useState('')
     const [filterStatus, setFilterStatus] = useState('TODOS')
     const [showForm, setShowForm] = useState(false)
@@ -41,24 +41,34 @@ export default function PurchaseOrders() {
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
         doc.text('ORDEN DE COMPRA', 20, 25)
         
-        doc.setFontSize(10)
-        doc.setTextColor(100, 100, 100)
-        doc.text(`NRO: ${po.order_number}`, 190, 25, { align: 'right' })
+        let lineEndX = 190
+        if (user?.tenantLogo) {
+            try {
+                doc.addImage(user.tenantLogo, 'PNG', 160, 10, 30, 30, undefined, 'FAST');
+                lineEndX = 155
+            } catch (e) {
+                console.warn('Could not load logo for PDF', e);
+            }
+        }
         
         doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2])
         doc.setLineWidth(1)
-        doc.line(20, 30, 190, 30)
+        doc.line(20, 30, lineEndX, 30)
+        
+        doc.setFontSize(10)
+        doc.setTextColor(100, 100, 100)
+        doc.text(`NRO: ${po.order_number}`, 20, 38)
         
         // Info
         doc.setFontSize(10)
         doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
-        doc.text('EMITIDO A:', 20, 45)
+        doc.text('EMITIDO A:', 20, 50)
         doc.setFont('helvetica', 'bold')
-        doc.text(po.supplierName, 20, 50)
+        doc.text(po.supplierName, 20, 55)
         
         doc.setFont('helvetica', 'normal')
-        doc.text('FECHA PEDIDO:', 120, 45)
-        doc.text(po.date_ordered, 120, 50)
+        doc.text('FECHA PEDIDO:', 120, 50)
+        doc.text(po.date_ordered, 120, 55)
         
         if (po.expected_date) {
             doc.text('FECHA ENTREGA ESTIMADA:', 120, 60)
