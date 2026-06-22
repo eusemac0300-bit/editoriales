@@ -103,16 +103,20 @@ export default function AdminLayout() {
             <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 dark:bg-dark-100 border-r border-slate-800 dark:border-dark-300 transform transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="flex flex-col h-full">
                     <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-800 dark:border-dark-300">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center shadow-lg shadow-primary/20">
-                            <BookOpen className="w-5 h-5 text-white" />
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden shrink-0">
+                            {user?.tenantLogo ? (
+                                <img src={user?.tenantLogo} alt="Logo" className="w-full h-full object-contain bg-white" />
+                            ) : (
+                                <BookOpen className="w-5 h-5 text-white" />
+                            )}
                         </div>
-                        <div>
-                            <h1 className="font-bold text-white text-sm">Editorial Pro</h1>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight">
+                        <div className="min-w-0">
+                            <h1 className="font-bold text-white text-sm truncate">{user?.tenantName || 'Editorial Pro'}</h1>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-tight truncate">
                                 {t('admin_panel')} <span className="text-primary-400 block font-semibold italic">{APP_VERSION} (PRODUCTION READY)</span>
                             </p>
                         </div>
-                        <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white">
+                        <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-slate-500 hover:text-white shrink-0">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
@@ -230,7 +234,7 @@ export default function AdminLayout() {
                                 </div>
                                 <div className="hidden sm:block text-left">
                                     <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{user?.name}</p>
-                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">{APP_VERSION} (Editorial Pro)</p>
+                                    <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase truncate max-w-[150px]">{APP_VERSION} ({user?.tenantName || 'Editorial Pro'})</p>
                                 </div>
                                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${settingsOpen ? 'rotate-180' : ''}`} />
                             </button>

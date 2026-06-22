@@ -1,7 +1,17 @@
-export const APP_VERSION = 'v3.2.3.17';
-export const APP_BUILD = '2026.06.22.002';
+export const APP_VERSION = 'v3.2.3.18';
+export const APP_BUILD = '2026.06.22.003';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.18',
+        date: '2026-06-22',
+        title: 'Personalización de Marca: Editorial Client',
+        details: [
+            'Se agregó una caja contenedora en el panel lateral superior izquierdo que muestra dinámicamente el logo de la editorial.',
+            'Se muestra el nombre de la editorial de manera personalizada en el panel lateral y menú de usuario.',
+            'En caso de no tener logo configurado, se muestra un ícono representativo de forma predeterminada.'
+        ]
+    },
     {
         version: 'v3.2.3.17',
         date: '2026-06-22',
