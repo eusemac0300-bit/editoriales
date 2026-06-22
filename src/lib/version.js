@@ -1,7 +1,15 @@
-export const APP_VERSION = 'v3.2.3.15';
-export const APP_BUILD = '2026.05.25.005';
+export const APP_VERSION = 'v3.2.3.16';
+export const APP_BUILD = '2026.06.22.001';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.16',
+        date: '2026-06-22',
+        title: 'Hotfix: Safari Upload Logo',
+        details: [
+            'Corregido el error "Failed to fetch" al cargar un logo (problema relacionado a la limpieza prematura de URLs en memoria).'
+        ]
+    },
     {
         version: 'v3.2.3.15',
         date: '2026-05-25',

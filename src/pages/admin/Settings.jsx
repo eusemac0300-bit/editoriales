@@ -52,7 +52,6 @@ export default function Settings() {
             img.src = objectUrl
             
             img.onload = async () => {
-                URL.revokeObjectURL(objectUrl)
                 if (img.width < 500 && img.height < 500) {
                     setError('La imagen es algo pequeña. Se recomienda al menos 500px para una mejor calidad en reportes.')
                 }
@@ -77,6 +76,7 @@ export default function Settings() {
                     setError('Error al subir el archivo: ' + err.message)
                 } finally {
                     setLoading(false)
+                    URL.revokeObjectURL(objectUrl)
                 }
             }
 
