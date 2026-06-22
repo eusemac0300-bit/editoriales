@@ -1,7 +1,16 @@
-export const APP_VERSION = 'v3.2.3.16';
-export const APP_BUILD = '2026.06.22.001';
+export const APP_VERSION = 'v3.2.3.17';
+export const APP_BUILD = '2026.06.22.002';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.17',
+        date: '2026-06-22',
+        title: 'Hotfix: Adblockers & Upload Fetch Error',
+        details: [
+            'Se cambió la ruta de almacenamiento de branding/logo_ a assets/img_ para evitar bloqueos por Adblockers (Brave, uBlock, etc).',
+            'Se transforman los archivos a ArrayBuffer nativo previo a la carga para evitar desconexiones en el FormData de la petición Fetch.'
+        ]
+    },
     {
         version: 'v3.2.3.16',
         date: '2026-06-22',

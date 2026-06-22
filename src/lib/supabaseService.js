@@ -2636,12 +2636,15 @@ export async function uploadEditorialLogo(tenantId, file) {
     
     try {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${tid}/logo_${Date.now()}.${fileExt}`;
-        const filePath = `branding/${fileName}`;
+        const fileName = `${tid}/img_${Date.now()}.${fileExt}`;
+        const filePath = `assets/${fileName}`;
+
+        // Convert File to ArrayBuffer to avoid browser fetch issues with detached File objects
+        const fileBuffer = await file.arrayBuffer();
 
         const { error: uploadError } = await supabase.storage
             .from('editorial_documents')
-            .upload(filePath, file, {
+            .upload(filePath, fileBuffer, {
                 upsert: true,
                 contentType: file.type
             });
