@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { publishAppVersion } from '../../lib/supabaseService'
-import { APP_VERSION } from '../../lib/version'
+import { APP_VERSION, CHANGELOG } from '../../lib/version'
 import { useState } from 'react'
 import { Package, BookOpen, DollarSign, Users, TrendingUp, AlertTriangle, ArrowUpRight, Activity, Database, Trash2, Plus, CheckCircle2, Sparkles, FileText, Truck } from 'lucide-react'
 
@@ -127,7 +127,9 @@ export default function AdminDashboard() {
                                 if (window.confirm(`¿Publicar la ${APP_VERSION} para todas las editoriales ahora? Esto notificará a todos tus clientes.`)) {
                                     setIsPublishing(true)
                                     try {
-                                        await publishAppVersion(APP_VERSION, ['Manual Data Stability', 'Authors fix', 'Suppliers FK fix', 'Sales Tax Fix', 'Client Selector & Quick Create'])
+                                        const currentRelease = CHANGELOG.find(item => item.version === APP_VERSION)
+                                        const notes = currentRelease ? currentRelease.details : ['Actualización del sistema']
+                                        await publishAppVersion(APP_VERSION, notes)
                                         alert(`¡ÉXITO! Versión ${APP_VERSION} liberada globalmente. Se ha notificado a todas las editoriales.`)
                                     } catch (err) {
                                         console.error('Master Publish Error:', err);
