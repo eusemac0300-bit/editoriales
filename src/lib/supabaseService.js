@@ -458,7 +458,7 @@ export async function loginUser(email, password) {
             
             const { data: tenant } = await supabase
                 .from('tenants')
-                .select('name, plan')
+                .select('name, plan, logo_url')
                 .eq('id', realUser.tenant_id)
                 .single()
 
@@ -468,7 +468,7 @@ export async function loginUser(email, password) {
                 tenantName: tenant?.name || 'Editorial',
                 tenantPlan: tenant?.plan || 'ENTERPRISE',
                 tenantStatus: 'ACTIVE',
-                tenantLogo: null,
+                tenantLogo: tenant?.logo_url || null,
                 email: realUser.email,
                 name: realUser.name || (isSuper ? 'Eusebio Manriquez (Owner)' : 'Administrador Maestro'),
                 role: isSuper ? 'SUPERADMIN' : realUser.role || 'ADMIN',
@@ -555,18 +555,20 @@ export async function loginUser(email, password) {
 
     if (error || !data) return null
 
-    // Fetch tenant status
+    // Fetch tenant info (plan + logo)
     const { data: tenant } = await supabase
         .from('tenants')
-        .select('plan')
+        .select('name, plan, logo_url')
         .eq('id', data.tenant_id)
         .single()
 
     return {
         id: data.id,
         tenantId: data.tenant_id,
+        tenantName: tenant?.name || 'Editorial',
         tenantPlan: tenant?.plan || 'FREE',
         tenantStatus: 'ACTIVE',
+        tenantLogo: tenant?.logo_url || null,
         email: data.email,
         name: data.name,
         role: data.role,
@@ -2619,10 +2621,17 @@ export async function updateTenantLogoInDb(tenantId, logoUrl) {
     
     try {
         console.log(`[DB] Updating logo for tenant ${tid} to ${logoUrl?.substring(0, 50)}...`);
-        // NOTA: logo_url no existe en la tabla tenants. 
-        // No intentamos actualizar en BD para evitar errores, pero retornamos true 
-        // porque el logo ya se subió a Storage y se actualizará en la sesión (AuthContext).
-        console.warn('[DB] La columna logo_url no existe en tenants. Sincronización BD saltada.');
+        const { error } = await supabase
+            .from('tenants')
+            .update({ logo_url: logoUrl })
+            .eq('id', tid);
+        
+        if (error) {
+            console.error('[DB] Error updating tenant logo_url:', error);
+            return false;
+        }
+        
+        console.log('[DB] logo_url updated successfully in tenants table.');
         return true;
     } catch (err) {
         console.error('[DB] Exception updating tenant logo:', err);

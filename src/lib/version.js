@@ -1,7 +1,18 @@
-export const APP_VERSION = 'v3.2.3.18';
-export const APP_BUILD = '2026.06.22.003';
+export const APP_VERSION = 'v3.2.3.19';
+export const APP_BUILD = '2026.06.22.004';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.19',
+        date: '2026-06-22',
+        title: 'Fix: Logo persiste para todos los usuarios',
+        details: [
+            'Se agrega la columna logo_url a la tabla tenants en Supabase (migración SQL incluida).',
+            'La función updateTenantLogoInDb ahora guarda el logo realmente en la base de datos.',
+            'El flujo de login (normal y master) ahora carga logo_url y tenantName desde la BD.',
+            'Todos los usuarios del mismo tenant ahora ven el logo actualizado al iniciar sesión.'
+        ]
+    },
     {
         version: 'v3.2.3.18',
         date: '2026-06-22',
