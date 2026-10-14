@@ -1,7 +1,18 @@
-export const APP_VERSION = 'v3.2.3.19';
-export const APP_BUILD = '2026.06.22.004';
+export const APP_VERSION = 'v3.2.3.20';
+export const APP_BUILD = '2026.10.14.001';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.20',
+        date: '2026-10-14',
+        title: 'Kit del Desarrollador & Acceso a Código Fuente en Guía y Ayuda',
+        details: [
+            'Nueva pestaña "Zona Programador" en Guía y Ayuda con descarga directa del código fuente (.ZIP de 1.3 MB).',
+            'Enlace directo al repositorio GitHub oficial y comandos de clonado con copiado en un clic.',
+            'Visor interactivo y descarga del Manual del Desarrollador (arquitectura, multi-tenancy, Supabase).',
+            'Variables de entorno listas para copiar (.env) y tabla de credenciales de prueba para desarrollo local.'
+        ]
+    },
     {
         version: 'v3.2.3.19',
         date: '2026-06-22',
