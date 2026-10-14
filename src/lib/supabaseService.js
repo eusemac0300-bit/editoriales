@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { getTrialDemoData } from '../data/trialDemoData'
 
 // Helper to ensure we always have a valid tenant_id for insertions (prevents NOT NULL violations)
 const ensureTenantId = (tid) => {
@@ -349,6 +350,12 @@ export async function loadAllData(tenantId) {
             supplierName: po.suppliers?.name || 'Proveedor Desconocido'
         }))
 
+        // Si es el usuario trial o un tenant de prueba y no tiene libros, suministramos los 10 ejemplos completos
+        if ((!transformedBooks || transformedBooks.length === 0) && (tenantId === 'demo-tenant-id' || tenantId === 't1' || tenantId?.includes('demo') || tenantId?.includes('trial'))) {
+            console.log(`[loadAllData] Activando dataset completo de 10 ejemplos para tenant demo: ${tenantId}`);
+            return getTrialDemoData(tenantId);
+        }
+
         return {
             users: transformedUsers,
             books: transformedBooks,
@@ -393,6 +400,10 @@ export async function loadAllData(tenantId) {
         }
     } catch (err) {
         console.error('Failed to load data from Supabase:', err)
+        if (tenantId === 'demo-tenant-id' || tenantId === 't1' || tenantId?.includes('demo') || tenantId?.includes('trial')) {
+            console.warn(`[loadAllData] Supabase inaccesible o en pausa. Activando dataset resiliente con 10 ejemplos para ${tenantId}`);
+            return getTrialDemoData(tenantId);
+        }
         return null
     }
 }
@@ -520,24 +531,25 @@ export async function loginUser(email, password) {
     // 4. Trial/Demo User (Backdoor for Demo Flow)
     const isTrial = email === 'trial@editorial.cl' && password === 'demo';
     if (isTrial) {
-        const { data: trialUser } = await supabase.from('users').select('*').eq('email', email).single()
-        if (trialUser) {
-            return {
-                id: trialUser.id,
-                tenantId: trialUser.tenant_id,
-                email: trialUser.email,
-                name: trialUser.name || 'Usuario Trial',
-                role: trialUser.role || 'ADMIN',
-                avatar: trialUser.avatar || 'UT',
-                title: 'Editor de Prueba',
-                firstLogin: false
-            }
+        let trialUser = null;
+        try {
+            const { data } = await supabase.from('users').select('*').eq('email', email).maybeSingle()
+            trialUser = data;
+        } catch (e) {
+            console.warn('[Login] Trial user check offline, using fallback');
         }
+
+        const tid = trialUser?.tenant_id || 'demo-tenant-id';
+
         return {
-            id: 'trial-demo-uid',
-            tenantId: 'demo-tenant-id',
+            id: trialUser?.id || 'trial-demo-uid',
+            tenantId: tid,
+            tenantName: 'Editorial Demo (Trial)',
+            tenantPlan: 'PRO',
+            tenantStatus: 'ACTIVE',
+            tenantLogo: null,
             email: email,
-            name: 'Usuario Trial (Demo)',
+            name: trialUser?.name || 'Usuario Trial (Demo)',
             role: 'ADMIN',
             avatar: 'UT',
             title: 'Editor de Prueba',
@@ -2172,11 +2184,11 @@ export async function clearDemoData(tenantId) {
                 .from(table)
                 .delete()
                 .eq('tenant_id', tenantId)
-                .like('id', 'ffffffff-%')
+                .or('id.like.ffffffff-%,id.like.trial-%')
 
             // Intento 2: Atrapado por book_id si el ID no es la forma (para tablas dependientes)
             if (['inventory_physical', 'sales', 'royalties', 'consignments', 'comments', 'quotes', 'purchase_orders', 'documents', 'event_items'].includes(table)) {
-                await supabase.from(table).delete().eq('tenant_id', tenantId).like('book_id', 'ffffffff-%')
+                await supabase.from(table).delete().eq('tenant_id', tenantId).or('book_id.like.ffffffff-%,book_id.like.trial-%')
             }
             
             // Intento 3: Atrapado por client_name que contenga (Demo) en caso de emergencia cosmética

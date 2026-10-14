@@ -1,7 +1,18 @@
-export const APP_VERSION = 'v3.2.3.20';
-export const APP_BUILD = '2026.10.14.001';
+export const APP_VERSION = 'v3.2.3.21';
+export const APP_BUILD = '2026.10.14.002';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.21',
+        date: '2026-10-14',
+        title: 'Poblado de 10 Libros y Ecosistema Completo para Usuario Trial',
+        details: [
+            'El usuario trial (trial@editorial.cl / demo) cuenta ahora con 10 libros completos en todos los estados del flujo (Publicado, Imprenta, Maquetación, Corrección, Edición).',
+            'Ecosistema completo con 4 autores, 3 proveedores, 4 clientes, inventario físico, ventas B2B/B2C, consignaciones y gastos para activar todas las métricas.',
+            'Generado script SQL completo en supabase/seed_trial_10_examples.sql para inyección directa en Supabase PostgreSQL.',
+            'Carga resiliente automática: si Supabase está offline o sin datos, el usuario trial arranca inmediatamente con los 10 ejemplos sin pantallas en blanco.'
+        ]
+    },
     {
         version: 'v3.2.3.20',
         date: '2026-10-14',

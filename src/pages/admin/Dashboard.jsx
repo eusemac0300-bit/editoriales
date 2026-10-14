@@ -13,7 +13,7 @@ export default function AdminDashboard() {
     const { books, inventory, finances, alerts } = data
 
     const totalBooks = (books || []).length
-    const hasDemoData = (books || []).some(b => b.id?.startsWith('ffffffff-') || b.id?.startsWith('demo_'))
+    const hasDemoData = (books || []).some(b => b.id?.startsWith('ffffffff-') || b.id?.startsWith('demo_') || b.id?.startsWith('trial-'))
     const published = (books || []).filter(b => b.status === 'Publicado' || b.status === 'Published').length
     const inProduction = (books || []).filter(b => !['Publicado', 'Original', 'Published'].includes(b.status)).length
 
