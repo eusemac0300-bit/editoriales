@@ -1,17 +1,18 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { Image as ImageIcon } from 'lucide-react'
 import PdfPageRenderer from './PdfPageRenderer.jsx'
+import { useImposition } from '../../hooks/useImposition.js'
 
 /**
  * Vista previa del PDF fuente. Cada página es arrastrable (drag source).
  * Al seleccionar una página, se notifica vía onPageSelect.
  */
 export default function PdfPreview({ className = '', onPageSelect }) {
+  const { loadSourceFile, state } = useImposition()
   const [file, setFile] = useState(null)
-  const [arrayBuffer, setArrayBuffer] = useState(null)
   const [selectedPageId, setSelectedPageId] = useState(null)
 
-  const MAX_PAGES = 40
+  const { sourcePages } = state
 
   const handleFileChange = useCallback(async (e) => {
     const f = e.target.files[0]
@@ -19,24 +20,12 @@ export default function PdfPreview({ className = '', onPageSelect }) {
     setFile(f)
     try {
       const ab = await f.arrayBuffer()
-      setArrayBuffer(ab)
+      // Carga el PDF en el estado global de la app (hook), no solo localmente
+      await loadSourceFile(f, ab)
     } catch (err) {
       console.error('Error leyendo PDF:', err)
     }
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      // limpiar URLs de objeto si fuera necesario
-    }
-  }, [])
-
-  const pages = arrayBuffer
-    ? Array.from({ length: MAX_PAGES }, (_, i) => ({
-        id: `page-${i + 1}`,
-        index: i + 1,
-      }))
-    : []
+  }, [loadSourceFile])
 
   const handleDragStart = (e, pageId) => {
     e.dataTransfer.setData('application/x-impositor-page', pageId)
@@ -64,9 +53,9 @@ export default function PdfPreview({ className = '', onPageSelect }) {
             className="hidden"
             onChange={handleFileChange}
           />
-          {file && arrayBuffer ? (
+          {sourcePages.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-[62vh] overflow-y-auto p-2 bg-white rounded-xl border border-slate-200">
-              {pages.map((page) => (
+              {sourcePages.map((page) => (
                 <div
                   key={page.id}
                   draggable
@@ -79,7 +68,7 @@ export default function PdfPreview({ className = '', onPageSelect }) {
                 >
                   <div className="relative aspect-[3/4] bg-slate-100 border rounded-lg overflow-hidden">
                     <PdfPageRenderer
-                      arrayBuffer={arrayBuffer}
+                      arrayBuffer={state.sourceArrayBuffer}
                       pageNumber={page.index}
                       width={90}
                     />

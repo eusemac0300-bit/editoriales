@@ -131,6 +131,20 @@ export const IMPOSITION_PRESETS = {
     pageCount: 8,
     description: 'Folleto de 8 páginas (2 hojas pliego, cara Up y Dn)',
   },
+  'repeat': {
+    label: 'Todas iguales',
+    nrows: 2,
+    ncols: 2,
+    pageCount: 1,
+    description: 'Repite la misma página en todas las celdas del pliego',
+  },
+  'sequence': {
+    label: 'Todas diferentes',
+    nrows: 2,
+    ncols: 2,
+    pageCount: 4,
+    description: 'Páginas fuente secuenciales (1, 2, 3, 4…) en cada celda',
+  },
 }
 
 // Estado global de la imposición
