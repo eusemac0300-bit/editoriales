@@ -1,7 +1,18 @@
-export const APP_VERSION = 'v3.2.3.21';
-export const APP_BUILD = '2026.10.14.002';
+export const APP_VERSION = 'v3.2.3.22';
+export const APP_BUILD = '2026.10.15.001';
 
 export const CHANGELOG = [
+    {
+        version: 'v3.2.3.22',
+        date: '2026-10-15',
+        title: 'Reconexión Supabase y Poblado de Datos Workspace Master (10 Títulos)',
+        details: [
+            'Conexión restaurada hacia el proyecto activo iwbljdkmabwwcuzmmzhg.supabase.co.',
+            'Poblado de 10 títulos completos en catálogo con datos editoriales (ISBN, SKU, dimensiones, escandallo).',
+            'Sincronización de inventario físico, ventas B2B/B2C, consignaciones en librerías y gastos operativos.',
+            'Vinculación de autores y colaboradores para pruebas integrales de la plataforma.'
+        ]
+    },
     {
         version: 'v3.2.3.21',
         date: '2026-10-14',
