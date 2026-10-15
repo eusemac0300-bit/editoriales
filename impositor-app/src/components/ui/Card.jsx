@@ -1,3 +1,5 @@
+import { cn } from './utils.js'
+
 export function Card({ className = '', children }) {
   return (
     <div
