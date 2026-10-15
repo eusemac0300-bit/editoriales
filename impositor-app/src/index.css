@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  .sheet-cell {
+    @apply border border-slate-300 rounded-lg bg-white shadow-sm relative overflow-hidden select-none;
+  }
+  .sheet-cell--occupied {
+    @apply border-impositor-500 bg-impositor-50 shadow-md;
+  }
+  .sheet-cell--empty {
+    @apply hover:border-slate-400 cursor-move transition-colors;
+  }
+}
