@@ -40,6 +40,9 @@ export const createSheetTemplate = () => ({
   name: 'Nueva plantilla',
   sheetWidth: 595.28, // A4 en puntos
   sheetHeight: 841.89,
+  pageWidth: 595.28, // ancho real de la página fuente (pt)
+  pageHeight: 841.89, // alto real de la página fuente (pt)
+  bleed: 0, // sangrado/excedente en pt
   trimBox: { x: 0, y: 0, width: 595.28, height: 841.89 },
   nCopies: 1,
   collate: 'Job',

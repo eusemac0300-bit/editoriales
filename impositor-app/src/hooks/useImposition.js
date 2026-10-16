@@ -27,10 +27,33 @@ export function useImposition() {
   /* ---------- Carga de PDF fuente ---------- */
   const loadSourceFile = useCallback(async (file, arrayBuffer) => {
     let pageCount = 0
+    let pageWidth = 595.28
+    let pageHeight = 841.89
+    let bleed = 0
     try {
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
       const pdf = await loadingTask.promise
       pageCount = pdf.numPages
+
+      // Extraer dimensiones reales de la primera página
+      const firstPage = await pdf.getPage(1)
+      const viewport = firstPage.getViewport({ scale: 1 })
+      pageWidth = viewport.width
+      pageHeight = viewport.height
+
+      // Intentar detectar sangrado/bleed del PDF
+      try {
+        const bleedBox = firstPage.getBleedBox ? firstPage.getBleedBox() : null
+        const trimBox = firstPage.getTrimBox ? firstPage.getTrimBox() : null
+        if (bleedBox && trimBox) {
+          const horizontalBleed = (bleedBox[2] - bleedBox[0] - (trimBox[2] - trimBox[0])) / 2
+          const verticalBleed = (bleedBox[3] - bleedBox[1] - (trimBox[3] - trimBox[1])) / 2
+          bleed = Math.max(horizontalBleed, verticalBleed, 0)
+        }
+      } catch (bleedErr) {
+        // Si no se puede detectar bleed, dejar en 0
+        bleed = 0
+      }
     } catch (err) {
       console.error('Error contando páginas del PDF:', err)
       pageCount = 40 // fallback
@@ -45,6 +68,15 @@ export function useImposition() {
       sourceArrayBuffer: arrayBuffer,
       sourcePages: pages,
       selectedPageId: pages[0]?.id || null,
+      sheetTemplate: {
+        ...prev.sheetTemplate,
+        pageWidth,
+        pageHeight,
+        bleed,
+        sheetWidth: pageWidth,
+        sheetHeight: pageHeight,
+        trimBox: { x: 0, y: 0, width: pageWidth, height: pageHeight },
+      },
     }))
   }, [])
 
