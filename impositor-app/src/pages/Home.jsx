@@ -5,11 +5,17 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card.
 import { Input } from '../components/ui/Input.jsx'
 import { useImposition } from '../hooks/useImposition.js'
 
+// 1 pt = 0.352778 mm
+const PT_TO_MM = 0.352778
+const MM_TO_PT = 1 / 0.352778
+
 export default function Home({ onStartImposition }) {
   const [file, setFile] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const { loadSourceFile, state } = useImposition()
   const { pageWidth, pageHeight, bleed } = state.sheetTemplate
+
+  const ptToMm = (pt) => (pt * PT_TO_MM)
 
   const handleFileChange = useCallback(async (e) => {
     const f = e.target.files[0]
@@ -83,15 +89,15 @@ export default function Home({ onStartImposition }) {
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <div className="text-xs text-slate-500 uppercase">Ancho</div>
-                  <div className="text-slate-900 font-medium">{pageWidth.toFixed(2)} pt</div>
+                  <div className="text-slate-900 font-medium">{ptToMm(pageWidth).toFixed(2)} mm</div>
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 uppercase">Alto</div>
-                  <div className="text-slate-900 font-medium">{pageHeight.toFixed(2)} pt</div>
+                  <div className="text-slate-900 font-medium">{ptToMm(pageHeight).toFixed(2)} mm</div>
                 </div>
                 <div>
                   <div className="text-xs text-slate-500 uppercase">Sangrado</div>
-                  <div className="text-slate-900 font-medium">{bleed.toFixed(2)} pt</div>
+                  <div className="text-slate-900 font-medium">{ptToMm(bleed).toFixed(2)} mm</div>
                 </div>
               </div>
             </div>
@@ -99,12 +105,12 @@ export default function Home({ onStartImposition }) {
           <div className="mt-8 flex items-center justify-between">
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Ancho hoja (pt)"
-                defaultValue={pageWidth.toFixed(2)}
+                label="Ancho hoja (mm)"
+                defaultValue={ptToMm(pageWidth).toFixed(2)}
               />
               <Input
-                label="Alto hoja (pt)"
-                defaultValue={pageHeight.toFixed(2)}
+                label="Alto hoja (mm)"
+                defaultValue={ptToMm(pageHeight).toFixed(2)}
               />
             </div>
             <Button

@@ -314,7 +314,7 @@ export default function Editor({ onBack }) {
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-slate-400">
-                  {sheetTemplate.sheetWidth} × {sheetTemplate.sheetHeight} pt
+                  {(sheetTemplate.sheetWidth * 0.352778).toFixed(2)} × {(sheetTemplate.sheetHeight * 0.352778).toFixed(2)} mm
                 </span>
               </div>
             </div>
