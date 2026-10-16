@@ -71,12 +71,22 @@ function SheetCell({
           </div>
 
           {sourceArrayBuffer && cell?.sourcePageId && (
-            <div className="mb-3">
-              <PdfPageRenderer
-                arrayBuffer={sourceArrayBuffer}
-                pageNumber={parseInt(String(cell.sourcePageId).split('-')[1], 10)}
-                width={cellSize > 100 ? 110 : 70}
-              />
+            <div className="mb-3 flex flex-col items-center">
+              <div className="relative w-full aspect-[3/4] bg-slate-100 border border-slate-200 rounded-lg overflow-hidden">
+                <PdfPageRenderer
+                  arrayBuffer={sourceArrayBuffer}
+                  pageNumber={parseInt(String(cell.sourcePageId).split('-')[1], 10)}
+                  width={cellSize > 100 ? 110 : 70}
+                />
+              </div>
+              <span className="text-[10px] text-slate-500 mt-1">
+                P{String(cell.sourcePageId).split('-')[1]}
+              </span>
+            </div>
+          )}
+          {cell?.sourcePageId && !sourceArrayBuffer && (
+            <div className="mb-3 flex items-center justify-center h-20 text-slate-400 text-xs">
+              PDF fuente no cargado
             </div>
           )}
 
