@@ -86,30 +86,40 @@ export default function Home({ onStartImposition }) {
                   Dimensiones detectadas del PDF
                 </span>
               </div>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-4 gap-4 text-sm">
                 <div>
-                  <div className="text-xs text-slate-500 uppercase">Ancho</div>
+                  <div className="text-xs text-slate-500 uppercase">Ancho terminado</div>
                   <div className="text-slate-900 font-medium">{ptToMm(pageWidth).toFixed(2)} mm</div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500 uppercase">Alto</div>
+                  <div className="text-xs text-slate-500 uppercase">Alto terminado</div>
                   <div className="text-slate-900 font-medium">{ptToMm(pageHeight).toFixed(2)} mm</div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500 uppercase">Sangrado</div>
+                  <div className="text-xs text-slate-500 uppercase">Sangrado (por lado)</div>
                   <div className="text-slate-900 font-medium">{ptToMm(bleed).toFixed(2)} mm</div>
                 </div>
+                <div>
+                  <div className="text-xs text-slate-500 uppercase">Total con sangre</div>
+                  <div className="text-slate-900 font-medium">
+                    {ptToMm(pageWidth + bleed * 2).toFixed(2)} × {ptToMm(pageHeight + bleed * 2).toFixed(2)} mm
+                  </div>
+                </div>
               </div>
+              <p className="text-[10px] text-slate-400 mt-2">
+                El ancho y alto son el tamaño terminado (trim box). El sangrado se detecta del
+                bleed box del PDF y se aplica por cada lado.
+              </p>
             </div>
           )}
           <div className="mt-8 flex items-center justify-between">
             <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Ancho hoja (mm)"
+                label="Ancho hoja terminado (mm)"
                 defaultValue={ptToMm(pageWidth).toFixed(2)}
               />
               <Input
-                label="Alto hoja (mm)"
+                label="Alto hoja terminado (mm)"
                 defaultValue={ptToMm(pageHeight).toFixed(2)}
               />
             </div>

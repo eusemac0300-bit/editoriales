@@ -27,33 +27,43 @@ export function useImposition() {
   /* ---------- Carga de PDF fuente ---------- */
   const loadSourceFile = useCallback(async (file, arrayBuffer) => {
     let pageCount = 0
-    let pageWidth = 595.28
-    let pageHeight = 841.89
-    let bleed = 0
+    let trimWidth = 595.28   // tamaño terminado (sin sangre) en pt
+    let trimHeight = 841.89  // tamaño terminado (sin sangre) en pt
+    let bleedWidth = 0       // ancho total incluyendo sangre en pt
+    let bleedHeight = 0      // alto total incluyendo sangre en pt
+    let bleed = 0            // sangre por lado en pt
     try {
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
       const pdf = await loadingTask.promise
       pageCount = pdf.numPages
 
-      // Extraer dimensiones reales de la primera página
       const firstPage = await pdf.getPage(1)
-      const viewport = firstPage.getViewport({ scale: 1 })
-      pageWidth = viewport.width
-      pageHeight = viewport.height
 
-      // Intentar detectar sangrado/bleed del PDF
-      try {
-        const bleedBox = firstPage.getBleedBox ? firstPage.getBleedBox() : null
-        const trimBox = firstPage.getTrimBox ? firstPage.getTrimBox() : null
-        if (bleedBox && trimBox) {
-          const horizontalBleed = (bleedBox[2] - bleedBox[0] - (trimBox[2] - trimBox[0])) / 2
-          const verticalBleed = (bleedBox[3] - bleedBox[1] - (trimBox[3] - trimBox[1])) / 2
-          bleed = Math.max(horizontalBleed, verticalBleed, 0)
-        }
-      } catch (bleedErr) {
-        // Si no se puede detectar bleed, dejar en 0
-        bleed = 0
+      // Dimensiones del trim box (tamaño terminado del documento)
+      const trimBox = firstPage.getTrimBox ? firstPage.getTrimBox() : null
+      if (trimBox) {
+        trimWidth = trimBox[2] - trimBox[0]
+        trimHeight = trimBox[3] - trimBox[1]
+      } else {
+        const viewport = firstPage.getViewport({ scale: 1 })
+        trimWidth = viewport.width
+        trimHeight = viewport.height
       }
+
+      // Dimensiones del bleed box (tamaño total incluyendo sangre)
+      const bleedBox = firstPage.getBleedBox ? firstPage.getBleedBox() : null
+      if (bleedBox) {
+        bleedWidth = bleedBox[2] - bleedBox[0]
+        bleedHeight = bleedBox[3] - bleedBox[1]
+      } else {
+        bleedWidth = trimWidth
+        bleedHeight = trimHeight
+      }
+
+      // Calcular sangre por lado (diferencia entre bleed y trim, dividida entre 2)
+      const horizontalBleed = (bleedWidth - trimWidth) / 2
+      const verticalBleed = (bleedHeight - trimHeight) / 2
+      bleed = Math.max(horizontalBleed, verticalBleed, 0)
     } catch (err) {
       console.error('Error contando páginas del PDF:', err)
       pageCount = 40 // fallback
@@ -70,12 +80,15 @@ export function useImposition() {
       selectedPageId: pages[0]?.id || null,
       sheetTemplate: {
         ...prev.sheetTemplate,
-        pageWidth,
-        pageHeight,
+        // Tamaño terminado de la página (lo que se imprime realmente)
+        pageWidth: trimWidth,
+        pageHeight: trimHeight,
+        // Sangrado detectado (por lado)
         bleed,
-        sheetWidth: pageWidth,
-        sheetHeight: pageHeight,
-        trimBox: { x: 0, y: 0, width: pageWidth, height: pageHeight },
+        // Dimensiones de la hoja pliego (usamos el tamaño terminado por defecto)
+        sheetWidth: trimWidth,
+        sheetHeight: trimHeight,
+        trimBox: { x: 0, y: 0, width: trimWidth, height: trimHeight },
       },
     }))
   }, [])
