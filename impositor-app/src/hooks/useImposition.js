@@ -66,16 +66,13 @@ export function useImposition() {
     }))
   }, [])
 
-  const autoDistribute = useCallback((signatureId, mode = 'sequence') => {
+  const autoDistribute = useCallback((signatureId) => {
     setState((prev) => {
-      const { sourcePages, sheetTemplate, selectedPageId } = prev
+      const { sourcePages, sheetTemplate } = prev
       const sig = sheetTemplate.signatures.find((s) => s.id === signatureId)
       if (!sig || sourcePages.length === 0) return prev
 
       const { nrows, ncols } = sig
-
-      const // Página por defecto para "todas iguales": la seleccionada o la primera
-        defaultPageId = selectedPageId || sourcePages[0]?.id || null
 
       const signatures = sheetTemplate.signatures.map((s) => {
         if (s.id !== signatureId) return s
@@ -86,24 +83,15 @@ export function useImposition() {
         for (let row = 1; row <= nrows; row++) {
           for (let col = 1; col <= ncols; col++) {
             for (const face of ['Up', 'Dn']) {
-              let sourcePageId = null
-
-              if (mode === 'repeat') {
-                // Todas iguales: repite la misma página en todas las celdas
-                sourcePageId = defaultPageId
-              } else {
-                // Todas diferentes (secuencial): 1, 2, 3, …
-                sourcePageId = pageIdx < sourcePages.length
-                  ? sourcePages[pageIdx].id
-                  : null
-                pageIdx++
-              }
-
+              const sourcePageId = pageIdx < sourcePages.length
+                ? sourcePages[pageIdx].id
+                : null
               cells.push({
                 ...createCell(row, col, face),
                 sourcePageId,
                 rotation: face === 'Dn' ? 180 : 0, // cara Dn volteada 180°
               })
+              pageIdx++
             }
           }
         }

@@ -72,15 +72,11 @@ export default function Editor({ onBack }) {
     setNcols(preset.ncols)
     setPageCount(preset.pageCount)
     applyPreset(presetId)
-    // Presets de distribución automática: aplicar inmediatamente a la firma activa
-    if ((presetId === 'repeat' || presetId === 'sequence') && activeSignatureId) {
-      autoDistribute(activeSignatureId, presetId)
-    }
-  }, [applyPreset, autoDistribute, activeSignatureId])
+  }, [applyPreset])
 
   const handleAutoDistribute = useCallback(() => {
     if (!activeSignatureId) return
-    autoDistribute(activeSignatureId, 'sequence')
+    autoDistribute(activeSignatureId)
   }, [activeSignatureId, autoDistribute])
 
   const handleAssign = useCallback((cellId, pageId) => {
