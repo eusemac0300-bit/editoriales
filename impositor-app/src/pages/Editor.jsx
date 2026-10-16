@@ -145,7 +145,7 @@ export default function Editor({ onBack }) {
             </div>
             <Button variant="outline" onClick={handleAddSignature} className="w-full">
               <Plus className="w-4 h-4 mr-2" />
-              Agregar firma
+              Crear imposición
             </Button>
           </CardContent>
         </Card>
@@ -161,7 +161,7 @@ export default function Editor({ onBack }) {
             </CardHeader>
             <CardContent className="space-y-2">
               <p className="text-xs text-slate-500 mb-3">
-                Aplica un preset estilo SmartStream Designer a la firma activa
+                Aplica un preset de imposición a la plantilla activa
               </p>
               <div className="grid grid-cols-1 gap-2">
                 {Object.entries(IMPOSITION_PRESETS).map(([id, preset]) => (
@@ -185,7 +185,7 @@ export default function Editor({ onBack }) {
                   disabled={signatures.length === 0}
                 >
                   <RefreshCw className="w-3 h-3 mr-2" />
-                  Auto-distribuir páginas en firma activa
+                  Auto-distribuir páginas en la plantilla activa
                 </Button>
               )}
             </CardContent>
@@ -196,7 +196,7 @@ export default function Editor({ onBack }) {
         {signatures.length > 0 && (
           <Card className="mt-4">
             <CardHeader>
-              <CardTitle>Firmas ({signatures.length})</CardTitle>
+              <CardTitle>Imposiciones ({signatures.length})</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {signatures.map((sig) => {
@@ -290,7 +290,7 @@ export default function Editor({ onBack }) {
         <header className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold text-slate-900">
-              Editor de imposición — {activeSig ? activeSig.name : 'Sin firma activa'}
+              Editor de imposición — {activeSig ? activeSig.name : 'Sin imposición creada'}
             </h1>
             <p className="text-slate-500 text-sm">
               {assignedCount}/{totalCells} celdas ocupadas •

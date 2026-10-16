@@ -163,8 +163,8 @@ export default function SheetCanvas({
       <div className={className}>
         <div className="flex flex-col items-center justify-center h-[60vh] bg-slate-50 rounded-xl border-2 border-dashed border-slate-300">
           <FileText className="w-12 h-12 text-slate-300 mb-3" />
-          <p className="text-sm text-slate-600">Sin firma activa</p>
-          <p className="text-xs text-slate-400 mt-1">Agrega una firma desde el panel izquierdo</p>
+          <p className="text-sm text-slate-600">Sin imposición creada</p>
+          <p className="text-xs text-slate-400 mt-1">Crea una imposición desde el panel izquierdo</p>
         </div>
       </div>
     )

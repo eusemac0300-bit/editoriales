@@ -25,14 +25,22 @@ export default function PdfPageRenderer({ arrayBuffer, pageNumber, width = 120, 
 
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
         const pdf = await loadingTask.promise;
+
+        if (pageNumber < 1 || pageNumber > pdf.numPages) {
+          setError(`Página ${pageNumber} no existe (el PDF tiene ${pdf.numPages})`);
+          setIsLoading(false);
+          return;
+        }
+
         const page = await pdf.getPage(pageNumber);
 
         const viewport = page.getViewport({ scale: width / page.getViewport({ scale: 1 }).width });
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
 
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        // Asegurar dimensiones mínimas
+        canvas.width = Math.max(viewport.width, 1);
+        canvas.height = Math.max(viewport.height, 1);
 
         await page.render({
           canvasContext: context,
@@ -44,7 +52,7 @@ export default function PdfPageRenderer({ arrayBuffer, pageNumber, width = 120, 
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err.message);
+          setError(err.message || 'Error al renderizar página');
           setIsLoading(false);
         }
       }
@@ -59,14 +67,14 @@ export default function PdfPageRenderer({ arrayBuffer, pageNumber, width = 120, 
 
   if (error) {
     return (
-      <div className={cn('aspect-[3/4] bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center', className)}>
-        <span className="text-xs text-slate-500">Error al renderizar</span>
+      <div className={cn(`aspect-[3/4] bg-slate-100 border border-rose-200 rounded-lg flex items-center justify-center text-rose-600`, className)}>
+        <span className="text-xs text-center px-1">{error}</span>
       </div>
     );
   }
 
   return (
-    <div className="relative aspect-[3/4] bg-slate-100 border border-slate-200 rounded-lg overflow-hidden">
+    <div className={`relative aspect-[3/4] bg-slate-100 border border-slate-200 rounded-lg overflow-hidden ${className}`}>
       <canvas ref={canvasRef} className="block w-full h-full" />
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10">
