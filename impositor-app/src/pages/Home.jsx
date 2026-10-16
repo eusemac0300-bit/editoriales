@@ -13,7 +13,7 @@ export default function Home({ onStartImposition }) {
   const [file, setFile] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const { loadSourceFile, state } = useImposition()
-  const { pageWidth, pageHeight, bleed } = state.sheetTemplate
+  const { pageWidth, pageHeight, bleed, _detectedBoxes } = state.sheetTemplate
 
   const ptToMm = (pt) => (pt * PT_TO_MM)
 
@@ -106,9 +106,20 @@ export default function Home({ onStartImposition }) {
                   </div>
                 </div>
               </div>
+              {_detectedBoxes && (
+                <div className="mt-3 p-3 rounded-lg bg-slate-100 border border-slate-200">
+                  <p className="text-[10px] text-slate-500 mb-1">Detalle de detección:</p>
+                  <div className="text-[10px] text-slate-600 space-y-1">
+                    <div>Trim box (tamaño terminado): {_detectedBoxes.trim ? '✓ detectado' : '✗ no definido'}</div>
+                    <div>Bleed box (con sangre): {_detectedBoxes.bleed ? '✓ detectado' : '✗ no definido'}</div>
+                    <div>Media box: {_detectedBoxes.media ? '✓ detectado' : '✗ no definido'}</div>
+                  </div>
+                </div>
+              )}
               <p className="text-[10px] text-slate-400 mt-2">
                 El ancho y alto son el tamaño terminado (trim box). El sangrado se detecta del
-                bleed box del PDF y se aplica por cada lado.
+                bleed box del PDF y se aplica por cada lado. Si los valores no son correctos,
+                edítalos manualmente abajo.
               </p>
             </div>
           )}

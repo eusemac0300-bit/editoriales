@@ -32,6 +32,7 @@ export function useImposition() {
     let bleedWidth = 0       // ancho total incluyendo sangre en pt
     let bleedHeight = 0      // alto total incluyendo sangre en pt
     let bleed = 0            // sangre por lado en pt
+    let detectedBoxes = {}
     try {
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
       const pdf = await loadingTask.promise
@@ -39,31 +40,60 @@ export function useImposition() {
 
       const firstPage = await pdf.getPage(1)
 
-      // Dimensiones del trim box (tamaño terminado del documento)
+      // Intentar obtener todos los boxes disponibles del PDF
       const trimBox = firstPage.getTrimBox ? firstPage.getTrimBox() : null
+      const bleedBox = firstPage.getBleedBox ? firstPage.getBleedBox() : null
+      const mediaBox = firstPage.getMediaBox ? firstPage.getMediaBox() : null
+      const cropBox = firstPage.getCropBox ? firstPage.getCropBox() : null
+      const viewport = firstPage.getViewport({ scale: 1 })
+
+      detectedBoxes = {
+        trim: !!trimBox,
+        bleed: !!bleedBox,
+        media: !!mediaBox,
+        crop: !!cropBox,
+      }
+
+      // Prioridad 1: Trim box = tamaño terminado del documento
       if (trimBox) {
         trimWidth = trimBox[2] - trimBox[0]
         trimHeight = trimBox[3] - trimBox[1]
       } else {
-        const viewport = firstPage.getViewport({ scale: 1 })
+        // Sin trim box: usar el viewport (crop box) como tamaño terminado
         trimWidth = viewport.width
         trimHeight = viewport.height
       }
 
-      // Dimensiones del bleed box (tamaño total incluyendo sangre)
-      const bleedBox = firstPage.getBleedBox ? firstPage.getBleedBox() : null
+      // Prioridad 2: Bleed box = tamaño total con sangre
       if (bleedBox) {
         bleedWidth = bleedBox[2] - bleedBox[0]
         bleedHeight = bleedBox[3] - bleedBox[1]
+      } else if (mediaBox) {
+        // Si no hay bleed box pero sí media box, usar media box como referencia total
+        bleedWidth = mediaBox[2] - mediaBox[0]
+        bleedHeight = mediaBox[3] - mediaBox[1]
       } else {
+        // Sin bleed box: asumir que no hay sangre (trim = total)
         bleedWidth = trimWidth
         bleedHeight = trimHeight
       }
 
-      // Calcular sangre por lado (diferencia entre bleed y trim, dividida entre 2)
+      // Calcular sangre por lado (diferencia entre total y terminado, dividida entre 2)
       const horizontalBleed = (bleedWidth - trimWidth) / 2
       const verticalBleed = (bleedHeight - trimHeight) / 2
       bleed = Math.max(horizontalBleed, verticalBleed, 0)
+
+      console.log('[Impositor] Dimensiones PDF detectadas:', {
+        pageCount,
+        trimBox: trimBox ? `${trimWidth.toFixed(2)}×${trimHeight.toFixed(2)}pt` : 'no definido',
+        bleedBox: bleedBox ? `${bleedWidth.toFixed(2)}×${bleedHeight.toFixed(2)}pt` : 'no definido',
+        mediaBox: mediaBox ? `${mediaBox[2] - mediaBox[0]}×${mediaBox[3] - mediaBox[1]}pt` : 'no definido',
+        cropBox: cropBox ? `${cropBox[2] - cropBox[0]}×${cropBox[3] - cropBox[1]}pt` : 'no definido',
+        viewport: `${viewport.width.toFixed(2)}×${viewport.height.toFixed(2)}pt`,
+        bleedPt: bleed.toFixed(2),
+        bleedMm: (bleed * 0.352778).toFixed(2),
+        trimMm: (trimWidth * 0.352778).toFixed(2) + ' × ' + (trimHeight * 0.352778).toFixed(2),
+      })
     } catch (err) {
       console.error('Error contando páginas del PDF:', err)
       pageCount = 40 // fallback
@@ -80,15 +110,17 @@ export function useImposition() {
       selectedPageId: pages[0]?.id || null,
       sheetTemplate: {
         ...prev.sheetTemplate,
-        // Tamaño terminado de la página (lo que se imprime realmente)
+        // Tamaño terminado de la página (lo que se imprime realmente, sin sangre)
         pageWidth: trimWidth,
         pageHeight: trimHeight,
-        // Sangrado detectado (por lado)
+        // Sangrado detectado (por lado, en pt)
         bleed,
         // Dimensiones de la hoja pliego (usamos el tamaño terminado por defecto)
         sheetWidth: trimWidth,
         sheetHeight: trimHeight,
         trimBox: { x: 0, y: 0, width: trimWidth, height: trimHeight },
+        // Guardar info de detección para debug
+        _detectedBoxes: detectedBoxes,
       },
     }))
   }, [])
